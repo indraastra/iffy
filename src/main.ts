@@ -8,7 +8,6 @@ class IffyApp {
   private commandInput: HTMLInputElement;
   private settingsModal: HTMLElement;
   private apiKeyInput: HTMLInputElement;
-  private storyFileInput: HTMLInputElement;
   
   constructor() {
     this.gameEngine = new GameEngine();
@@ -18,7 +17,6 @@ class IffyApp {
     this.commandInput = document.getElementById('command-input') as HTMLInputElement;
     this.settingsModal = document.getElementById('settings-modal')!;
     this.apiKeyInput = document.getElementById('api-key') as HTMLInputElement;
-    this.storyFileInput = document.getElementById('story-file') as HTMLInputElement;
     
     this.initializeEventListeners();
     this.loadApiKey();
@@ -52,54 +50,11 @@ class IffyApp {
       this.saveApiKey();
     });
 
-    // Story file loading
-    this.storyFileInput.addEventListener('change', (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        this.loadStoryFile(file);
-      }
-    });
-
     // Save/Load buttons
     document.getElementById('save-btn')!.addEventListener('click', () => this.saveGame());
-    document.getElementById('load-btn')!.addEventListener('click', () => this.loadGame());
+    document.getElementById('load-btn')!.addEventListener('click', () => this.showLoadOptions());
   }
 
-  private async loadStoryFile(file: File): Promise<void> {
-    try {
-      this.addMessage('Loading story...', 'system');
-      
-      const story = await StoryParser.parseFromFile(file);
-      this.gameEngine.loadStory(story);
-      
-      // Clear output and show story start
-      this.clearOutput();
-      this.addMessage(`${story.title} by ${story.author}`, 'title');
-      this.addMessage(this.gameEngine.getInitialText(), 'story');
-      
-      // Show current location
-      const response = this.gameEngine.processAction({ 
-        type: 'command', 
-        input: 'look', 
-        timestamp: new Date() 
-      });
-      this.addMessage(response.text, 'story');
-      
-      this.hideSettings();
-      this.commandInput.focus();
-      
-    } catch (error) {
-      let errorMessage = 'Failed to load story file.';
-      
-      if (error instanceof StoryParseError) {
-        errorMessage = `Story parsing error: ${error.message}`;
-      } else if (error instanceof Error) {
-        errorMessage = `Error: ${error.message}`;
-      }
-      
-      this.addMessage(errorMessage, 'error');
-    }
-  }
 
   private processCommand(): void {
     const input = this.commandInput.value.trim();
@@ -149,7 +104,7 @@ class IffyApp {
 
   private displayWelcomeMessage(): void {
     this.addMessage('Welcome to Iffy - LLM-powered Interactive Fiction Engine', 'title');
-    this.addMessage('To get started, click Settings and load a story file (.yaml)', 'system');
+    this.addMessage('To get started, click the "Load" button to load a story file (.yaml)', 'system');
     this.addMessage('This is an MVP version. Try commands like "look", "go [direction]", "inventory", or "help".', 'system');
   }
 
@@ -196,7 +151,139 @@ class IffyApp {
     }
   }
 
-  private loadGame(): void {
+  private showLoadOptions(): void {
+    const options = [
+      { text: 'Load Story File (.yaml)', action: () => this.loadStoryFile() },
+      { text: 'Load Save Game (.json)', action: () => this.loadSaveGame() }
+    ];
+
+    // Create a simple menu
+    const menu = document.createElement('div');
+    menu.className = 'load-menu';
+    menu.innerHTML = `
+      <div class="load-menu-content">
+        <h3>What would you like to load?</h3>
+        ${options.map((option, index) => 
+          `<button class="load-option-btn" data-index="${index}">${option.text}</button>`
+        ).join('')}
+        <button class="load-cancel-btn">Cancel</button>
+      </div>
+    `;
+
+    // Style the menu
+    menu.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 15, 35, 0.95);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1001;
+    `;
+
+    const content = menu.querySelector('.load-menu-content') as HTMLElement;
+    content.style.cssText = `
+      background: var(--primary-color);
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      padding: 2rem;
+      text-align: center;
+      min-width: 300px;
+    `;
+
+    // Add event listeners
+    options.forEach((option, index) => {
+      const btn = menu.querySelector(`[data-index="${index}"]`) as HTMLElement;
+      btn.style.cssText = `
+        display: block;
+        width: 100%;
+        margin: 1rem 0;
+        padding: 0.75rem;
+        background: var(--button-bg);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: inherit;
+      `;
+      btn.addEventListener('click', () => {
+        document.body.removeChild(menu);
+        option.action();
+      });
+    });
+
+    const cancelBtn = menu.querySelector('.load-cancel-btn') as HTMLElement;
+    cancelBtn.style.cssText = `
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      background: transparent;
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+    `;
+    cancelBtn.addEventListener('click', () => {
+      document.body.removeChild(menu);
+    });
+
+    document.body.appendChild(menu);
+  }
+
+  private loadStoryFile(): void {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.yaml,.yml';
+    
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        this.loadStoryFileFromFile(file);
+      }
+    };
+    
+    input.click();
+  }
+
+  private async loadStoryFileFromFile(file: File): Promise<void> {
+    try {
+      this.addMessage('Loading story...', 'system');
+      
+      const story = await StoryParser.parseFromFile(file);
+      this.gameEngine.loadStory(story);
+      
+      // Clear output and show story start
+      this.clearOutput();
+      this.addMessage(`${story.title} by ${story.author}`, 'title');
+      this.addMessage(this.gameEngine.getInitialText(), 'story');
+      
+      // Show current location
+      const response = this.gameEngine.processAction({ 
+        type: 'command', 
+        input: 'look', 
+        timestamp: new Date() 
+      });
+      this.addMessage(response.text, 'story');
+      
+      this.commandInput.focus();
+      
+    } catch (error) {
+      let errorMessage = 'Failed to load story file.';
+      
+      if (error instanceof StoryParseError) {
+        errorMessage = `Story parsing error: ${error.message}`;
+      } else if (error instanceof Error) {
+        errorMessage = `Error: ${error.message}`;
+      }
+      
+      this.addMessage(errorMessage, 'error');
+    }
+  }
+
+  private loadSaveGame(): void {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
