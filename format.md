@@ -107,10 +107,16 @@ knowledge:
 
 ### Unified Flow System
 
+The flow system supports both explicit flows for scripted interactions and open scenes for natural exploration.
+
+#### Explicit Flows
+
+Traditional flows with defined interactions:
+
 ```yaml
 flows:
   - id: "flow_id"
-    type: "narrative"  # or "dialogue" or "scene"
+    type: "narrative"  # or "dialogue"
     name: "Flow Name"
     requirements:
       - "previous_flow_id"
@@ -157,6 +163,62 @@ flows:
       - speaker: "character_id"
         text: "Response that follows any choice"
         next: "continue_flow_id"  # Optional, continues to another flow
+```
+
+#### Open Scenes (Fuzzy Discovery)
+
+For natural exploration where the LLM interprets player actions:
+
+```yaml
+flows:
+  - id: "open_scene_id"
+    type: "open_scene"
+    name: "Scene Name"
+    description: |
+      Setting and context for the scene. This helps the LLM understand
+      the environment and generate appropriate responses.
+    
+    # Declare what exists to be discovered
+    story_elements:
+      evidence:
+        - id: "unique_evidence_id"
+          type: "item"  # or "knowledge"
+          object: "item_id"  # for items
+          fact: "knowledge_id"  # for knowledge
+          location_hints: ["where it might be found"]
+          discovery_clues:
+            - "What the player might notice"
+            - "Subtle indicators"
+          natural_actions: ["search room", "examine area", "look for clues"]
+          requires: ["prerequisite_knowledge"]  # Optional
+          difficulty: "easy"  # easy/moderate/hard, optional
+    
+    # Story progression rules
+    progression:
+      completion_threshold:
+        evidence_found: 2  # How many pieces needed to progress
+        
+      hint_escalation:
+        after_turns: 3  # Start giving hints after X turns
+        progression: ["subtle", "direct", "explicit"]
+        
+      synergies:  # Optional - evidence that makes other evidence easier to find
+        - if_found: "evidence_id"
+          then_easier: "other_evidence_id"
+          reason: "Why this connection makes sense"
+    
+    # Transitions when scene is complete
+    completion_transitions:
+      - condition: "evidence_threshold_met"
+        to_flow: "next_flow_id"
+        
+    # LLM interpretation guidelines
+    llm_guidelines: |
+      Instructions for how the LLM should handle this scene:
+      - Generate natural discovery sequences
+      - Match narrative tone to story
+      - Provide appropriate difficulty scaling
+      - Connect discoveries meaningfully
 ```
 
 ## Special Sections
@@ -255,6 +317,39 @@ endings:
     # ... ending content ...
 ```
 
+## Flow Type Guidelines
+
+### When to Use Explicit Flows
+
+**Narrative flows** for:
+- **Story beats**: Key narrative moments that must happen in a specific way
+- **Simple interactions**: Single-step actions with defined outcomes  
+- **Transitions**: Moving between scenes or major story points
+- **Scripted sequences**: Events that must unfold in a particular order
+
+**Dialogue flows** for:
+- **Conversations**: Multi-exchange interactions with characters
+- **Branching dialogue**: Conversations with meaningful player choices
+- **Character development**: Dialogue that reveals character or advances relationships
+- **Plot-critical discussions**: Conversations that gate story progression
+
+### When to Use Open Scenes
+
+**Open scene flows** for:
+- **Exploration sequences**: Investigating rooms, searching areas, examining objects
+- **Discovery-based gameplay**: Finding clues, items, or information naturally
+- **Investigation scenes**: Crime scenes, research, archaeological digs
+- **Social situations**: Meeting people, gathering information through conversation
+- **Creative problem-solving**: Multiple valid approaches to the same goal
+- **Sandbox interactions**: Letting players experiment and discover organically
+
+### Benefits of Open Scenes
+- **Reduced authoring overhead**: No need to anticipate every possible player action
+- **Natural interactions**: Players can use intuitive commands like "search the room"
+- **Multiple solutions**: Different approaches can lead to the same discoveries
+- **Emergent storytelling**: LLM creates contextually appropriate narratives
+- **Player agency**: Freedom to explore and discover at their own pace
+
 ## Best Practices
 
 ### 1. ID Conventions
@@ -276,6 +371,14 @@ endings:
 - Make critical path clear with simple requirements
 - Provide multiple solutions where possible
 - Test that all flows are reachable
+
+### 5. Open Scene Design
+- **Rich descriptions**: Provide detailed scene context for the LLM
+- **Clear discovery clues**: Give enough hints without being too obvious
+- **Varied natural actions**: List different ways players might approach discovery
+- **Logical progression**: Ensure evidence builds toward story goals
+- **Appropriate difficulty**: Match discovery difficulty to story pacing
+- **Meaningful synergies**: Connect discoveries in ways that make narrative sense
 
 ## Validation Rules
 

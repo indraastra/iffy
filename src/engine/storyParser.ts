@@ -136,13 +136,13 @@ export class StoryParser {
     }
 
     return items.map((item, index) => {
-      this.validateRequired(item, ['id', 'name', 'description', 'location'], `item[${index}]`);
+      this.validateRequired(item, ['id', 'name', 'description'], `item[${index}]`);
       
       return {
         id: item.id,
         name: item.name,
         description: item.description,
-        location: item.location,
+        location: item.location || 'discovered', // Allow items to be discovered through fuzzy flows
         hidden: item.hidden || false
       };
     });
@@ -176,8 +176,8 @@ export class StoryParser {
     return flows.map((flow, index) => {
       this.validateRequired(flow, ['id', 'type', 'name'], `flow[${index}]`);
       
-      if (!['narrative', 'dialogue', 'scene'].includes(flow.type)) {
-        throw new StoryParseError(`flow[${index}].type must be 'narrative', 'dialogue', or 'scene'`);
+      if (!['narrative', 'dialogue', 'open_scene'].includes(flow.type)) {
+        throw new StoryParseError(`flow[${index}].type must be 'narrative', 'dialogue', or 'open_scene'`);
       }
 
       const result: Story['flows'][0] = {
@@ -255,8 +255,9 @@ export class StoryParser {
     });
 
     // Validate item locations
+    const validSpecialLocations = new Set(['none', 'discovered']); // Allow fuzzy discovery
     story.items.forEach(item => {
-      if (item.location !== 'none' && !locationIds.has(item.location)) {
+      if (!validSpecialLocations.has(item.location) && !locationIds.has(item.location)) {
         throw new StoryParseError(`Item ${item.id} references unknown location: ${item.location}`);
       }
     });

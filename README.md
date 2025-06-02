@@ -136,10 +136,12 @@ This is currently in MVP development. Contributions will be welcomed once Phase 
 
 ## 🎮 Example Stories
 
-Check out the example story in the `examples/` directory:
-- `investigation.yaml` - A noir detective story showcasing the unified flow system
+Check out the example stories in the `examples/` directory:
+- `investigation.yaml` - A noir detective story using traditional explicit flows
+- `lost_keys.yaml` - A domestic drama demonstrating fuzzy/open scene flows
+- `comparison_traditional_vs_fuzzy.md` - Detailed comparison of authoring approaches
 
-Load this in the app to see the engine in action!
+Load these in the app to see the engine in action!
 
 ## 🛠️ Development Tools
 

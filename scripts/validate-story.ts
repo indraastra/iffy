@@ -81,8 +81,9 @@ async function validateStory(filePath: string): Promise<void> {
     
     // Check item locations
     const allLocationIds = new Set(story.locations.map(l => l.id));
+    const validSpecialLocations = new Set(['none', 'discovered']); // Allow fuzzy discovery
     const invalidItemLocations = story.items.filter(item => 
-      item.location !== 'none' && !allLocationIds.has(item.location)
+      !validSpecialLocations.has(item.location) && !allLocationIds.has(item.location)
     );
     
     if (invalidItemLocations.length > 0) {

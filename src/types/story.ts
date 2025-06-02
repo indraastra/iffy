@@ -55,7 +55,7 @@ export interface Knowledge {
 }
 
 export interface FlowTransition {
-  type: 'narrative' | 'dialogue' | 'scene';
+  type: 'narrative' | 'dialogue';
   trigger: string;
   flow_id: string;
 }
@@ -76,7 +76,7 @@ export interface DialogueExchange {
 
 export interface Flow {
   id: string;
-  type: 'narrative' | 'dialogue' | 'scene';
+  type: 'narrative' | 'dialogue' | 'open_scene';
   name: string;
   requirements?: string[];
   sets?: string[];
