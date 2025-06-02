@@ -266,10 +266,81 @@ This is a basic MVP version. More natural language understanding will be added i
     const colors = story.metadata.ui?.colors;
     if (colors) {
       const root = document.documentElement;
+      
+      // Apply base colors
       if (colors.primary) root.style.setProperty('--primary-color', colors.primary);
       if (colors.background) root.style.setProperty('--background-color', colors.background);
       if (colors.text) root.style.setProperty('--text-color', colors.text);
+      
+      // Set header and footer to use background color for better text readability
+      if (colors.background) {
+        root.style.setProperty('--header-bg', colors.background);
+        root.style.setProperty('--footer-bg', colors.background);
+      }
+      
+      // Set input background to use background color for consistency
+      if (colors.background) {
+        root.style.setProperty('--input-bg', colors.background);
+      }
+      
+      // Derive related colors for cohesive theming
+      if (colors.primary) {
+        
+        // Make button background slightly lighter than primary
+        const buttonBg = this.adjustColorBrightness(colors.primary, 30);
+        root.style.setProperty('--button-bg', buttonBg);
+        
+        // Make button hover even lighter
+        const buttonHover = this.adjustColorBrightness(colors.primary, 50);
+        root.style.setProperty('--button-hover', buttonHover);
+        
+        // Make border color lighter than primary
+        const borderColor = this.adjustColorBrightness(colors.primary, 40);
+        root.style.setProperty('--border-color', borderColor);
+        
+        // Make modal background semi-transparent version of background
+        if (colors.background) {
+          const modalBg = this.hexToRgba(colors.background, 0.95);
+          root.style.setProperty('--modal-bg', modalBg);
+        }
+      }
     }
+  }
+
+  private adjustColorBrightness(hex: string, percent: number): string {
+    // Remove # if present
+    hex = hex.replace('#', '');
+    
+    // Parse RGB values
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    
+    // Adjust brightness
+    const adjust = (val: number) => {
+      const adjusted = val + (percent * 255 / 100);
+      return Math.max(0, Math.min(255, Math.round(adjusted)));
+    };
+    
+    const newR = adjust(r);
+    const newG = adjust(g);
+    const newB = adjust(b);
+    
+    // Convert back to hex
+    const toHex = (val: number) => val.toString(16).padStart(2, '0');
+    return `#${toHex(newR)}${toHex(newG)}${toHex(newB)}`;
+  }
+
+  private hexToRgba(hex: string, alpha: number): string {
+    // Remove # if present
+    hex = hex.replace('#', '');
+    
+    // Parse RGB values
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
   getGameState(): GameState {

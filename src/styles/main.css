@@ -3,6 +3,8 @@
   --primary-color: #1a1a2e;
   --background-color: #0f0f23;
   --text-color: #eee;
+  --header-bg: #0f0f23;
+  --footer-bg: #0f0f23;
   --input-bg: #2a2a4e;
   --border-color: #404060;
   --button-bg: #3a3a6e;
@@ -38,7 +40,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background-color: var(--primary-color);
+  background-color: var(--header-bg);
   border-bottom: 2px solid var(--border-color);
 }
 
@@ -97,7 +99,7 @@ body {
 /* Input area */
 .input-area {
   padding: 1rem 2rem;
-  background-color: var(--primary-color);
+  background-color: var(--footer-bg);
   border-top: 2px solid var(--border-color);
 }
 
