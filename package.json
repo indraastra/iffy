@@ -1,0 +1,20 @@
+{
+  "name": "iffy-engine",
+  "version": "0.1.0",
+  "description": "LLM-powered Interactive Fiction Engine",
+  "main": "src/main.ts",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0",
+    "@types/js-yaml": "^4.0.0"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  }
+}
