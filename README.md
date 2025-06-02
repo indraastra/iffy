@@ -40,6 +40,11 @@ Open http://localhost:3000 in your browser.
 npm run build
 ```
 
+### Validating Stories
+```bash
+npm run validate-story examples/investigation.yaml
+```
+
 ## 📖 Story Format
 
 Stories are written in YAML using our unified flow system. Here's a minimal example:
@@ -131,8 +136,25 @@ This is currently in MVP development. Contributions will be welcomed once Phase 
 
 ## 🎮 Example Stories
 
-Check out the example stories in the `examples/` directory:
-- `investigation.yaml` - A noir detective story
-- `the_last_signal.yaml` - A sci-fi thriller
+Check out the example story in the `examples/` directory:
+- `investigation.yaml` - A noir detective story showcasing the unified flow system
 
-Load these in the app to see the engine in action!
+Load this in the app to see the engine in action!
+
+## 🛠️ Development Tools
+
+### Story Validator
+Use the built-in validator to check story files for errors:
+
+```bash
+npm run validate-story examples/investigation.yaml
+```
+
+The validator checks for:
+- YAML syntax errors
+- Missing required fields
+- Invalid references between flows, locations, and characters
+- Unreachable flows
+- Common authoring mistakes
+
+This is essential for debugging story parsing issues!

@@ -1,0 +1,124 @@
+#!/usr/bin/env tsx
+import { readFile } from 'fs/promises';
+import { StoryParser, StoryParseError } from '../src/engine/storyParser';
+
+async function validateStory(filePath: string): Promise<void> {
+  try {
+    console.log(`🔍 Validating story file: ${filePath}`);
+    
+    // Read the file
+    const fileContent = await readFile(filePath, 'utf-8');
+    console.log(`📖 File read successfully (${fileContent.length} characters)`);
+    
+    // Parse and validate
+    const story = StoryParser.parseFromYaml(fileContent);
+    console.log(`✅ Story parsed successfully!`);
+    
+    // Display story info
+    console.log(`\n📚 Story Information:`);
+    console.log(`   Title: ${story.title}`);
+    console.log(`   Author: ${story.author}`);
+    console.log(`   Version: ${story.version}`);
+    console.log(`   Characters: ${story.characters.length}`);
+    console.log(`   Locations: ${story.locations.length}`);
+    console.log(`   Items: ${story.items.length}`);
+    console.log(`   Knowledge: ${story.knowledge.length}`);
+    console.log(`   Flows: ${story.flows.length}`);
+    console.log(`   Endings: ${story.endings.length}`);
+    
+    // Validate references
+    console.log(`\n🔗 Reference Validation:`);
+    console.log(`   Start location: ${story.start.location} - ${story.locations.find(l => l.id === story.start.location) ? '✅' : '❌'}`);
+    console.log(`   Start flow: ${story.start.first_flow} - ${story.flows.find(f => f.id === story.start.first_flow) ? '✅' : '❌'}`);
+    
+    // Check for common issues
+    console.log(`\n🧪 Common Issues Check:`);
+    
+    // Check for unreferenced flows
+    const referencedFlows = new Set([story.start.first_flow]);
+    story.flows.forEach(flow => {
+      if (flow.next) {
+        flow.next.forEach(transition => referencedFlows.add(transition.flow_id));
+      }
+      if (flow.exchanges) {
+        flow.exchanges.forEach(exchange => {
+          if (exchange.choices) {
+            exchange.choices.forEach(choice => {
+              if (choice.next) referencedFlows.add(choice.next);
+            });
+          }
+          if (exchange.next) referencedFlows.add(exchange.next);
+        });
+      }
+    });
+    
+    const unreferencedFlows = story.flows.filter(flow => !referencedFlows.has(flow.id));
+    if (unreferencedFlows.length > 0) {
+      console.log(`   ⚠️  Unreferenced flows: ${unreferencedFlows.map(f => f.id).join(', ')}`);
+    } else {
+      console.log(`   ✅ All flows are referenced`);
+    }
+    
+    // Check for missing flow references
+    const allFlowIds = new Set(story.flows.map(f => f.id));
+    const missingRefs: string[] = [];
+    
+    story.flows.forEach(flow => {
+      if (flow.next) {
+        flow.next.forEach(transition => {
+          if (!allFlowIds.has(transition.flow_id)) {
+            missingRefs.push(`${flow.id} -> ${transition.flow_id}`);
+          }
+        });
+      }
+    });
+    
+    if (missingRefs.length > 0) {
+      console.log(`   ❌ Missing flow references: ${missingRefs.join(', ')}`);
+    } else {
+      console.log(`   ✅ All flow references are valid`);
+    }
+    
+    // Check item locations
+    const allLocationIds = new Set(story.locations.map(l => l.id));
+    const invalidItemLocations = story.items.filter(item => 
+      item.location !== 'none' && !allLocationIds.has(item.location)
+    );
+    
+    if (invalidItemLocations.length > 0) {
+      console.log(`   ❌ Items with invalid locations: ${invalidItemLocations.map(i => `${i.id}@${i.location}`).join(', ')}`);
+    } else {
+      console.log(`   ✅ All item locations are valid`);
+    }
+    
+    console.log(`\n🎉 Validation complete! The story file is valid.`);
+    
+  } catch (error) {
+    console.error(`\n❌ Validation failed:`);
+    
+    if (error instanceof StoryParseError) {
+      console.error(`   Parse Error: ${error.message}`);
+      if (error.details) {
+        console.error(`   Details:`, error.details);
+      }
+    } else if (error instanceof Error) {
+      console.error(`   Error: ${error.message}`);
+    } else {
+      console.error(`   Unknown error:`, error);
+    }
+    
+    process.exit(1);
+  }
+}
+
+// Get command line arguments
+const args = process.argv.slice(2);
+
+if (args.length === 0) {
+  console.log(`Usage: npm run validate-story <story-file.yaml>`);
+  console.log(`Example: npm run validate-story examples/investigation.yaml`);
+  process.exit(1);
+}
+
+const filePath = args[0];
+validateStory(filePath);

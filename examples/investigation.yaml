@@ -76,7 +76,7 @@ items:
   - id: "knife"
     name: "Bloodied Knife"
     description: "The murder weapon. Has partial fingerprints on the hilt."
-    location: "under_bed"
+    location: "bedroom"
     hidden: true
 
 knowledge:
@@ -271,6 +271,67 @@ flows:
             next: "joe_weapon_found"
             sets: ["weapon_reported"]
 
+  - id: "desk_examination"
+    type: "narrative"
+    name: "Examining the Desk"
+    requirements:
+      - "investigating"
+    content: |
+      The desk is tidy but lived-in. A lamp sits in one corner, an empty in-tray 
+      in the other. Everything appears normal, but something catches your eye.
+    next:
+      - type: "narrative"
+        trigger: "examine lamp"
+        flow_id: "lamp_examination"
+
+  - id: "window_examination" 
+    type: "narrative"
+    name: "The Window"
+    requirements:
+      - "investigating"
+    content: |
+      The window overlooks a dismal brook beside the house. The glass appears 
+      clean but when you breathe on it, something becomes visible.
+    sets:
+      - "knows:prints_on_window"
+    next:
+      - type: "narrative"
+        trigger: "examine fingerprints"
+        flow_id: "fingerprint_analysis"
+
+  - id: "examine_bloodstain"
+    type: "narrative" 
+    name: "Bloodstain Analysis"
+    requirements:
+      - "knows:bloodstain_on_sheet"
+    sets:
+      - "knows:murdered_in_bed"
+    content: |
+      Using your flashlight, you examine the bloodstain more carefully. The pattern 
+      and concentration tell a clear story - this is where the victim was killed, 
+      not just where the body was placed.
+
+  - id: "lamp_examination"
+    type: "narrative"
+    name: "The Desk Lamp"
+    requirements:
+      - "investigating"
+    content: |
+      The desk lamp is off, but when you turn it on, it provides excellent 
+      illumination for detailed examination work.
+
+  - id: "fingerprint_analysis"
+    type: "narrative"
+    name: "Fingerprint Evidence"
+    requirements:
+      - "knows:prints_on_window"
+      - "knows:prints_on_knife"
+    sets:
+      - "knows:prints_match"
+    content: |
+      Comparing the prints on the window with those on the knife, you make a 
+      startling discovery - they match! The killer touched both items.
+
   - id: "joe_murder_in_bed"
     type: "dialogue"
     name: "Murder in Bed Theory"
@@ -286,7 +347,22 @@ flows:
         text: "Exactly. The bed was hastily remade, but they missed the blood on the sheets underneath."
       - speaker: "joe"
         text: "Good work. That suggests someone with access to the house. What else?"
-        next: "continue_investigation"
+
+  - id: "joe_weapon_found"
+    type: "dialogue"
+    name: "Weapon Evidence"
+    participants:
+      - "joe"
+      - "player"
+    requirements:
+      - "weapon_reported"
+    exchanges:
+      - speaker: "joe"
+        text: "A knife under the bed? That's significant evidence. Any prints?"
+      - speaker: "player"
+        text: "Partial fingerprints on the hilt. Clear enough for identification."
+      - speaker: "joe"
+        text: "Excellent work. This gives us solid physical evidence."
 
 start:
   text: |
@@ -298,7 +374,7 @@ start:
 endings:
   - id: "case_solved"
     name: "Case Closed"
-    requirements:
+    requires:
       - "knows:prints_match"
       - "weapon_reported"
     content: |
