@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:gh-pages": "NODE_ENV=production npm run build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "validate-story": "tsx scripts/validate-story.ts"
