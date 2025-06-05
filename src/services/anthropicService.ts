@@ -78,7 +78,9 @@ export class AnthropicService {
             role: 'user',
             content: prompt
           }
-        ]
+        ],
+        // Use JSON mode for more reliable parsing
+        system: "You must respond with valid JSON only. Do not include any text before or after the JSON object."
       });
 
       const content = response.content[0];
@@ -206,7 +208,9 @@ ${gameState.gameEnded ? this.getEndingContext(story, gameState) : ''}
 
 PLAYER COMMAND: "${command}"
 
-Please respond with a JSON object in this exact format:
+CRITICAL: You must respond with valid JSON only. No text before or after the JSON object.
+
+Use this exact format with properly escaped strings for multiline content:
 {
   "action": "look|move|take|drop|talk|examine|help|inventory|other",
   "reasoning": "Brief explanation of what the player is trying to do",
@@ -218,7 +222,7 @@ Please respond with a JSON object in this exact format:
     "unsetFlags": ["flag_name1"] or [],
     "addKnowledge": ["knowledge_id1"] or []
   },
-  "response": "The narrative response to show the player, matching the story's tone and voice"
+  "response": "The narrative response to show the player. Use \\n for line breaks, escape quotes as \\\", and ensure all strings are properly JSON-formatted."
 }
 
 CRITICAL RULES:
@@ -246,22 +250,11 @@ ENDGAME HANDLING:
     try {
       console.log('Raw LLM response:', responseText); // Debug log
       
-      // Try to extract JSON from the response with better parsing
-      let jsonString = this.extractJsonFromResponse(responseText);
-      console.log('Extracted JSON:', jsonString); // Debug log
+      // With JSON mode, the response should be pure JSON
+      const trimmedResponse = responseText.trim();
       
-      if (!jsonString) {
-        console.warn('No JSON found in response, treating as plain text');
-        // If no JSON found, treat the entire response as narrative text
-        return {
-          action: 'other',
-          reasoning: 'LLM provided plain text response instead of JSON',
-          stateChanges: {},
-          response: responseText.trim() || 'I didn\'t understand that command. Could you try rephrasing it?'
-        };
-      }
-
-      const parsed = JSON.parse(jsonString);
+      // Direct JSON parsing since we're using JSON mode
+      const parsed = JSON.parse(trimmedResponse);
       console.log('Parsed JSON:', parsed); // Debug log
       
       // Validate required fields
@@ -285,6 +278,19 @@ ENDGAME HANDLING:
     } catch (error) {
       console.error('Failed to parse LLM response:', error);
       console.error('Raw response:', responseText);
+      
+      // Log the specific parsing error for debugging
+      if (error instanceof SyntaxError) {
+        console.error('JSON Syntax Error:', error.message);
+        // Try to identify the problem area
+        const lines = responseText.split('\n');
+        console.error('Response has', lines.length, 'lines');
+        lines.forEach((line, i) => {
+          if (line.includes('"') && !line.includes('\\"')) {
+            console.warn(`Potential unescaped quote on line ${i + 1}: ${line}`);
+          }
+        });
+      }
       
       // Never show raw JSON to the user - always provide a clean error message
       return {
@@ -339,38 +345,4 @@ The player has successfully concluded this story path.`;
     return context;
   }
 
-  private extractJsonFromResponse(text: string): string | null {
-    // Remove any markdown code blocks
-    text = text.replace(/```json\s*\n?/g, '').replace(/```\s*$/g, '');
-    
-    // Try to find JSON object using bracket counting for proper matching
-    let braceCount = 0;
-    let startIndex = -1;
-    let endIndex = -1;
-    
-    for (let i = 0; i < text.length; i++) {
-      const char = text[i];
-      
-      if (char === '{') {
-        if (braceCount === 0) {
-          startIndex = i; // Mark start of JSON
-        }
-        braceCount++;
-      } else if (char === '}') {
-        braceCount--;
-        if (braceCount === 0 && startIndex !== -1) {
-          endIndex = i; // Mark end of JSON
-          break; // Found complete JSON object
-        }
-      }
-    }
-    
-    if (startIndex !== -1 && endIndex !== -1) {
-      return text.substring(startIndex, endIndex + 1);
-    }
-    
-    // Fallback to original regex if bracket counting fails
-    const jsonMatch = text.match(/\{[\s\S]*?\}/);
-    return jsonMatch ? jsonMatch[0] : null;
-  }
 }
