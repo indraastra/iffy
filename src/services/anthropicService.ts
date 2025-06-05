@@ -244,13 +244,25 @@ ENDGAME HANDLING:
 
   private parseResponse(responseText: string): LLMResponse {
     try {
+      console.log('Raw LLM response:', responseText); // Debug log
+      
       // Try to extract JSON from the response with better parsing
       let jsonString = this.extractJsonFromResponse(responseText);
+      console.log('Extracted JSON:', jsonString); // Debug log
+      
       if (!jsonString) {
-        throw new Error('No valid JSON found in response');
+        console.warn('No JSON found in response, treating as plain text');
+        // If no JSON found, treat the entire response as narrative text
+        return {
+          action: 'other',
+          reasoning: 'LLM provided plain text response instead of JSON',
+          stateChanges: {},
+          response: responseText.trim() || 'I didn\'t understand that command. Could you try rephrasing it?'
+        };
       }
 
       const parsed = JSON.parse(jsonString);
+      console.log('Parsed JSON:', parsed); // Debug log
       
       // Validate required fields
       if (!parsed.action || !parsed.response) {
@@ -274,12 +286,12 @@ ENDGAME HANDLING:
       console.error('Failed to parse LLM response:', error);
       console.error('Raw response:', responseText);
       
-      // Fallback: return the raw response as a generic action
+      // Never show raw JSON to the user - always provide a clean error message
       return {
         action: 'other',
-        reasoning: 'Failed to parse structured response',
+        reasoning: 'Failed to parse LLM response',
         stateChanges: {},
-        response: responseText || 'I didn\'t understand that command. Could you try rephrasing it?'
+        response: 'I had trouble understanding that command. The AI system seems to be having formatting issues. Could you try rephrasing your request?'
       };
     }
   }
