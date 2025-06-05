@@ -40,6 +40,9 @@ async function validateStory(filePath: string): Promise<void> {
       if (flow.next) {
         flow.next.forEach(transition => referencedFlows.add(transition.flow_id));
       }
+      if (flow.completion_transitions) {
+        flow.completion_transitions.forEach(transition => referencedFlows.add(transition.to_flow));
+      }
       if (flow.exchanges) {
         flow.exchanges.forEach(exchange => {
           if (exchange.choices) {
@@ -71,6 +74,13 @@ async function validateStory(filePath: string): Promise<void> {
           }
         });
       }
+      if (flow.completion_transitions) {
+        flow.completion_transitions.forEach(transition => {
+          if (!allFlowIds.has(transition.to_flow)) {
+            missingRefs.push(`${flow.id} -> ${transition.to_flow} (completion)`);
+          }
+        });
+      }
     });
     
     if (missingRefs.length > 0) {
@@ -79,15 +89,31 @@ async function validateStory(filePath: string): Promise<void> {
       console.log(`   ✅ All flow references are valid`);
     }
     
-    // Check item locations
+    // Check item locations (support both location and discoverable_in)
     const allLocationIds = new Set(story.locations.map(l => l.id));
     const validSpecialLocations = new Set(['none', 'discovered']); // Allow fuzzy discovery
-    const invalidItemLocations = story.items.filter(item => 
-      !validSpecialLocations.has(item.location) && !allLocationIds.has(item.location)
-    );
+    const invalidItemLocations = story.items.filter(item => {
+      // Item is valid if:
+      // 1. It has no location field (using discoverable_in)
+      // 2. It has a valid location field
+      // 3. It has a valid discoverable_in field
+      
+      const hasValidLocation = !item.location || 
+        validSpecialLocations.has(item.location) || 
+        allLocationIds.has(item.location);
+        
+      const hasValidDiscoverableIn = !item.discoverable_in || 
+        allLocationIds.has(item.discoverable_in);
+        
+      return !hasValidLocation || !hasValidDiscoverableIn;
+    });
     
     if (invalidItemLocations.length > 0) {
-      console.log(`   ❌ Items with invalid locations: ${invalidItemLocations.map(i => `${i.id}@${i.location}`).join(', ')}`);
+      console.log(`   ❌ Items with invalid locations: ${invalidItemLocations.map(i => {
+        const loc = i.location || 'undefined';
+        const discLoc = i.discoverable_in || 'undefined';
+        return `${i.id}@${loc}/${discLoc}`;
+      }).join(', ')}`);
     } else {
       console.log(`   ✅ All item locations are valid`);
     }
