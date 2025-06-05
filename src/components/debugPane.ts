@@ -22,6 +22,8 @@ export class DebugPane {
       <div class="debug-header">
         <h3>🐛 Debug Console</h3>
         <div class="debug-controls">
+          <button class="debug-top-btn">⬆️ Top</button>
+          <button class="debug-bottom-btn">⬇️ Bottom</button>
           <button class="debug-clear-btn">Clear</button>
           <button class="debug-close-btn">×</button>
         </div>
@@ -32,9 +34,13 @@ export class DebugPane {
     `;
 
     // Add event listeners
+    const topBtn = pane.querySelector('.debug-top-btn') as HTMLElement;
+    const bottomBtn = pane.querySelector('.debug-bottom-btn') as HTMLElement;
     const clearBtn = pane.querySelector('.debug-clear-btn') as HTMLElement;
     const closeBtn = pane.querySelector('.debug-close-btn') as HTMLElement;
     
+    topBtn.addEventListener('click', () => this.scrollToTop());
+    bottomBtn.addEventListener('click', () => this.scrollToBottom());
     clearBtn.addEventListener('click', () => this.clear());
     closeBtn.addEventListener('click', () => this.hide());
 
@@ -127,18 +133,23 @@ export class DebugPane {
     // Parse and colorize different sections of the prompt
     const sections = [
       { pattern: /STORY CONTEXT:([\s\S]*?)(?=CURRENT GAME STATE:|$)/g, class: 'prompt-story-context', label: 'Story Context' },
-      { pattern: /CURRENT GAME STATE:([\s\S]*?)(?=AVAILABLE LOCATIONS:|$)/g, class: 'prompt-game-state', label: 'Game State' },
-      { pattern: /AVAILABLE LOCATIONS:([\s\S]*?)(?=AVAILABLE ITEMS:|$)/g, class: 'prompt-locations', label: 'Locations' },
-      { pattern: /AVAILABLE ITEMS:([\s\S]*?)(?=PLAYER COMMAND:|$)/g, class: 'prompt-items', label: 'Items' },
+      { pattern: /CURRENT GAME STATE:([\s\S]*?)(?=WORLD MODEL:|$)/g, class: 'prompt-game-state', label: 'Game State' },
+      { pattern: /WORLD MODEL:([\s\S]*?)(?=CHARACTERS:|$)/g, class: 'prompt-world-model', label: 'World Model' },
+      { pattern: /CHARACTERS:([\s\S]*?)(?=STORY FLOWS:|$)/g, class: 'prompt-characters', label: 'Characters' },
+      { pattern: /STORY FLOWS:([\s\S]*?)(?=STORY ENDINGS:|$)/g, class: 'prompt-flows', label: 'Story Flows' },
+      { pattern: /STORY ENDINGS:([\s\S]*?)(?=CURRENT FLOW CONTEXT:|$)/g, class: 'prompt-endings', label: 'Story Endings' },
+      { pattern: /CURRENT FLOW CONTEXT:([\s\S]*?)(?=GAME COMPLETED:|PLAYER COMMAND:|$)/g, class: 'prompt-flow-context', label: 'Current Flow Context' },
+      { pattern: /GAME COMPLETED:([\s\S]*?)(?=PLAYER COMMAND:|$)/g, class: 'prompt-game-completed', label: 'Game Completed' },
       { pattern: /PLAYER COMMAND:([\s\S]*?)(?=Please respond|$)/g, class: 'prompt-command', label: 'Player Command' },
-      { pattern: /Please respond with a JSON object([\s\S]*?)(?=IMPORTANT RULES:|$)/g, class: 'prompt-format', label: 'Response Format' },
-      { pattern: /IMPORTANT RULES:([\s\S]*?)$/g, class: 'prompt-rules', label: 'Rules' }
+      { pattern: /Please respond with a JSON object([\s\S]*?)(?=CRITICAL RULES:|$)/g, class: 'prompt-format', label: 'Response Format' },
+      { pattern: /CRITICAL RULES:([\s\S]*?)(?=ENDGAME HANDLING:|$)/g, class: 'prompt-rules', label: 'Critical Rules' },
+      { pattern: /ENDGAME HANDLING:([\s\S]*?)$/g, class: 'prompt-endgame', label: 'Endgame Handling' }
     ];
 
     let formatted = this.escapeHtml(prompt);
     
     sections.forEach(section => {
-      formatted = formatted.replace(section.pattern, (match, content) => {
+      formatted = formatted.replace(section.pattern, (_match, content) => {
         return `<div class="prompt-section ${section.class}">
           <div class="prompt-section-header">${section.label}</div>
           <div class="prompt-section-content"><pre>${content.trim()}</pre></div>
@@ -172,6 +183,16 @@ export class DebugPane {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  public scrollToTop(): void {
+    const logContainer = this.container.querySelector('.debug-log') as HTMLElement;
+    logContainer.scrollTop = 0;
+  }
+
+  public scrollToBottom(): void {
+    const logContainer = this.container.querySelector('.debug-log') as HTMLElement;
+    logContainer.scrollTop = logContainer.scrollHeight;
   }
 
   public clear(): void {

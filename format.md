@@ -90,8 +90,31 @@ items:
   - id: "item_id"
     name: "Item Name"
     description: "What it is and looks like"
-    location: "starting_location_id"
-    hidden: false  # Optional, default false
+    location: "starting_location_id"  # Optional - if item starts visible
+    hidden: false  # Optional - if true, requires discovery even with location
+    discoverable_in: "location_id"  # Alternative to location - for items found via exploration
+    discovery_objects: ["object1", "object2"]  # Optional - what to search to find it
+    aliases: ["alternate_name", "nickname"]  # Optional - other names players might use
+```
+
+**Location Logic:**
+- **`location`**: Item starts visible/accessible at this location
+- **`discoverable_in`**: Item can be found through exploration/searching 
+- **`discovery_objects`**: Specific objects players should search (e.g., "dresser", "drawer")
+- **`aliases`**: Alternative names to prevent terminology confusion
+- **`hidden`**: Even if location is set, item requires discovery action
+
+**Examples:**
+```yaml
+# Visible item that can be taken immediately
+- id: "sword"
+  location: "armory"
+
+# Hidden item that requires searching
+- id: "hidden_key"
+  discoverable_in: "bedroom"
+  discovery_objects: ["dresser", "drawer"]
+  aliases: ["key", "brass key"]
 ```
 
 ### Knowledge States
@@ -239,18 +262,24 @@ start:
 
 ### Endings
 
+Endings are defined as narrative flows with `ends_game: true`. This simplifies the format by eliminating a separate endings section.
+
 ```yaml
-endings:
-  - id: "victory"
-    name: "Victory Ending"
-    requires:
+flows:
+  - id: "victory_ending"
+    type: "narrative"
+    name: "Victory!"
+    requirements:
       - "defeated_antagonist"
       - "saved_world"
+    ends_game: true
     content: |
       The triumphant ending text.
       
-      Describe the resolution.
+      Describe the complete resolution and epilogue here.
 ```
+
+**Note:** The legacy `endings:` section is still supported for backward compatibility, but new stories should use `ends_game: true` on narrative flows.
 
 ## Condition Syntax
 
@@ -386,7 +415,7 @@ endings:
 1. Must have `title`, `author`, and `version`
 2. Must have at least one location
 3. Must have `start` section
-4. Must have at least one ending
+4. Must have at least one ending (either `endings:` section or narrative flow with `ends_game: true`)
 
 ### ID Rules
 - All `id` fields must be unique

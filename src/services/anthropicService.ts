@@ -30,7 +30,7 @@ export class AnthropicService {
 
   private loadApiKey(): void {
     // Try environment variable first, then fall back to localStorage
-    this.apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY || localStorage.getItem('iffy_api_key');
+    this.apiKey = (import.meta as any).env?.VITE_ANTHROPIC_API_KEY || localStorage.getItem('iffy_api_key');
     if (this.apiKey) {
       this.client = new Anthropic({
         apiKey: this.apiKey,
@@ -144,12 +144,65 @@ Location Description: ${currentLocation?.description || 'No description'}
 Available Exits: ${currentLocation?.connections?.join(', ') || 'None'}
 Inventory: ${gameState.inventory?.length > 0 ? gameState.inventory.join(', ') : 'Empty'}
 Flags: ${gameState.flags?.size > 0 ? Array.from(gameState.flags).join(', ') : 'None'}
+Current Flow: ${gameState.currentFlow || 'None'}
+Knowledge: ${gameState.knowledge?.size > 0 ? Array.from(gameState.knowledge).join(', ') : 'None'}
+Game Status: ${gameState.gameEnded ? `COMPLETED (Ending: ${gameState.endingId || 'Unknown'})` : 'IN PROGRESS'}
 
-AVAILABLE LOCATIONS:
-${story.locations?.map((loc: any) => `- ${loc.name} (${loc.id}): ${loc.description}`).join('\n') || 'None defined'}
+WORLD MODEL:
+${story.locations?.map((loc: any) => {
+  let locationInfo = `📍 ${loc.name} (${loc.id}): ${loc.description}`;
+  
+  // Show location objects
+  if (loc.objects && loc.objects.length > 0) {
+    locationInfo += `\n  🔧 Objects in this location:`;
+    loc.objects.forEach((obj: any) => {
+      locationInfo += `\n    - ${obj.name}: ${obj.description}`;
+    });
+  }
+  
+  // Show items directly in this location
+  const itemsHere = story.items?.filter((item: any) => item.location === loc.id) || [];
+  if (itemsHere.length > 0) {
+    locationInfo += `\n  📦 Items visible here:`;
+    itemsHere.forEach((item: any) => {
+      locationInfo += `\n    - ${item.name} (${item.id}): ${item.description}`;
+      if (item.aliases && item.aliases.length > 0) {
+        locationInfo += ` [Also called: ${item.aliases.join(', ')}]`;
+      }
+    });
+  }
+  
+  // Show discoverable items and what to search
+  const discoverableHere = story.items?.filter((item: any) => item.discoverable_in === loc.id) || [];
+  if (discoverableHere.length > 0) {
+    locationInfo += `\n  🔍 Items discoverable here:`;
+    discoverableHere.forEach((item: any) => {
+      locationInfo += `\n    - ${item.name} (${item.id}): ${item.description}`;
+      if (item.discovery_objects && item.discovery_objects.length > 0) {
+        locationInfo += `\n      ➤ Found by searching: ${item.discovery_objects.join(', ')}`;
+      }
+      if (item.aliases && item.aliases.length > 0) {
+        locationInfo += ` [Also called: ${item.aliases.join(', ')}]`;
+      }
+    });
+  }
+  
+  return locationInfo;
+}).join('\n\n') || 'None defined'}
 
-AVAILABLE ITEMS:
-${story.items?.map((item: any) => `- ${item.name} (${item.id}): ${item.description} [Location: ${item.location}]`).join('\n') || 'None defined'}
+CHARACTERS:
+${story.characters?.map((char: any) => `- ${char.name} (${char.id}): ${char.description} [Voice: ${char.voice}] [Traits: ${char.traits?.join(', ') || 'None'}]`).join('\n') || 'None defined'}
+
+STORY FLOWS:
+${story.flows?.map((flow: any) => `- ${flow.name} (${flow.id}): ${flow.type} ${flow.requirements ? `[Requires: ${flow.requirements.join(', ')}]` : ''}${flow.ends_game ? ' [ENDS GAME]' : ''}`).join('\n') || 'None defined'}
+
+STORY ENDINGS:
+${story.endings?.map((ending: any) => `- ${ending.name} (${ending.id}): ${ending.requires ? `[Requires: ${ending.requires.join(', ')}]` : 'No requirements'}`).join('\n') || 'Defined as narrative flows with ends_game=true'}
+
+CURRENT FLOW CONTEXT:
+${this.getCurrentFlowContext(story, gameState)}
+
+${gameState.gameEnded ? this.getEndingContext(story, gameState) : ''}
 
 PLAYER COMMAND: "${command}"
 
@@ -168,15 +221,25 @@ Please respond with a JSON object in this exact format:
   "response": "The narrative response to show the player, matching the story's tone and voice"
 }
 
-IMPORTANT RULES:
-- Only allow valid actions based on current location and inventory
-- Maintain the story's tone and narrative voice
-- Keep responses concise but atmospheric
-- If the action is impossible, explain why in a diegetic way
-- Use the exact location IDs and item IDs from the story data
-- Never break the fourth wall unless the story does
-- For movement commands, check that the destination is in the current location's connections
-- For taking items, check that they exist in the current location`;
+CRITICAL RULES:
+1. If your narrative describes moving to a different location, set "newLocation" to the exact location ID
+2. DISCOVERY IS MANDATORY: When players search objects listed in "Found by searching:", you MUST describe finding the item
+   - Use discovery language: "you spot", "you notice", "you see", "you find" (without taking)
+   - Example: "check dresser" → "You spot your car keys on the dresser surface" (NO inventory change)
+3. TAKING IS SEPARATE: Only when players use action words like "take", "grab", "pick up" should you add to inventory
+   - If you write "grabbing", "taking", "picking up" then you MUST add the item to addToInventory
+   - Discovery and taking are two separate actions
+4. Use exact location and item IDs from the story data
+5. Only allow actions valid for current location and inventory
+6. Maintain the story's tone and be concise but atmospheric
+
+ENDGAME HANDLING:
+- If Game Status is COMPLETED, the story has concluded and no major actions should change the world state
+- Allow reflective interactions: examining the final state, discussing the outcome, asking "what if" questions
+- Respond to questions about the story, characters, or player choices made during the game  
+- Don't allow actions that would fundamentally change the concluded narrative
+- Maintain the celebratory or reflective tone appropriate to the ending achieved
+- Players can still look around, check inventory, or discuss what happened`;
   }
 
   private parseResponse(responseText: string): LLMResponse {
@@ -219,6 +282,49 @@ IMPORTANT RULES:
         response: responseText || 'I didn\'t understand that command. Could you try rephrasing it?'
       };
     }
+  }
+
+  private getEndingContext(story: any, gameState: any): string {
+    if (!gameState.endingId) return '';
+    
+    const ending = story.endings?.find((ending: any) => ending.id === gameState.endingId);
+    if (!ending) return 'GAME COMPLETED: Unknown ending reached';
+    
+    return `GAME COMPLETED:
+Ending Achieved: ${ending.name}
+Ending Description: This ending was triggered by meeting the requirements: ${ending.requires?.join(', ') || 'None'}
+The player has successfully concluded this story path.`;
+  }
+
+  private getCurrentFlowContext(story: any, gameState: any): string {
+    if (!gameState.currentFlow) return 'No active flow';
+    
+    const currentFlow = story.flows?.find((flow: any) => flow.id === gameState.currentFlow);
+    if (!currentFlow) return 'Flow not found';
+    
+    let context = `Active Flow: ${currentFlow.name} (${currentFlow.type})`;
+    
+    if (currentFlow.content) {
+      context += `\nFlow Content: ${currentFlow.content}`;
+    }
+    
+    if (currentFlow.player_goal) {
+      context += `\nPlayer Goal: ${currentFlow.player_goal}`;
+    }
+    
+    if (currentFlow.hint) {
+      context += `\nHint: ${currentFlow.hint}`;
+    }
+    
+    if (currentFlow.participants) {
+      context += `\nParticipants: ${currentFlow.participants.join(', ')}`;
+    }
+    
+    if (currentFlow.exchanges && currentFlow.exchanges.length > 0) {
+      context += `\nDialogue Context: ${currentFlow.exchanges.length} exchanges available`;
+    }
+    
+    return context;
   }
 
   private extractJsonFromResponse(text: string): string | null {

@@ -142,8 +142,11 @@ export class StoryParser {
         id: item.id,
         name: item.name,
         description: item.description,
-        location: item.location || 'discovered', // Allow items to be discovered through fuzzy flows
-        hidden: item.hidden || false
+        location: item.location,
+        hidden: item.hidden || false,
+        discoverable_in: item.discoverable_in,
+        discovery_objects: item.discovery_objects,
+        aliases: item.aliases
       };
     });
   }
@@ -188,11 +191,13 @@ export class StoryParser {
         sets: flow.sets,
         content: flow.content,
         next: flow.next,
+        completion_transitions: flow.completion_transitions,
         participants: flow.participants,
         location: flow.location,
         exchanges: flow.exchanges,
         player_goal: flow.player_goal,
-        hint: flow.hint
+        hint: flow.hint,
+        ends_game: flow.ends_game
       };
 
       return result;
@@ -254,11 +259,15 @@ export class StoryParser {
       });
     });
 
-    // Validate item locations
+    // Validate item locations (only when location is specified)
     const validSpecialLocations = new Set(['none', 'discovered']); // Allow fuzzy discovery
     story.items.forEach(item => {
-      if (!validSpecialLocations.has(item.location) && !locationIds.has(item.location)) {
+      if (item.location && !validSpecialLocations.has(item.location) && !locationIds.has(item.location)) {
         throw new StoryParseError(`Item ${item.id} references unknown location: ${item.location}`);
+      }
+      // Also validate discoverable_in locations when specified
+      if (item.discoverable_in && !locationIds.has(item.discoverable_in)) {
+        throw new StoryParseError(`Item ${item.id} references unknown discoverable_in location: ${item.discoverable_in}`);
       }
     });
 

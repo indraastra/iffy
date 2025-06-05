@@ -44,8 +44,11 @@ export interface Item {
   id: string;
   name: string;
   description: string;
-  location: string;
-  hidden?: boolean;
+  location?: string; // Starting location (if item starts visible/accessible)
+  hidden?: boolean; // If true, item must be discovered even if location is specified
+  discoverable_in?: string; // Alternative: location where this can be found through exploration
+  discovery_objects?: string[]; // Objects to search to find this item
+  aliases?: string[]; // Alternative names players might use
 }
 
 export interface Knowledge {
@@ -58,6 +61,11 @@ export interface FlowTransition {
   type: 'narrative' | 'dialogue';
   trigger: string;
   flow_id: string;
+}
+
+export interface CompletionTransition {
+  condition: string;
+  to_flow: string;
 }
 
 export interface DialogueChoice {
@@ -82,11 +90,13 @@ export interface Flow {
   sets?: string[];
   content?: string;
   next?: FlowTransition[];
+  completion_transitions?: CompletionTransition[];
   participants?: string[];
   location?: string;
   exchanges?: DialogueExchange[];
   player_goal?: string;
   hint?: string;
+  ends_game?: boolean; // Marks this flow as a game ending
 }
 
 export interface StartSection {
@@ -114,7 +124,7 @@ export interface Story {
   knowledge: Knowledge[];
   flows: Flow[];
   start: StartSection;
-  endings: Ending[];
+  endings?: Ending[]; // Optional - endings can be defined as flows instead
 }
 
 // Game state types

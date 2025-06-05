@@ -361,7 +361,7 @@ body {
   gap: 0.5rem;
 }
 
-.debug-clear-btn, .debug-close-btn {
+.debug-top-btn, .debug-bottom-btn, .debug-clear-btn, .debug-close-btn {
   padding: 0.25rem 0.5rem;
   background-color: var(--button-bg);
   color: var(--text-color);
@@ -379,7 +379,7 @@ body {
   padding: 0.25rem 0.75rem;
 }
 
-.debug-clear-btn:hover, .debug-close-btn:hover {
+.debug-top-btn:hover, .debug-bottom-btn:hover, .debug-clear-btn:hover, .debug-close-btn:hover {
   opacity: 0.8;
 }
 
@@ -496,6 +496,42 @@ body {
 .prompt-rules .prompt-section-header {
   background-color: rgba(244, 67, 54, 0.2);
   color: #EF5350;
+}
+
+.prompt-characters .prompt-section-header {
+  background-color: rgba(139, 195, 74, 0.2);
+  color: #AED581;
+}
+
+.prompt-flows .prompt-section-header {
+  background-color: rgba(103, 58, 183, 0.2);
+  color: #B39DDB;
+}
+
+.prompt-endings .prompt-section-header {
+  background-color: rgba(233, 30, 99, 0.2);
+  color: #F48FB1;
+}
+
+.prompt-flow-context .prompt-section-header {
+  background-color: rgba(0, 188, 212, 0.2);
+  color: #4DD0E1;
+}
+
+.prompt-game-completed .prompt-section-header {
+  background-color: rgba(76, 175, 80, 0.3);
+  color: #66BB6A;
+  font-weight: bold;
+}
+
+.prompt-important .prompt-section-header {
+  background-color: rgba(255, 152, 0, 0.2);
+  color: #FFB74D;
+}
+
+.prompt-endgame .prompt-section-header {
+  background-color: rgba(121, 85, 72, 0.2);
+  color: #BCAAA4;
 }
 
 /* Response Formatting */

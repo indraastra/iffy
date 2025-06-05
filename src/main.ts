@@ -82,6 +82,8 @@ class IffyApp {
     this.commandInput.disabled = true;
     this.addMessage('Processing...', 'system');
 
+    let response: any = null;
+
     try {
       // Process action
       const action: PlayerAction = {
@@ -90,7 +92,7 @@ class IffyApp {
         timestamp: new Date()
       };
 
-      const response = await this.gameEngine.processAction(action);
+      response = await this.gameEngine.processAction(action);
       
       // Remove processing message
       const messages = this.storyOutput.querySelectorAll('.story-text');
@@ -106,9 +108,14 @@ class IffyApp {
         this.addMessage(response.text, 'story');
       }
 
+      // Show completion message if game ended
+      if (response.gameState.gameEnded && response.gameState.endingId) {
+        this.addMessage('🎉 Story Complete! You can continue exploring or reflecting on your choices.', 'system');
+      }
+
       // Show choices if available
       if (response.choices && response.choices.length > 0) {
-        const choicesText = 'Choose:\n' + response.choices.map((choice, i) => `${i + 1}. ${choice}`).join('\n');
+        const choicesText = 'Choose:\n' + response.choices.map((choice: string, i: number) => `${i + 1}. ${choice}`).join('\n');
         this.addMessage(choicesText, 'choices');
       }
     } catch (error) {
@@ -125,6 +132,11 @@ class IffyApp {
       // Re-enable input
       this.commandInput.disabled = false;
       this.commandInput.focus();
+      
+      // Update input placeholder if game is completed
+      if (response && response.gameState.gameEnded) {
+        this.commandInput.placeholder = "Story complete! Ask questions, reflect, or explore...";
+      }
     }
   }
 
@@ -507,6 +519,20 @@ const additionalStyles = `
   text-align: center;
   border-bottom: 2px solid var(--border-color);
   padding-bottom: 0.5rem;
+}
+
+/* Game completion styling */
+.command-input[placeholder*="complete"] {
+  border-color: #4CAF50;
+  background-color: rgba(76, 175, 80, 0.1);
+}
+
+.story-complete-indicator {
+  background-color: rgba(76, 175, 80, 0.2);
+  border-left: 4px solid #4CAF50;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 4px;
 }
 `;
 

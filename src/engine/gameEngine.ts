@@ -1,4 +1,4 @@
-import { Story, GameState, PlayerAction, GameResponse, Flow } from '@/types/story';
+import { Story, GameState, PlayerAction, GameResponse, Flow, FlowTransition } from '@/types/story';
 import { AnthropicService, LLMResponse } from '@/services/anthropicService';
 
 export class GameEngine {
@@ -85,8 +85,42 @@ export class GameEngine {
       // Apply state changes from LLM response
       this.applyStateChanges(llmResponse);
 
+      // Check if we're in a narrative flow that should trigger an ending
+      let responseText = llmResponse.response;
+      
+      // If we've transitioned to a narrative flow, show its content instead (but only on first transition)
+      const currentFlow = this.getCurrentFlow();
+      if (currentFlow && currentFlow.type === 'narrative' && currentFlow.content && !this.gameState.gameEnded) {
+        responseText = currentFlow.content;
+        
+        // Apply any sets from this narrative flow
+        this.applyFlowSets(currentFlow);
+        
+        // Check if this flow ends the game
+        if (currentFlow.ends_game) {
+          this.gameState.gameEnded = true;
+          this.gameState.endingId = currentFlow.id;
+          console.log('Game ended via narrative flow:', currentFlow.name);
+        }
+        
+        // Also check traditional ending conditions if they exist
+        this.checkEndingConditions();
+      } else if (this.gameState.gameEnded) {
+        // Game has ended, use LLM response for post-game interactions
+        console.log('Post-game interaction, using LLM response:', llmResponse.response);
+      }
+      
+      if (this.gameState.gameEnded && this.gameState.endingId) {
+        // Check if ending is defined as a separate ending (legacy)
+        const ending = this.story!.endings?.find(e => e.id === this.gameState.endingId);
+        if (ending) {
+          responseText += `\n\n${ending.content}`;
+        }
+        // If ending is defined as a flow, the content is already included above
+      }
+
       return {
-        text: llmResponse.response,
+        text: responseText,
         gameState: { ...this.gameState },
         error: llmResponse.error
       };
@@ -100,9 +134,11 @@ export class GameEngine {
 
   private applyStateChanges(llmResponse: LLMResponse): void {
     const changes = llmResponse.stateChanges;
+    console.log('🔄 Applying state changes:', changes);
 
     // Update location
     if (changes.newLocation) {
+      console.log(`Location changed: ${this.gameState.currentLocation} -> ${changes.newLocation}`);
       this.gameState.currentLocation = changes.newLocation;
     }
 
@@ -110,6 +146,7 @@ export class GameEngine {
     if (changes.addToInventory) {
       changes.addToInventory.forEach(itemId => {
         if (!this.gameState.inventory.includes(itemId)) {
+          console.log(`Added to inventory: ${itemId}`);
           this.gameState.inventory.push(itemId);
         }
       });
@@ -119,6 +156,7 @@ export class GameEngine {
       changes.removeFromInventory.forEach(itemId => {
         const index = this.gameState.inventory.indexOf(itemId);
         if (index > -1) {
+          console.log(`Removed from inventory: ${itemId}`);
           this.gameState.inventory.splice(index, 1);
         }
       });
@@ -127,12 +165,14 @@ export class GameEngine {
     // Update flags
     if (changes.setFlags) {
       changes.setFlags.forEach(flag => {
+        console.log(`Set flag: ${flag}`);
         this.gameState.flags.add(flag);
       });
     }
 
     if (changes.unsetFlags) {
       changes.unsetFlags.forEach(flag => {
+        console.log(`Unset flag: ${flag}`);
         this.gameState.flags.delete(flag);
       });
     }
@@ -140,9 +180,20 @@ export class GameEngine {
     // Update knowledge
     if (changes.addKnowledge) {
       changes.addKnowledge.forEach(knowledge => {
+        console.log(`Added knowledge: ${knowledge}`);
         this.gameState.knowledge.add(knowledge);
       });
     }
+
+    console.log('📋 Final inventory after changes:', this.gameState.inventory);
+
+    // Check for flow transitions after state changes
+    console.log('🔀 Checking flow transitions after state changes...');
+    this.checkFlowTransitions();
+    
+    // Check for ending conditions
+    console.log('🏁 Checking ending conditions...');
+    this.checkEndingConditions();
   }
 
   private handleBasicCommand(input: string): GameResponse {
@@ -456,6 +507,169 @@ This is a basic MVP version. More natural language understanding will be added i
     return complexPatterns.some(pattern => pattern.test(input)) || 
            input.split(' ').length > 3 || // Long commands
            input.includes('?'); // Questions
+  }
+
+  private checkFlowTransitions(): void {
+    if (!this.story || !this.gameState.currentFlow) {
+      console.log('Flow transition check skipped: no story or current flow');
+      return;
+    }
+
+    const currentFlow = this.getCurrentFlow();
+    if (!currentFlow) {
+      console.log('Flow transition check skipped: current flow not found');
+      return;
+    }
+
+    console.log(`Checking flow transitions for: ${currentFlow.id} (${currentFlow.name})`);
+    console.log('Current inventory:', this.gameState.inventory);
+
+    // Check completion transitions first (these are condition-based)
+    if (currentFlow.completion_transitions) {
+      console.log(`Found ${currentFlow.completion_transitions.length} completion transitions`);
+      for (const transition of currentFlow.completion_transitions) {
+        console.log(`Evaluating condition: ${transition.condition}`);
+        const conditionMet = this.evaluateCondition(transition.condition);
+        console.log(`Condition "${transition.condition}" result: ${conditionMet}`);
+        
+        if (conditionMet) {
+          // Check if target flow's requirements are met
+          const targetFlow = this.story.flows.find(f => f.id === transition.to_flow);
+          if (targetFlow) {
+            const targetRequirementsMet = this.checkFlowRequirements(targetFlow);
+            console.log(`Target flow "${targetFlow.id}" requirements met: ${targetRequirementsMet}`);
+            
+            if (!targetRequirementsMet) {
+              console.log(`⚠️ Transition blocked: target flow requirements not met`);
+              continue; // Try next transition
+            }
+          }
+          
+          console.log(`✅ Completion transition triggered: ${currentFlow.id} -> ${transition.to_flow}`);
+          this.gameState.currentFlow = transition.to_flow;
+          
+          // Apply flow sets if the target flow has them
+          if (targetFlow) {
+            console.log(`Applying sets from target flow: ${targetFlow.id}`);
+            this.applyFlowSets(targetFlow);
+          }
+          
+          return; // Exit after first successful transition
+        }
+      }
+    } else {
+      console.log('No completion transitions found');
+    }
+
+    // Check regular flow transitions (trigger-based)
+    if (currentFlow.next) {
+      console.log(`Found ${currentFlow.next.length} regular transitions`);
+      for (const transition of currentFlow.next) {
+        if (this.canTriggerTransition(transition)) {
+          console.log(`Flow transition: ${currentFlow.id} -> ${transition.flow_id}`);
+          this.gameState.currentFlow = transition.flow_id;
+          break;
+        }
+      }
+    } else {
+      console.log('No regular transitions found');
+    }
+    
+    console.log('Flow transition check complete');
+  }
+
+  private canTriggerTransition(_transition: FlowTransition): boolean {
+    // For now, implement basic trigger checking
+    // This can be enhanced based on the specific trigger logic needed
+    return true; // Allow all transitions for MVP
+  }
+
+
+  private checkFlowRequirements(flow: Flow): boolean {
+    if (!flow.requirements) {
+      console.log(`  Flow "${flow.id}" has no requirements - allowing`);
+      return true;
+    }
+    
+    console.log(`  Checking requirements for flow "${flow.id}": [${flow.requirements.join(', ')}]`);
+    
+    const allMet = flow.requirements.every(requirement => {
+      const met = this.evaluateCondition(requirement);
+      console.log(`    Requirement "${requirement}": ${met}`);
+      return met;
+    });
+    
+    console.log(`  All requirements for "${flow.id}" met: ${allMet}`);
+    return allMet;
+  }
+
+  private applyFlowSets(flow: Flow): void {
+    if (!flow.sets) return;
+    
+    flow.sets.forEach(flag => {
+      this.gameState.flags.add(flag);
+    });
+  }
+
+  private evaluateCondition(condition: string): boolean {
+    console.log(`🔍 Evaluating condition: "${condition}"`);
+    
+    // Parse different condition types
+    if (condition.startsWith('has_item:')) {
+      const itemId = condition.substring('has_item:'.length);
+      const hasItem = this.gameState.inventory.includes(itemId);
+      console.log(`  has_item check: "${itemId}" in [${this.gameState.inventory.join(', ')}] = ${hasItem}`);
+      return hasItem;
+    }
+    
+    if (condition.startsWith('flag:')) {
+      const flag = condition.substring('flag:'.length);
+      const hasFlag = this.gameState.flags.has(flag);
+      console.log(`  flag check: "${flag}" in [${Array.from(this.gameState.flags).join(', ')}] = ${hasFlag}`);
+      return hasFlag;
+    }
+    
+    if (condition.startsWith('knows:')) {
+      const knowledge = condition.substring('knows:'.length);
+      const hasKnowledge = this.gameState.knowledge.has(knowledge);
+      console.log(`  knowledge check: "${knowledge}" in [${Array.from(this.gameState.knowledge).join(', ')}] = ${hasKnowledge}`);
+      return hasKnowledge;
+    }
+    
+    if (condition.startsWith('location:')) {
+      const location = condition.substring('location:'.length);
+      const atLocation = this.gameState.currentLocation === location;
+      console.log(`  location check: "${location}" === "${this.gameState.currentLocation}" = ${atLocation}`);
+      return atLocation;
+    }
+    
+    // Direct flag check (no prefix)
+    if (this.gameState.flags.has(condition)) {
+      console.log(`  direct flag check: "${condition}" found in flags = true`);
+      return true;
+    }
+    
+    // Direct knowledge check
+    if (this.gameState.knowledge.has(condition)) {
+      console.log(`  direct knowledge check: "${condition}" found in knowledge = true`);
+      return true;
+    }
+    
+    console.log(`  condition not met: "${condition}" = false`);
+    return false;
+  }
+
+  private checkEndingConditions(): void {
+    if (!this.story || this.gameState.gameEnded || !this.story.endings) return;
+
+    for (const ending of this.story.endings) {
+      if (this.checkFlowRequirements({ requirements: ending.requires } as Flow)) {
+        this.gameState.gameEnded = true;
+        this.gameState.endingId = ending.id;
+        console.log(`Game ended with ending: ${ending.name}`);
+        break;
+      }
+    }
   }
 
   getAnthropicService(): AnthropicService {

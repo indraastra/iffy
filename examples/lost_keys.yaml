@@ -76,13 +76,16 @@ items:
   - id: "car_keys"
     name: "Car Keys"
     description: "Your keychain with car key, house key, and a small flashlight attached"
-    # No location specified - will be discovered through open scene
+    discoverable_in: "bedroom"
+    discovery_objects: ["dresser", "dresser top", "dresser surface"]
+    aliases: ["keychain", "keys", "car key", "house key"]
 
   - id: "backup_phone"
     name: "Old Phone"
     description: "Your old smartphone, could be useful for calling a rideshare"
-    location: "bedroom"
-    hidden: true
+    discoverable_in: "bedroom"
+    discovery_objects: ["dresser drawer", "drawer", "old electronics"]
+    aliases: ["phone", "smartphone", "old phone"]
 
 knowledge:
   - id: "interview_location"
@@ -173,7 +176,7 @@ flows:
     completion_transitions:
       - condition: "has_item:car_keys"
         to_flow: "success_ending"
-      - condition: "has_item:backup_phone"
+      - condition: "rideshare_called"
         to_flow: "rideshare_ending"
         
     llm_guidelines: |
@@ -189,6 +192,7 @@ flows:
     name: "Found Them!"
     requirements:
       - "has_item:car_keys"
+    ends_game: true
     content: |
       There! Your keys glint in the morning light, exactly where any reasonable
       person would have put them... if they'd been thinking clearly last night.
@@ -198,12 +202,16 @@ flows:
       interview answers.
       
       Some days start badly but end well.
+      
+      You made it to the interview on time, keys found and confidence restored.
+      Sometimes a little morning chaos is exactly the energy you need to succeed.
 
   - id: "rideshare_ending"  
     type: "narrative"
     name: "Plan B"
     requirements:
-      - "has_item:backup_phone"
+      - "rideshare_called"
+    ends_game: true
     content: |
       Keys are still missing, but your old phone will save the day. You quickly
       open the rideshare app - 8 minutes for pickup, 15 minutes to get there.
@@ -211,6 +219,10 @@ flows:
       
       Sometimes the backup plan works better than the original. You'll deal with
       the keys later - right now, you have an interview to ace.
+      
+      The rideshare got you there perfectly on time. When you tell the interviewer
+      about your morning adventure, they're impressed by your problem-solving skills
+      under pressure. The keys can wait - you nailed the interview.
 
 start:
   text: |
@@ -226,22 +238,3 @@ start:
   sets:
     - "knows:interview_location"
 
-endings:
-  - id: "success_made_it"
-    name: "Interview Success"
-    requires:
-      - "has_item:car_keys"
-    content: |
-      You made it to the interview on time, keys found and confidence restored.
-      Sometimes a little morning chaos is exactly the energy you need to succeed.
-      
-  - id: "backup_plan_worked"
-    name: "Adaptability Wins"  
-    requires:
-      - "has_item:backup_phone"
-    content: |
-      The rideshare got you there perfectly on time. When you tell the interviewer
-      about your morning adventure, they're impressed by your problem-solving skills
-      under pressure. 
-      
-      The keys can wait - you nailed the interview.
