@@ -181,13 +181,13 @@ IMPORTANT RULES:
 
   private parseResponse(responseText: string): LLMResponse {
     try {
-      // Try to extract JSON from the response
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
+      // Try to extract JSON from the response with better parsing
+      let jsonString = this.extractJsonFromResponse(responseText);
+      if (!jsonString) {
+        throw new Error('No valid JSON found in response');
       }
 
-      const parsed = JSON.parse(jsonMatch[0]);
+      const parsed = JSON.parse(jsonString);
       
       // Validate required fields
       if (!parsed.action || !parsed.response) {
@@ -219,5 +219,40 @@ IMPORTANT RULES:
         response: responseText || 'I didn\'t understand that command. Could you try rephrasing it?'
       };
     }
+  }
+
+  private extractJsonFromResponse(text: string): string | null {
+    // Remove any markdown code blocks
+    text = text.replace(/```json\s*\n?/g, '').replace(/```\s*$/g, '');
+    
+    // Try to find JSON object using bracket counting for proper matching
+    let braceCount = 0;
+    let startIndex = -1;
+    let endIndex = -1;
+    
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      
+      if (char === '{') {
+        if (braceCount === 0) {
+          startIndex = i; // Mark start of JSON
+        }
+        braceCount++;
+      } else if (char === '}') {
+        braceCount--;
+        if (braceCount === 0 && startIndex !== -1) {
+          endIndex = i; // Mark end of JSON
+          break; // Found complete JSON object
+        }
+      }
+    }
+    
+    if (startIndex !== -1 && endIndex !== -1) {
+      return text.substring(startIndex, endIndex + 1);
+    }
+    
+    // Fallback to original regex if bracket counting fails
+    const jsonMatch = text.match(/\{[\s\S]*?\}/);
+    return jsonMatch ? jsonMatch[0] : null;
   }
 }

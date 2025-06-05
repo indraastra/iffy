@@ -26,6 +26,7 @@ class IffyApp {
     this.displayWelcomeMessage();
     this.createDebugToggle();
     this.setupDebugLogging();
+    this.createApiKeyStatusIndicator();
   }
 
   private initializeEventListeners(): void {
@@ -145,11 +146,60 @@ class IffyApp {
     this.addMessage('To get started, click the "Load" button to load a story file (.yaml)', 'system');
     
     if (!this.gameEngine.getAnthropicService().isConfigured()) {
-      this.addMessage('⚠️ For enhanced natural language understanding, set your Anthropic API key in Settings.', 'system');
-      this.addMessage('Without an API key, basic commands like "look", "go [direction]", "inventory", or "help" will work.', 'system');
+      this.promptForApiKey();
     } else {
       this.addMessage('✅ LLM integration active! Try natural language commands like "examine the room" or "pick up the key".', 'system');
     }
+  }
+
+  private promptForApiKey(): void {
+    this.addMessage('🔑 API Key Required', 'title');
+    this.addMessage('Iffy uses Claude AI for natural language understanding. You\'ll need an Anthropic API key to unlock the full experience.', 'system');
+    this.addMessage('', 'system'); // Empty line for spacing
+    
+    // Create interactive prompt
+    const promptDiv = document.createElement('div');
+    promptDiv.className = 'api-key-prompt';
+    promptDiv.innerHTML = `
+      <div class="api-key-prompt-content">
+        <div class="api-key-prompt-header">
+          <h3>🚀 Get Started with Enhanced AI</h3>
+          <p>Enter your Anthropic API key to enable natural language commands</p>
+        </div>
+        <div class="api-key-prompt-actions">
+          <button class="api-key-prompt-btn primary" id="setup-api-key">
+            Set Up API Key
+          </button>
+          <button class="api-key-prompt-btn secondary" id="continue-basic">
+            Continue with Basic Mode
+          </button>
+        </div>
+        <div class="api-key-prompt-info">
+          <p><strong>Enhanced Mode:</strong> "examine the mysterious door", "talk to the shopkeeper"</p>
+          <p><strong>Basic Mode:</strong> "look", "go north", "inventory", "help"</p>
+          <p><small>Get your API key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></small></p>
+        </div>
+      </div>
+    `;
+
+    this.storyOutput.appendChild(promptDiv);
+    this.storyOutput.scrollTop = this.storyOutput.scrollHeight;
+
+    // Add event listeners
+    const setupBtn = promptDiv.querySelector('#setup-api-key') as HTMLElement;
+    const basicBtn = promptDiv.querySelector('#continue-basic') as HTMLElement;
+
+    setupBtn.addEventListener('click', () => {
+      promptDiv.remove();
+      this.showSettings();
+      this.addMessage('💡 Tip: You can always access Settings later to add your API key.', 'system');
+    });
+
+    basicBtn.addEventListener('click', () => {
+      promptDiv.remove();
+      this.addMessage('⚠️ Running in Basic Mode - Limited to simple commands like "look", "go [direction]", "inventory".', 'system');
+      this.addMessage('💡 You can enable enhanced AI anytime by clicking Settings and adding your API key.', 'system');
+    });
   }
 
   private showSettings(): void {
@@ -166,8 +216,23 @@ class IffyApp {
     if (apiKey) {
       localStorage.setItem('iffy_api_key', apiKey);
       this.gameEngine.getAnthropicService().setApiKey(apiKey);
+      this.updateApiKeyStatus();
     } else {
       localStorage.removeItem('iffy_api_key');
+      this.updateApiKeyStatus();
+    }
+  }
+
+  private updateApiKeyStatus(): void {
+    const statusIndicator = document.querySelector('.api-key-status');
+    if (statusIndicator) {
+      if (this.gameEngine.getAnthropicService().isConfigured()) {
+        statusIndicator.className = 'api-key-status configured';
+        statusIndicator.textContent = '🤖 AI Enhanced';
+      } else {
+        statusIndicator.className = 'api-key-status not-configured';
+        statusIndicator.textContent = '⚠️ Basic Mode';
+      }
     }
   }
 
@@ -381,6 +446,30 @@ class IffyApp {
         this.debugPane.logResponse(response);
       }
     });
+  }
+
+  private createApiKeyStatusIndicator(): void {
+    const statusDiv = document.createElement('div');
+    statusDiv.className = this.gameEngine.getAnthropicService().isConfigured() 
+      ? 'api-key-status configured' 
+      : 'api-key-status not-configured';
+    statusDiv.textContent = this.gameEngine.getAnthropicService().isConfigured() 
+      ? '🤖 AI Enhanced' 
+      : '⚠️ Basic Mode';
+    statusDiv.title = this.gameEngine.getAnthropicService().isConfigured()
+      ? 'Natural language processing enabled'
+      : 'Click Settings to enable AI features';
+    
+    if (!this.gameEngine.getAnthropicService().isConfigured()) {
+      statusDiv.style.cursor = 'pointer';
+      statusDiv.addEventListener('click', () => this.showSettings());
+    }
+    
+    // Insert in header next to controls
+    const controls = document.querySelector('.controls');
+    if (controls) {
+      controls.insertBefore(statusDiv, controls.firstChild);
+    }
   }
 }
 

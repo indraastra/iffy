@@ -148,6 +148,15 @@ export class GameEngine {
   private handleBasicCommand(input: string): GameResponse {
     const command = input.toLowerCase().trim();
     
+    // Check if this looks like a complex command that would benefit from LLM
+    if (this.isComplexCommand(input) && !this.anthropicService.isConfigured()) {
+      return {
+        text: `🔑 This command "${input}" would work better with AI enhancement. Set up your Anthropic API key in Settings for natural language understanding.\n\nFor now, try basic commands like: "look", "go north", "inventory", "help"`,
+        gameState: this.gameState,
+        error: 'API key required for enhanced commands'
+      };
+    }
+    
     // Basic navigation commands
     if (command.startsWith('go ') || command.startsWith('move ') || command.startsWith('walk ')) {
       const direction = command.split(' ').slice(1).join(' ');
@@ -428,6 +437,25 @@ This is a basic MVP version. More natural language understanding will be added i
 
   getGameState(): GameState {
     return { ...this.gameState };
+  }
+
+  private isComplexCommand(input: string): boolean {
+    const complexPatterns = [
+      /^(examine|inspect|study|analyze|investigate|check out|look at|search)/i,
+      /^(talk to|speak with|chat with|converse with|ask|tell)/i,
+      /^(pick up|take|grab|collect|get|obtain)/i,
+      /^(use|utilize|operate|activate|press|push|pull)/i,
+      /^(open|close|unlock|lock)/i,
+      /^(eat|drink|consume|taste)/i,
+      /^(throw|toss|drop|place|put)/i,
+      /^(climb|jump|swim|run|crawl)/i,
+      /^(listen|smell|touch|feel)/i,
+      /and|with|the|a|an|from|to|in|on|under|behind|beside/i // Complex sentence structure
+    ];
+    
+    return complexPatterns.some(pattern => pattern.test(input)) || 
+           input.split(' ').length > 3 || // Long commands
+           input.includes('?'); // Questions
   }
 
   getAnthropicService(): AnthropicService {
