@@ -30,6 +30,8 @@
                         class="command-input" 
                         placeholder="Enter your command..."
                         autocomplete="off"
+                        data-lpignore="true"
+                        data-1p-ignore="true"
                     >
                 </div>
             </div>
@@ -42,11 +44,22 @@
                     <button id="close-settings" class="close-btn">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <div class="setting-group">
-                        <label for="api-key">Anthropic API Key:</label>
-                        <input type="password" id="api-key" placeholder="sk-ant-..." />
-                        <small>Your API key is stored locally and never sent to our servers.</small>
-                    </div>
+                    <form autocomplete="off" data-lpignore="true">
+                        <div class="setting-group">
+                            <label for="api-key">Anthropic API Key:</label>
+                            <input 
+                                type="password" 
+                                id="api-key" 
+                                name="api-key"
+                                placeholder="sk-ant-..." 
+                                autocomplete="new-password"
+                                data-lpignore="true"
+                                data-form-type="other"
+                                data-1p-ignore="true"
+                            />
+                            <small>Your API key is stored locally and never sent to our servers.</small>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
