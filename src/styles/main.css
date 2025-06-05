@@ -293,8 +293,273 @@ body {
   animation: pulse 1s infinite;
 }
 
+/* Processing indicator for LLM requests */
+.command-input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.processing-indicator {
+  color: #4ecdc4;
+  font-style: italic;
+  animation: processing-dots 1.5s infinite;
+}
+
 @keyframes pulse {
   0% { opacity: 1; }
   50% { opacity: 0.5; }
   100% { opacity: 1; }
+}
+
+@keyframes processing-dots {
+  0% { content: 'Processing'; }
+  25% { content: 'Processing.'; }
+  50% { content: 'Processing..'; }
+  75% { content: 'Processing...'; }
+  100% { content: 'Processing'; }
+}
+
+/* Debug Pane Styles */
+.debug-pane {
+  position: fixed;
+  top: 10%;
+  right: 2rem;
+  width: 500px;
+  height: 70vh;
+  background-color: var(--primary-color);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  z-index: 1002;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Courier New', monospace;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.debug-pane.hidden {
+  display: none;
+}
+
+.debug-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: var(--header-bg);
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 6px 6px 0 0;
+}
+
+.debug-header h3 {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 1rem;
+}
+
+.debug-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.debug-clear-btn, .debug-close-btn {
+  padding: 0.25rem 0.5rem;
+  background-color: var(--button-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+}
+
+.debug-close-btn {
+  background-color: #d32f2f;
+  border-color: #b71c1c;
+  font-weight: bold;
+  padding: 0.25rem 0.75rem;
+}
+
+.debug-clear-btn:hover, .debug-close-btn:hover {
+  opacity: 0.8;
+}
+
+.debug-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.debug-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+  background-color: var(--background-color);
+}
+
+.debug-entry {
+  margin-bottom: 1rem;
+  border-left: 3px solid var(--border-color);
+  padding-left: 0.75rem;
+}
+
+.debug-entry.debug-request {
+  border-left-color: #4CAF50;
+}
+
+.debug-entry.debug-response {
+  border-left-color: #2196F3;
+}
+
+.debug-entry.debug-error {
+  border-left-color: #F44336;
+}
+
+.debug-timestamp {
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.debug-content-section {
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.debug-error-content {
+  background-color: rgba(244, 67, 54, 0.1);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+/* Prompt Section Formatting */
+.prompt-section {
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.prompt-section-header {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 0.5rem;
+  font-weight: bold;
+  font-size: 0.9rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.prompt-section-content {
+  padding: 0.5rem;
+}
+
+.prompt-section-content pre {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Color coding for different prompt sections */
+.prompt-story-context .prompt-section-header {
+  background-color: rgba(76, 175, 80, 0.2);
+  color: #81C784;
+}
+
+.prompt-game-state .prompt-section-header {
+  background-color: rgba(255, 193, 7, 0.2);
+  color: #FFD54F;
+}
+
+.prompt-locations .prompt-section-header {
+  background-color: rgba(156, 39, 176, 0.2);
+  color: #BA68C8;
+}
+
+.prompt-items .prompt-section-header {
+  background-color: rgba(255, 87, 34, 0.2);
+  color: #FFB74D;
+}
+
+.prompt-command .prompt-section-header {
+  background-color: rgba(33, 150, 243, 0.2);
+  color: #64B5F6;
+}
+
+.prompt-format .prompt-section-header {
+  background-color: rgba(96, 125, 139, 0.2);
+  color: #90A4AE;
+}
+
+.prompt-rules .prompt-section-header {
+  background-color: rgba(244, 67, 54, 0.2);
+  color: #EF5350;
+}
+
+/* Response Formatting */
+.response-json, .response-text {
+  background-color: rgba(33, 150, 243, 0.1);
+  border: 1px solid rgba(33, 150, 243, 0.3);
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+
+.response-section-header {
+  font-weight: bold;
+  color: #64B5F6;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.json-formatted {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #E8F5E8;
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Debug toggle button */
+.debug-toggle-btn {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  padding: 0.75rem;
+  background-color: var(--button-bg);
+  color: var(--text-color);
+  border: 2px solid var(--border-color);
+  border-radius: 50%;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1.2rem;
+  z-index: 1001;
+  transition: all 0.2s;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.debug-toggle-btn:hover {
+  background-color: var(--button-hover);
+  transform: scale(1.1);
+}
+
+/* Responsive debug pane */
+@media (max-width: 768px) {
+  .debug-pane {
+    width: calc(100vw - 1rem);
+    right: 0.5rem;
+    left: 0.5rem;
+    height: 60vh;
+  }
+  
+  .debug-toggle-btn {
+    bottom: 1rem;
+    right: 1rem;
+  }
 }

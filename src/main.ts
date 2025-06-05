@@ -1,6 +1,7 @@
 import { StoryParser, StoryParseError } from '@/engine/storyParser';
 import { GameEngine } from '@/engine/gameEngine';
 import { PlayerAction } from '@/types/story';
+import { DebugPane } from '@/components/debugPane';
 
 class IffyApp {
   private gameEngine: GameEngine;
@@ -8,9 +9,11 @@ class IffyApp {
   private commandInput: HTMLInputElement;
   private settingsModal: HTMLElement;
   private apiKeyInput: HTMLInputElement;
+  private debugPane: DebugPane;
   
   constructor() {
     this.gameEngine = new GameEngine();
+    this.debugPane = new DebugPane();
     
     // Get DOM elements
     this.storyOutput = document.getElementById('story-output')!;
@@ -21,6 +24,8 @@ class IffyApp {
     this.initializeEventListeners();
     this.loadApiKey();
     this.displayWelcomeMessage();
+    this.createDebugToggle();
+    this.setupDebugLogging();
   }
 
   private initializeEventListeners(): void {
@@ -53,39 +58,72 @@ class IffyApp {
     // Save/Load buttons
     document.getElementById('save-btn')!.addEventListener('click', () => this.saveGame());
     document.getElementById('load-btn')!.addEventListener('click', () => this.showLoadOptions());
+
+    // Debug pane keyboard shortcut
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'd') {
+        e.preventDefault();
+        this.debugPane.toggle();
+      }
+    });
   }
 
 
-  private processCommand(): void {
+  private async processCommand(): Promise<void> {
     const input = this.commandInput.value.trim();
     if (!input) return;
 
     // Show user input
     this.addMessage(`> ${input}`, 'input');
     
-    // Clear input
+    // Clear input and disable input during processing
     this.commandInput.value = '';
+    this.commandInput.disabled = true;
+    this.addMessage('Processing...', 'system');
 
-    // Process action
-    const action: PlayerAction = {
-      type: 'command',
-      input: input,
-      timestamp: new Date()
-    };
+    try {
+      // Process action
+      const action: PlayerAction = {
+        type: 'command',
+        input: input,
+        timestamp: new Date()
+      };
 
-    const response = this.gameEngine.processAction(action);
-    
-    // Show response
-    if (response.error) {
-      this.addMessage(response.text, 'error');
-    } else {
-      this.addMessage(response.text, 'story');
-    }
+      const response = await this.gameEngine.processAction(action);
+      
+      // Remove processing message
+      const messages = this.storyOutput.querySelectorAll('.story-text');
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage && lastMessage.textContent === 'Processing...') {
+        lastMessage.remove();
+      }
+      
+      // Show response
+      if (response.error) {
+        this.addMessage(response.text, 'error');
+      } else {
+        this.addMessage(response.text, 'story');
+      }
 
-    // Show choices if available
-    if (response.choices && response.choices.length > 0) {
-      const choicesText = 'Choose:\n' + response.choices.map((choice, i) => `${i + 1}. ${choice}`).join('\n');
-      this.addMessage(choicesText, 'choices');
+      // Show choices if available
+      if (response.choices && response.choices.length > 0) {
+        const choicesText = 'Choose:\n' + response.choices.map((choice, i) => `${i + 1}. ${choice}`).join('\n');
+        this.addMessage(choicesText, 'choices');
+      }
+    } catch (error) {
+      // Remove processing message
+      const messages = this.storyOutput.querySelectorAll('.story-text');
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage && lastMessage.textContent === 'Processing...') {
+        lastMessage.remove();
+      }
+      
+      this.addMessage('An error occurred while processing your command.', 'error');
+      console.error('Command processing error:', error);
+    } finally {
+      // Re-enable input
+      this.commandInput.disabled = false;
+      this.commandInput.focus();
     }
   }
 
@@ -105,7 +143,13 @@ class IffyApp {
   private displayWelcomeMessage(): void {
     this.addMessage('Welcome to Iffy - LLM-powered Interactive Fiction Engine', 'title');
     this.addMessage('To get started, click the "Load" button to load a story file (.yaml)', 'system');
-    this.addMessage('This is an MVP version. Try commands like "look", "go [direction]", "inventory", or "help".', 'system');
+    
+    if (!this.gameEngine.getAnthropicService().isConfigured()) {
+      this.addMessage('⚠️ For enhanced natural language understanding, set your Anthropic API key in Settings.', 'system');
+      this.addMessage('Without an API key, basic commands like "look", "go [direction]", "inventory", or "help" will work.', 'system');
+    } else {
+      this.addMessage('✅ LLM integration active! Try natural language commands like "examine the room" or "pick up the key".', 'system');
+    }
   }
 
   private showSettings(): void {
@@ -121,6 +165,7 @@ class IffyApp {
     const apiKey = this.apiKeyInput.value;
     if (apiKey) {
       localStorage.setItem('iffy_api_key', apiKey);
+      this.gameEngine.getAnthropicService().setApiKey(apiKey);
     } else {
       localStorage.removeItem('iffy_api_key');
     }
@@ -261,7 +306,7 @@ class IffyApp {
       this.addMessage(this.gameEngine.getInitialText(), 'story');
       
       // Show current location
-      const response = this.gameEngine.processAction({ 
+      const response = await this.gameEngine.processAction({ 
         type: 'command', 
         input: 'look', 
         timestamp: new Date() 
@@ -292,13 +337,13 @@ class IffyApp {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
           try {
             const saveData = e.target?.result as string;
             if (this.gameEngine.loadGame(saveData)) {
               this.addMessage('Game loaded successfully!', 'system');
               // Refresh display
-              const response = this.gameEngine.processAction({ 
+              const response = await this.gameEngine.processAction({ 
                 type: 'command', 
                 input: 'look', 
                 timestamp: new Date() 
@@ -316,6 +361,26 @@ class IffyApp {
     };
     
     input.click();
+  }
+
+  private createDebugToggle(): void {
+    const toggleBtn = document.createElement('button');
+    toggleBtn.className = 'debug-toggle-btn';
+    toggleBtn.innerHTML = '🐛';
+    toggleBtn.title = 'Toggle Debug Pane (Ctrl+D)';
+    toggleBtn.addEventListener('click', () => this.debugPane.toggle());
+    document.body.appendChild(toggleBtn);
+  }
+
+  private setupDebugLogging(): void {
+    this.gameEngine.getAnthropicService().setDebugCallback((prompt: string, response: string) => {
+      if (prompt) {
+        this.debugPane.logRequest(prompt);
+      }
+      if (response) {
+        this.debugPane.logResponse(response);
+      }
+    });
   }
 }
 

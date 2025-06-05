@@ -1,10 +1,14 @@
 import { Story, GameState, PlayerAction, GameResponse, Flow } from '@/types/story';
+import { AnthropicService, LLMResponse } from '@/services/anthropicService';
 
 export class GameEngine {
   private story: Story | null = null;
   private gameState: GameState = this.createInitialState();
+  private anthropicService: AnthropicService;
 
-  constructor() {}
+  constructor() {
+    this.anthropicService = new AnthropicService();
+  }
 
   loadStory(story: Story): void {
     this.story = story;
@@ -40,7 +44,7 @@ export class GameEngine {
     return this.story.locations.find(loc => loc.id === this.gameState.currentLocation) || null;
   }
 
-  processAction(action: PlayerAction): GameResponse {
+  async processAction(action: PlayerAction): Promise<GameResponse> {
     if (!this.story) {
       return {
         text: 'No story is currently loaded.',
@@ -50,15 +54,94 @@ export class GameEngine {
     }
 
     try {
-      // For MVP, we'll handle basic commands directly without LLM
-      // In Phase 2, this will be replaced with LLM-powered interpretation
-      return this.handleBasicCommand(action.input);
+      // Phase 2: Use LLM for command interpretation when available
+      if (this.anthropicService.isConfigured()) {
+        return await this.processWithLLM(action.input);
+      } else {
+        // Fallback to basic command handling when no API key is set
+        return this.handleBasicCommand(action.input);
+      }
     } catch (error) {
+      console.error('Error processing action:', error);
       return {
-        text: 'Sorry, I didn\'t understand that command. Try something else.',
+        text: 'Sorry, I had trouble processing that command. Try something else.',
         gameState: this.gameState,
         error: error instanceof Error ? error.message : 'Unknown error'
       };
+    }
+  }
+
+  private async processWithLLM(input: string): Promise<GameResponse> {
+    const currentLocation = this.getCurrentLocation();
+    
+    try {
+      const llmResponse = await this.anthropicService.processCommand(
+        input,
+        this.gameState,
+        this.story!,
+        currentLocation
+      );
+
+      // Apply state changes from LLM response
+      this.applyStateChanges(llmResponse);
+
+      return {
+        text: llmResponse.response,
+        gameState: { ...this.gameState },
+        error: llmResponse.error
+      };
+    } catch (error) {
+      console.error('LLM processing failed:', error);
+      
+      // Fallback to basic command handling
+      return this.handleBasicCommand(input);
+    }
+  }
+
+  private applyStateChanges(llmResponse: LLMResponse): void {
+    const changes = llmResponse.stateChanges;
+
+    // Update location
+    if (changes.newLocation) {
+      this.gameState.currentLocation = changes.newLocation;
+    }
+
+    // Update inventory
+    if (changes.addToInventory) {
+      changes.addToInventory.forEach(itemId => {
+        if (!this.gameState.inventory.includes(itemId)) {
+          this.gameState.inventory.push(itemId);
+        }
+      });
+    }
+
+    if (changes.removeFromInventory) {
+      changes.removeFromInventory.forEach(itemId => {
+        const index = this.gameState.inventory.indexOf(itemId);
+        if (index > -1) {
+          this.gameState.inventory.splice(index, 1);
+        }
+      });
+    }
+
+    // Update flags
+    if (changes.setFlags) {
+      changes.setFlags.forEach(flag => {
+        this.gameState.flags.add(flag);
+      });
+    }
+
+    if (changes.unsetFlags) {
+      changes.unsetFlags.forEach(flag => {
+        this.gameState.flags.delete(flag);
+      });
+    }
+
+    // Update knowledge
+    if (changes.addKnowledge) {
+      changes.addKnowledge.forEach(knowledge => {
+        this.gameState.knowledge.add(knowledge);
+      });
     }
   }
 
@@ -345,6 +428,10 @@ This is a basic MVP version. More natural language understanding will be added i
 
   getGameState(): GameState {
     return { ...this.gameState };
+  }
+
+  getAnthropicService(): AnthropicService {
+    return this.anthropicService;
   }
 
   saveGame(): string {
