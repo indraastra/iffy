@@ -153,7 +153,9 @@ ${story.locations?.map((loc: any) => {
   return info;
 }).join('\n') || 'None'}
 
-CHARACTERS: ${story.characters?.map((char: any) => char.name).join(', ') || 'None'}
+PLAYER CHARACTER: ${this.getPlayerCharacterInfo(story)}
+
+NPC CHARACTERS: ${this.getNPCCharacterInfo(story)}
 
 ${story.flows?.length > 0 ? `FLOWS: ${story.flows.map((flow: any) => `${flow.name}${flow.ends_game ? ' [END]' : ''}`).join(', ')}` : ''}
 
@@ -168,7 +170,8 @@ DISCOVERY STATUS: Based on recent interactions, analyze if player has already ex
 ${gameState.gameEnded ? this.getEndingContext(story, gameState) : ''}
 
 MARKUP: Use [character:Name] for characters, [item:Name] for items, **bold** for emphasis, [!warning]/[!discovery]/[!danger] for alerts.
-Characters: ${story.characters?.map((char: any) => char.name).join(', ') || 'None'}
+
+IMPORTANT: The player IS the player character. Do NOT treat the player character as a separate NPC they can talk to. When players try to "talk to" or interact with the player character, explain that they ARE that character.
 
 PLAYER COMMAND: "${command}"
 
@@ -199,7 +202,8 @@ RULES:
 7. Movement commands change location, but be flexible about phrasing
 8. If game COMPLETED, allow reflection but no major state changes
 9. Be permissive with item discovery - if player has clearly interacted with containers/objects, items inside are available
-10. NEVER demand specific syntax - interpret intent and respond naturally`;
+10. NEVER demand specific syntax - interpret intent and respond naturally
+11. CRITICAL: The player IS the player character. If they try to "talk to" or interact with the player character, explain that they ARE that character - don't treat it as a separate NPC conversation`;
   }
 
   private parseResponse(responseText: string): LLMResponse {
@@ -338,6 +342,24 @@ The player has successfully concluded this story path.`;
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours === 1) return '1 hour ago';
     return `${diffHours} hours ago`;
+  }
+
+  private getPlayerCharacterInfo(story: any): string {
+    const playerChar = story.characters?.find((char: any) => char.id === 'player');
+    if (!playerChar) {
+      return 'Not defined';
+    }
+    
+    return `${playerChar.name} - ${playerChar.description || 'No description'} (${playerChar.traits?.join(', ') || 'No traits'})`;
+  }
+
+  private getNPCCharacterInfo(story: any): string {
+    const npcs = story.characters?.filter((char: any) => char.id !== 'player') || [];
+    if (npcs.length === 0) {
+      return 'None';
+    }
+    
+    return npcs.map((char: any) => `${char.name} - ${char.description || 'No description'}`).join(', ');
   }
 
 }
