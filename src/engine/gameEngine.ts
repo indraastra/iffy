@@ -660,6 +660,10 @@ This is a basic MVP version. More natural language understanding will be added i
     return { ...this.gameState };
   }
 
+  getCurrentStoryTitle(): string | null {
+    return this.story?.title || null;
+  }
+
   // Action-based state management methods
   addItemToInventory(itemId: string): Result<void> {
     try {

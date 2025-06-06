@@ -281,16 +281,41 @@ class IffyApp {
       const blob = new Blob([saveData], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       
+      const filename = this.generateSaveFilename();
+      
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'iffy_save.json';
+      a.download = filename;
       a.click();
       
       URL.revokeObjectURL(url);
-      this.addMessage('Game saved successfully!', 'system');
+      this.addMessage(`Game saved as "${filename}"!`, 'system');
     } catch (error) {
       this.addMessage('Failed to save game.', 'error');
     }
+  }
+
+  private generateSaveFilename(): string {
+    const storyTitle = this.gameEngine.getCurrentStoryTitle();
+    const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    const time = new Date().toTimeString().split(' ')[0].replace(/:/g, '-'); // HH-MM-SS format
+    
+    if (storyTitle) {
+      const sanitizedTitle = this.sanitizeFilename(storyTitle);
+      return `${sanitizedTitle}_${timestamp}_${time}.json`;
+    } else {
+      return `iffy_save_${timestamp}_${time}.json`;
+    }
+  }
+
+  private sanitizeFilename(filename: string): string {
+    // Remove or replace characters that aren't allowed in filenames
+    return filename
+      .replace(/[<>:"/\\|?*]/g, '_') // Replace invalid chars with underscore
+      .replace(/\s+/g, '_') // Replace spaces with underscores
+      .replace(/_+/g, '_') // Replace multiple underscores with single
+      .replace(/^_|_$/g, '') // Remove leading/trailing underscores
+      .toLowerCase();
   }
 
   private showLoadOptions(): void {

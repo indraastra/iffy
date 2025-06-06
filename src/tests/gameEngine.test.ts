@@ -252,4 +252,16 @@ describe('GameEngine', () => {
       expect(gameState.knowledge).toBeInstanceOf(Set)
     })
   })
+
+  describe('Story Title Access', () => {
+    it('should return null when no story is loaded', () => {
+      const newEngine = new GameEngine()
+      expect(newEngine.getCurrentStoryTitle()).toBeNull()
+    })
+
+    it('should return story title when story is loaded', () => {
+      gameEngine.loadStory(mockStory)
+      expect(gameEngine.getCurrentStoryTitle()).toBe('Test Story')
+    })
+  })
 })
