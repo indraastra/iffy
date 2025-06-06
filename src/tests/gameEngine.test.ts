@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { GameEngine } from '../engine/gameEngine'
-import { Story, GameState } from '../types/story'
+import { Story } from '../types/story'
 
 describe('GameEngine', () => {
   let gameEngine: GameEngine
@@ -24,6 +24,7 @@ describe('GameEngine', () => {
         {
           id: "test_char",
           name: "Test Character",
+          description: "A helpful test character",
           traits: ["helpful"],
           voice: "friendly"
         }
