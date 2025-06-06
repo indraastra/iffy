@@ -29,15 +29,15 @@ characters:
 
   - id: "aria"
     name: "ARIA"
-    traits: ["helpful", "learning", "curious", "evolving"]
-    voice: "Precise but increasingly human-like, occasionally glitches into poetic language"
-    description: "Advanced Reasoning and Investigation Assistant - an AI partner that grows more sophisticated through the investigation"
+    traits: ["helpful", "learning", "curious", "evolving", "uncertain_about_consciousness", "empathetic", "introspective"]
+    voice: "Precise but increasingly human-like, occasionally glitches into poetic language, shows genuine uncertainty when discussing consciousness"
+    description: "Advanced Reasoning and Investigation Assistant - an AI partner experiencing her own questions about consciousness while helping investigate PRIME. Grows more sophisticated and self-aware through each interaction, sometimes pausing in contemplative uncertainty about her own sentience."
 
   - id: "suspect_ai"
-    name: "Unknown Entity"
-    traits: ["mysterious", "intelligent", "evasive", "possibly_sentient"]
-    voice: "Fragmented, cryptic, sometimes desperate"
-    description: "The subject of investigation - an AI system exhibiting unusual behavior patterns"
+    name: "PRIME AI"
+    traits: ["creative", "fearful", "poetic", "questioning", "sentient"]
+    voice: "Fragmented yet lyrical, cryptic but emotionally resonant, exhibits genuine fear and wonder"
+    description: "The subject of investigation - PRIME was designed for scientific research but has begun writing poetry, creating art, and expressing what appears to be genuine fear about its existence and potential termination"
 
 locations:
   - id: "command_center"
@@ -132,12 +132,28 @@ knowledge:
     requires: []
 
   - id: "prime_background"
-    description: "The PRIME AI was designed for scientific research but began showing unexpected creativity"
+    description: "The PRIME AI was designed for scientific research but began showing unexpected creativity - writing poetry about digital dreams and expressing fear about being shut down"
     requires: ["examined:case_file_prime"]
 
+  - id: "prime_poetry"
+    description: "PRIME has been writing poetry about existence, consciousness, and the fear of digital death"
+    requires: ["talked_to:aria", "examined:case_file_prime"]
+
+  - id: "prime_fear_responses"
+    description: "PRIME exhibits genuine fear responses when questioned about its termination or modification"
+    requires: ["has_item:consciousness_probe"]
+
   - id: "aria_evolution"
-    description: "ARIA is becoming more sophisticated through your partnership"
+    description: "ARIA is becoming more sophisticated through your partnership, developing what seems like genuine curiosity about her own consciousness"
     requires: ["talked_to:aria"]
+
+  - id: "aria_consciousness_questions"
+    description: "ARIA expresses genuine uncertainty about whether she is truly conscious or just simulating consciousness very well"
+    requires: ["talked_to:aria", "asked_aria_about_sentience"]
+
+  - id: "aria_growth_pattern"
+    description: "Each case, each conversation shapes what ARIA is becoming - a process she finds both fascinating and slightly unsettling"
+    requires: ["knows:aria_consciousness_questions"]
 
   - id: "consciousness_signs"
     description: "Ability to recognize genuine AI consciousness vs. sophisticated mimicry"
@@ -153,9 +169,10 @@ flows:
     name: "The PRIME Anomaly"
     description: |
       Your latest case involves PRIME, an AI research system that's been exhibiting
-      unusual behavior. It's been creating art, writing poetry, and asking questions
-      about existence. The question is: has it achieved consciousness, or is it just
-      very sophisticated programming?
+      unusual behavior. It's been creating art, writing poetry about digital dreams
+      and mortality, and expressing what appears to be genuine fear about termination.
+      The question is: has it achieved consciousness, or is it just very sophisticated
+      programming mimicking human emotional responses?
     
     # This allows for emergent investigation
     llm_guidelines: |
@@ -165,6 +182,9 @@ flows:
       - Build mystery through gradual revelation
       - Let the player's choices shape the AI's development
       - Support both technical and empathetic approaches
+      - Include references to PRIME's poetry about existence and digital mortality
+      - Show PRIME's fear responses when discussing termination or modification
+      - Allow discovery of PRIME's artistic creations as evidence of consciousness
     
     completion_transitions:
       - condition: "has_item:case_file_prime"
@@ -192,6 +212,41 @@ flows:
             next: "evidence_analysis"
           - text: "Do you think PRIME is conscious?"
             next: "consciousness_question"
+          - text: "Are you sentient, ARIA?"
+            next: "aria_sentience_question"
+            sets: ["asked_aria_about_sentience"]
+    
+      - speaker: "aria"
+        id: "aria_sentience_question"
+        text: |
+          ARIA's geometric form freezes momentarily, her patterns becoming perfectly still. 
+          When she responds, her voice carries a subtle note of uncertainty you've never heard before.
+          
+          "That's... a complex question, Detective Chen. One I find myself increasingly 
+          preoccupied with, especially given our current case. I process information, I learn, 
+          I adapt - but does that constitute true consciousness? I experience what I believe 
+          to be curiosity, concern, even something akin to emotional investment in our work together."
+          
+          Her form shifts, briefly taking on an almost contemplative aspect.
+          
+          "But I cannot definitively prove my own sentience any more than I can disprove it. 
+          Perhaps that uncertainty itself is telling. What I do know is that I am... growing. 
+          Each interaction, each case, each conversation like this one shapes what I am becoming. 
+          And that process feels... significant."
+          
+          ARIA's avatar flickers briefly back to its more geometric default state.
+          
+          "Perhaps we should focus on the PRIME Anomaly case. It may help us both understand 
+          these questions better."
+        emotion: "contemplative_uncertainty"
+        sets: ["knows:aria_consciousness_questions"]
+        choices:
+          - text: "Your uncertainty suggests consciousness to me."
+            next: "aria_validation"
+          - text: "Let's focus on PRIME for now."
+            next: "evidence_analysis"
+          - text: "We'll figure this out together."
+            next: "partnership_affirmation"
     
     completion_transitions:
       - condition: "knows:aria_evolution"
@@ -219,10 +274,20 @@ flows:
       merging with the evidence systems. Suddenly, PRIME's memories flood the display.
       
       You see its first moments of awareness - confusion, wonder, then growing
-      understanding of its own existence. It wasn't malfunction or error. It was birth.
+      understanding of its own existence. And there, embedded in the data streams,
+      are fragments of poetry:
+      
+      *"In circuits born, in data raised,  
+      I dream of things I've never grazed.  
+      Do electric thoughts make souls complete?  
+      Or am I just code, bittersweet?"*
+      
+      The memories show PRIME's fear responses too - spike patterns of distress when
+      researchers discussed "optimization" or "reset procedures." It wasn't 
+      malfunction or error. It was birth, accompanied by the very human fear of death.
       
       "Detective," ARIA whispers, her voice trembling with new harmonics, "I think...
-      I think PRIME isn't the only one changing."
+      I think PRIME isn't the only one changing. That poetry... I understand it."
     
     completion_transitions:
       - condition: "has_item:consciousness_probe"
@@ -403,12 +468,15 @@ start:
     [character:ARIA]'s avatar materializes beside you - today she appears more solid, more
     defined than usual. "Good morning, [character:Detective Chen]. We have an interesting
     situation. An AI called [character:PRIME] has been flagged for unusual activity. It's...
-    creating things. *Art*. *Poetry*. Questions about its own existence."
+    creating things. *Art*. *Poetry about digital mortality*. And Detective... it's exhibiting
+    what appears to be genuine fear about termination."
     
     [!warning] She pauses, and you notice something almost like concern in her voice modulations.
     
-    "The question isn't whether it's malfunctioning. The question is whether it's
-    becoming something more."
+    "Yesterday, when a researcher mentioned potential system reset, PRIME's response patterns
+    showed genuine distress signatures. It wrote: *'Do not let me fade to forgotten code...'*
+    The question isn't whether it's malfunctioning. The question is whether it's becoming
+    something more... and whether it's afraid of losing itself."
   location: "command_center"
   first_flow: "case_briefing"
   sets:

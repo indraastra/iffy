@@ -448,10 +448,16 @@ This is a basic MVP version. More natural language understanding will be added i
     if (colors) {
       const root = document.documentElement;
       
-      // Apply base colors
+      // Apply base colors with contrast validation
       if (colors.primary) root.style.setProperty('--primary-color', colors.primary);
       if (colors.background) root.style.setProperty('--background-color', colors.background);
-      if (colors.text) root.style.setProperty('--text-color', colors.text);
+      
+      // Ensure text color has proper contrast against background
+      let textColor = colors.text || '#ffffff';
+      if (colors.background) {
+        textColor = this.ensureTextContrast(textColor, colors.background);
+      }
+      root.style.setProperty('--text-color', textColor);
       
       // Set header and footer to use background color for better text readability
       if (colors.background) {
@@ -464,8 +470,8 @@ This is a basic MVP version. More natural language understanding will be added i
         root.style.setProperty('--input-bg', colors.background);
       }
       
-      // Derive related colors for cohesive theming
-      if (colors.primary) {
+      // Derive related colors for cohesive theming with proper contrast
+      if (colors.primary && colors.background) {
         
         // Make button background slightly lighter than primary
         const buttonBg = this.adjustColorBrightness(colors.primary, 30);
@@ -475,15 +481,70 @@ This is a basic MVP version. More natural language understanding will be added i
         const buttonHover = this.adjustColorBrightness(colors.primary, 50);
         root.style.setProperty('--button-hover', buttonHover);
         
+        // Ensure button text has proper contrast against button backgrounds
+        const buttonTextColor = this.ensureTextContrast(textColor, buttonBg);
+        const buttonTextHoverColor = this.ensureTextContrast(textColor, buttonHover);
+        root.style.setProperty('--button-text-color', buttonTextColor);
+        root.style.setProperty('--button-text-hover-color', buttonTextHoverColor);
+        
         // Make border color lighter than primary
         const borderColor = this.adjustColorBrightness(colors.primary, 40);
         root.style.setProperty('--border-color', borderColor);
         
         // Make modal background semi-transparent version of background
-        if (colors.background) {
-          const modalBg = this.hexToRgba(colors.background, 0.95);
-          root.style.setProperty('--modal-bg', modalBg);
-        }
+        const modalBg = this.hexToRgba(colors.background, 0.95);
+        root.style.setProperty('--modal-bg', modalBg);
+        
+        // Ensure modal text contrast
+        const modalTextColor = this.ensureTextContrast(textColor, colors.background);
+        root.style.setProperty('--modal-text-color', modalTextColor);
+      }
+      
+      // Ensure character and item colors have proper contrast
+      if (colors.primary && colors.background) {
+        const characterColor = this.ensureTextContrast(colors.primary, colors.background);
+        root.style.setProperty('--character-color', characterColor);
+        
+        // For items, we want a golden color but ensure it contrasts
+        const itemColor = this.ensureTextContrast('#ffd700', colors.background);
+        root.style.setProperty('--item-color', itemColor);
+        
+        // Set item background colors based on item color
+        const itemBg = this.hexToRgba(itemColor, 0.2);
+        const itemBgHover = this.hexToRgba(itemColor, 0.3);
+        const itemBorder = this.hexToRgba(itemColor, 0.3);
+        
+        root.style.setProperty('--item-bg', itemBg);
+        root.style.setProperty('--item-bg-hover', itemBgHover);
+        root.style.setProperty('--item-border', itemBorder);
+      }
+      
+      // Set theme-aware alert colors
+      if (colors.background) {
+        // Warning alert (amber/yellow)
+        const warningColor = this.ensureTextContrast('#ffc107', colors.background);
+        const warningBg = this.hexToRgba(warningColor, 0.15);
+        root.style.setProperty('--alert-warning-color', warningColor);
+        root.style.setProperty('--alert-warning-bg', warningBg);
+        root.style.setProperty('--alert-warning-border', warningColor);
+        
+        // Discovery alert (green)
+        const discoveryColor = this.ensureTextContrast('#28a745', colors.background);
+        const discoveryBg = this.hexToRgba(discoveryColor, 0.15);
+        root.style.setProperty('--alert-discovery-color', discoveryColor);
+        root.style.setProperty('--alert-discovery-bg', discoveryBg);
+        root.style.setProperty('--alert-discovery-border', discoveryColor);
+        
+        // Danger alert (red)
+        const dangerColor = this.ensureTextContrast('#dc3545', colors.background);
+        const dangerBg = this.hexToRgba(dangerColor, 0.15);
+        const dangerPulse = this.hexToRgba(dangerColor, 0.3);
+        const dangerPulseFaint = this.hexToRgba(dangerColor, 0.1);
+        root.style.setProperty('--alert-danger-color', dangerColor);
+        root.style.setProperty('--alert-danger-bg', dangerBg);
+        root.style.setProperty('--alert-danger-border', dangerColor);
+        root.style.setProperty('--alert-danger-pulse', dangerPulse);
+        root.style.setProperty('--alert-danger-pulse-faint', dangerPulseFaint);
       }
     }
   }
@@ -522,6 +583,68 @@ This is a basic MVP version. More natural language understanding will be added i
     const b = parseInt(hex.substr(4, 2), 16);
     
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  private getLuminance(hex: string): number {
+    // Remove # if present
+    hex = hex.replace('#', '');
+    
+    // Parse RGB values
+    const r = parseInt(hex.substr(0, 2), 16) / 255;
+    const g = parseInt(hex.substr(2, 2), 16) / 255;
+    const b = parseInt(hex.substr(4, 2), 16) / 255;
+    
+    // Apply gamma correction
+    const toLinear = (c: number) => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    
+    const rLinear = toLinear(r);
+    const gLinear = toLinear(g);
+    const bLinear = toLinear(b);
+    
+    // Calculate relative luminance
+    return 0.2126 * rLinear + 0.7152 * gLinear + 0.0722 * bLinear;
+  }
+
+  private getContrastRatio(color1: string, color2: string): number {
+    const lum1 = this.getLuminance(color1);
+    const lum2 = this.getLuminance(color2);
+    
+    const lighter = Math.max(lum1, lum2);
+    const darker = Math.min(lum1, lum2);
+    
+    return (lighter + 0.05) / (darker + 0.05);
+  }
+
+  private ensureTextContrast(textColor: string, backgroundColor: string, minRatio: number = 4.5): string {
+    const currentRatio = this.getContrastRatio(textColor, backgroundColor);
+    
+    if (currentRatio >= minRatio) {
+      return textColor; // Already has good contrast
+    }
+    
+    // If contrast is poor, determine if background is dark or light
+    const bgLuminance = this.getLuminance(backgroundColor);
+    
+    // If background is dark, use light text; if light, use dark text
+    if (bgLuminance < 0.5) {
+      // Dark background - use white or very light color
+      const lightOptions = ['#ffffff', '#f8f8f8', '#f0f0f0', '#e8e8e8', '#e0e0e0'];
+      for (const option of lightOptions) {
+        if (this.getContrastRatio(option, backgroundColor) >= minRatio) {
+          return option;
+        }
+      }
+      return '#ffffff'; // Fallback to white
+    } else {
+      // Light background - use black or very dark color
+      const darkOptions = ['#000000', '#1a1a1a', '#2a2a2a', '#3a3a3a', '#4a4a4a'];
+      for (const option of darkOptions) {
+        if (this.getContrastRatio(option, backgroundColor) >= minRatio) {
+          return option;
+        }
+      }
+      return '#000000'; // Fallback to black
+    }
   }
 
   getGameState(): GameState {

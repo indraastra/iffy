@@ -127,6 +127,10 @@ knowledge:
     description: "In the darkest hour, CHEESE emerges as the unlikely hero of this saga!"
     requires: ["has_item:heroic_cheese"]
 
+  - id: "condiment_gamble"
+    description: "You have chosen to risk EVERYTHING on the mystery condiment - may the kitchen gods have mercy on your soul!"
+    requires: ["has_item:mystery_jar", "used_mystery_condiment"]
+
 flows:
   - id: "hunger_awakens"
     type: "narrative"
@@ -214,7 +218,43 @@ flows:
     
     completion_transitions:
       - condition: "has_item:heroic_cheese"
+        to_flow: "final_choice"
+      - condition: "has_item:stale_bread"
+        to_flow: "condiment_catastrophe"
+
+  - id: "final_choice"
+    type: "dialogue"
+    name: "The Moment of Truth!"
+    participants: ["player", "narrator"]
+    requirements: ["has_item:heroic_cheese", "has_item:mystery_jar", "has_item:stale_bread"]
+    player_goal: "Choose between the safe cheese route or the risky mystery condiment"
+    
+    exchanges:
+      - speaker: "narrator"
+        text: |
+          [!warning] OH THE **TENSION**! OH THE *SUSPENSE*! Here you stand, [character:Jennifer], at the 
+          **CROSSROADS OF DESTINY**! In one hand, the [item:heroic cheese] of salvation! 
+          In the other, the [item:mystery jar] of UNKNOWN PERIL!
+          
+          The [item:stale bread] awaits its fate! But which path will you choose? 
+          The safe road of processed dairy **GLORY**? Or will you GAMBLE EVERYTHING 
+          on the mysterious depths of that unlabeled jar?
+          
+          THE VERY **UNIVERSE** holds its breath! What will it be?!
+        emotion: "dramatic_tension"
+        choices:
+          - text: "Use the cheese - play it safe!"
+            next: "cheese_chosen"
+            sets: ["chose_safety"]
+          - text: "Risk everything on the mystery condiment!"
+            next: "condiment_chosen"
+            sets: ["used_mystery_condiment", "chose_danger"]
+    
+    completion_transitions:
+      - condition: "flag:chose_safety"
         to_flow: "sandwich_showdown"
+      - condition: "flag:chose_danger"
+        to_flow: "condiment_catastrophe"
 
   - id: "sandwich_showdown"
     type: "narrative"
@@ -242,6 +282,44 @@ flows:
       [character:Jennifer] will tackle dinner with the same **EPIC COURAGE**? Will the 
       toaster finally get its revenge? Find out next time on... 
       "**KITCHEN OF BROKEN DREAMS**!"
+
+  - id: "condiment_catastrophe"
+    type: "narrative"
+    name: "THE CONDIMENT OF DOOM!"
+    requirements: ["has_item:mystery_jar", "has_item:stale_bread"]
+    ends_game: true
+    content: |
+      [!danger] OH NO! OH THE **HUBRIS**! OH THE *HUMANITY*!
+      
+      Against all wisdom, against all **COMMON SENSE**, you have chosen to trust 
+      the [item:mystery jar]! With hands shaking like leaves in a HURRICANE OF REGRET, 
+      you twist open the lid and...
+      
+      **THE SMELL!** *THE UNGODLY SMELL!*
+      
+      [!warning] It's... it's **FISH SAUCE**! Ancient, fermented, *AGGRESSIVE* fish sauce 
+      that has been lurking in your pantry since the CARTER ADMINISTRATION! The 
+      very **AIR** recoils in horror!
+      
+      But you've gone too far to turn back now! With the determination of the 
+      **DOOMED**, you spread this CULINARY NIGHTMARE upon your [item:bread of betrayal]!
+      
+      One bite... just ONE BITE... and...
+      
+      [!danger] **BETRAYAL MOST FOUL!** Your taste buds REVOLT! Your stomach 
+      **MUTINIES**! The sandwich of your dreams has become the NIGHTMARE OF YOUR REALITY!
+      
+      As you run to the sink, spitting and gasping, you realize the terrible truth: 
+      sometimes the greatest mysteries are mysteries for a **REASON**!
+      
+      *Ominous music plays as storm clouds gather*
+      
+      Will [character:Jennifer] ever trust a condiment again? Will she survive this 
+      culinary **CATASTROPHE**? Will she ever eat fish again?
+      
+      Find out NEVER because this story is OVER and you're ordering PIZZA!
+      
+      **THE END... OR IS IT?**
 
 start:
   text: |

@@ -58,16 +58,17 @@ body {
 .btn {
   padding: 0.5rem 1rem;
   background-color: var(--button-bg);
-  color: var(--text-color);
+  color: var(--button-text-color, var(--text-color));
   border: 1px solid var(--border-color);
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .btn:hover {
   background-color: var(--button-hover);
+  color: var(--button-text-hover-color, var(--text-color));
 }
 
 /* Main game area */
@@ -364,12 +365,13 @@ body {
 .debug-top-btn, .debug-bottom-btn, .debug-clear-btn, .debug-close-btn {
   padding: 0.25rem 0.5rem;
   background-color: var(--button-bg);
-  color: var(--text-color);
+  color: var(--button-text-color, var(--text-color));
   border: 1px solid var(--border-color);
   border-radius: 3px;
   cursor: pointer;
   font-family: inherit;
   font-size: 0.8rem;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .debug-close-btn {
@@ -379,7 +381,12 @@ body {
   padding: 0.25rem 0.75rem;
 }
 
-.debug-top-btn:hover, .debug-bottom-btn:hover, .debug-clear-btn:hover, .debug-close-btn:hover {
+.debug-top-btn:hover, .debug-bottom-btn:hover, .debug-clear-btn:hover {
+  background-color: var(--button-hover);
+  color: var(--button-text-hover-color, var(--text-color));
+}
+
+.debug-close-btn:hover {
   opacity: 0.8;
 }
 
@@ -526,23 +533,23 @@ body {
 
 .rich-character {
   font-weight: bold;
-  color: var(--primary-color);
-  border-bottom: 1px dotted var(--primary-color);
+  color: var(--character-color, var(--primary-color));
+  border-bottom: 1px dotted var(--character-color, var(--primary-color));
   padding: 0 2px;
 }
 
 .rich-item {
-  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.2), transparent);
+  background: linear-gradient(90deg, transparent, var(--item-bg, rgba(255, 215, 0, 0.2)), transparent);
   padding: 2px 4px;
   border-radius: 3px;
   font-weight: 500;
-  color: #b8860b;
-  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: var(--item-color, #b8860b);
+  border: 1px solid var(--item-border, rgba(255, 215, 0, 0.3));
   transition: all 0.2s ease;
 }
 
 .rich-item:hover {
-  background: rgba(255, 215, 0, 0.3);
+  background: var(--item-bg-hover, rgba(255, 215, 0, 0.3));
   transform: translateY(-1px);
   cursor: help;
 }
@@ -569,30 +576,30 @@ body {
 }
 
 .rich-alert-warning {
-  background: rgba(255, 193, 7, 0.15);
-  border-left-color: #ffc107;
-  color: #856404;
+  background: var(--alert-warning-bg, rgba(255, 193, 7, 0.15));
+  border-left-color: var(--alert-warning-border, #ffc107);
+  color: var(--alert-warning-color, #856404);
 }
 
 .rich-alert-discovery {
-  background: rgba(40, 167, 69, 0.15);
-  border-left-color: #28a745;
-  color: #155724;
+  background: var(--alert-discovery-bg, rgba(40, 167, 69, 0.15));
+  border-left-color: var(--alert-discovery-border, #28a745);
+  color: var(--alert-discovery-color, #155724);
 }
 
 .rich-alert-danger {
-  background: rgba(220, 53, 69, 0.15);
-  border-left-color: #dc3545;
-  color: #721c24;
+  background: var(--alert-danger-bg, rgba(220, 53, 69, 0.15));
+  border-left-color: var(--alert-danger-border, #dc3545);
+  color: var(--alert-danger-color, #721c24);
   animation: danger-pulse 2s ease-in-out infinite;
 }
 
 @keyframes danger-pulse {
   0%, 100% { 
-    box-shadow: 0 0 0 rgba(220, 53, 69, 0.3);
+    box-shadow: 0 0 0 var(--alert-danger-pulse, rgba(220, 53, 69, 0.3));
   }
   50% { 
-    box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.1);
+    box-shadow: 0 0 0 4px var(--alert-danger-pulse-faint, rgba(220, 53, 69, 0.1));
   }
 }
 
@@ -762,7 +769,7 @@ body {
   right: 2rem;
   padding: 0.75rem;
   background-color: var(--button-bg);
-  color: var(--text-color);
+  color: var(--button-text-color, var(--text-color));
   border: 2px solid var(--border-color);
   border-radius: 50%;
   cursor: pointer;
@@ -779,6 +786,7 @@ body {
 
 .debug-toggle-btn:hover {
   background-color: var(--button-hover);
+  color: var(--button-text-hover-color, var(--text-color));
   transform: scale(1.1);
 }
 
@@ -846,7 +854,7 @@ body {
 
 .api-key-prompt-btn.primary {
   background-color: var(--button-hover);
-  color: var(--text-color);
+  color: var(--button-text-hover-color, var(--text-color));
   border-color: var(--button-hover);
 }
 
@@ -862,11 +870,13 @@ body {
 }
 
 .api-key-prompt-btn.primary:hover {
-  background-color: #5a5a8e;
+  background-color: var(--button-hover);
+  color: var(--button-text-hover-color, var(--text-color));
 }
 
 .api-key-prompt-btn.secondary:hover {
   background-color: var(--button-bg);
+  color: var(--button-text-color, var(--text-color));
 }
 
 .api-key-prompt-info {
