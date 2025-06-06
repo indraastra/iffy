@@ -1,0 +1,264 @@
+title: "The Great Sandwich Crisis"
+author: "Iffy Engine Team"
+version: "3.0"
+
+metadata:
+  setting:
+    time: "A fateful Tuesday afternoon, 12:17 PM"
+    place: "Jennifer's modest kitchen - stage of EPIC DRAMA"
+  tone:
+    overall: "Ridiculously over-the-top soap opera melodrama applied to mundane sandwich-making"
+    narrative_voice: "Breathlessly dramatic soap opera narrator who treats every action like a life-or-death crisis"
+  themes:
+    - "The EPIC struggle of everyday decisions"
+    - "Betrayal by inanimate objects"
+    - "The heroic quest for lunch"
+  ui:
+    colors:
+      primary: "#ff1493"
+      background: "#000000"
+      text: "#ffffff"
+
+characters:
+  - id: "player"
+    name: "Jennifer"
+    traits: ["hungry", "dramatic_protagonist", "sandwich_seeker"]
+    voice: "Inner thoughts increasingly influenced by soap opera narrator's dramatic style"
+    description: "An ordinary person thrust into the EXTRAORDINARY drama of lunch preparation"
+
+locations:
+  - id: "kitchen"
+    name: "The Kitchen of Destiny"
+    connections: ["pantry", "refrigerator_zone"]
+    description: |
+      THIS IS IT! The battleground where DREAMS are made and HOPES are crushed! 
+      The counter stands before you with a **toaster** gleaming ominously in the corner!
+    objects:
+      - name: "toaster"
+        description: "The chrome sentinel that will determine your sandwich's DESTINY!"
+      - name: "counter"
+        description: "Where the final assembly will take place!"
+
+  - id: "pantry"
+    name: "The Pantry of Secrets"
+    connections: ["kitchen"]
+    description: |
+      Shelves stretch before you, hiding both **salvation** and **DOOM**!
+
+  - id: "refrigerator_zone"
+    name: "The Cold Vault"
+    connections: ["kitchen"]
+    description: |
+      The humming fortress where dairy dreams are stored!
+
+items:
+  - id: "bread"
+    name: "The Bread of Potential"
+    description: "Ordinary bread... but it YEARNS for transformation!"
+    discoverable_in: "pantry"
+    discovery_objects: ["bread shelf", "shelf"]
+    aliases: ["bread", "loaf"]
+
+  - id: "cheese"
+    name: "The Cheese of Hope"
+    description: "A slice of processed perfection!"
+    discoverable_in: "refrigerator_zone"
+    discovery_objects: ["dairy shelf", "cheese drawer"]
+    aliases: ["cheese", "slice"]
+
+  - id: "mystery_jar"
+    name: "The Condiment of Unknown Origin"
+    description: "A jar without a label... what SECRETS does it hold?"
+    discoverable_in: "pantry"
+    discovery_objects: ["condiment shelf", "mysterious jars"]
+    aliases: ["jar", "condiment", "mystery condiment"]
+
+knowledge:
+  - id: "ingredients_found"
+    description: "You have the basic ingredients for sandwich destiny!"
+    requires: ["has_item:bread", "has_item:cheese"]
+
+flows:
+  - id: "ingredient_hunt"
+    type: "narrative"
+    name: "The Quest Begins!"
+    content: |
+      Your stomach **RUMBLES** with desperate hunger! The clock strikes 12:17 PM!
+      
+      [!warning] You need ingredients for the sandwich of DESTINY!
+      
+      Search the kitchen for what you need... but beware - not everything
+      is as it seems!
+
+    llm_guidelines: |
+      - EVERYTHING is dramatically over-the-top
+      - Use [item:Name] markup for all items
+      - Use [!warning], [!danger], [!discovery] alerts for drama
+      - DO NOT auto-trigger endings - wait for player to take specific actions
+      - When player uses toaster, set flag "bread_toasted" 
+      - When player applies mystery condiment, set flag "condiment_applied"
+      - Only trigger endings when player "eats", "bites", or "tastes" sandwich
+      - If player has toasted bread + cheese, they can assemble basic sandwich
+      - If they add mystery condiment, track that separately
+      - NEVER reveal mystery condiment contents until bite is taken
+
+    completion_transitions:
+      - condition: "knows:ingredients_found"
+        to_flow: "assembly_time"
+
+  - id: "assembly_time"
+    type: "narrative"
+    name: "The Assembly Phase!"
+    requirements: ["has_item:bread", "has_item:cheese"]
+    content: |
+      [!discovery] YOU HAVE THE INGREDIENTS! The [item:bread] and [item:cheese] 
+      await their **DESTINY**!
+      
+      But wait... the [item:bread] must be **TRANSFORMED**! The **toaster** 
+      calls to you with its chrome promise!
+      
+      [!warning] And what about that mysterious jar? Will you DARE to use 
+      the unknown condiment?
+
+    llm_guidelines: |
+      - Player must use toaster on bread before assembling sandwich
+      - Track if bread has been toasted with flag "bread_toasted"
+      - Allow player to apply mystery condiment if they choose
+      - Track condiment application with flag "condiment_applied"
+      - DO NOT trigger endings until player takes bite
+      - Build dramatic tension around the mystery condiment choice
+      - Emphasize the toaster as crucial to success
+
+    completion_transitions:
+      - condition: "flag:bread_toasted"
+        to_flow: "sandwich_ready"
+
+  - id: "sandwich_ready"
+    type: "narrative"
+    name: "The Moment of Truth!"
+    requirements: ["flag:bread_toasted"]
+    content: |
+      [!discovery] THE BREAD IS TOASTED! Golden, crispy, **PERFECT**! 
+      
+      Now you can assemble the sandwich of your dreams! Place the 
+      [item:cheese] upon the **toasted bread**!
+      
+      [!warning] But will you use JUST the cheese... or will you DARE 
+      to add the mystery condiment? The choice that will determine 
+      your **FATE**!
+
+    llm_guidelines: |
+      - Player can now assemble sandwich with toasted bread + cheese
+      - If they use mystery jar, set flag "condiment_applied"
+      - Build maximum drama around condiment choice
+      - DO NOT reveal what's in mystery jar until bite is taken
+      - Only trigger endings when player takes bite/eats sandwich
+      - Track sandwich state: basic (bread+cheese) vs full (+ condiment)
+
+    completion_transitions:
+      - condition: "flag:condiment_applied"
+        to_flow: "dangerous_sandwich"
+      - condition: "flag:bread_toasted"
+        to_flow: "safe_sandwich"
+
+  - id: "safe_sandwich"
+    type: "narrative"
+    name: "The Safe Path!"
+    requirements: ["flag:bread_toasted"]
+    content: |
+      [!discovery] You have chosen the path of **WISDOM**! The sandwich 
+      stands before you - **toasted bread** and **cheese** in perfect harmony!
+      
+      [!warning] But the moment of truth approaches... will you take the bite 
+      that will determine your fate?
+
+    llm_guidelines: |
+      - Player has basic sandwich: toasted bread + cheese
+      - ONLY trigger good ending when player takes bite/eats
+      - Build tension around the first bite
+      - If player eats/bites sandwich, trigger "cheese_triumph" ending
+      - Do not auto-advance - wait for player action
+
+    completion_transitions:
+      - condition: "player_eats_sandwich"
+        to_flow: "cheese_triumph"
+
+  - id: "dangerous_sandwich"
+    type: "narrative"
+    name: "The Risky Path!"
+    requirements: ["flag:condiment_applied"]
+    content: |
+      [!danger] OH THE **AUDACITY**! You have applied the mystery condiment 
+      to your sandwich! The unknown substance glistens ominously!
+      
+      [!warning] The sandwich is assembled... but will you DARE to take 
+      the bite that will reveal the condiment's true nature?
+
+    llm_guidelines: |
+      - Player has dangerous sandwich: toasted bread + cheese + mystery condiment
+      - ONLY trigger bad ending when player takes bite/eats
+      - Build maximum suspense around the mystery condiment
+      - If player eats/bites sandwich, trigger "fish_sauce_doom" ending
+      - Do not reveal condiment contents until bite is taken
+
+    completion_transitions:
+      - condition: "player_eats_sandwich"
+        to_flow: "fish_sauce_doom"
+
+  - id: "cheese_triumph"
+    type: "narrative"
+    name: "The Victory of Simplicity!"
+    requirements: ["flag:bread_toasted"]
+    ends_game: true
+    content: |
+      [!discovery] YOU TAKE THE BITE! The moment of **ULTIMATE TRUTH**!
+      
+      The **toasted bread** provides perfect texture! The **cheese** melts 
+      slightly from the warmth! It's... it's...
+      
+      [!discovery] **DELICIOUS**! Simple, perfect, exactly what you needed!
+      
+      The wisdom of choosing safety over mystery has **TRIUMPHED**! Your 
+      hunger is vanquished by the power of basic sandwich construction!
+      
+      *Triumphant music swells*
+      
+      You have achieved... **SANDWICH VICTORY**!
+
+  - id: "fish_sauce_doom"
+    type: "narrative"
+    name: "THE CONDIMENT OF DOOM!"
+    requirements: ["flag:condiment_applied"]
+    ends_game: true
+    content: |
+      [!danger] YOU TAKE THE BITE! The moment of **ULTIMATE TRUTH**!
+      
+      At first... toasted bread... cheese... perfect! But then... THEN...
+      
+      **THE FLAVOR HITS!**
+      
+      [!danger] OH THE HORROR! It's **FISH SAUCE**! Ancient, fermented, 
+      AGGRESSIVE fish sauce that has been lurking since the Carter Administration!
+      
+      Your taste buds **REVOLT**! Your sandwich dreams become NIGHTMARES!
+      
+      [!warning] The mystery condiment has revealed its terrible secret! 
+      You run to the sink, spitting and gasping!
+      
+      *Ominous music plays*
+      
+      The sandwich that promised **GLORY** has delivered only **BETRAYAL**!
+      
+      **THE END... ORDER PIZZA!**
+
+start:
+  text: |
+    **Dramatic music swells**
+    
+    IT'S 12:17 PM ON A TUESDAY! Your stomach **RUMBLES** with desperate hunger!
+    
+    [!warning] You need... a sandwich! But little do you know the TRIALS ahead!
+    
+    This is... **THE GREAT SANDWICH CRISIS**!
+  location: "kitchen"
+  first_flow: "ingredient_hunt"

@@ -1,0 +1,472 @@
+title: "The Great Sandwich Crisis"
+author: "Iffy Engine Team"
+version: "2.0"
+
+metadata:
+  setting:
+    time: "A fateful Tuesday afternoon, 12:17 PM"
+    place: "Jennifer's modest kitchen - stage of EPIC DRAMA"
+  tone:
+    overall: "Ridiculously over-the-top soap opera melodrama applied to mundane sandwich-making"
+    narrative_voice: "Breathlessly dramatic soap opera narrator who treats every action like a life-or-death crisis"
+  themes:
+    - "The EPIC struggle of everyday decisions"
+    - "Betrayal by inanimate objects"
+    - "The heroic quest for lunch"
+    - "Kitchen appliances as dramatic antagonists"
+  ui:
+    colors:
+      primary: "#ff1493"
+      background: "#000000"
+      text: "#ffffff"
+
+characters:
+  - id: "player"
+    name: "Jennifer"
+    traits: ["hungry", "dramatic_protagonist", "sandwich_seeker", "easily_betrayed_by_condiments"]
+    voice: "Inner thoughts increasingly influenced by soap opera narrator's dramatic style"
+    description: "An ordinary person thrust into the EXTRAORDINARY drama of lunch preparation"
+
+  - id: "narrator"
+    name: "The Voice of Destiny"
+    traits: ["melodramatic", "breathless", "prone_to_capitalization", "sees_drama_everywhere"]
+    voice: "Over-the-top soap opera announcer with a flair for the dramatic"
+    description: "The omniscient narrator who has clearly been watching too many daytime dramas"
+
+locations:
+  - id: "kitchen"
+    name: "The Kitchen of Destiny"
+    connections: ["pantry", "refrigerator_zone"]
+    description: |
+      THIS IS IT! The battleground where DREAMS are made and HOPES are crushed! 
+      Sunlight streams through the window like the tears of a thousand forgotten 
+      meals! The counter stands before you - cold, unforgiving, WAITING for the 
+      epic sandwich that will CHANGE EVERYTHING!
+    objects:
+      - name: "counter"
+        description: "This sacred altar of culinary creation has witnessed TRIUMPHS and TRAGEDIES!"
+      - name: "toaster"
+        description: "The chrome sentinel that could be your GREATEST ALLY... or your most BITTER ENEMY!"
+      - name: "knife block"
+        description: "An arsenal of gleaming blades, each one THIRSTING for sandwich justice!"
+
+  - id: "pantry"
+    name: "The Pantry of Broken Dreams"
+    connections: ["kitchen"]
+    description: |
+      You step into the shadowy realm where HOPE goes to die! Shelves stretch 
+      before you like the years you've wasted NOT making the perfect sandwich! 
+      What SECRETS lie hidden behind these canned goods? What BETRAYALS await 
+      among the crackers?
+    objects:
+      - name: "bread shelf"
+        description: "The throne where carbohydrate royalty should reign supreme!"
+      - name: "condiment collection"
+        description: "Jars and bottles that MOCK you with their false promises!"
+      - name: "mystery cans"
+        description: "Unlabeled cylindrical enigmas that could contain ANYTHING!"
+
+  - id: "refrigerator_zone"
+    name: "The Frigid Fortress of Solitude"
+    connections: ["kitchen"]
+    description: |
+      The humming MONOLITH of preservation! Behind these sealed doors lie the 
+      PERISHABLE SECRETS that will make or break your sandwich destiny! The 
+      cold air whispers of expired dreams and forgotten leftovers!
+    objects:
+      - name: "vegetable crisper"
+        description: "Where once-proud vegetables go to contemplate their MORTALITY!"
+      - name: "dairy shelf"
+        description: "The calcium-rich sanctuary where milk products plot their REVENGE!"
+      - name: "mysterious leftovers"
+        description: "Tupperware containers hiding UNSPEAKABLE culinary mysteries!"
+
+items:
+  - id: "stale_bread"
+    name: "The Bread of Betrayal"
+    description: "Once soft and yielding, now hardened by the cruel passage of time!"
+    discoverable_in: "pantry"
+    discovery_objects: ["bread shelf", "bread box", "shelf"]
+    aliases: ["bread", "loaf", "stale loaf"]
+
+  - id: "expired_milk"
+    name: "The Milk of Broken Promises"
+    description: "A white lie in liquid form - it PROMISED freshness, but delivered only DECEPTION!"
+    discoverable_in: "refrigerator_zone" 
+    discovery_objects: ["dairy shelf", "milk jug", "refrigerator"]
+    aliases: ["milk", "dairy", "expired dairy"]
+
+  - id: "mystery_jar"
+    name: "The Condiment of Unknown Origin"
+    description: "A jar without a label - is it salvation or DOOM in viscous form?"
+    discoverable_in: "pantry"
+    discovery_objects: ["condiment collection", "mysterious jars", "unlabeled jar"]
+    aliases: ["jar", "condiment", "mystery condiment"]
+
+  - id: "heroic_cheese"
+    name: "The Cheese of Last Hope"
+    description: "A single slice of processed cheese - your FINAL chance at sandwich glory!"
+    discoverable_in: "refrigerator_zone"
+    discovery_objects: ["dairy shelf", "cheese drawer", "last slice"]
+    aliases: ["cheese", "slice", "processed cheese", "hope"]
+
+knowledge:
+  - id: "sandwich_desperation"
+    description: "The growing realization that this sandwich mission is more PERILOUS than anticipated"
+    requires: []
+
+  - id: "bread_betrayal"
+    description: "The bread has BETRAYED you with its staleness - but the quest must continue!"
+    requires: ["has_item:stale_bread"]
+
+  - id: "dairy_conspiracy"
+    description: "The refrigerated rebellion! Even the MILK has turned against you!"
+    requires: ["has_item:expired_milk"]
+
+  - id: "cheese_salvation"
+    description: "In your darkest hour, CHEESE emerges as the unlikely hero!"
+    requires: ["has_item:heroic_cheese"]
+
+  - id: "condiment_mystery"
+    description: "The mystery jar could be the KEY to salvation... or your ULTIMATE DOWNFALL!"
+    requires: ["has_item:mystery_jar"]
+
+flows:
+  - id: "hunger_awakens"
+    type: "narrative"
+    name: "The Hunger Strikes!"
+    content: |
+      It begins... as all great dramas do... with a **RUMBLING**! Your stomach 
+      cries out in desperate hunger! The clock strikes **12:17 PM** and you 
+      realize... you haven't eaten since breakfast! This is a *CRISIS* of 
+      **epic proportions**!
+      
+      [!warning] The kitchen awaits, but little do you know the TRIALS that lie ahead!
+    
+    llm_guidelines: |
+      - EVERYTHING is dramatically over-the-top
+      - Use ALL CAPS for emotional emphasis
+      - Treat mundane actions like epic struggles
+      - Every object has personality and potential for betrayal
+      - Build tension through dramatic pauses and exclamation points
+      - Make simple decisions feel like life-or-death choices
+      - Use soap opera clichés and melodramatic language
+      - React to player actions with breathless commentary
+      - ALWAYS use [item:Name] markup for items: [item:The Bread of Betrayal], [item:The Cheese of Last Hope]
+      - Use [character:Jennifer] when referring to the player character
+      - Use [!danger], [!warning], and [!discovery] alerts for maximum drama
+      - Use **bold** for EPIC DRAMATIC MOMENTS
+    
+    completion_transitions:
+      - condition: "has_item:stale_bread"
+        to_flow: "bread_discovery"
+      - condition: "has_item:expired_milk"
+        to_flow: "milk_discovery"
+      - condition: "has_item:heroic_cheese"
+        to_flow: "cheese_discovery"
+      - condition: "has_item:mystery_jar"
+        to_flow: "mystery_discovery"
+
+  - id: "bread_discovery"
+    type: "narrative"
+    name: "The Bread Betrayal!"
+    requirements: ["has_item:stale_bread"]
+    content: |
+      [!danger] OH THE BETRAYAL! OH THE HEARTBREAK! You have discovered the 
+      [item:bread of betrayal] and it has **STABBED YOU IN THE BACK** with its 
+      staleness! 
+      
+      This was supposed to be your foundation! Your carbohydrate CORNERSTONE! 
+      But no... it sits there, MOCKING you with its hardened exterior and 
+      dreams of what it ONCE was!
+      
+      [!warning] But the quest must continue! Surely there are other ingredients 
+      that won't BETRAY your sandwich dreams!
+    
+    completion_transitions:
+      - condition: "has_item:heroic_cheese"
+        to_flow: "ingredients_gathered"
+      - condition: "has_item:mystery_jar"
+        to_flow: "ingredients_gathered"
+      - condition: "has_item:expired_milk"
+        to_flow: "double_betrayal"
+
+  - id: "milk_discovery"
+    type: "narrative"
+    name: "The Dairy Disaster!"
+    requirements: ["has_item:expired_milk"]
+    content: |
+      [!danger] GASP! *GASP!* The [item:milk of broken promises] reveals its 
+      TRUE NATURE! The expiration date glares at you like the eyes of a 
+      **VENGEFUL SPIRIT**!
+      
+      How COULD this happen? How could your own refrigerator harbor such 
+      DECEPTION? The very foundations of your dairy trust have been 
+      **SHATTERED**!
+      
+      [!warning] But wait... surely not ALL the ingredients have turned against you... right?
+    
+    completion_transitions:
+      - condition: "has_item:heroic_cheese"
+        to_flow: "ingredients_gathered"
+      - condition: "has_item:mystery_jar"
+        to_flow: "ingredients_gathered"
+      - condition: "has_item:stale_bread"
+        to_flow: "double_betrayal"
+
+  - id: "cheese_discovery"
+    type: "narrative"
+    name: "The Cheese Salvation!"
+    requirements: ["has_item:heroic_cheese"]
+    content: |
+      [!discovery] BUT WAIT! What light through yonder refrigerator breaks? 
+      It is CHEESE! And Jennifer is the HUNGRY!
+      
+      In the dairy drawer, wrapped in plastic like a **GOLDEN TREASURE**, 
+      lies salvation! The [item:cheese of last hope] gleams with processed 
+      PERFECTION! Could this be the key to ending your sandwich saga?
+      
+      [!warning] But cheese alone does not make a sandwich... you need more ingredients!
+    
+    completion_transitions:
+      - condition: "has_item:stale_bread"
+        to_flow: "ingredients_gathered"
+      - condition: "has_item:mystery_jar"
+        to_flow: "ingredients_gathered"
+
+  - id: "mystery_discovery"
+    type: "narrative"
+    name: "The Condiment Enigma!"
+    requirements: ["has_item:mystery_jar"]
+    content: |
+      [!warning] OH MY! OH THE SUSPENSE! Deep in the condiment collection, 
+      you have uncovered... THE [item:MYSTERY JAR]!
+      
+      No label! No clue! Just a jar of **UNKNOWN DESTINY** that could 
+      contain ANYTHING! Is it salvation in sauce form? Or is it the 
+      **DOOM** of your sandwich dreams?
+      
+      [!danger] The very air around it seems to WHISPER of dangerous flavors!
+    
+    completion_transitions:
+      - condition: "has_item:stale_bread"
+        to_flow: "ingredients_gathered"
+      - condition: "has_item:heroic_cheese"
+        to_flow: "ingredients_gathered"
+
+  - id: "double_betrayal"
+    type: "narrative"
+    name: "The Kitchen Conspiracy!"
+    requirements: ["has_item:stale_bread", "has_item:expired_milk"]
+    content: |
+      [!danger] OH THE HORROR! OH THE HUMANITY! A **DOUBLE BETRAYAL** has 
+      been revealed! Both the [item:bread] AND the [item:milk] have turned 
+      against you!
+      
+      It's as if the very **UNIVERSE** is conspiring to deny you this 
+      simple sandwich! Your own kitchen - the very *HEART* of your home - 
+      has become a den of **CULINARY TREACHERY**!
+      
+      *Lightning crashes outside even though it's a sunny day*
+      
+      [!warning] But surely... SURELY there must be hope somewhere in this fortress of betrayal!
+    
+    completion_transitions:
+      - condition: "has_item:heroic_cheese"
+        to_flow: "ingredients_gathered"
+      - condition: "has_item:mystery_jar"
+        to_flow: "ingredients_gathered"
+
+  - id: "ingredients_gathered"
+    type: "narrative"
+    name: "The Moment of Truth Approaches!"
+    requirements: ["has_item:stale_bread"]
+    content: |
+      [!warning] THE PIECES ARE FALLING INTO PLACE! You have assembled the 
+      components of what could be... the sandwich of **DESTINY**!
+      
+      The [item:stale bread] awaits its fate! But what will you choose to 
+      complete this epic culinary quest? Will you trust in the **UNKNOWN**? 
+      Or will you choose the path of **SAFETY**?
+      
+      [!danger] The very UNIVERSE holds its breath as you stand at the 
+      crossroads of sandwich destiny!
+    
+    completion_transitions:
+      - condition: "has_item:heroic_cheese"
+        to_flow: "final_choice"
+      - condition: "has_item:mystery_jar"
+        to_flow: "risky_choice"
+
+  - id: "final_choice"
+    type: "dialogue"
+    name: "The Ultimate Decision!"
+    participants: ["player", "narrator"]
+    requirements: ["has_item:heroic_cheese", "has_item:stale_bread"]
+    player_goal: "Choose between the safe cheese route or explore other options"
+    
+    exchanges:
+      - speaker: "narrator"
+        text: |
+          [!warning] HERE WE ARE! The **MOMENT OF TRUTH**! You hold the 
+          [item:heroic cheese] in your hands - salvation in processed form!
+          
+          But wait... do you sense something else calling to you? Some other 
+          **MYSTERIOUS** possibility lurking in your kitchen? The [item:bread] 
+          waits patiently for your decision!
+          
+          What will it be, [character:Jennifer]? Will you trust in the 
+          **SAFETY** of cheese? Or dare you seek... something MORE dangerous?
+        emotion: "dramatic_tension"
+        choices:
+          - text: "Use the cheese - play it safe!"
+            next: "cheese_ending"
+            sets: ["chose_safety"]
+          - text: "Search for something more... adventurous!"
+            next: "mystery_search"
+            sets: ["seeks_danger"]
+
+  - id: "risky_choice"
+    type: "dialogue"
+    name: "The Dangerous Decision!"
+    participants: ["player", "narrator"]
+    requirements: ["has_item:mystery_jar", "has_item:stale_bread"]
+    player_goal: "Choose between the mystery condiment or find something safer"
+    
+    exchanges:
+      - speaker: "narrator"
+        text: |
+          [!danger] OH THE **PERIL**! You stand before the [item:mystery jar], 
+          its unlabeled surface reflecting your **UNCERTAIN FUTURE**!
+          
+          This could be your greatest triumph... or your most **SPECTACULAR** 
+          failure! The [item:bread] trembles in anticipation!
+          
+          But perhaps... perhaps wisdom would suggest finding something... 
+          SAFER? What will you choose?
+        emotion: "dangerous_tension"
+        choices:
+          - text: "Risk everything on the mystery condiment!"
+            next: "condiment_ending"
+            sets: ["chose_danger", "used_mystery_condiment"]
+          - text: "Find something safer first!"
+            next: "safety_search"
+            sets: ["seeks_safety"]
+
+  - id: "mystery_search"
+    type: "narrative"
+    name: "The Search for Danger!"
+    requirements: ["flag:seeks_danger"]
+    content: |
+      [!warning] YOU SEEK DANGER? You CRAVE the thrill of culinary Russian 
+      roulette? Very well! The kitchen **RESPONDS** to your call for adventure!
+      
+      And there... in the pantry... the [item:mystery jar] seems to **GLOW** 
+      with malevolent possibility! Will you take this final step into 
+      the UNKNOWN?
+    
+    completion_transitions:
+      - condition: "has_item:mystery_jar"
+        to_flow: "condiment_ending"
+
+  - id: "safety_search"
+    type: "narrative"
+    name: "The Search for Safety!"
+    requirements: ["flag:seeks_safety"]
+    content: |
+      [!discovery] WISDOM! You seek the path of **CAUTION**! The kitchen 
+      **APPROVES** of your prudent choice!
+      
+      And there... in the refrigerator... the [item:heroic cheese] awaits 
+      like a beacon of **PROCESSED HOPE**! Will you embrace this dairy 
+      salvation?
+    
+    completion_transitions:
+      - condition: "has_item:heroic_cheese"
+        to_flow: "cheese_ending"
+
+  - id: "cheese_ending"
+    type: "narrative"
+    name: "The Safe Triumph!"
+    requirements: ["has_item:heroic_cheese", "has_item:stale_bread"]
+    ends_game: true
+    content: |
+      [!discovery] THIS IS IT! The moment of **TRUTH**! The *CLIMAX* of our epic tale!
+      
+      With trembling hands, you place the [item:heroic cheese] upon the [item:bread of betrayal]! 
+      Will love conquer all? Will processed dairy overcome the forces of staleness? 
+      The very **UNIVERSE** holds its breath!
+      
+      You take a bite... and... **AND...**
+      
+      [!discovery] IT'S... it's actually pretty okay! Not great, but definitely edible! 
+      The [item:cheese] has **TRIUMPHED** over adversity! Your hunger is *VANQUISHED*!
+      
+      As you chew this [item:sandwich of DESTINY], you realize that sometimes... 
+      sometimes the greatest victories come from the simplest ingredients... 
+      and the most **DRAMATIC** narration!
+      
+      *Fade to black as triumphant soap opera music swells*
+      
+      Will [character:Jennifer] tackle dinner with the same **EPIC COURAGE**? Will the 
+      toaster finally get its revenge? Find out next time on... 
+      "**KITCHEN OF BROKEN DREAMS**!"
+
+  - id: "condiment_ending"
+    type: "narrative"
+    name: "THE CONDIMENT OF DOOM!"
+    requirements: ["has_item:mystery_jar", "has_item:stale_bread"]
+    ends_game: true
+    content: |
+      [!danger] OH NO! OH THE **HUBRIS**! OH THE *HUMANITY*!
+      
+      Against all wisdom, against all **COMMON SENSE**, you have chosen to trust 
+      the [item:mystery jar]! With hands shaking like leaves in a HURRICANE OF REGRET, 
+      you twist open the lid and...
+      
+      **THE SMELL!** *THE UNGODLY SMELL!*
+      
+      [!warning] It's... it's **FISH SAUCE**! Ancient, fermented, *AGGRESSIVE* fish sauce 
+      that has been lurking in your pantry since the CARTER ADMINISTRATION! The 
+      very **AIR** recoils in horror!
+      
+      But you've gone too far to turn back now! With the determination of the 
+      **DOOMED**, you spread this CULINARY NIGHTMARE upon your [item:bread of betrayal]!
+      
+      One bite... just ONE BITE... and...
+      
+      [!danger] **BETRAYAL MOST FOUL!** Your taste buds REVOLT! Your stomach 
+      **MUTINIES**! The sandwich of your dreams has become the NIGHTMARE OF YOUR REALITY!
+      
+      As you run to the sink, spitting and gasping, you realize the terrible truth: 
+      sometimes the greatest mysteries are mysteries for a **REASON**!
+      
+      *Ominous music plays as storm clouds gather*
+      
+      Will [character:Jennifer] ever trust a condiment again? Will she survive this 
+      culinary **CATASTROPHE**? Will she ever eat fish again?
+      
+      Find out NEVER because this story is OVER and you're ordering PIZZA!
+      
+      **THE END... OR IS IT?**
+
+start:
+  text: |
+    **Dramatic music swells**
+    
+    IT'S **12:17 PM** ON A TUESDAY! The *SUN* shines with **CRUEL** indifference as our 
+    HEROINE, [character:Jennifer], stands at the crossroads of *DESTINY*! Her stomach 
+    **RUMBLES** with the fury of a thousand unfed souls!
+    
+    [!warning] "I need... a sandwich," she whispers, not knowing that these simple words will set in motion events of EARTH-SHATTERING importance!
+    
+    The **kitchen** awaits... but what *TRIALS* lie ahead? What **BETRAYALS** lurk 
+    in the pantry? What *SECRETS* hide in the refrigerator?
+    
+    [!danger] Thunder crashes mysteriously
+    
+    This is... **THE GREAT SANDWICH CRISIS**!
+  location: "kitchen"
+  first_flow: "hunger_awakens"
+  sets:
+    - "knows:sandwich_desperation"
