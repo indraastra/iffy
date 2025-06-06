@@ -3,6 +3,7 @@ export interface FormattedComponent {
   type: string;
   props: Record<string, any>;
   content: string;
+  originalContent?: string; // Store original content for alerts before nested parsing
 }
 
 export interface ParsedContent {
@@ -22,7 +23,17 @@ export class RichTextParser {
     const components: FormattedComponent[] = [];
 
     // Define markup patterns for Phase 1
+    // IMPORTANT: Process alerts FIRST before nested components get replaced
     const patterns = [
+      // Alert boxes: [!type] content (until newline or end)
+      {
+        regex: /\[!(\w+)\]\s*([^\n\r]*)\n?/g,
+        type: 'Alert',
+        extractContent: (match: RegExpMatchArray) => match[2],
+        extractProps: (match: RegExpMatchArray) => ({ alertType: match[1] }),
+        storeOriginal: true
+      },
+
       // Bold text: **text**
       {
         regex: /\*\*((?:[^*]|\*(?!\*))+)\*\*/g,
@@ -49,14 +60,6 @@ export class RichTextParser {
         regex: /\[item:([^\]]+)\]/g,
         type: 'Item',
         extractContent: (match: RegExpMatchArray) => match[1]
-      },
-
-      // Alert boxes: [!type] content (until newline or end)
-      {
-        regex: /\[!(\w+)\]\s*([^\n\r]*)\n?/g,
-        type: 'Alert',
-        extractContent: (match: RegExpMatchArray) => match[2],
-        extractProps: (match: RegExpMatchArray) => ({ alertType: match[1] })
       }
     ];
 
@@ -73,6 +76,11 @@ export class RichTextParser {
           props: pattern.extractProps ? pattern.extractProps(match) : {}
         };
 
+        // For alerts, store the original content before any component replacement
+        if ((pattern as any).storeOriginal) {
+          component.originalContent = pattern.extractContent(match);
+        }
+
         components.push(component);
         return `{{COMPONENT:${componentId}}}`;
       });
@@ -88,18 +96,23 @@ export class RichTextParser {
     // Split text by component placeholders
     const segments = text.split(/\{\{COMPONENT:([^}]+)\}\}/);
     
+    // Debug: log if we have component placeholders but no segments
+    if (text.includes('{{COMPONENT:') && segments.length === 1) {
+      console.error('Rich text split failed!', { text, segments });
+    }
+    
     for (let i = 0; i < segments.length; i++) {
       if (i % 2 === 0) {
         // Regular text segment
         if (segments[i]) {
           // Check if next segment is a block-level component
-          const nextComponent = (i < segments.length - 2) ? 
-            components.find(c => c.id === segments[i + 1]) : null;
+          const nextComponentId = (i + 1 < segments.length) ? segments[i + 1] : null;
+          const nextComponent = nextComponentId ? components.find(c => c.id === nextComponentId) : null;
           const isNextComponentBlock = nextComponent && nextComponent.type === 'Alert';
           
           // Check if previous segment was a block-level component
-          const prevComponent = (i > 1) ? 
-            components.find(c => c.id === segments[i - 1]) : null;
+          const prevComponentId = (i > 1) ? segments[i - 1] : null;
+          const prevComponent = prevComponentId ? components.find(c => c.id === prevComponentId) : null;
           const isPrevComponentBlock = prevComponent && prevComponent.type === 'Alert';
           
           let textContent = segments[i];
@@ -130,6 +143,7 @@ export class RichTextParser {
         // Component placeholder - segments[i] contains just the component ID due to capture group
         const componentId = segments[i];
         const component = components.find(c => c.id === componentId);
+        
         
         if (component) {
           fragment.appendChild(this.createDOMElement(component));
@@ -184,7 +198,13 @@ export class RichTextParser {
         // Create content span
         const contentSpan = document.createElement('span');
         contentSpan.className = 'rich-alert-content';
-        contentSpan.textContent = component.content;
+        
+        // For alert content, we need to parse it as rich text but with a fresh parser
+        // to avoid component ID conflicts. Use originalContent if available.
+        const alertParser = new RichTextParser();
+        const contentToRender = component.originalContent || component.content;
+        const alertFragment = alertParser.renderContent(contentToRender);
+        contentSpan.appendChild(alertFragment);
         
         element.appendChild(iconSpan);
         element.appendChild(contentSpan);

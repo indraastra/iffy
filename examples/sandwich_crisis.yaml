@@ -152,6 +152,10 @@ flows:
       - Make simple decisions feel like life-or-death choices
       - Use soap opera clichés and melodramatic language
       - React to player actions with breathless commentary
+      - ALWAYS use [item:Name] markup for items: [item:The Bread of Betrayal], [item:The Cheese of Last Hope]
+      - Use [character:Jennifer] when referring to the player character
+      - Use [!danger], [!warning], and [!discovery] alerts for maximum drama
+      - Use **bold** for EPIC DRAMATIC MOMENTS
     
     completion_transitions:
       - condition: "knows:kitchen_betrayal"

@@ -9,13 +9,19 @@
     "build:gh-pages": "NODE_ENV=production npm run build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
-    "validate-story": "tsx scripts/validate-story.ts"
+    "validate-story": "tsx scripts/validate-story.ts",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.0",
+    "@vitest/ui": "^1.0.0",
+    "jsdom": "^23.0.0",
     "tsx": "^4.19.4",
     "typescript": "^5.0.0",
-    "vite": "^5.0.0"
+    "vite": "^5.0.0",
+    "vitest": "^1.0.0"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",

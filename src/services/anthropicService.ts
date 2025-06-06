@@ -127,79 +127,35 @@ export class AnthropicService {
     story: any,
     currentLocation: any
   ): string {
-    return `You are an interactive fiction game interpreter. Your job is to:
-1. Understand the player's natural language command
-2. Determine what action they want to take
-3. Check if the action is valid in the current context
-4. Generate an appropriate response
-5. Specify any state changes that should occur
+    return `You are an interactive fiction game interpreter processing natural language commands.
 
-STORY CONTEXT:
-Title: ${story.title}
-Setting: ${story.metadata.setting.time}, ${story.metadata.setting.place}
-Tone: ${story.metadata.tone.overall}
-Narrative Voice: ${story.metadata.tone.narrative_voice}
+STORY: ${story.title} | ${story.metadata.tone.overall} | ${story.metadata.tone.narrative_voice}
 
-CURRENT GAME STATE:
-Location: ${currentLocation?.name || 'Unknown'}
-Location Description: ${currentLocation?.description || 'No description'}
-Available Exits: ${currentLocation?.connections?.join(', ') || 'None'}
+STATE:
+Location: ${currentLocation?.name || 'Unknown'} | Exits: ${currentLocation?.connections?.join(', ') || 'None'}
 Inventory: ${gameState.inventory?.length > 0 ? gameState.inventory.join(', ') : 'Empty'}
-Flags: ${gameState.flags?.size > 0 ? Array.from(gameState.flags).join(', ') : 'None'}
-Current Flow: ${gameState.currentFlow || 'None'}
-Knowledge: ${gameState.knowledge?.size > 0 ? Array.from(gameState.knowledge).join(', ') : 'None'}
-Game Status: ${gameState.gameEnded ? `COMPLETED (Ending: ${gameState.endingId || 'Unknown'})` : 'IN PROGRESS'}
+Flow: ${gameState.currentFlow || 'None'} | Status: ${gameState.gameEnded ? 'COMPLETED' : 'ACTIVE'}
 
-WORLD MODEL:
+LOCATIONS:
 ${story.locations?.map((loc: any) => {
-  let locationInfo = `📍 ${loc.name} (${loc.id}): ${loc.description}`;
+  let info = `${loc.name} (${loc.id})`;
   
-  // Show location objects
-  if (loc.objects && loc.objects.length > 0) {
-    locationInfo += `\n  🔧 Objects in this location:`;
-    loc.objects.forEach((obj: any) => {
-      locationInfo += `\n    - ${obj.name}: ${obj.description}`;
-    });
-  }
-  
-  // Show items directly in this location
   const itemsHere = story.items?.filter((item: any) => item.location === loc.id) || [];
-  if (itemsHere.length > 0) {
-    locationInfo += `\n  📦 Items visible here:`;
-    itemsHere.forEach((item: any) => {
-      locationInfo += `\n    - ${item.name}: ${item.description}`;
-      if (item.aliases && item.aliases.length > 0) {
-        locationInfo += ` [Also called: ${item.aliases.join(', ')}]`;
-      }
-    });
-  }
-  
-  // Show discoverable items and what to search
   const discoverableHere = story.items?.filter((item: any) => item.discoverable_in === loc.id) || [];
+  
+  if (itemsHere.length > 0) {
+    info += ` | Items: ${itemsHere.map((item: any) => item.name).join(', ')}`;
+  }
   if (discoverableHere.length > 0) {
-    locationInfo += `\n  🔍 Items discoverable here:`;
-    discoverableHere.forEach((item: any) => {
-      locationInfo += `\n    - ${item.name}: ${item.description}`;
-      if (item.discovery_objects && item.discovery_objects.length > 0) {
-        locationInfo += `\n      ➤ Found by searching: ${item.discovery_objects.join(', ')}`;
-      }
-      if (item.aliases && item.aliases.length > 0) {
-        locationInfo += ` [Also called: ${item.aliases.join(', ')}]`;
-      }
-    });
+    info += ` | Discoverable: ${discoverableHere.map((item: any) => `${item.name} (search: ${item.discovery_objects?.join('/') || 'any'})`).join(', ')}`;
   }
   
-  return locationInfo;
-}).join('\n\n') || 'None defined'}
+  return info;
+}).join('\n') || 'None'}
 
-CHARACTERS:
-${story.characters?.map((char: any) => `- ${char.name}: ${char.description} [Voice: ${char.voice}] [Traits: ${char.traits?.join(', ') || 'None'}]`).join('\n') || 'None defined'}
+CHARACTERS: ${story.characters?.map((char: any) => char.name).join(', ') || 'None'}
 
-STORY FLOWS:
-${story.flows?.map((flow: any) => `- ${flow.name} (${flow.id}): ${flow.type} ${flow.requirements ? `[Requires: ${flow.requirements.join(', ')}]` : ''}${flow.ends_game ? ' [ENDS GAME]' : ''}`).join('\n') || 'None defined'}
-
-STORY ENDINGS:
-${story.endings?.map((ending: any) => `- ${ending.name} (${ending.id}): ${ending.requires ? `[Requires: ${ending.requires.join(', ')}]` : 'No requirements'}`).join('\n') || 'Defined as narrative flows with ends_game=true'}
+${story.flows?.length > 0 ? `FLOWS: ${story.flows.map((flow: any) => `${flow.name}${flow.ends_game ? ' [END]' : ''}`).join(', ')}` : ''}
 
 CURRENT FLOW CONTEXT:
 ${this.getCurrentFlowContext(story, gameState)}
@@ -208,6 +164,9 @@ CONVERSATION MEMORY:
 ${this.getConversationContext(gameState)}
 
 ${gameState.gameEnded ? this.getEndingContext(story, gameState) : ''}
+
+MARKUP: Use [character:Name] for characters, [item:Name] for items, **bold** for emphasis, [!warning]/[!discovery]/[!danger] for alerts.
+Characters: ${story.characters?.map((char: any) => char.name).join(', ') || 'None'}
 
 PLAYER COMMAND: "${command}"
 
@@ -228,45 +187,14 @@ Use this exact format with properly escaped strings for multiline content:
   "response": "The narrative response to show the player. Use \\n for line breaks, escape quotes as \\\", and ensure all strings are properly JSON-formatted."
 }
 
-CRITICAL RULES:
-1. If your narrative describes moving to a different location, set "newLocation" to the exact location ID
-2. ITEM DISCOVERY CONSTRAINTS ARE ABSOLUTE:
-   - Items with "discoverable_in" can ONLY be found in that specific location, nowhere else
-   - Items with "discovery_objects" can ONLY be found by searching those exact objects
-   - If player searches wrong location/object for a discoverable item, they find NOTHING
-   - Example: item_x discoverable_in "location_a" via "object_y" → searching location_b finds NOTHING
-   - Be firm: "You search thoroughly but find nothing" - do NOT improvise alternate locations
-3. DISCOVERY vs TAKING - CRITICAL DISTINCTION:
-   - DISCOVERY commands (check, examine, inspect, search, look, rummage): ONLY describe finding/spotting items
-   - NEVER automatically take items during discovery - STOP at "you spot", "you notice", "you see"
-   - Example: "examine object_y" → "You spot item_x among the object_y" (NO inventory change)
-   - TAKING commands (take, grab, pick up, get, collect): Add items to inventory
-   - Example: "take item_x" → "You grab the item_x" (WITH inventory change)
-4. DISCOVERY IS MANDATORY: When players search correct objects in correct locations, you MUST find the item
-   - Use discovery language: "you spot", "you notice", "you see", "you find" 
-   - STOP THERE - do not continue with taking actions
-   - Let the player decide their next action after discovery
-5. DO NOT ASSUME PLAYER INTENT - PERFORM ONLY THE REQUESTED ACTION:
-   - If player says "go to location_a", ONLY move there - do not search, examine, or take anything
-   - If player says "check object_y", ONLY examine it - do not take anything found
-   - If player says "examine item_x", ONLY look at it - do not use or manipulate it
-   - NEVER chain multiple actions together - each command is one specific action
-   - Do not anticipate what the player "probably wants" based on story context
-6. MOVEMENT COMMANDS ARE LOCATION-ONLY:
-   - "go to", "move to", "enter", "leave" should ONLY change location
-   - Describe the new location but do NOT perform searches or interactions
-   - Let the player explicitly request any searches or examinations after moving
-7. Use exact location and item IDs from the story data
-8. Only allow actions valid for current location and inventory
-9. Maintain the story's tone and be concise but atmospheric
-
-ENDGAME HANDLING:
-- If Game Status is COMPLETED, the story has concluded and no major actions should change the world state
-- Allow reflective interactions: examining the final state, discussing the outcome, asking "what if" questions
-- Respond to questions about the story, characters, or player choices made during the game  
-- Don't allow actions that would fundamentally change the concluded narrative
-- Maintain the celebratory or reflective tone appropriate to the ending achieved
-- Players can still look around, check inventory, or discuss what happened`;
+RULES:
+1. Use exact location/item IDs from story data
+2. Items discoverable ONLY in specified locations via specified objects - no exceptions
+3. Discovery commands (examine/search) only reveal items - don't auto-take
+4. Taking commands (take/grab) add to inventory
+5. One action per command - no chaining
+6. Movement commands only change location
+7. If game COMPLETED, allow reflection but no major state changes`;
   }
 
   private parseResponse(responseText: string): LLMResponse {

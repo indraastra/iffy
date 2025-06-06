@@ -868,12 +868,14 @@ This is a basic MVP version. More natural language understanding will be added i
     const isDiscoveryCommand = discoveryCommands.some(cmd => inputLower.includes(cmd));
     
     if (isDiscoveryCommand) {
-      // Check for taking language in the response
-      const takingWords = ['grab', 'take', 'pick up', 'scoop', 'collect', 'clutch', 'seize', 'snatch'];
-      const responseLower = responseText.toLowerCase();
-      const containsTakingLanguage = takingWords.some(word => responseLower.includes(word));
+      // Check for taking language in the response - be more contextual to avoid false positives
+      const takingPatterns = [
+        /\byou\s+(grab|take|pick\s+up|scoop|collect|clutch|seize|snatch)\b/i,
+        /\b(grabbing|taking|picking\s+up|scooping|collecting|clutching|seizing|snatching)\b/i
+      ];
+      const containsTakingLanguage = takingPatterns.some(pattern => pattern.test(responseText));
       
-      // Also check if items were added to inventory (double validation)
+      // Also check if items were added to inventory (this is the definitive check)
       const itemsAdded = stateChanges.addToInventory?.length > 0;
       
       if (containsTakingLanguage || itemsAdded) {

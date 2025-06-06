@@ -229,22 +229,20 @@ export class DebugPane {
   }
 
   private formatPrompt(prompt: string): string {
-    // Parse and colorize different sections of the prompt
+    // Parse and colorize different sections of the compact prompt
     const sections = [
-      { pattern: /STORY CONTEXT:([\s\S]*?)(?=CURRENT GAME STATE:|$)/g, class: 'prompt-story-context', label: 'Story Context' },
-      { pattern: /CURRENT GAME STATE:([\s\S]*?)(?=WORLD MODEL:|$)/g, class: 'prompt-game-state', label: 'Game State' },
-      { pattern: /WORLD MODEL:([\s\S]*?)(?=CHARACTERS:|$)/g, class: 'prompt-world-model', label: 'World Model' },
-      { pattern: /CHARACTERS:([\s\S]*?)(?=STORY FLOWS:|$)/g, class: 'prompt-characters', label: 'Characters' },
-      { pattern: /STORY FLOWS:([\s\S]*?)(?=STORY ENDINGS:|$)/g, class: 'prompt-flows', label: 'Story Flows' },
-      { pattern: /STORY ENDINGS:([\s\S]*?)(?=CURRENT FLOW CONTEXT:|$)/g, class: 'prompt-endings', label: 'Story Endings' },
-      { pattern: /CURRENT FLOW CONTEXT:([\s\S]*?)(?=CONVERSATION MEMORY:|$)/g, class: 'prompt-flow-context', label: 'Current Flow Context' },
-      { pattern: /CONVERSATION MEMORY:([\s\S]*?)(?=GAME COMPLETED:|PLAYER COMMAND:|$)/g, class: 'prompt-conversation-memory', label: 'Conversation Memory' },
-      { pattern: /GAME COMPLETED:([\s\S]*?)(?=PLAYER COMMAND:|$)/g, class: 'prompt-game-completed', label: 'Game Completed' },
-      { pattern: /PLAYER COMMAND:([\s\S]*?)(?=CRITICAL:|$)/g, class: 'prompt-command', label: 'Player Command' },
-      { pattern: /CRITICAL:([\s\S]*?)(?=Use this exact format|CRITICAL RULES:|$)/g, class: 'prompt-critical-header', label: 'Critical Instructions' },
-      { pattern: /Use this exact format([\s\S]*?)(?=CRITICAL RULES:|$)/g, class: 'prompt-format', label: 'Response Format' },
-      { pattern: /CRITICAL RULES:([\s\S]*?)(?=ENDGAME HANDLING:|$)/g, class: 'prompt-rules', label: 'Critical Rules' },
-      { pattern: /ENDGAME HANDLING:([\s\S]*?)$/g, class: 'prompt-endgame', label: 'Endgame Handling' }
+      { pattern: /STORY:([\s\S]*?)(?=STATE:|$)/g, class: 'prompt-story-context', label: 'Story' },
+      { pattern: /STATE:([\s\S]*?)(?=LOCATIONS:|$)/g, class: 'prompt-game-state', label: 'State' },
+      { pattern: /LOCATIONS:([\s\S]*?)(?=CHARACTERS:|$)/g, class: 'prompt-locations', label: 'Locations' },
+      { pattern: /CHARACTERS:([\s\S]*?)(?=FLOWS:|$)/g, class: 'prompt-characters', label: 'Characters' },
+      { pattern: /FLOWS:([\s\S]*?)(?=CURRENT FLOW CONTEXT:|$)/g, class: 'prompt-flows', label: 'Flows' },
+      { pattern: /CURRENT FLOW CONTEXT:([\s\S]*?)(?=CONVERSATION MEMORY:|$)/g, class: 'prompt-flow-context', label: 'Current Flow' },
+      { pattern: /CONVERSATION MEMORY:([\s\S]*?)(?=MARKUP:|$)/g, class: 'prompt-conversation-memory', label: 'Memory' },
+      { pattern: /MARKUP:([\s\S]*?)(?=PLAYER COMMAND:|$)/g, class: 'prompt-markup', label: 'Markup Rules' },
+      { pattern: /PLAYER COMMAND:([\s\S]*?)(?=CRITICAL:|$)/g, class: 'prompt-command', label: 'Command' },
+      { pattern: /CRITICAL:([\s\S]*?)(?=Use this exact format|RULES:|$)/g, class: 'prompt-critical-header', label: 'Instructions' },
+      { pattern: /Use this exact format([\s\S]*?)(?=RULES:|$)/g, class: 'prompt-format', label: 'Format' },
+      { pattern: /RULES:([\s\S]*?)$/g, class: 'prompt-rules', label: 'Rules' }
     ];
 
     let formatted = this.escapeHtml(prompt);

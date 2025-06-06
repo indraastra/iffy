@@ -32,6 +32,7 @@ A modern interactive fiction engine that uses Large Language Models to interpret
 - **Web-based**: Runs in any modern browser, no installation required
 - **Save/Load System**: Persistent game state with JSON save files
 - **Debug Console**: Comprehensive logging and debugging tools
+- **Comprehensive Testing**: Vitest-based test suite with DOM testing for rich text parser
 
 ## 🚀 Quick Start
 
@@ -68,6 +69,20 @@ For the full experience with natural language commands:
 ```bash
 npm run build
 ```
+
+### Testing
+```bash
+# Run tests in watch mode
+npm test
+
+# Run tests once
+npm run test:run
+
+# Run tests with UI
+npm run test:ui
+```
+
+The project uses Vitest for testing with comprehensive coverage of the rich text parser and core engine components.
 
 ### Validating Stories
 ```bash

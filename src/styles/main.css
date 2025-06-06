@@ -559,7 +559,7 @@ body {
   padding: 0.75rem 1rem;
   border-radius: 6px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.5rem;
   border-left: 4px solid;
   font-weight: 500;
@@ -568,7 +568,6 @@ body {
 .rich-alert-icon {
   font-size: 1.1em;
   line-height: 1;
-  margin-top: 0.1em;
 }
 
 .rich-alert-content {
