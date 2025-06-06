@@ -1,201 +1,167 @@
-# Story Format v2: Action-Based Narrative Enhancement
+# Story Format v2: LLM-Driven Simplicity
 
-**Status:** 📋 Proposed  
+**Status:** 📋 Revised Proposal  
 **Priority:** High  
-**Motivation:** Current format limitations discovered through sandwich_crisis.yaml implementation
+**Motivation:** Reduce authoring burden while enabling natural action-based storytelling
 
-## Problem Statement
+## Core Philosophy Shift
 
-While implementing a simple branching sandwich-making story, we discovered fundamental limitations in the current story format that prevent natural action-based storytelling:
+**Original Problem**: Format v1 was too rigid and couldn't handle simple action-based stories like sandwich-making.
 
-### Current Format Limitations
+**Wrong Solution**: Add complex manual specifications (action_triggers, transforms, etc.) that burden authors.
 
-1. **Item Collection Focus**: Format is designed around collecting items and meeting possession conditions
-2. **Automatic Flow Transitions**: Flows trigger based on item possession, not player actions
-3. **No Action-Based State Tracking**: Cannot reliably detect and respond to specific player actions like "use toaster" or "take bite"
-4. **No Item Transformations**: Cannot transform items (bread → toasted bread)
-5. **Automatic Ending Triggers**: Endings trigger on flow entry, not on specific player commands
-6. **LLM Compliance Issues**: No guarantee LLM will follow complex guidelines about flag setting or waiting for specific commands
+**Right Solution**: **Let the LLM do the intelligent inference work** - reduce authoring complexity while increasing expressivity.
 
-### Real-World Story Requirements
+## The Real Problem
 
-The sandwich crisis story revealed a need for simple state machines:
+The sandwich crisis story revealed that we're forcing authors to specify things that LLMs should naturally understand:
 
-```
-Collecting → Toasting → Assembling → [Choice] → Eating → Ending
-```
-
-But current format only supports:
-
-```
-Collect Items → Meet Conditions → Auto-trigger Flows
+### What Authors Want to Write:
+```yaml
+items:
+  - id: "bread"
+    name: "Stale Bread"
+    description: "Old bread that could be toasted"
+    
+success_conditions:
+  - description: "Make and eat a sandwich with toasted bread and cheese"
+    requires: ["toasted bread", "cheese"]
+    trigger_action: "eat sandwich"
 ```
 
-## Proposed Format v2 Enhancements
+### What Format v1 Forces Them to Write:
+```yaml
+# Complex flow chains, rigid item possession checks, manual state tracking...
+# 200+ lines of YAML for a simple sandwich story
+```
 
-### 1. Action Triggers
-
-Add explicit action detection and response:
-
+### What Format v2 (Wrong Approach) Would Force:
 ```yaml
 action_triggers:
-  - id: "toast_bread"
-    command_patterns: 
-      - "use toaster"
-      - "toast bread"
-      - "put bread in toaster"
+  - command_patterns: ["toast bread", "use toaster", "toast the bread"]
+    transforms: [{from: "bread", to: "toasted_bread"}]
     requirements: ["has_item:bread"]
-    sets: ["bread_toasted"]
-    removes: ["has_item:bread"]
-    adds: ["has_item:toasted_bread"]
-    response: |
-      [!discovery] The bread transforms into **GOLDEN TOAST**! 
-      The toaster has done its MAGNIFICENT work!
-    
-  - id: "apply_condiment"
-    command_patterns:
-      - "apply condiment"
-      - "use mystery jar"
-      - "add condiment to sandwich"
-    requirements: ["has_item:mystery_jar", "has_item:toasted_bread"]
-    sets: ["condiment_applied"]
-    response: |
-      [!warning] You apply the mysterious condiment! Its fate 
-      shall be revealed when you take the first bite!
+# Even MORE manual specification!
 ```
 
-### 2. Item Transformations
+## Format v2: LLM-Driven Intelligence
 
-Support explicit item state changes:
+### Core Principle: **Describe Intent, Let LLM Infer Implementation**
+
+Instead of manually specifying every possible action and transformation, authors describe their story goals and let the LLM figure out how to achieve them.
+
+### 1. Success Conditions (Instead of Complex Flows)
 
 ```yaml
-item_transformations:
-  - trigger: "use_toaster"
-    from_item: "bread"
-    to_item: "toasted_bread"
-    requirements: []
-    sets: ["bread_toasted"]
-    
-  - trigger: "assemble_sandwich"
-    required_items: ["toasted_bread", "cheese"]
-    creates_item: "basic_sandwich"
-    consumes_items: ["toasted_bread", "cheese"]
-    sets: ["sandwich_assembled"]
+success_conditions:
+  - id: "good_ending"
+    description: "Player successfully makes and eats a sandwich with toasted bread and cheese"
+    requires: ["toasted bread", "cheese"]
+    trigger_action: "eat sandwich"
+    ending: |
+      [!discovery] Perfect! You've made the ideal sandwich with golden toast and cheese.
+      Your hunger is satisfied!
+      
+  - id: "bad_ending"
+    description: "Player eats sandwich with the mystery condiment (fish sauce)"
+    requires: ["bread", "mystery condiment"]
+    trigger_action: "eat sandwich"
+    priority: 10  # Higher priority than good ending
+    ending: |
+      [!danger] Oh no! The mystery condiment was ancient fish sauce! 
+      You rush to the sink, gagging!
 ```
 
-### 3. Conditional Ending Triggers
-
-Replace automatic flow-based endings with action-triggered endings:
+### 2. Smart Item Relationships (Instead of Manual Transformations)
 
 ```yaml
-ending_triggers:
-  - id: "safe_ending"
-    action_patterns:
-      - "eat sandwich"
-      - "take bite"
-      - "taste sandwich"
-    conditions: 
-      - "flag:bread_toasted"
-      - "has_item:cheese" 
-      - "NOT flag:condiment_applied"
-    ending_flow: "cheese_triumph"
+items:
+  - id: "bread"
+    name: "Stale Bread"
+    description: "Old bread that could be improved by toasting"
+    can_become: "toasted bread"  # LLM infers how
     
-  - id: "dangerous_ending"
-    action_patterns:
-      - "eat sandwich"
-      - "take bite"
-      - "taste sandwich"
-    conditions:
-      - "flag:bread_toasted"
-      - "flag:condiment_applied"
-    ending_flow: "fish_sauce_doom"
+  - id: "toasted_bread"
+    name: "Golden Toast"
+    description: "Perfectly toasted bread"
+    created_from: "bread"  # LLM understands the relationship
+    
+  - id: "mystery_jar"
+    name: "Mystery Condiment"
+    description: "Unlabeled jar containing unknown sauce"
+    aliases: ["mystery condiment", "unknown sauce"]
 ```
 
-### 4. Enhanced Flow Control
+### 3. LLM Inference Guidelines (Instead of Rigid Rules)
 
-Flows wait for specific actions rather than auto-advancing:
+```yaml
+llm_story_guidelines: |
+  STORY GOALS:
+  - Player should find bread and cheese
+  - Bread can be toasted to become "toasted bread" using kitchen appliances
+  - Good ending: Player eats sandwich made with toasted bread + cheese
+  - Bad ending: Player uses mystery condiment (it's actually fish sauce)
+  
+  ITEM TRANSFORMATIONS:
+  - When player toasts/cooks bread → becomes "toasted bread"
+  - "Toasted bread" satisfies requirements for "toasted bread"
+  - Be flexible about cooking methods (toaster, oven, pan, etc.)
+  
+  ENDING TRIGGERS:
+  - Watch for eating/biting sandwich actions
+  - Check if player has winning combination
+  - Prioritize specific bad endings over general good ones
+```
+
+### 4. Simplified Flow System (Optional)
+
+Flows become simple narrative moments instead of complex state machines:
 
 ```yaml
 flows:
-  - id: "assembly_phase"
+  - id: "start"
     type: "narrative"
-    name: "Ready to Assemble!"
     content: |
-      You have the ingredients! Now you must **USE THE TOASTER** 
-      to transform your bread into golden perfection!
+      Your stomach rumbles! Time to make a sandwich.
+      Look around for ingredients!
     
-    # Flow waits for action, doesn't auto-advance
-    waits_for_action: true
-    
-    # Only advance when specific action taken
-    action_transitions:
-      - action: "use_toaster"
-        to_flow: "toasting_complete"
-      - action: "assemble_without_toasting"
-        to_flow: "raw_bread_warning"
+  # No complex transitions - LLM handles progression naturally
 ```
 
-### 5. State Validation
-
-Ensure story consistency with state validation:
+### 5. Enhanced Item Discovery (Keeps Current Strengths)
 
 ```yaml
-state_validation:
-  - rule: "sandwich_assembly"
-    condition: "assembling_sandwich"
-    requires: ["flag:bread_toasted", "has_item:cheese"]
-    failure_message: "You need toasted bread and cheese to make a proper sandwich!"
-    
-  - rule: "ending_trigger"
-    condition: "eating_sandwich"
-    requires: ["has_item:sandwich OR (has_item:toasted_bread AND has_item:cheese)"]
-    failure_message: "You need to assemble a sandwich before eating it!"
-```
-
-### 6. Action Command Patterns
-
-More flexible command recognition:
-
-```yaml
-command_patterns:
-  cooking_actions:
-    - patterns: ["toast *", "use toaster with *", "put * in toaster"]
-      action: "use_toaster"
-      target_extraction: "item_reference"
-    
-    - patterns: ["eat *", "take bite of *", "taste *"]
-      action: "consume"
-      target_extraction: "item_reference"
-    
-    - patterns: ["apply * to *", "spread * on *", "add * to *"]
-      action: "combine_items"
-      source_extraction: "first_item"
-      target_extraction: "second_item"
+# Keep the current discoverable_in system - it works well
+items:
+  - id: "bread"
+    discoverable_in: "kitchen"
+    discovery_objects: ["pantry", "bread box"]
+    can_become: "toasted bread"  # NEW: LLM inference hint
 ```
 
 ## Implementation Strategy
 
-### Phase 1: Core Action System
-1. Implement `action_triggers` parsing and execution
-2. Add action pattern matching to game engine
-3. Create action response system
+### Phase 1: Success Conditions System
+1. Add `success_conditions` parsing to story format
+2. Implement success condition checking in game engine
+3. Create LLM prompts that understand success goals
 
-### Phase 2: Item Transformations
-1. Add item transformation system
-2. Support item creation/consumption
-3. Update inventory management
+### Phase 2: Smart Item Relationships  
+1. Add `can_become` and `created_from` to item definitions
+2. Enhance LLM prompts to understand item transformations
+3. Let LLM infer when transformations should occur
 
-### Phase 3: Conditional Endings
-1. Implement `ending_triggers` system
-2. Replace automatic flow endings
-3. Add action-based ending detection
+### Phase 3: LLM Story Intelligence
+1. Add `llm_story_guidelines` section to stories
+2. Enhance prompts to include story-specific guidance
+3. Implement intelligent ending detection
 
-### Phase 4: Enhanced Flow Control
-1. Add `waits_for_action` flow behavior
-2. Implement `action_transitions`
-3. Create state validation system
+### Phase 4: Simplified Authoring Tools
+1. Create story templates for common patterns
+2. Add validation for success conditions
+3. Provide authoring guidelines for LLM-friendly stories
 
-## Example: Simple Sandwich Story
+## Example: Simple Sandwich Story (Format v2)
 
 ```yaml
 title: "Simple Sandwich"
@@ -203,70 +169,85 @@ title: "Simple Sandwich"
 
 items:
   - id: "bread"
-    name: "Bread"
-    description: "Plain bread that needs toasting"
-    
-  - id: "toasted_bread"
-    name: "Toast"
-    description: "Golden, perfect toast!"
+    name: "Stale Bread" 
+    description: "Old bread that could be improved by toasting"
+    discoverable_in: "kitchen"
+    can_become: "toasted bread"
     
   - id: "cheese"
     name: "Cheese"
     description: "A slice of cheese"
+    discoverable_in: "kitchen"
 
-action_triggers:
-  - id: "toast_bread"
-    command_patterns: ["toast bread", "use toaster"]
-    requirements: ["has_item:bread"]
-    transforms:
-      - from: "bread"
-        to: "toasted_bread"
-    response: "Perfect golden toast!"
-
-ending_triggers:
-  - id: "good_ending"
-    action_patterns: ["eat", "bite"]
-    conditions: ["has_item:toasted_bread", "has_item:cheese"]
-    ending_flow: "success"
+success_conditions:
+  - id: "perfect_sandwich"
+    description: "Make and eat a sandwich with toasted bread and cheese"
+    requires: ["toasted bread", "cheese"]
+    trigger_action: "eat sandwich"
+    ending: |
+      [!discovery] Perfect! You've made the ideal sandwich.
+      The golden toast and melted cheese are delicious!
 
 flows:
   - id: "start"
     type: "narrative"
-    content: "Find ingredients and make a sandwich!"
-    waits_for_action: true
-    
-  - id: "success"
-    type: "narrative"
-    content: "Delicious sandwich!"
-    ends_game: true
+    content: |
+      Your stomach rumbles! Time to make a sandwich.
+      Look around the kitchen for ingredients.
+
+llm_story_guidelines: |
+  STORY GOAL: Player should make and eat a sandwich with toasted bread and cheese.
+  
+  ITEM TRANSFORMATIONS:
+  - When player toasts "Stale Bread" → becomes "toasted bread"
+  - Be flexible about toasting methods (toaster, oven, pan, etc.)
+  
+  SUCCESS: When player eats sandwich with both "toasted bread" and "cheese"
 ```
 
-## Benefits
+**Result**: 25 lines instead of 100+, and the LLM handles all the complexity!
 
-1. **Natural Storytelling**: Stories can follow actual player actions
-2. **Flexible Progression**: No forced item collection sequences
-3. **Action-Based Logic**: Triggers based on what players DO, not what they HAVE
-4. **Simpler Stories**: Complex flow chains replaced with simple action → response
-5. **Better Player Agency**: Players drive progression through actions
-6. **Predictable Behavior**: Less reliance on LLM compliance for story logic
+## Benefits of LLM-Driven Approach
+
+1. **Reduced Authoring Burden**: Authors describe goals, not implementation details
+2. **Natural Language for Authors**: Write what you want, not how to achieve it
+3. **Flexible Player Actions**: LLM handles variations and synonyms naturally
+4. **Intelligent Inference**: System understands logical relationships (bread → toasted bread)
+5. **Simpler Debugging**: Fewer moving parts, clearer intent
+6. **Future-Proof**: New LLM capabilities automatically benefit stories
+
+## Key Insights
+
+### ❌ Wrong Approach: More Manual Specification
+- Forces authors to think like programmers
+- Brittle - breaks when players use unexpected phrasing
+- Doesn't leverage LLM intelligence
+- Creates maintenance burden
+
+### ✅ Right Approach: LLM Intelligence + Author Intent
+- Authors focus on storytelling, not edge cases
+- LLM handles the "how", authors specify the "what"
+- Robust to player variation
+- Leverages the core strength of LLMs
 
 ## Migration Path
 
-- Current v1 format remains fully supported
-- v2 features are additive enhancements
-- Stories can gradually adopt v2 features
-- Mixed v1/v2 stories supported during transition
-
-## Related Issues
-
-- Fixes sandwich_crisis.yaml structural problems
-- Enables natural action-based narratives
-- Reduces complexity in story authoring
-- Improves player experience consistency
+- Format v1 remains fully supported
+- New `success_conditions` are optional enhancements
+- Existing stories work unchanged
+- Authors can gradually adopt v2 patterns
+- LLM prompts enhanced to understand both formats
 
 ## Success Metrics
 
-1. **sandwich_crisis.yaml** works as intended with v2 format
-2. Story authors can create action-based narratives easily
-3. Player actions reliably trigger intended responses
-4. Reduced reliance on complex LLM prompt engineering for story logic
+1. **sandwich_crisis.yaml** can be rewritten in <30 lines while maintaining functionality
+2. Authors can express complex story logic without programming knowledge
+3. Stories become more robust to player input variations
+4. Reduced time from story concept to working implementation
+
+## Next Steps
+
+1. Implement `success_conditions` parsing
+2. Enhance LLM prompts with story intelligence
+3. Rewrite sandwich_crisis.yaml as proof of concept
+4. Create authoring guidelines for LLM-friendly stories
