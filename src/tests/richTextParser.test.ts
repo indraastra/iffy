@@ -20,9 +20,22 @@ describe('RichTextParser', () => {
     const result = parser.renderContent(input)
     const html = fragmentToHTML(result)
     
-    // Check for expected content
+    // Check for expected content - update for clickable elements
     expectedSubstrings.forEach(expected => {
-      expect(html).toContain(expected)
+      if (expected.includes('rich-character') || expected.includes('rich-item')) {
+        // For character and item elements, check for the class and content separately
+        const classMatch = expected.match(/class="([^"]+)"/)
+        const contentMatch = expected.match(/>([^<]+)</)
+        
+        if (classMatch) {
+          expect(html).toContain(`class="${classMatch[1]} clickable-element"`)
+        }
+        if (contentMatch) {
+          expect(html).toContain(`>${contentMatch[1]}<`)
+        }
+      } else {
+        expect(html).toContain(expected)
+      }
     })
     
     // Ensure no component placeholders remain
@@ -293,7 +306,8 @@ As your eyes scan the shadowy depths, you spot it - [item:The Bread of Betrayal]
       const html = fragmentToHTML(fragment)
       
       expect(html).toContain('<strong class="rich-bold">bold</strong>')
-      expect(html).toContain('<span class="rich-character">Name</span>')
+      expect(html).toContain('class="rich-character clickable-element"')
+      expect(html).toContain('>Name<')
       expect(html).not.toContain('{{COMPONENT:')
     })
   })

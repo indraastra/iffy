@@ -68,6 +68,18 @@ class IffyApp {
         this.debugPane.toggle();
       }
     });
+
+    // Clickable elements in rich text
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.classList.contains('clickable-element')) {
+        const text = target.getAttribute('data-clickable-text');
+        if (text) {
+          this.commandInput.value = text;
+          this.commandInput.focus();
+        }
+      }
+    });
   }
 
 

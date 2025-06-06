@@ -536,6 +536,18 @@ body {
   color: var(--character-color, var(--primary-color));
   border-bottom: 1px dotted var(--character-color, var(--primary-color));
   padding: 0 2px;
+  transition: all 0.2s ease;
+}
+
+.rich-character.clickable-element {
+  cursor: pointer;
+  border-bottom: 1px solid var(--character-color, var(--primary-color));
+}
+
+.rich-character.clickable-element:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  transform: translateY(-1px);
 }
 
 .rich-item {
@@ -551,7 +563,16 @@ body {
 .rich-item:hover {
   background: var(--item-bg-hover, rgba(255, 215, 0, 0.3));
   transform: translateY(-1px);
-  cursor: help;
+}
+
+.rich-item.clickable-element {
+  cursor: pointer;
+}
+
+.rich-item.clickable-element:hover {
+  background: var(--item-bg-hover, rgba(255, 215, 0, 0.4));
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .rich-alert {

@@ -176,14 +176,20 @@ export class RichTextParser {
         
       case 'Character':
         element = document.createElement('span');
-        element.className = 'rich-character';
+        element.className = 'rich-character clickable-element';
         element.textContent = component.content;
+        element.setAttribute('data-clickable-text', component.content);
+        element.setAttribute('title', `Click to add "${component.content}" to input`);
+        element.style.cursor = 'pointer';
         break;
         
       case 'Item':
         element = document.createElement('span');
-        element.className = 'rich-item';
+        element.className = 'rich-item clickable-element';
         element.textContent = component.content;
+        element.setAttribute('data-clickable-text', component.content);
+        element.setAttribute('title', `Click to add "${component.content}" to input`);
+        element.style.cursor = 'pointer';
         break;
         
       case 'Alert':
