@@ -1,0 +1,302 @@
+title: "The Lost Keys (Narrative Version)"
+author: "Iffy Engine Team"
+version: "1.0"
+
+metadata:
+  setting:
+    time: "Present day"
+    place: "Your apartment before an important meeting"
+  tone:
+    overall: "Light domestic stress with building urgency"
+    narrative_voice: "Second person, present tense, relatable and slightly frantic"
+  themes:
+    - "Everyday problems"
+    - "Time pressure"
+    - "Problem solving"
+  ui:
+    colors:
+      primary: "#4a5568"
+      background: "#f7fafc"
+      text: "#2d3748"
+
+characters:
+  - id: "player"
+    name: "You"
+    traits:
+      - "stressed"
+      - "running_late"
+      - "methodical_when_calm"
+    voice: "Internal thoughts, increasingly frantic"
+    description: "You have an important job interview in 30 minutes and can't find your keys."
+
+locations:
+  - id: "living_room"
+    name: "Living Room"
+    connections:
+      - "kitchen"
+      - "bedroom"
+      - "bathroom"
+    description: |
+      Your cozy living room, usually tidy but now showing signs of your frantic search.
+      Couch cushions askew, magazines scattered. The coffee table holds yesterday's
+      newspaper and an empty mug.
+    objects:
+      - name: "Couch"
+        description: "A well-worn sofa with deep cushions - things fall into the cracks"
+      - name: "Coffee table" 
+        description: "Glass top with magazines, newspaper, and miscellaneous items"
+      - name: "TV stand"
+        description: "Entertainment center with various electronics and cables"
+
+  - id: "kitchen"
+    name: "Kitchen"
+    connections:
+      - "living_room"
+    description: |
+      Your small but functional kitchen. Dishes from last night's dinner are still
+      in the sink. The counter has the usual appliances and a fruit bowl.
+
+  - id: "bedroom"
+    name: "Bedroom"
+    connections:
+      - "living_room"
+    description: |
+      Your bedroom in its typical morning chaos - clothes on the floor, unmade bed,
+      dresser top cluttered with personal items.
+
+  - id: "bathroom"
+    name: "Bathroom"
+    connections:
+      - "living_room"
+    description: |
+      Small bathroom with the usual fixtures. The counter around the sink has
+      toiletries and personal care items.
+
+items:
+  - id: "car_keys"
+    name: "Car Keys"
+    description: "Your keychain with car key, house key, and a small flashlight attached"
+    discoverable_in: "bedroom"
+    discovery_objects: ["dresser", "dresser top", "dresser surface"]
+    aliases: ["keychain", "keys", "car key", "house key"]
+
+  - id: "backup_phone"
+    name: "Old Phone"
+    description: "Your old smartphone, could be useful for calling a rideshare"
+    discoverable_in: "bedroom"
+    discovery_objects: ["dresser drawer", "drawer", "old electronics"]
+    aliases: ["phone", "smartphone", "old phone"]
+
+knowledge:
+  - id: "interview_location"
+    description: "You remember the exact address of your interview"
+    requires: []
+
+  - id: "rideshare_option"
+    description: "You could call a rideshare if you can't find the keys"
+    requires:
+      - "has_item:backup_phone"
+
+  - id: "time_pressure"
+    description: "You're acutely aware that time is running out"
+    requires: []
+
+  - id: "last_night_memory"
+    description: "You remember coming home tired with groceries last night"
+    requires: []
+
+flows:
+  - id: "initial_panic"
+    type: "narrative"
+    name: "The Initial Panic"
+    content: |
+      You stand in your living room, heart racing. Thirty minutes until the most 
+      important job interview of your career, and your keys have vanished into thin air.
+      
+      Think. Where did you put them last night? You were carrying groceries, you were
+      exhausted... you must have set them down somewhere without thinking.
+      
+      The clock on the wall seems to tick louder with each passing second. You need
+      to start searching, and fast.
+    
+    completion_transitions:
+      - condition: "location:living_room"
+        to_flow: "living_room_search"
+
+  - id: "living_room_search"
+    type: "narrative"
+    name: "Searching the Living Room"
+    requirements:
+      - "location:living_room"
+    content: |
+      You start with the living room - this is where you usually drop things when
+      you come home. The couch cushions are askew from your earlier frantic searching,
+      but maybe you missed something?
+      
+      You methodically check the couch cracks, under the coffee table, around the
+      TV stand. Nothing but lint, loose change, and that pen you lost last month.
+      
+      Your keys aren't here. Where else could they be?
+    
+    sets: ["knows:time_pressure", "knows:last_night_memory"]
+    
+    completion_transitions:
+      - condition: "location:kitchen"
+        to_flow: "kitchen_search"
+      - condition: "location:bedroom"
+        to_flow: "bedroom_search"
+      - condition: "location:bathroom"
+        to_flow: "bathroom_search"
+
+  - id: "kitchen_search"
+    type: "narrative"
+    name: "Kitchen Investigation"
+    requirements:
+      - "location:kitchen"
+    content: |
+      The kitchen - maybe you set them down while putting away groceries? You check
+      the counter near the sink, around the microwave, even in the refrigerator
+      (stranger things have happened when you're tired).
+      
+      Nothing. Just dirty dishes that remind you of last night's exhaustion.
+      
+      You're starting to feel the time pressure more acutely now. The bedroom
+      and bathroom remain unsearched.
+    
+    completion_transitions:
+      - condition: "location:bedroom"
+        to_flow: "bedroom_search"
+      - condition: "location:bathroom"
+        to_flow: "bathroom_search"
+      - condition: "location:living_room"
+        to_flow: "living_room_search"
+
+  - id: "bathroom_search"
+    type: "narrative"
+    name: "Bathroom Check"
+    requirements:
+      - "location:bathroom"
+    content: |
+      The bathroom counter is cluttered with toiletries and personal care items.
+      You quickly scan the area - sometimes you mindlessly set things down while
+      brushing your teeth or washing your face.
+      
+      No keys here either. Just the usual bathroom chaos of modern life.
+      
+      The bedroom is your last hope, unless you want to consider alternative
+      transportation options.
+    
+    completion_transitions:
+      - condition: "location:bedroom"
+        to_flow: "bedroom_search"
+      - condition: "location:living_room"
+        to_flow: "living_room_search"
+      - condition: "location:kitchen"
+        to_flow: "kitchen_search"
+
+  - id: "bedroom_search"
+    type: "narrative"
+    name: "The Bedroom Hunt"
+    requirements:
+      - "location:bedroom"
+    content: |
+      Your bedroom - the most likely place for tired-you to have dropped the keys
+      without thinking. The dresser top is cluttered with personal items, exactly
+      the kind of place where keys disappear.
+      
+      You can search the dresser more thoroughly, or look for your old backup phone
+      in the drawers - it might be time for Plan B.
+    
+    completion_transitions:
+      - condition: "has_item:car_keys"
+        to_flow: "keys_found"
+      - condition: "has_item:backup_phone"
+        to_flow: "phone_found"
+
+  - id: "keys_found"
+    type: "narrative"
+    name: "Eureka Moment"
+    requirements:
+      - "has_item:car_keys"
+    content: |
+      There they are! Your keys were hiding behind a stack of books on the dresser,
+      exactly where a tired person would absent-mindedly set them down.
+      
+      Relief floods through you as you grab them. A quick check of your watch shows
+      you still have 20 minutes - tight, but doable if you leave right now.
+      
+      Time to get to that interview!
+    
+    completion_transitions:
+      - condition: "has_item:car_keys"
+        to_flow: "success_ending"
+
+  - id: "phone_found"
+    type: "narrative"
+    name: "Plan B Activated"
+    requirements:
+      - "has_item:backup_phone"
+    content: |
+      Your old phone powers up with a familiar chime. The rideshare app still works,
+      and there's a car available - 8 minutes for pickup, 15 minutes to get there.
+      
+      Perfect timing. Sometimes the backup plan is better than the original.
+      
+      You'll deal with the missing keys later. Right now, you have an interview to ace.
+    
+    sets: ["rideshare_called"]
+    
+    completion_transitions:
+      - condition: "rideshare_called"
+        to_flow: "rideshare_ending"
+
+  - id: "success_ending"
+    type: "narrative"
+    name: "Found Them!"
+    requirements:
+      - "has_item:car_keys"
+    ends_game: true
+    content: |
+      There! Your keys glint in the morning light, exactly where any reasonable
+      person would have put them... if they'd been thinking clearly last night.
+      
+      You grab them with relief, check your watch - still 20 minutes to get there.
+      Tight, but doable. You rush out the door, already mentally rehearsing your
+      interview answers.
+      
+      Some days start badly but end well.
+      
+      You made it to the interview on time, keys found and confidence restored.
+      Sometimes a little morning chaos is exactly the energy you need to succeed.
+
+  - id: "rideshare_ending"  
+    type: "narrative"
+    name: "Plan B"
+    requirements:
+      - "rideshare_called"
+    ends_game: true
+    content: |
+      Keys are still missing, but your old phone will save the day. You quickly
+      open the rideshare app - 8 minutes for pickup, 15 minutes to get there.
+      You'll arrive exactly on time.
+      
+      Sometimes the backup plan works better than the original. You'll deal with
+      the keys later - right now, you have an interview to ace.
+      
+      The rideshare got you there perfectly on time. When you tell the interviewer
+      about your morning adventure, they're impressed by your problem-solving skills
+      under pressure. The keys can wait - you nailed the interview.
+
+start:
+  text: |
+    Your alarm didn't go off. Or maybe it did and you snoozed it one too many times.
+    Either way, you're now running 30 minutes behind schedule for the job interview
+    you've been preparing for all week.
+    
+    Shower: done. Professional outfit: on. Resume: in hand. Car keys: ...nowhere to be found.
+    
+    This cannot be happening.
+  location: "living_room"
+  first_flow: "initial_panic"
+  sets:
+    - "knows:interview_location"
