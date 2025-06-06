@@ -5,6 +5,7 @@ export class GameEngine {
   private story: Story | null = null;
   private gameState: GameState = this.createInitialState();
   private anthropicService: AnthropicService;
+  private previousFlow: string | null = null;
 
   constructor() {
     this.anthropicService = new AnthropicService();
@@ -13,6 +14,7 @@ export class GameEngine {
   loadStory(story: Story): void {
     this.story = story;
     this.gameState = this.createInitialState();
+    this.previousFlow = null; // Reset flow tracking
     
     // Apply story-specific theming
     this.applyTheme(story);
@@ -85,13 +87,20 @@ export class GameEngine {
       // Apply state changes from LLM response
       this.applyStateChanges(llmResponse);
 
-      // Check if we're in a narrative flow that should trigger an ending
+      // Check if we've transitioned to a new narrative flow
       let responseText = llmResponse.response;
-      
-      // If we've transitioned to a narrative flow, show its content instead (but only on first transition)
       const currentFlow = this.getCurrentFlow();
-      if (currentFlow && currentFlow.type === 'narrative' && currentFlow.content && !this.gameState.gameEnded) {
-        responseText = currentFlow.content;
+      
+      // Only show flow content if we've just transitioned to a new narrative flow
+      const hasTransitionedToNewFlow = currentFlow && 
+        currentFlow.id !== this.previousFlow && 
+        currentFlow.type === 'narrative' && 
+        currentFlow.content && 
+        !this.gameState.gameEnded;
+      
+      if (hasTransitionedToNewFlow) {
+        console.log(`Transitioned to new narrative flow: ${this.previousFlow} -> ${currentFlow.id}`);
+        responseText = currentFlow.content || '';
         
         // Apply any sets from this narrative flow
         this.applyFlowSets(currentFlow);
@@ -108,6 +117,11 @@ export class GameEngine {
       } else if (this.gameState.gameEnded) {
         // Game has ended, use LLM response for post-game interactions
         console.log('Post-game interaction, using LLM response:', llmResponse.response);
+      }
+      
+      // Update previous flow tracking
+      if (currentFlow) {
+        this.previousFlow = currentFlow.id;
       }
       
       if (this.gameState.gameEnded && this.gameState.endingId) {
