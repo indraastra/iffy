@@ -159,6 +159,20 @@ export interface ConversationMemory {
   significantMemories: SignificantMemory[];
 }
 
+// Result types for consistent API responses
+export interface Result<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  warnings?: string[];
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings?: string[];
+}
+
 // Game state types
 export interface GameState {
   currentLocation: string;

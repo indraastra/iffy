@@ -1,4 +1,4 @@
-import { Story, GameState, PlayerAction, GameResponse, Flow, FlowTransition, InteractionPair } from '@/types/story';
+import { Story, GameState, PlayerAction, GameResponse, Flow, FlowTransition, InteractionPair, Result } from '@/types/story';
 import { AnthropicService, LLMResponse } from '@/services/anthropicService';
 
 export class GameEngine {
@@ -7,24 +7,44 @@ export class GameEngine {
   private anthropicService: AnthropicService;
   private debugPane: any = null;
 
-  constructor() {
-    this.anthropicService = new AnthropicService();
+  constructor(anthropicService?: AnthropicService) {
+    this.anthropicService = anthropicService || new AnthropicService();
   }
 
-  loadStory(story: Story): void {
-    this.story = story;
-    this.gameState = this.createInitialState();
-    
-    // Apply story-specific theming
-    this.applyTheme(story);
-    
-    // Set initial state from story start
-    this.gameState.currentLocation = story.start.location;
-    if (story.start.sets) {
-      story.start.sets.forEach(flag => this.gameState.flags.add(flag));
+  loadStory(story: Story): Result<GameState> {
+    try {
+      // Basic validation
+      if (!story || !story.title || !story.start) {
+        return {
+          success: false,
+          error: 'Invalid story: missing required fields (title, start)'
+        };
+      }
+
+      this.story = story;
+      this.gameState = this.createInitialState();
+      
+      // Apply story-specific theming
+      this.applyTheme(story);
+      
+      // Set initial state from story start
+      this.gameState.currentLocation = story.start.location;
+      if (story.start.sets) {
+        story.start.sets.forEach(flag => this.gameState.flags.add(flag));
+      }
+      this.gameState.gameStarted = true;
+      this.gameState.currentFlow = story.start.first_flow;
+
+      return {
+        success: true,
+        data: { ...this.gameState }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: `Failed to load story: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
     }
-    this.gameState.gameStarted = true;
-    this.gameState.currentFlow = story.start.first_flow;
   }
 
   getInitialText(): string {
@@ -170,50 +190,39 @@ export class GameEngine {
 
     // Update location
     if (changes.newLocation) {
-      console.log(`Location changed: ${this.gameState.currentLocation} -> ${changes.newLocation}`);
-      this.gameState.currentLocation = changes.newLocation;
+      this.setLocation(changes.newLocation);
     }
 
     // Update inventory
     if (changes.addToInventory) {
       changes.addToInventory.forEach(itemId => {
-        if (!this.gameState.inventory.includes(itemId)) {
-          console.log(`Added to inventory: ${itemId}`);
-          this.gameState.inventory.push(itemId);
-        }
+        this.addItemToInventory(itemId);
       });
     }
 
     if (changes.removeFromInventory) {
       changes.removeFromInventory.forEach(itemId => {
-        const index = this.gameState.inventory.indexOf(itemId);
-        if (index > -1) {
-          console.log(`Removed from inventory: ${itemId}`);
-          this.gameState.inventory.splice(index, 1);
-        }
+        this.removeItemFromInventory(itemId);
       });
     }
 
     // Update flags
     if (changes.setFlags) {
       changes.setFlags.forEach(flag => {
-        console.log(`Set flag: ${flag}`);
-        this.gameState.flags.add(flag);
+        this.setFlag(flag);
       });
     }
 
     if (changes.unsetFlags) {
       changes.unsetFlags.forEach(flag => {
-        console.log(`Unset flag: ${flag}`);
-        this.gameState.flags.delete(flag);
+        this.unsetFlag(flag);
       });
     }
 
     // Update knowledge
     if (changes.addKnowledge) {
       changes.addKnowledge.forEach(knowledge => {
-        console.log(`Added knowledge: ${knowledge}`);
-        this.gameState.knowledge.add(knowledge);
+        this.addKnowledge(knowledge);
       });
     }
 
@@ -651,6 +660,105 @@ This is a basic MVP version. More natural language understanding will be added i
     return { ...this.gameState };
   }
 
+  // Action-based state management methods
+  addItemToInventory(itemId: string): Result<void> {
+    try {
+      if (!this.gameState.inventory.includes(itemId)) {
+        this.gameState.inventory.push(itemId);
+        console.log(`Added to inventory: ${itemId}`);
+      }
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: `Failed to add item to inventory: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
+  }
+
+  removeItemFromInventory(itemId: string): Result<void> {
+    try {
+      const index = this.gameState.inventory.indexOf(itemId);
+      if (index > -1) {
+        this.gameState.inventory.splice(index, 1);
+        console.log(`Removed from inventory: ${itemId}`);
+      }
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: `Failed to remove item from inventory: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
+  }
+
+  setFlag(flagName: string): Result<void> {
+    try {
+      this.gameState.flags.add(flagName);
+      console.log(`Set flag: ${flagName}`);
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: `Failed to set flag: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
+  }
+
+  unsetFlag(flagName: string): Result<void> {
+    try {
+      this.gameState.flags.delete(flagName);
+      console.log(`Unset flag: ${flagName}`);
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: `Failed to unset flag: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
+  }
+
+  addKnowledge(knowledgeId: string): Result<void> {
+    try {
+      this.gameState.knowledge.add(knowledgeId);
+      console.log(`Added knowledge: ${knowledgeId}`);
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: `Failed to add knowledge: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
+  }
+
+  setLocation(locationId: string): Result<void> {
+    try {
+      if (!this.story) {
+        return {
+          success: false,
+          error: 'No story loaded'
+        };
+      }
+      
+      const location = this.story.locations.find(loc => loc.id === locationId);
+      if (!location) {
+        return {
+          success: false,
+          error: `Location not found: ${locationId}`
+        };
+      }
+      
+      console.log(`Location changed: ${this.gameState.currentLocation} -> ${locationId}`);
+      this.gameState.currentLocation = locationId;
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: `Failed to set location: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
+  }
+
   private isComplexCommand(input: string): boolean {
     const complexPatterns = [
       /^(examine|inspect|study|analyze|investigate|check out|look at|search)/i,
@@ -995,6 +1103,26 @@ Remember: Items can only be obtained in their designated locations according to 
       return true;
     }
     
+    // Enhanced discovery logic: Check if player has recently examined discovery objects
+    if (item.discovery_objects && this.gameState.conversationMemory?.immediateContext?.recentInteractions) {
+      const recentInputs = this.gameState.conversationMemory.immediateContext.recentInteractions
+        .slice(-10) // Check last 10 interactions
+        .map(interaction => interaction.playerInput.toLowerCase());
+      
+      // Check if player has examined any of the discovery objects for this item
+      const hasExaminedDiscoveryObject = item.discovery_objects.some(obj => 
+        recentInputs.some(input => 
+          (input.includes('examine') || input.includes('open') || input.includes('check') || input.includes('look')) &&
+          input.includes(obj.toLowerCase())
+        )
+      );
+      
+      if (hasExaminedDiscoveryObject && item.discoverable_in === this.gameState.currentLocation) {
+        console.log(`Item ${itemId} is discoverable - player has examined discovery objects: ${item.discovery_objects}`);
+        return true;
+      }
+    }
+    
     return false;
   }
 
@@ -1083,11 +1211,29 @@ Remember: Items can only be obtained in their designated locations according to 
     });
   }
 
-  loadGame(saveData: string): boolean {
+  loadGame(saveData: string): Result<GameState> {
     try {
       const data = JSON.parse(saveData);
-      if (data.storyTitle !== this.story?.title) {
-        return false; // Save is for a different story
+      
+      if (!this.story) {
+        return {
+          success: false,
+          error: 'No story loaded. Load a story before attempting to load a saved game.'
+        };
+      }
+      
+      if (data.storyTitle !== this.story.title) {
+        return {
+          success: false,
+          error: `Save file is for "${data.storyTitle}" but current story is "${this.story.title}"`
+        };
+      }
+
+      if (!data.gameState) {
+        return {
+          success: false,
+          error: 'Invalid save file format: missing gameState'
+        };
       }
 
       this.gameState = {
@@ -1114,9 +1260,15 @@ Remember: Items can only be obtained in their designated locations according to 
         }
       };
 
-      return true;
-    } catch {
-      return false;
+      return {
+        success: true,
+        data: { ...this.gameState }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: `Failed to load save file: ${error instanceof Error ? error.message : 'Invalid JSON format'}`
+      };
     }
   }
 }
