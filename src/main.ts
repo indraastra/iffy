@@ -2,6 +2,7 @@ import { StoryParser, StoryParseError } from '@/engine/storyParser';
 import { GameEngine } from '@/engine/gameEngine';
 import { PlayerAction } from '@/types/story';
 import { DebugPane } from '@/components/debugPane';
+import { richTextParser } from '@/utils/richTextParser';
 
 class IffyApp {
   private gameEngine: GameEngine;
@@ -143,7 +144,14 @@ class IffyApp {
   private addMessage(text: string, type: 'story' | 'input' | 'error' | 'system' | 'choices' | 'title'): void {
     const messageDiv = document.createElement('div');
     messageDiv.className = `story-text ${type}`;
-    messageDiv.textContent = text;
+    
+    // Use rich text formatting for story content, plain text for others
+    if (type === 'story') {
+      const richContent = richTextParser.renderContent(text);
+      messageDiv.appendChild(richContent);
+    } else {
+      messageDiv.textContent = text;
+    }
     
     this.storyOutput.appendChild(messageDiv);
     this.storyOutput.scrollTop = this.storyOutput.scrollHeight;
@@ -382,13 +390,20 @@ class IffyApp {
       this.addMessage(`${story.title} by ${story.author}`, 'title');
       this.addMessage(this.gameEngine.getInitialText(), 'story');
       
-      // Show current location
-      const response = await this.gameEngine.processAction({ 
-        type: 'command', 
-        input: 'look', 
-        timestamp: new Date() 
-      });
-      this.addMessage(response.text, 'story');
+      // Show first flow content if it exists, otherwise issue automatic "look"
+      const firstFlow = story.flows.find(flow => flow.id === story.start.first_flow);
+      if (firstFlow && firstFlow.content) {
+        // Show the first flow's content
+        this.addMessage(firstFlow.content, 'story');
+      } else {
+        // Issue automatic "look" command for flows without content
+        const response = await this.gameEngine.processAction({ 
+          type: 'command', 
+          input: 'look', 
+          timestamp: new Date() 
+        });
+        this.addMessage(response.text, 'story');
+      }
       
       this.commandInput.focus();
       

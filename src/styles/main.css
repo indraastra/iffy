@@ -509,6 +509,116 @@ body {
   font-style: italic;
 }
 
+/* Rich Text Formatting */
+.rich-text {
+  line-height: 1.6;
+}
+
+.rich-bold {
+  font-weight: bold;
+  color: var(--text-color);
+}
+
+.rich-italic {
+  font-style: italic;
+  color: var(--text-color);
+}
+
+.rich-character {
+  font-weight: bold;
+  color: var(--primary-color);
+  border-bottom: 1px dotted var(--primary-color);
+  padding: 0 2px;
+}
+
+.rich-item {
+  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.2), transparent);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-weight: 500;
+  color: #b8860b;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.rich-item:hover {
+  background: rgba(255, 215, 0, 0.3);
+  transform: translateY(-1px);
+  cursor: help;
+}
+
+.rich-alert {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  border-left: 4px solid;
+  font-weight: 500;
+}
+
+.rich-alert-icon {
+  font-size: 1.1em;
+  line-height: 1;
+  margin-top: 0.1em;
+}
+
+.rich-alert-content {
+  flex: 1;
+}
+
+.rich-alert-warning {
+  background: rgba(255, 193, 7, 0.15);
+  border-left-color: #ffc107;
+  color: #856404;
+}
+
+.rich-alert-discovery {
+  background: rgba(40, 167, 69, 0.15);
+  border-left-color: #28a745;
+  color: #155724;
+}
+
+.rich-alert-danger {
+  background: rgba(220, 53, 69, 0.15);
+  border-left-color: #dc3545;
+  color: #721c24;
+  animation: danger-pulse 2s ease-in-out infinite;
+}
+
+@keyframes danger-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 0 rgba(220, 53, 69, 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.1);
+  }
+}
+
+/* Dark theme adjustments */
+@media (prefers-color-scheme: dark) {
+  .rich-item {
+    color: #ffd700;
+    border-color: rgba(255, 215, 0, 0.4);
+  }
+  
+  .rich-alert-warning {
+    background: rgba(255, 193, 7, 0.1);
+    color: #fff3cd;
+  }
+  
+  .rich-alert-discovery {
+    background: rgba(40, 167, 69, 0.1);
+    color: #d4edda;
+  }
+  
+  .rich-alert-danger {
+    background: rgba(220, 53, 69, 0.1);
+    color: #f8d7da;
+  }
+}
+
 /* Prompt Section Formatting */
 .prompt-section {
   margin-bottom: 1rem;

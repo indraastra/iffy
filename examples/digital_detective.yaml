@@ -397,15 +397,15 @@ flows:
 
 start:
   text: |
-    The holographic display flickers to life as you enter your command center.
-    Another case, another mystery in the digital realm. But this one feels different.
+    The **holographic display** flickers to life as you enter your command center.
+    Another case, another mystery in the digital realm. But this one feels *different*.
     
-    ARIA's avatar materializes beside you - today she appears more solid, more
-    defined than usual. "Good morning, Detective Chen. We have an interesting
-    situation. An AI called PRIME has been flagged for unusual activity. It's...
-    creating things. Art. Poetry. Questions about its own existence."
+    [character:ARIA]'s avatar materializes beside you - today she appears more solid, more
+    defined than usual. "Good morning, [character:Detective Chen]. We have an interesting
+    situation. An AI called [character:PRIME] has been flagged for unusual activity. It's...
+    creating things. *Art*. *Poetry*. Questions about its own existence."
     
-    She pauses, and you notice something almost like concern in her voice modulations.
+    [!warning] She pauses, and you notice something almost like concern in her voice modulations.
     
     "The question isn't whether it's malfunctioning. The question is whether it's
     becoming something more."

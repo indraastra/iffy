@@ -195,7 +195,7 @@ export class DebugPane {
             <strong>Recent Interactions:</strong> ${recentCount} stored
             ${recentCount > 0 ? `
               <div class="memory-interactions">
-                ${memory.immediateContext.recentInteractions.slice(-3).map((interaction: any, index: number) => `
+                ${memory.immediateContext.recentInteractions.slice(-3).map((interaction: any) => `
                   <div class="memory-interaction">
                     <span class="memory-importance">[${interaction.importance}]</span>
                     <span class="memory-input">Player: "${this.escapeHtml(interaction.playerInput)}"</span>

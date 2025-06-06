@@ -384,6 +384,82 @@ character:
   id: "hero"  # You can also put comments at line ends
 ```
 
+## Rich Text Formatting
+
+The engine supports semantic markup for enhanced visual storytelling in story content. This markup works in all text fields including flow content, location descriptions, and start text.
+
+### Supported Markup
+
+#### Text Formatting
+```yaml
+content: |
+  This text includes **bold** and *italic* formatting.
+  You can **combine** them with *emphasis* for better storytelling.
+```
+
+#### Character Names
+```yaml
+content: |
+  [character:Detective Chen] looks at you with curiosity.
+  The conversation with [character:ARIA] reveals new insights.
+```
+
+#### Item Highlighting
+```yaml
+content: |
+  You notice the [item:quantum key] glowing on the table.
+  The [item:ancient tome] contains mysterious symbols.
+```
+
+#### Alert Boxes
+```yaml
+content: |
+  [!warning] This action cannot be undone.
+  
+  [!discovery] You've found something important!
+  
+  [!danger] The situation is becoming critical.
+  
+  [!urgent] Time is running out.
+```
+
+### Styling
+- **Bold text**: Rendered with `<strong>` tags and rich-bold styling
+- **Italic text**: Rendered with `<em>` tags and rich-italic styling  
+- **Character names**: Styled with primary color and dotted underlines
+- **Items**: Golden highlighting with hover effects
+- **Alerts**: Color-coded boxes with icons and animations
+  - `warning`: Orange/amber styling with ⚠️ icon
+  - `discovery`: Purple/blue styling with ✨ icon
+  - `danger`: Red styling with 🚨 icon
+  - Custom alert types: Default styling with 📝 icon
+
+### Best Practices
+- Use **bold** for emphasis on key actions or outcomes
+- Use *italic* for thoughts, whispers, or subtle emphasis
+- Use `[character:Name]` for first mentions or important character references
+- Use `[item:Name]` to highlight important objects players should notice
+- Use alert boxes sparingly for maximum impact
+- Alert content should be concise (single sentence preferred)
+- Leave blank lines around alert boxes for proper spacing
+
+### Example
+```yaml
+flows:
+  - id: "investigation_start"
+    type: "narrative"
+    content: |
+      The **holographic display** flickers to life as you enter the command center.
+      Another case, another mystery in the digital realm. But this one feels *different*.
+      
+      [character:ARIA]'s avatar materializes beside you, more defined than usual.
+      "We have an interesting situation with [character:PRIME]. It's creating *art* and *poetry*."
+      
+      [!warning] She pauses, concern evident in her voice modulations.
+      
+      "The question isn't whether it's malfunctioning. The question is whether it's becoming something more."
+```
+
 ## Version Notes
 
 ### v1.0 (MVP)
@@ -391,9 +467,12 @@ character:
 - Basic condition system
 - Linear story progression
 - Simple state tracking
+- Rich text formatting with semantic markup
+- Enhanced visual presentation for immersive storytelling
 
 ### Future Versions
 - Multi-file support with includes
 - Complex conditional expressions
 - Variables and counters
 - Procedural content rules
+- Extended rich formatting options

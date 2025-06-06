@@ -131,13 +131,13 @@ flows:
   - id: "hunger_awakens"
     type: "narrative"
     name: "The Hunger Strikes!"
-    description: |
-      It begins... as all great dramas do... with a RUMBLING! Your stomach 
-      cries out in desperate hunger! The clock strikes 12:17 PM and you 
-      realize... you haven't eaten since breakfast! This is a CRISIS of 
-      epic proportions!
+    content: |
+      It begins... as all great dramas do... with a **RUMBLING**! Your stomach 
+      cries out in desperate hunger! The clock strikes **12:17 PM** and you 
+      realize... you haven't eaten since breakfast! This is a *CRISIS* of 
+      **epic proportions**!
       
-      The kitchen awaits, but little do you know the TRIALS that lie ahead!
+      [!warning] The kitchen awaits, but little do you know the TRIALS that lie ahead!
     
     llm_guidelines: |
       - EVERYTHING is dramatically over-the-top
@@ -160,17 +160,17 @@ flows:
     name: "The Kitchen Conspiracy!"
     requirements: ["knows:kitchen_betrayal"]
     content: |
-      OH THE HORROR! OH THE HUMANITY! The terrible truth is revealed! Your 
-      own kitchen - the very HEART of your home - has turned against you! 
+      [!danger] OH THE HORROR! OH THE HUMANITY! The terrible truth is revealed! Your 
+      own **kitchen** - the very *HEART* of your home - has turned against you! 
       
-      The bread... STALE! The milk... EXPIRED! It's as if the very UNIVERSE 
+      The [item:bread]... **STALE**! The [item:milk]... **EXPIRED**! It's as if the very *UNIVERSE* 
       is conspiring to deny you this simple sandwich! But wait... what's this? 
-      Could there be HOPE yet? Could salvation come from the most UNEXPECTED 
+      Could there be **HOPE** yet? Could salvation come from the most *UNEXPECTED* 
       source?
       
       *Lightning crashes outside even though it's a sunny day*
       
-      Your quest for lunch has become... A BATTLE FOR YOUR VERY SOUL!
+      [!warning] Your quest for lunch has become... A BATTLE FOR YOUR VERY SOUL!
     
     completion_transitions:
       - condition: "has_item:heroic_cheese"
@@ -222,44 +222,43 @@ flows:
     requirements: ["has_item:heroic_cheese", "has_item:stale_bread"]
     ends_game: true
     content: |
-      THIS IS IT! The moment of TRUTH! The CLIMAX of our epic tale!
+      [!discovery] THIS IS IT! The moment of **TRUTH**! The *CLIMAX* of our epic tale!
       
-      With trembling hands, you place the heroic cheese upon the bread of 
-      betrayal! Will love conquer all? Will processed dairy overcome the 
-      forces of staleness? The very UNIVERSE holds its breath!
+      With trembling hands, you place the [item:heroic cheese] upon the [item:bread of betrayal]! 
+      Will love conquer all? Will processed dairy overcome the forces of staleness? 
+      The very **UNIVERSE** holds its breath!
       
-      You take a bite... and... AND...
+      You take a bite... and... **AND...**
       
-      IT'S... it's actually pretty okay! Not great, but definitely edible! 
-      The cheese has TRIUMPHED over adversity! Your hunger is VANQUISHED!
+      [!discovery] IT'S... it's actually pretty okay! Not great, but definitely edible! 
+      The [item:cheese] has **TRIUMPHED** over adversity! Your hunger is *VANQUISHED*!
       
-      As you chew this sandwich of DESTINY, you realize that sometimes... 
+      As you chew this [item:sandwich of DESTINY], you realize that sometimes... 
       sometimes the greatest victories come from the simplest ingredients... 
-      and the most DRAMATIC narration!
+      and the most **DRAMATIC** narration!
       
       *Fade to black as triumphant soap opera music swells*
       
-      Will Jennifer tackle dinner with the same EPIC COURAGE? Will the 
+      [character:Jennifer] will tackle dinner with the same **EPIC COURAGE**? Will the 
       toaster finally get its revenge? Find out next time on... 
-      "KITCHEN OF BROKEN DREAMS!"
+      "**KITCHEN OF BROKEN DREAMS**!"
 
 start:
   text: |
-    *Dramatic music swells*
+    **Dramatic music swells**
     
-    IT'S 12:17 PM ON A TUESDAY! The SUN shines with CRUEL indifference as our 
-    HEROINE, Jennifer, stands at the crossroads of DESTINY! Her stomach 
-    RUMBLES with the fury of a thousand unfed souls!
+    IT'S **12:17 PM** ON A TUESDAY! The *SUN* shines with **CRUEL** indifference as our 
+    HEROINE, [character:Jennifer], stands at the crossroads of *DESTINY*! Her stomach 
+    **RUMBLES** with the fury of a thousand unfed souls!
     
-    "I need... a sandwich," she whispers, not knowing that these simple words 
-    will set in motion events of EARTH-SHATTERING importance!
+    [!warning] "I need... a sandwich," she whispers, not knowing that these simple words will set in motion events of EARTH-SHATTERING importance!
     
-    The kitchen awaits... but what TRIALS lie ahead? What BETRAYALS lurk 
-    in the pantry? What SECRETS hide in the refrigerator?
+    The **kitchen** awaits... but what *TRIALS* lie ahead? What **BETRAYALS** lurk 
+    in the pantry? What *SECRETS* hide in the refrigerator?
     
-    *Thunder crashes mysteriously*
+    [!danger] Thunder crashes mysteriously
     
-    This is... THE GREAT SANDWICH CRISIS!
+    This is... **THE GREAT SANDWICH CRISIS**!
   location: "kitchen"
   first_flow: "hunger_awakens"
   sets:

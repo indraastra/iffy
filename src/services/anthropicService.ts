@@ -167,7 +167,7 @@ ${story.locations?.map((loc: any) => {
   if (itemsHere.length > 0) {
     locationInfo += `\n  📦 Items visible here:`;
     itemsHere.forEach((item: any) => {
-      locationInfo += `\n    - ${item.name} (${item.id}): ${item.description}`;
+      locationInfo += `\n    - ${item.name}: ${item.description}`;
       if (item.aliases && item.aliases.length > 0) {
         locationInfo += ` [Also called: ${item.aliases.join(', ')}]`;
       }
@@ -179,7 +179,7 @@ ${story.locations?.map((loc: any) => {
   if (discoverableHere.length > 0) {
     locationInfo += `\n  🔍 Items discoverable here:`;
     discoverableHere.forEach((item: any) => {
-      locationInfo += `\n    - ${item.name} (${item.id}): ${item.description}`;
+      locationInfo += `\n    - ${item.name}: ${item.description}`;
       if (item.discovery_objects && item.discovery_objects.length > 0) {
         locationInfo += `\n      ➤ Found by searching: ${item.discovery_objects.join(', ')}`;
       }
@@ -193,7 +193,7 @@ ${story.locations?.map((loc: any) => {
 }).join('\n\n') || 'None defined'}
 
 CHARACTERS:
-${story.characters?.map((char: any) => `- ${char.name} (${char.id}): ${char.description} [Voice: ${char.voice}] [Traits: ${char.traits?.join(', ') || 'None'}]`).join('\n') || 'None defined'}
+${story.characters?.map((char: any) => `- ${char.name}: ${char.description} [Voice: ${char.voice}] [Traits: ${char.traits?.join(', ') || 'None'}]`).join('\n') || 'None defined'}
 
 STORY FLOWS:
 ${story.flows?.map((flow: any) => `- ${flow.name} (${flow.id}): ${flow.type} ${flow.requirements ? `[Requires: ${flow.requirements.join(', ')}]` : ''}${flow.ends_game ? ' [ENDS GAME]' : ''}`).join('\n') || 'None defined'}

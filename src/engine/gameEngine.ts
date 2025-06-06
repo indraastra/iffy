@@ -5,7 +5,6 @@ export class GameEngine {
   private story: Story | null = null;
   private gameState: GameState = this.createInitialState();
   private anthropicService: AnthropicService;
-  private previousFlow: string | null = null;
   private debugPane: any = null;
 
   constructor() {
@@ -15,7 +14,6 @@ export class GameEngine {
   loadStory(story: Story): void {
     this.story = story;
     this.gameState = this.createInitialState();
-    this.previousFlow = null; // Reset flow tracking
     
     // Apply story-specific theming
     this.applyTheme(story);
@@ -101,21 +99,25 @@ export class GameEngine {
         return await this.retryWithValidationFeedback(input, llmResponse, allValidationIssues);
       }
 
+      // Capture the current flow before applying state changes
+      const flowBeforeStateChanges = this.getCurrentFlow();
+      const previousFlowId = flowBeforeStateChanges?.id || null;
+
       this.applyStateChanges(llmResponse);
 
-      // Check if we've transitioned to a new narrative flow
+      // Check if we've transitioned to a new narrative flow after state changes
       let responseText = llmResponse.response;
       const currentFlow = this.getCurrentFlow();
       
       // Only show flow content if we've just transitioned to a new narrative flow
       const hasTransitionedToNewFlow = currentFlow && 
-        currentFlow.id !== this.previousFlow && 
+        currentFlow.id !== previousFlowId && 
         currentFlow.type === 'narrative' && 
         currentFlow.content && 
         !this.gameState.gameEnded;
       
       if (hasTransitionedToNewFlow) {
-        console.log(`Transitioned to new narrative flow: ${this.previousFlow} -> ${currentFlow.id}`);
+        console.log(`Transitioned to new narrative flow: ${previousFlowId} -> ${currentFlow.id}`);
         responseText = currentFlow.content || '';
         
         // Apply any sets from this narrative flow
@@ -135,10 +137,7 @@ export class GameEngine {
         console.log('Post-game interaction, using LLM response:', llmResponse.response);
       }
       
-      // Update previous flow tracking
-      if (currentFlow) {
-        this.previousFlow = currentFlow.id;
-      }
+      // Note: Flow tracking is now handled locally within this method
       
       if (this.gameState.gameEnded && this.gameState.endingId) {
         // Check if ending is defined as a separate ending (legacy)
@@ -804,6 +803,10 @@ Remember: Items can only be obtained in their designated locations according to 
         this.getCurrentLocation()
       );
 
+      // Capture the current flow before applying state changes
+      const flowBeforeStateChanges = this.getCurrentFlow();
+      const previousFlowId = flowBeforeStateChanges?.id || null;
+
       // Apply the corrected state changes (should be valid now)
       this.applyStateChanges(correctedResponse);
 
@@ -812,7 +815,7 @@ Remember: Items can only be obtained in their designated locations according to 
       const currentFlow = this.getCurrentFlow();
       
       const hasTransitionedToNewFlow = currentFlow && 
-        currentFlow.id !== this.previousFlow && 
+        currentFlow.id !== previousFlowId && 
         currentFlow.type === 'narrative' && 
         currentFlow.content && 
         !this.gameState.gameEnded;
@@ -829,9 +832,7 @@ Remember: Items can only be obtained in their designated locations according to 
         this.checkEndingConditions();
       }
       
-      if (currentFlow) {
-        this.previousFlow = currentFlow.id;
-      }
+      // Note: Flow tracking is now handled locally within each method
 
       // Track this interaction for conversation memory
       this.trackInteraction(originalInput, responseText);
