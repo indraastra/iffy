@@ -82,7 +82,15 @@ npm run test:run
 npm run test:ui
 ```
 
-The project uses Vitest for testing with comprehensive coverage of the rich text parser and core engine components.
+The project uses **Vitest** for testing with comprehensive coverage:
+
+#### Test Coverage
+- **Rich Text Parser** (30 tests) - Full semantic markup processing, nested components, regression tests
+- **Game Engine** (14 tests) - Story loading, state management, save/load functionality, validation
+- **Story Parser** (5 tests) - YAML parsing, story structure validation, format compliance  
+- **Anthropic Service** (23 tests) - Prompt building, response parsing, configuration management
+
+**Total: 72 tests** ensuring reliability and preventing regressions in core functionality.
 
 ### Validating Stories
 ```bash

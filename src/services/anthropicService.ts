@@ -163,6 +163,8 @@ ${this.getCurrentFlowContext(story, gameState)}
 CONVERSATION MEMORY:
 ${this.getConversationContext(gameState)}
 
+DISCOVERY STATUS: Based on recent interactions, analyze if player has already examined/opened/checked containers or objects that would reveal items.
+
 ${gameState.gameEnded ? this.getEndingContext(story, gameState) : ''}
 
 MARKUP: Use [character:Name] for characters, [item:Name] for items, **bold** for emphasis, [!warning]/[!discovery]/[!danger] for alerts.
@@ -188,13 +190,16 @@ Use this exact format with properly escaped strings for multiline content:
 }
 
 RULES:
-1. Use exact location/item IDs from story data
-2. Items discoverable ONLY in specified locations via specified objects - no exceptions
-3. Discovery commands (examine/search) only reveal items - don't auto-take
-4. Taking commands (take/grab) add to inventory
-5. One action per command - no chaining
-6. Movement commands only change location
-7. If game COMPLETED, allow reflection but no major state changes`;
+1. Interpret natural language commands flexibly - the whole point is to avoid rigid syntax
+2. Allow reasonable interactions with objects/appliances even if not explicitly defined (like using appliances, opening containers, etc.)
+3. Items in discoverable_in locations can be taken if player has examined/opened/checked discovery_objects OR explicitly searched
+4. Discovery commands (examine/search/look/check/open) reveal items and make them available for taking
+5. Taking commands (take/grab) add to inventory - allow if item is accessible in current location
+6. Use natural language understanding for actions like "cook X with Y", "put X in Y", "use X on Y"
+7. Movement commands change location, but be flexible about phrasing
+8. If game COMPLETED, allow reflection but no major state changes
+9. Be permissive with item discovery - if player has clearly interacted with containers/objects, items inside are available
+10. NEVER demand specific syntax - interpret intent and respond naturally`;
   }
 
   private parseResponse(responseText: string): LLMResponse {

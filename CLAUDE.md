@@ -1,0 +1,1 @@
+- Let's keep all examples in the prompt game-agnostic
