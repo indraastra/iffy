@@ -99,9 +99,9 @@ knowledge:
 
 flows:
   - id: "apartment_search"
-    type: "open_scene"
+    type: "narrative"
     name: "The Frantic Search"
-    description: |
+    content: |
       You're standing in your living room, 30 minutes before the most important
       job interview of your career. Your keys are nowhere to be seen. Where did
       you put them last night? Think... you came home, you were tired, you must
@@ -109,83 +109,17 @@ flows:
       
       The clock is ticking. You need to find those keys or figure out another
       way to get to the interview.
-    
-    story_elements:
-      evidence:
-        - id: "find_car_keys"
-          type: "item"
-          object: "car_keys"
-          location_hints: ["where you'd set them down", "common key spots", "automatic habits"]
-          discovery_clues:
-            - "Think about last night's routine"
-            - "Where do tired people drop things?"
-            - "Check the obvious places first"
-            - "Sometimes they fall behind or under things"
-          natural_actions: 
-            - "search couch cushions"
-            - "check coffee table"
-            - "look in kitchen"
-            - "examine coat pockets"
-            - "search bedroom"
-            - "check bathroom counter"
-          difficulty: "moderate"
-          
-        - id: "find_backup_phone"
-          type: "item"
-          object: "backup_phone"
-          location_hints: ["bedroom storage", "old electronics", "backup items"]
-          discovery_clues:
-            - "You keep old tech around just in case"
-            - "Probably in a drawer or on the dresser"
-            - "Could call a rideshare as backup plan"
-          natural_actions:
-            - "search bedroom drawers"
-            - "check dresser"
-            - "look for old electronics"
-            - "find backup options"
-          difficulty: "easy"
-          
-        - id: "remember_routine"
-          type: "knowledge"
-          fact: "evening_routine"
-          location_hints: ["retrace your steps", "think about last night"]
-          discovery_clues:
-            - "You were carrying groceries"
-            - "You were exhausted from work"
-            - "What's the first thing you do when you get home?"
-          natural_actions:
-            - "think about last night"
-            - "retrace your steps"
-            - "remember coming home"
-            - "recall your routine"
-          difficulty: "easy"
-    
-    progression:
-      completion_threshold:
-        evidence_found: 1  # Just need to find keys OR backup plan
-        
-      hint_escalation:
-        after_turns: 2
-        progression: ["subtle", "direct", "explicit"]
-        
-      synergies:
-        - if_found: "remember_routine"
-          then_easier: "find_car_keys"
-          reason: "Remembering your routine helps you think of where you might have put them"
+      
+      Start searching! Check the obvious places first - couch cushions, coffee table,
+      kitchen counter. If that doesn't work, think about your routine last night.
+      You were carrying groceries and exhausted from work. Where would tired-you
+      have dropped the keys without thinking?
     
     completion_transitions:
       - condition: "has_item:car_keys"
         to_flow: "success_ending"
       - condition: "rideshare_called"
         to_flow: "rideshare_ending"
-        
-    llm_guidelines: |
-      - Generate realistic searching behavior and discoveries
-      - Match the growing urgency and stress of being late
-      - Provide satisfying "aha!" moments when items are found
-      - Consider logical places someone might absent-mindedly put keys
-      - Build tension through time pressure but don't make it impossible
-      - Reward both methodical searching and lateral thinking
 
   - id: "success_ending"
     type: "narrative"

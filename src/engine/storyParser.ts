@@ -179,8 +179,8 @@ export class StoryParser {
     return flows.map((flow, index) => {
       this.validateRequired(flow, ['id', 'type', 'name'], `flow[${index}]`);
       
-      if (!['narrative', 'dialogue', 'open_scene'].includes(flow.type)) {
-        throw new StoryParseError(`flow[${index}].type must be 'narrative', 'dialogue', or 'open_scene'`);
+      if (!['narrative', 'dialogue'].includes(flow.type)) {
+        throw new StoryParseError(`flow[${index}].type must be 'narrative' or 'dialogue'`);
       }
 
       const result: Story['flows'][0] = {

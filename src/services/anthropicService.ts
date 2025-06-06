@@ -71,7 +71,7 @@ export class AnthropicService {
       }
       
       const response = await this.client.messages.create({
-        model: 'claude-3-haiku-20240307',
+        model: 'claude-3-5-sonnet-20241022',
         max_tokens: 1000,
         messages: [
           {
@@ -204,6 +204,9 @@ ${story.endings?.map((ending: any) => `- ${ending.name} (${ending.id}): ${ending
 CURRENT FLOW CONTEXT:
 ${this.getCurrentFlowContext(story, gameState)}
 
+CONVERSATION MEMORY:
+${this.getConversationContext(gameState)}
+
 ${gameState.gameEnded ? this.getEndingContext(story, gameState) : ''}
 
 PLAYER COMMAND: "${command}"
@@ -227,15 +230,35 @@ Use this exact format with properly escaped strings for multiline content:
 
 CRITICAL RULES:
 1. If your narrative describes moving to a different location, set "newLocation" to the exact location ID
-2. DISCOVERY IS MANDATORY: When players search objects listed in "Found by searching:", you MUST describe finding the item
-   - Use discovery language: "you spot", "you notice", "you see", "you find" (without taking)
-   - Example: "check dresser" → "You spot your car keys on the dresser surface" (NO inventory change)
-3. TAKING IS SEPARATE: Only when players use action words like "take", "grab", "pick up" should you add to inventory
-   - If you write "grabbing", "taking", "picking up" then you MUST add the item to addToInventory
-   - Discovery and taking are two separate actions
-4. Use exact location and item IDs from the story data
-5. Only allow actions valid for current location and inventory
-6. Maintain the story's tone and be concise but atmospheric
+2. ITEM DISCOVERY CONSTRAINTS ARE ABSOLUTE:
+   - Items with "discoverable_in" can ONLY be found in that specific location, nowhere else
+   - Items with "discovery_objects" can ONLY be found by searching those exact objects
+   - If player searches wrong location/object for a discoverable item, they find NOTHING
+   - Example: item_x discoverable_in "location_a" via "object_y" → searching location_b finds NOTHING
+   - Be firm: "You search thoroughly but find nothing" - do NOT improvise alternate locations
+3. DISCOVERY vs TAKING - CRITICAL DISTINCTION:
+   - DISCOVERY commands (check, examine, inspect, search, look, rummage): ONLY describe finding/spotting items
+   - NEVER automatically take items during discovery - STOP at "you spot", "you notice", "you see"
+   - Example: "examine object_y" → "You spot item_x among the object_y" (NO inventory change)
+   - TAKING commands (take, grab, pick up, get, collect): Add items to inventory
+   - Example: "take item_x" → "You grab the item_x" (WITH inventory change)
+4. DISCOVERY IS MANDATORY: When players search correct objects in correct locations, you MUST find the item
+   - Use discovery language: "you spot", "you notice", "you see", "you find" 
+   - STOP THERE - do not continue with taking actions
+   - Let the player decide their next action after discovery
+5. DO NOT ASSUME PLAYER INTENT - PERFORM ONLY THE REQUESTED ACTION:
+   - If player says "go to location_a", ONLY move there - do not search, examine, or take anything
+   - If player says "check object_y", ONLY examine it - do not take anything found
+   - If player says "examine item_x", ONLY look at it - do not use or manipulate it
+   - NEVER chain multiple actions together - each command is one specific action
+   - Do not anticipate what the player "probably wants" based on story context
+6. MOVEMENT COMMANDS ARE LOCATION-ONLY:
+   - "go to", "move to", "enter", "leave" should ONLY change location
+   - Describe the new location but do NOT perform searches or interactions
+   - Let the player explicitly request any searches or examinations after moving
+7. Use exact location and item IDs from the story data
+8. Only allow actions valid for current location and inventory
+9. Maintain the story's tone and be concise but atmospheric
 
 ENDGAME HANDLING:
 - If Game Status is COMPLETED, the story has concluded and no major actions should change the world state
@@ -343,6 +366,45 @@ The player has successfully concluded this story path.`;
     }
     
     return context;
+  }
+
+  private getConversationContext(gameState: any): string {
+    if (!gameState.conversationMemory?.immediateContext?.recentInteractions?.length) {
+      return 'No recent conversation history.';
+    }
+
+    const interactions = gameState.conversationMemory.immediateContext.recentInteractions;
+    let context = `Recent Conversation History (last ${interactions.length} interactions):\n`;
+    
+    interactions.forEach((interaction: any, index: number) => {
+      const timeAgo = this.getTimeAgo(new Date(interaction.timestamp));
+      context += `\n${index + 1}. [${timeAgo}] Player: "${interaction.playerInput}"\n`;
+      context += `   Response: "${interaction.llmResponse}"\n`;
+      if (interaction.importance !== 'low') {
+        context += `   [Importance: ${interaction.importance}]\n`;
+      }
+    });
+
+    // Add any significant memories (Phase 2+ feature, placeholder for now)
+    if (gameState.conversationMemory.significantMemories?.length > 0) {
+      context += `\nSignificant Memories: ${gameState.conversationMemory.significantMemories.length} stored\n`;
+    }
+
+    return context;
+  }
+
+  private getTimeAgo(timestamp: Date): string {
+    const now = new Date();
+    const diffMs = now.getTime() - timestamp.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'just now';
+    if (diffMins === 1) return '1 min ago';
+    if (diffMins < 60) return `${diffMins} mins ago`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours === 1) return '1 hour ago';
+    return `${diffHours} hours ago`;
   }
 
 }

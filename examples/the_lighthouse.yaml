@@ -155,7 +155,7 @@ knowledge:
 
 flows:
   - id: "final_watch"
-    type: "open_scene"
+    type: "narrative"
     name: "The Weight of Duty"
     description: |
       The storm builds like a symphony of destruction outside. This is your last

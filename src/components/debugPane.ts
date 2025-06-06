@@ -2,7 +2,13 @@ export interface DebugData {
   prompt?: string;
   response?: string;
   timestamp: Date;
-  type: 'request' | 'response' | 'error';
+  type: 'request' | 'response' | 'error' | 'validation' | 'memory' | 'retry';
+  metadata?: {
+    validationIssues?: string[];
+    originalInput?: string;
+    conversationMemory?: any;
+    importance?: string;
+  };
 }
 
 export class DebugPane {
@@ -95,6 +101,45 @@ export class DebugPane {
     this.renderLogEntry(data);
   }
 
+  public logValidation(issues: string[], originalInput: string): void {
+    const data: DebugData = {
+      timestamp: new Date(),
+      type: 'validation',
+      metadata: {
+        validationIssues: issues,
+        originalInput
+      }
+    };
+    this.debugLog.push(data);
+    this.renderLogEntry(data);
+  }
+
+  public logMemory(conversationMemory: any, importance: string): void {
+    const data: DebugData = {
+      timestamp: new Date(),
+      type: 'memory',
+      metadata: {
+        conversationMemory,
+        importance
+      }
+    };
+    this.debugLog.push(data);
+    this.renderLogEntry(data);
+  }
+
+  public logRetry(originalInput: string, reason: string): void {
+    const data: DebugData = {
+      response: reason,
+      timestamp: new Date(),
+      type: 'retry',
+      metadata: {
+        originalInput
+      }
+    };
+    this.debugLog.push(data);
+    this.renderLogEntry(data);
+  }
+
   private renderLogEntry(data: DebugData): void {
     const logContainer = this.container.querySelector('.debug-log') as HTMLElement;
     const entry = document.createElement('div');
@@ -123,6 +168,60 @@ export class DebugPane {
           <pre>${this.escapeHtml(data.response)}</pre>
         </div>
       `;
+    } else if (data.type === 'validation' && data.metadata?.validationIssues) {
+      entry.innerHTML = `
+        <div class="debug-timestamp">[${timestamp}] ⚠️ VALIDATION FAILED</div>
+        <div class="debug-content-section debug-validation-content">
+          <div class="debug-subsection">
+            <strong>Original Input:</strong> "${this.escapeHtml(data.metadata.originalInput || '')}"
+          </div>
+          <div class="debug-subsection">
+            <strong>Issues Found:</strong>
+            <ul class="validation-issues">
+              ${data.metadata.validationIssues.map(issue => `<li>${this.escapeHtml(issue)}</li>`).join('')}
+            </ul>
+          </div>
+        </div>
+      `;
+    } else if (data.type === 'memory' && data.metadata?.conversationMemory) {
+      const memory = data.metadata.conversationMemory;
+      const recentCount = memory.immediateContext?.recentInteractions?.length || 0;
+      const significantCount = memory.significantMemories?.length || 0;
+      
+      entry.innerHTML = `
+        <div class="debug-timestamp">[${timestamp}] 💭 MEMORY TRACKED (${data.metadata.importance})</div>
+        <div class="debug-content-section debug-memory-content">
+          <div class="debug-subsection">
+            <strong>Recent Interactions:</strong> ${recentCount} stored
+            ${recentCount > 0 ? `
+              <div class="memory-interactions">
+                ${memory.immediateContext.recentInteractions.slice(-3).map((interaction: any, index: number) => `
+                  <div class="memory-interaction">
+                    <span class="memory-importance">[${interaction.importance}]</span>
+                    <span class="memory-input">Player: "${this.escapeHtml(interaction.playerInput)}"</span>
+                    <span class="memory-response">Response: "${this.escapeHtml(interaction.llmResponse.substring(0, 60))}..."</span>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+          </div>
+          <div class="debug-subsection">
+            <strong>Significant Memories:</strong> ${significantCount} stored
+          </div>
+        </div>
+      `;
+    } else if (data.type === 'retry') {
+      entry.innerHTML = `
+        <div class="debug-timestamp">[${timestamp}] 🔄 RETRY INITIATED</div>
+        <div class="debug-content-section debug-retry-content">
+          <div class="debug-subsection">
+            <strong>Original Input:</strong> "${this.escapeHtml(data.metadata?.originalInput || '')}"
+          </div>
+          <div class="debug-subsection">
+            <strong>Retry Reason:</strong> ${this.escapeHtml(data.response || '')}
+          </div>
+        </div>
+      `;
     }
 
     logContainer.appendChild(entry);
@@ -138,10 +237,12 @@ export class DebugPane {
       { pattern: /CHARACTERS:([\s\S]*?)(?=STORY FLOWS:|$)/g, class: 'prompt-characters', label: 'Characters' },
       { pattern: /STORY FLOWS:([\s\S]*?)(?=STORY ENDINGS:|$)/g, class: 'prompt-flows', label: 'Story Flows' },
       { pattern: /STORY ENDINGS:([\s\S]*?)(?=CURRENT FLOW CONTEXT:|$)/g, class: 'prompt-endings', label: 'Story Endings' },
-      { pattern: /CURRENT FLOW CONTEXT:([\s\S]*?)(?=GAME COMPLETED:|PLAYER COMMAND:|$)/g, class: 'prompt-flow-context', label: 'Current Flow Context' },
+      { pattern: /CURRENT FLOW CONTEXT:([\s\S]*?)(?=CONVERSATION MEMORY:|$)/g, class: 'prompt-flow-context', label: 'Current Flow Context' },
+      { pattern: /CONVERSATION MEMORY:([\s\S]*?)(?=GAME COMPLETED:|PLAYER COMMAND:|$)/g, class: 'prompt-conversation-memory', label: 'Conversation Memory' },
       { pattern: /GAME COMPLETED:([\s\S]*?)(?=PLAYER COMMAND:|$)/g, class: 'prompt-game-completed', label: 'Game Completed' },
-      { pattern: /PLAYER COMMAND:([\s\S]*?)(?=Please respond|$)/g, class: 'prompt-command', label: 'Player Command' },
-      { pattern: /Please respond with a JSON object([\s\S]*?)(?=CRITICAL RULES:|$)/g, class: 'prompt-format', label: 'Response Format' },
+      { pattern: /PLAYER COMMAND:([\s\S]*?)(?=CRITICAL:|$)/g, class: 'prompt-command', label: 'Player Command' },
+      { pattern: /CRITICAL:([\s\S]*?)(?=Use this exact format|CRITICAL RULES:|$)/g, class: 'prompt-critical-header', label: 'Critical Instructions' },
+      { pattern: /Use this exact format([\s\S]*?)(?=CRITICAL RULES:|$)/g, class: 'prompt-format', label: 'Response Format' },
       { pattern: /CRITICAL RULES:([\s\S]*?)(?=ENDGAME HANDLING:|$)/g, class: 'prompt-rules', label: 'Critical Rules' },
       { pattern: /ENDGAME HANDLING:([\s\S]*?)$/g, class: 'prompt-endgame', label: 'Endgame Handling' }
     ];

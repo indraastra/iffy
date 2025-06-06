@@ -415,6 +415,18 @@ body {
   border-left-color: #F44336;
 }
 
+.debug-entry.debug-validation {
+  border-left-color: #FF9800;
+}
+
+.debug-entry.debug-memory {
+  border-left-color: #9C27B0;
+}
+
+.debug-entry.debug-retry {
+  border-left-color: #607D8B;
+}
+
 .debug-timestamp {
   font-size: 0.8rem;
   color: #888;
@@ -432,6 +444,69 @@ body {
 .debug-error-content {
   background-color: rgba(244, 67, 54, 0.1);
   border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.debug-validation-content {
+  background-color: rgba(255, 152, 0, 0.1);
+  border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.debug-memory-content {
+  background-color: rgba(156, 39, 176, 0.1);
+  border: 1px solid rgba(156, 39, 176, 0.3);
+}
+
+.debug-retry-content {
+  background-color: rgba(96, 125, 139, 0.1);
+  border: 1px solid rgba(96, 125, 139, 0.3);
+}
+
+.debug-subsection {
+  margin-bottom: 0.75rem;
+}
+
+.debug-subsection:last-child {
+  margin-bottom: 0;
+}
+
+.validation-issues {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.validation-issues li {
+  margin-bottom: 0.25rem;
+  color: #FF9800;
+}
+
+.memory-interactions {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.memory-interaction {
+  margin-bottom: 0.5rem;
+  padding: 0.25rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.memory-importance {
+  color: #9C27B0;
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+
+.memory-input {
+  color: #4CAF50;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.memory-response {
+  color: #2196F3;
+  display: block;
+  font-style: italic;
 }
 
 /* Prompt Section Formatting */
@@ -516,6 +591,18 @@ body {
 .prompt-flow-context .prompt-section-header {
   background-color: rgba(0, 188, 212, 0.2);
   color: #4DD0E1;
+}
+
+.prompt-conversation-memory .prompt-section-header {
+  background-color: rgba(156, 39, 176, 0.2);
+  color: #BA68C8;
+}
+
+.prompt-critical-header .prompt-section-header {
+  background-color: rgba(244, 67, 54, 0.3);
+  color: #EF5350;
+  font-weight: bold;
+  text-transform: uppercase;
 }
 
 .prompt-game-completed .prompt-section-header {

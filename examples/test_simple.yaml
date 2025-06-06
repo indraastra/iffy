@@ -40,7 +40,7 @@ knowledge: []
 
 flows:
   - id: "test_scene"
-    type: "open_scene"
+    type: "narrative"
     name: "Test Scene"
     description: "Find the key to win"
     completion_transitions:

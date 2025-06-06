@@ -84,7 +84,7 @@ export interface DialogueExchange {
 
 export interface Flow {
   id: string;
-  type: 'narrative' | 'dialogue' | 'open_scene';
+  type: 'narrative' | 'dialogue';
   name: string;
   requirements?: string[];
   sets?: string[];
@@ -127,6 +127,38 @@ export interface Story {
   endings?: Ending[]; // Optional - endings can be defined as flows instead
 }
 
+// Conversation memory types
+export interface InteractionPair {
+  playerInput: string;
+  llmResponse: string;
+  timestamp: Date;
+  importance: 'low' | 'medium' | 'high';
+}
+
+export interface ImmediateContext {
+  recentInteractions: InteractionPair[];
+  currentScene?: string;
+  emotionalContext?: string;
+  activeConversation?: string;
+}
+
+export interface SignificantMemory {
+  id: string;
+  type: 'character_bond' | 'discovery' | 'revelation' | 'promise' | 'goal';
+  summary: string;
+  participants?: string[]; // character IDs involved
+  relatedItems?: string[]; // item IDs involved
+  relatedLocations?: string[]; // location IDs involved
+  importance: number; // 1-10 scoring
+  lastAccessed: Date;
+  contextTriggers: string[]; // keywords that make this relevant
+}
+
+export interface ConversationMemory {
+  immediateContext: ImmediateContext;
+  significantMemories: SignificantMemory[];
+}
+
 // Game state types
 export interface GameState {
   currentLocation: string;
@@ -137,6 +169,7 @@ export interface GameState {
   gameStarted: boolean;
   gameEnded: boolean;
   endingId?: string;
+  conversationMemory?: ConversationMemory;
 }
 
 // Engine types

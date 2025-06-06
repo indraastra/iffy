@@ -1,4 +1,4 @@
-import { Story, GameState, PlayerAction, GameResponse, Flow, FlowTransition } from '@/types/story';
+import { Story, GameState, PlayerAction, GameResponse, Flow, FlowTransition, InteractionPair } from '@/types/story';
 import { AnthropicService, LLMResponse } from '@/services/anthropicService';
 
 export class GameEngine {
@@ -6,6 +6,7 @@ export class GameEngine {
   private gameState: GameState = this.createInitialState();
   private anthropicService: AnthropicService;
   private previousFlow: string | null = null;
+  private debugPane: any = null;
 
   constructor() {
     this.anthropicService = new AnthropicService();
@@ -84,7 +85,22 @@ export class GameEngine {
         currentLocation
       );
 
-      // Apply state changes from LLM response
+      // Validate state changes and response content
+      const stateValidationIssues = this.validateStateChanges(llmResponse.stateChanges);
+      const responseValidationIssues = this.validateResponseContent(input, llmResponse.response, llmResponse.stateChanges);
+      const allValidationIssues = [...stateValidationIssues, ...responseValidationIssues];
+      
+      if (allValidationIssues.length > 0) {
+        // Log validation failure to debug pane
+        if (this.debugPane) {
+          this.debugPane.logValidation(allValidationIssues, input);
+        }
+        
+        // Ask LLM to retry with validation feedback
+        console.log('🔄 Retrying with validation feedback:', allValidationIssues);
+        return await this.retryWithValidationFeedback(input, llmResponse, allValidationIssues);
+      }
+
       this.applyStateChanges(llmResponse);
 
       // Check if we've transitioned to a new narrative flow
@@ -132,6 +148,9 @@ export class GameEngine {
         }
         // If ending is defined as a flow, the content is already included above
       }
+
+      // Track this interaction for conversation memory
+      this.trackInteraction(input, responseText);
 
       return {
         text: responseText,
@@ -415,7 +434,13 @@ This is a basic MVP version. More natural language understanding will be added i
       flags: new Set(),
       knowledge: new Set(),
       gameStarted: false,
-      gameEnded: false
+      gameEnded: false,
+      conversationMemory: {
+        immediateContext: {
+          recentInteractions: []
+        },
+        significantMemories: []
+      }
     };
   }
 
@@ -686,6 +711,222 @@ This is a basic MVP version. More natural language understanding will be added i
     }
   }
 
+  private validateStateChanges(stateChanges: any): string[] {
+    const issues: string[] = [];
+    
+    // Validate inventory additions
+    if (stateChanges.addToInventory) {
+      stateChanges.addToInventory.forEach((itemId: string) => {
+        if (!this.validateItemDiscovery(itemId)) {
+          const item = this.story!.items.find(i => i.id === itemId);
+          if (item) {
+            if (item.discoverable_in) {
+              issues.push(`INVALID: Cannot obtain "${item.name}" (${itemId}) in current location. This item can only be found in "${item.discoverable_in}".`);
+            } else if (item.location) {
+              issues.push(`INVALID: Cannot obtain "${item.name}" (${itemId}) in current location. This item is only available in "${item.location}".`);
+            } else {
+              issues.push(`INVALID: Cannot obtain "${item.name}" (${itemId}) - item has no accessible location.`);
+            }
+          } else {
+            issues.push(`INVALID: Cannot obtain unknown item ${itemId}.`);
+          }
+        }
+      });
+    }
+    
+    return issues;
+  }
+
+  private validateResponseContent(playerInput: string, responseText: string, stateChanges: any): string[] {
+    const issues: string[] = [];
+    
+    // Check if this was a discovery command
+    const discoveryCommands = ['check', 'examine', 'inspect', 'search', 'look', 'rummage', 'explore'];
+    const inputLower = playerInput.toLowerCase();
+    const isDiscoveryCommand = discoveryCommands.some(cmd => inputLower.includes(cmd));
+    
+    if (isDiscoveryCommand) {
+      // Check for taking language in the response
+      const takingWords = ['grab', 'take', 'pick up', 'scoop', 'collect', 'clutch', 'seize', 'snatch'];
+      const responseLower = responseText.toLowerCase();
+      const containsTakingLanguage = takingWords.some(word => responseLower.includes(word));
+      
+      // Also check if items were added to inventory (double validation)
+      const itemsAdded = stateChanges.addToInventory?.length > 0;
+      
+      if (containsTakingLanguage || itemsAdded) {
+        issues.push(`INVALID: Discovery command "${playerInput}" should not include taking actions. Response contained taking language or added items to inventory. Discovery should stop at "you spot/see/notice".`);
+      }
+    }
+    
+    return issues;
+  }
+
+  public setDebugPane(debugPane: any): void {
+    this.debugPane = debugPane;
+    // Also set it on the anthropic service
+    this.anthropicService.setDebugCallback((prompt: string, response: string) => {
+      if (prompt) debugPane.logRequest(prompt);
+      if (response) debugPane.logResponse(response);
+    });
+  }
+
+  private async retryWithValidationFeedback(
+    originalInput: string, 
+    failedResponse: any, 
+    validationIssues: string[]
+  ): Promise<GameResponse> {
+    // Log retry initiation to debug pane
+    if (this.debugPane) {
+      this.debugPane.logRetry(originalInput, `Validation failed: ${validationIssues.length} issues found`);
+    }
+    
+    const feedbackPrompt = `VALIDATION FAILED for command "${originalInput}".
+
+Issues found:
+${validationIssues.map(issue => `- ${issue}`).join('\n')}
+
+Your previous response tried to: ${failedResponse.reasoning}
+
+Please provide a corrected response that:
+1. Acknowledges the player's attempt
+2. Explains why the action cannot be completed as requested
+3. Does NOT add invalid items to inventory
+4. Suggests appropriate alternatives (like going to the correct location first)
+
+Remember: Items can only be obtained in their designated locations according to the story data.`;
+
+    try {
+      const correctedResponse = await this.anthropicService.processCommand(
+        feedbackPrompt,
+        this.gameState,
+        this.story!,
+        this.getCurrentLocation()
+      );
+
+      // Apply the corrected state changes (should be valid now)
+      this.applyStateChanges(correctedResponse);
+
+      // Continue with normal flow processing
+      let responseText = correctedResponse.response;
+      const currentFlow = this.getCurrentFlow();
+      
+      const hasTransitionedToNewFlow = currentFlow && 
+        currentFlow.id !== this.previousFlow && 
+        currentFlow.type === 'narrative' && 
+        currentFlow.content && 
+        !this.gameState.gameEnded;
+      
+      if (hasTransitionedToNewFlow) {
+        responseText = currentFlow.content || '';
+        this.applyFlowSets(currentFlow);
+        
+        if (currentFlow.ends_game) {
+          this.gameState.gameEnded = true;
+          this.gameState.endingId = currentFlow.id;
+        }
+        
+        this.checkEndingConditions();
+      }
+      
+      if (currentFlow) {
+        this.previousFlow = currentFlow.id;
+      }
+
+      // Track this interaction for conversation memory
+      this.trackInteraction(originalInput, responseText);
+
+      return {
+        text: responseText,
+        gameState: { ...this.gameState },
+        error: correctedResponse.error
+      };
+    } catch (error) {
+      console.error('Failed to get corrected response:', error);
+      
+      // Fallback to a generic error message
+      return {
+        text: `You can't do that here. ${validationIssues[0]?.split(': ')[1] || 'Try something else.'}`,
+        gameState: { ...this.gameState },
+        error: 'Validation failed and retry failed'
+      };
+    }
+  }
+
+  private validateItemDiscovery(itemId: string): boolean {
+    if (!this.story) return false;
+    
+    const item = this.story.items.find(i => i.id === itemId);
+    if (!item) return false;
+    
+    // If item has a direct location, it's accessible in that location
+    if (item.location === this.gameState.currentLocation) {
+      return true;
+    }
+    
+    // If item is discoverable_in current location, it's accessible
+    if (item.discoverable_in === this.gameState.currentLocation) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  private trackInteraction(playerInput: string, llmResponse: string): void {
+    if (!this.gameState.conversationMemory) {
+      this.gameState.conversationMemory = {
+        immediateContext: { recentInteractions: [] },
+        significantMemories: []
+      };
+    }
+
+    // Determine importance based on content length and keywords
+    const importance = this.determineInteractionImportance(playerInput, llmResponse);
+
+    const interaction: InteractionPair = {
+      playerInput,
+      llmResponse,
+      timestamp: new Date(),
+      importance
+    };
+
+    // Add to recent interactions
+    this.gameState.conversationMemory.immediateContext.recentInteractions.push(interaction);
+
+    // Keep only last 5 interactions for Phase 1
+    const maxRecentInteractions = 5;
+    if (this.gameState.conversationMemory.immediateContext.recentInteractions.length > maxRecentInteractions) {
+      this.gameState.conversationMemory.immediateContext.recentInteractions = 
+        this.gameState.conversationMemory.immediateContext.recentInteractions.slice(-maxRecentInteractions);
+    }
+
+    console.log(`💭 Tracked interaction (${importance} importance): "${playerInput}" -> "${llmResponse.substring(0, 50)}..."`);
+    
+    // Log to debug pane if available
+    if (this.debugPane) {
+      this.debugPane.logMemory(this.gameState.conversationMemory, importance);
+    }
+  }
+
+  private determineInteractionImportance(playerInput: string, llmResponse: string): 'low' | 'medium' | 'high' {
+    // Simple heuristics for Phase 1
+    const combinedText = (playerInput + ' ' + llmResponse).toLowerCase();
+    
+    // High importance indicators
+    const highImportanceKeywords = ['find', 'discover', 'reveal', 'secret', 'important', 'remember', 'promise', 'love', 'hate', 'trust', 'betray'];
+    if (highImportanceKeywords.some(keyword => combinedText.includes(keyword))) {
+      return 'high';
+    }
+    
+    // Medium importance indicators
+    const mediumImportanceKeywords = ['character', 'conversation', 'tell', 'ask', 'explain', 'story', 'past', 'future'];
+    if (mediumImportanceKeywords.some(keyword => combinedText.includes(keyword)) || llmResponse.length > 200) {
+      return 'medium';
+    }
+    
+    return 'low';
+  }
+
   getAnthropicService(): AnthropicService {
     return this.anthropicService;
   }
@@ -695,7 +936,22 @@ This is a basic MVP version. More natural language understanding will be added i
       gameState: {
         ...this.gameState,
         flags: Array.from(this.gameState.flags),
-        knowledge: Array.from(this.gameState.knowledge)
+        knowledge: Array.from(this.gameState.knowledge),
+        conversationMemory: this.gameState.conversationMemory ? {
+          ...this.gameState.conversationMemory,
+          // Convert timestamps to strings for JSON serialization
+          immediateContext: {
+            ...this.gameState.conversationMemory.immediateContext,
+            recentInteractions: this.gameState.conversationMemory.immediateContext.recentInteractions.map(interaction => ({
+              ...interaction,
+              timestamp: interaction.timestamp.toISOString()
+            }))
+          },
+          significantMemories: this.gameState.conversationMemory.significantMemories.map(memory => ({
+            ...memory,
+            lastAccessed: memory.lastAccessed.toISOString()
+          }))
+        } : undefined
       },
       storyTitle: this.story?.title
     });
@@ -711,7 +967,25 @@ This is a basic MVP version. More natural language understanding will be added i
       this.gameState = {
         ...data.gameState,
         flags: new Set(data.gameState.flags),
-        knowledge: new Set(data.gameState.knowledge)
+        knowledge: new Set(data.gameState.knowledge),
+        conversationMemory: data.gameState.conversationMemory ? {
+          ...data.gameState.conversationMemory,
+          // Convert timestamp strings back to Date objects
+          immediateContext: {
+            ...data.gameState.conversationMemory.immediateContext,
+            recentInteractions: data.gameState.conversationMemory.immediateContext.recentInteractions.map((interaction: any) => ({
+              ...interaction,
+              timestamp: new Date(interaction.timestamp)
+            }))
+          },
+          significantMemories: data.gameState.conversationMemory.significantMemories.map((memory: any) => ({
+            ...memory,
+            lastAccessed: new Date(memory.lastAccessed)
+          }))
+        } : {
+          immediateContext: { recentInteractions: [] },
+          significantMemories: []
+        }
       };
 
       return true;

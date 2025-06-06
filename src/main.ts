@@ -450,6 +450,10 @@ class IffyApp {
   }
 
   private setupDebugLogging(): void {
+    // Connect debug pane to game engine
+    this.gameEngine.setDebugPane(this.debugPane);
+    
+    // Also set up the old callback for backward compatibility
     this.gameEngine.getAnthropicService().setDebugCallback((prompt: string, response: string) => {
       if (prompt) {
         this.debugPane.logRequest(prompt);

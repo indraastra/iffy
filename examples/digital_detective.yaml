@@ -149,7 +149,7 @@ knowledge:
 
 flows:
   - id: "case_briefing"
-    type: "open_scene"
+    type: "narrative"
     name: "The PRIME Anomaly"
     description: |
       Your latest case involves PRIME, an AI research system that's been exhibiting
@@ -198,7 +198,7 @@ flows:
         to_flow: "deepening_mystery"
 
   - id: "deepening_mystery"
-    type: "open_scene"
+    type: "narrative"
     name: "The Investigation Unfolds"
     description: |
       As you delve deeper into the PRIME case, both the mystery and ARIA herself

@@ -129,7 +129,7 @@ knowledge:
 
 flows:
   - id: "hunger_awakens"
-    type: "open_scene"
+    type: "narrative"
     name: "The Hunger Strikes!"
     description: |
       It begins... as all great dramas do... with a RUMBLING! Your stomach 
