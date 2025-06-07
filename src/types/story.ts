@@ -49,6 +49,9 @@ export interface Item {
   discoverable_in?: string; // Alternative: location where this can be found through exploration
   discovery_objects?: string[]; // Objects to search to find this item
   aliases?: string[]; // Alternative names players might use
+  // Format v2: Smart item relationships
+  can_become?: string; // What this item can transform into (e.g., "toasted bread")
+  created_from?: string; // What item this was created from (e.g., "bread")
 }
 
 export interface Knowledge {
@@ -113,6 +116,14 @@ export interface Ending {
   content: string;
 }
 
+// Format v2: Success conditions for LLM-driven story goals
+export interface SuccessCondition {
+  id: string;
+  description: string; // Natural language description of the goal
+  requires: string[]; // Items/flags/knowledge needed (including action requirements)
+  ending: string; // Rich text content for this ending
+}
+
 export interface Story {
   title: string;
   author: string;
@@ -125,6 +136,9 @@ export interface Story {
   flows: Flow[];
   start: StartSection;
   endings?: Ending[]; // Optional - endings can be defined as flows instead
+  // Format v2: LLM-driven story intelligence
+  success_conditions?: SuccessCondition[]; // Story goals for LLM to track
+  llm_story_guidelines?: string; // Natural language guidance for LLM
 }
 
 // Conversation memory types

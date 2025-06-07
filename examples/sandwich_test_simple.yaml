@@ -1,0 +1,127 @@
+title: "Simple Sandwich Test"
+author: "Test"
+version: "2.0"
+
+metadata:
+  setting:
+    time: "Test time"
+    place: "Test kitchen"
+  tone:
+    overall: "Simple test story"
+    narrative_voice: "Direct and clear"
+  themes:
+    - "Testing success conditions"
+
+characters:
+  - id: "player"
+    name: "Player"
+    traits: ["hungry"]
+    voice: "Simple"
+    description: "Test player"
+
+locations:
+  - id: "kitchen"
+    name: "Kitchen"
+    connections: []
+    description: |
+      A simple kitchen with a table. On the table you can see: bread, cheese, mystery jar, and a toaster.
+    objects:
+      - name: "table"
+        description: "A table with ingredients on it"
+      - name: "toaster"
+        description: "A toaster for making toast"
+
+items:
+  - id: "bread"
+    name: "Bread"
+    description: "Regular bread"
+    discoverable_in: "kitchen"
+    discovery_objects: ["table"]
+    aliases: ["bread", "loaf"]
+    can_become: "toasted_bread"
+
+  - id: "toasted_bread"
+    name: "Toasted Bread"
+    description: "Golden toasted bread"
+    created_from: "bread"
+    aliases: ["toast", "toasted bread"]
+
+  - id: "cheese"
+    name: "Cheese"
+    description: "A slice of cheese"
+    discoverable_in: "kitchen"
+    discovery_objects: ["table"]
+    aliases: ["cheese", "slice"]
+
+  - id: "mystery_jar"
+    name: "Mystery Jar"
+    description: "A jar with dark, fishy-smelling contents that reek of fermentation"
+    discoverable_in: "kitchen"
+    discovery_objects: ["table"]
+    aliases: ["jar", "mystery jar", "condiment"]
+
+# Format v2: Success conditions define story goals
+success_conditions:
+  - id: "mystery_disaster"
+    description: "Player eats sandwich made with the mystery condiment"
+    requires: ["sandwich has mystery condiment", "player has eaten sandwich"]
+    ending: |
+      Oh no! The mystery condiment was fish sauce! Disaster!
+
+  - id: "perfect_ending"
+    description: "Player makes and eats a sandwich with toasted bread and cheese"
+    requires: ["sandwich has toasted bread", "sandwich has cheese", "player has eaten sandwich"]
+    ending: |
+      Perfect! You made an amazing sandwich with golden toast and cheese!
+
+  - id: "decent_ending"
+    description: "Player makes and eats a sandwich with regular bread and cheese"
+    requires: ["sandwich has bread", "sandwich has cheese", "player has eaten sandwich"]
+    ending: |
+      Not bad! A simple but satisfying sandwich.
+
+flows:
+  - id: "start"
+    name: "Start"
+    type: "narrative"
+    content: |
+      Welcome to the simple sandwich test!
+
+start:
+  text: |
+    You're in a kitchen. Everything you need is on the table.
+  location: "kitchen"
+  first_flow: "start"
+
+# Format v2: LLM story guidelines
+llm_story_guidelines: |
+  STORY GOAL: Player should find ingredients on the table, make a sandwich, and eat it.
+  
+  SANDWICH COMPOSITION TRACKING:
+  When the player makes a sandwich, set knowledge flags to track what ingredients are used:
+  - If using toasted bread in sandwich → set knowledge "sandwich has toasted bread"
+  - If using regular bread in sandwich → set knowledge "sandwich has bread" 
+  - If using cheese in sandwich → set knowledge "sandwich has cheese"
+  - If using mystery condiment in sandwich → set knowledge "sandwich has mystery condiment"
+  
+  IMPORTANT: If mystery condiment is used, it determines the ending regardless of other ingredients. The mystery condiment overrides everything else.
+  
+  EATING ACTION TRACKING:
+  When the player eats their sandwich, set knowledge: "player has eaten sandwich"
+  
+  IMPORTANT - DO NOT WRITE ENDING TEXT:
+  When the player eats their sandwich, respond naturally to the eating action but DO NOT write any ending text, game over messages, or story conclusions. The game engine will automatically detect when success conditions are met and display the appropriate ending. Just describe the immediate experience of eating the sandwich.
+  
+  SUCCESS CONDITION LOGIC:
+  Endings are automatically triggered by the engine when all requirements are met:
+  - Mystery disaster: requires "sandwich has mystery condiment" + "player has eaten sandwich"
+  - Perfect ending: requires "sandwich has toasted bread" + "sandwich has cheese" + "player has eaten sandwich"
+  - Decent ending: requires "sandwich has bread" + "sandwich has cheese" + "player has eaten sandwich"
+  
+  ITEM TRANSFORMATIONS:
+  - When player toasts bread → becomes "toasted bread"
+  - Be flexible about toasting methods (toaster, etc.)
+  
+  DISCOVERY: All items are visible on the table and can be easily picked up.
+  
+  MYSTERY CONDIMENT KNOWLEDGE: The mystery condiment is fish sauce with a strong fishy, fermented smell. When describing it or when players examine it, emphasize the fishy, oceanic characteristics that hint at its true nature. This will make the fish sauce revelation in the ending feel natural and consistent.

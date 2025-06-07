@@ -133,7 +133,7 @@ STORY: ${story.title} | ${story.metadata.tone.overall} | ${story.metadata.tone.n
 
 STATE:
 Location: ${currentLocation?.name || 'Unknown'} | Exits: ${currentLocation?.connections?.join(', ') || 'None'}
-Inventory: ${gameState.inventory?.length > 0 ? gameState.inventory.join(', ') : 'Empty'}
+Inventory: ${this.getInventoryDisplay(gameState, story)}
 Flow: ${gameState.currentFlow || 'None'} | Status: ${gameState.gameEnded ? 'COMPLETED' : 'ACTIVE'}
 
 LOCATIONS:
@@ -153,6 +153,24 @@ ${story.locations?.map((loc: any) => {
   return info;
 }).join('\n') || 'None'}
 
+ITEMS & TRANSFORMATIONS:
+${story.items?.map((item: any) => {
+  let info = `${item.name} (${item.id})`;
+  if (item.can_become) {
+    info += ` → can become: ${item.can_become}`;
+  }
+  if (item.created_from) {
+    info += ` ← created from: ${item.created_from}`;
+  }
+  if (item.aliases && item.aliases.length > 0) {
+    info += ` | aliases: ${item.aliases.join(', ')}`;
+  }
+  return info;
+}).join('\n') || 'None'}
+
+${story.success_conditions?.length > 0 ? `SUCCESS CONDITIONS:
+${story.success_conditions.map((sc: any) => `${sc.description} | Requires: ${sc.requires.join(', ')}`).join('\n')}` : ''}
+
 PLAYER CHARACTER: ${this.getPlayerCharacterInfo(story)}
 
 NPC CHARACTERS: ${this.getNPCCharacterInfo(story)}
@@ -162,6 +180,9 @@ ${story.flows?.length > 0 ? `FLOWS: ${story.flows.map((flow: any) => `${flow.nam
 CURRENT FLOW CONTEXT:
 ${this.getCurrentFlowContext(story, gameState)}
 
+${story.llm_story_guidelines ? `LLM STORY GUIDELINES:
+${story.llm_story_guidelines}` : ''}
+
 CONVERSATION MEMORY:
 ${this.getConversationContext(gameState)}
 
@@ -169,7 +190,7 @@ DISCOVERY STATUS: Based on recent interactions, analyze if player has already ex
 
 ${gameState.gameEnded ? this.getEndingContext(story, gameState) : ''}
 
-MARKUP: Use [character:Name] for characters, [item:Name] for items, **bold** for emphasis, [!warning]/[!discovery]/[!danger] for alerts.
+MARKUP: Use [character:Name] for characters, [item:Name] for items, **bold** for emphasis, [!warning]/[!discovery]/[!danger] for alerts. Do NOT use [location:Name] markup - just use the location name directly.
 
 IMPORTANT: The player IS the player character. Do NOT treat the player character as a separate NPC they can talk to. When players try to "talk to" or interact with the player character, explain that they ARE that character.
 
@@ -203,7 +224,14 @@ RULES:
 8. If game COMPLETED, allow reflection but no major state changes
 9. Be permissive with item discovery - if player has clearly interacted with containers/objects, items inside are available
 10. NEVER demand specific syntax - interpret intent and respond naturally
-11. CRITICAL: The player IS the player character. If they try to "talk to" or interact with the player character, explain that they ARE that character - don't treat it as a separate NPC conversation`;
+11. CRITICAL: The player IS the player character. If they try to "talk to" or interact with the player character, explain that they ARE that character - don't treat it as a separate NPC conversation
+
+FORMAT v2 INTELLIGENCE:
+12. ITEM TRANSFORMATIONS: When players perform actions that logically transform items, intelligently create the new item. For example, if "bread" can_become "toasted bread" and player toasts it, remove "bread" from inventory and add "toasted bread".
+13. SUCCESS CONDITION AWARENESS: Understand story goals from success conditions and guide players toward meaningful achievements.
+14. FLEXIBLE TRANSFORMATION METHODS: Be creative about how transformations can occur - "toast bread" could use toaster, oven, pan, fire, etc. Focus on logical outcomes, not rigid methods.
+15. NATURAL ITEM RELATIONSHIPS: When items have can_become/created_from relationships, understand these as logical possibilities, not rigid requirements.
+16. STORY GOAL GUIDANCE: Use success conditions and LLM guidelines to understand the story's intended experience and help guide players toward meaningful interactions.`;
   }
 
   private parseResponse(responseText: string): LLMResponse {
@@ -265,6 +293,16 @@ RULES:
   private getEndingContext(story: any, gameState: any): string {
     if (!gameState.endingId) return '';
     
+    // Format v2: Check for success condition ending first
+    const successCondition = story.success_conditions?.find((sc: any) => sc.id === gameState.endingId);
+    if (successCondition) {
+      return `GAME COMPLETED:
+Success Condition Achieved: ${successCondition.description}
+Requirements Met: ${successCondition.requires?.join(', ') || 'None'}
+The player has successfully achieved this story goal.`;
+    }
+    
+    // Fallback to traditional ending
     const ending = story.endings?.find((ending: any) => ending.id === gameState.endingId);
     if (!ending) return 'GAME COMPLETED: Unknown ending reached';
     
@@ -360,6 +398,33 @@ The player has successfully concluded this story path.`;
     }
     
     return npcs.map((char: any) => `${char.name} - ${char.description || 'No description'}`).join(', ');
+  }
+
+  private getInventoryDisplay(gameState: any, story: any): string {
+    if (!gameState.inventory || gameState.inventory.length === 0) {
+      return 'Empty';
+    }
+
+    const itemDisplays = gameState.inventory.map((itemId: string) => {
+      const item = story.items?.find((i: any) => i.id === itemId);
+      if (!item) return itemId; // Fallback to ID if item not found
+      
+      let display = `${item.name} (${itemId})`;
+      
+      // Add aliases for LLM understanding
+      if (item.aliases && item.aliases.length > 0) {
+        display += ` [aliases: ${item.aliases.join(', ')}]`;
+      }
+      
+      // Add transformation info
+      if (item.can_become) {
+        display += ` [can become: ${item.can_become}]`;
+      }
+      
+      return display;
+    });
+
+    return itemDisplays.join(', ');
   }
 
 }

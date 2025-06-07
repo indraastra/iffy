@@ -1,3 +1,5 @@
+import { RichTextParser } from '@/utils/richTextParser';
+
 export interface DebugData {
   prompt?: string;
   response?: string;
@@ -15,8 +17,10 @@ export class DebugPane {
   private container: HTMLElement;
   private isVisible: boolean = false;
   private debugLog: DebugData[] = [];
+  private richTextParser: RichTextParser;
 
   constructor() {
+    this.richTextParser = new RichTextParser();
     this.container = this.createDebugPane();
     document.body.appendChild(this.container);
   }
@@ -265,18 +269,48 @@ export class DebugPane {
     try {
       // Try to parse as JSON and format it
       const parsed = JSON.parse(response);
-      return `<div class="response-json">
-        <div class="response-section">
-          <div class="response-section-header">Parsed Response</div>
-          <pre class="json-formatted">${JSON.stringify(parsed, null, 2)}</pre>
-        </div>
-      </div>`;
+      
+      let jsonDisplay = JSON.stringify(parsed, null, 2);
+      
+      // If the JSON has a 'response' field with rich text, also show rendered version
+      if (parsed.response && typeof parsed.response === 'string' && this.hasRichTextMarkup(parsed.response)) {
+        return `<div class="response-json">
+          <div class="response-section">
+            <div class="response-section-header">Rendered Response (with Rich Text)</div>
+            <div class="rendered-response">${this.renderRichTextForDebug(parsed.response)}</div>
+          </div>
+          <div class="response-section">
+            <div class="response-section-header">Raw JSON</div>
+            <pre class="json-formatted">${jsonDisplay}</pre>
+          </div>
+        </div>`;
+      } else {
+        return `<div class="response-json">
+          <div class="response-section">
+            <div class="response-section-header">Parsed Response</div>
+            <pre class="json-formatted">${jsonDisplay}</pre>
+          </div>
+        </div>`;
+      }
     } catch {
-      // If not JSON, treat as plain text
-      return `<div class="response-text">
-        <div class="response-section-header">Raw Response</div>
-        <pre>${this.escapeHtml(response)}</pre>
-      </div>`;
+      // If not JSON, check if it's rich text
+      if (this.hasRichTextMarkup(response)) {
+        return `<div class="response-text">
+          <div class="response-section">
+            <div class="response-section-header">Rendered Response (with Rich Text)</div>
+            <div class="rendered-response">${this.renderRichTextForDebug(response)}</div>
+          </div>
+          <div class="response-section">
+            <div class="response-section-header">Raw Response</div>
+            <pre>${this.escapeHtml(response)}</pre>
+          </div>
+        </div>`;
+      } else {
+        return `<div class="response-text">
+          <div class="response-section-header">Raw Response</div>
+          <pre>${this.escapeHtml(response)}</pre>
+        </div>`;
+      }
     }
   }
 
@@ -284,6 +318,46 @@ export class DebugPane {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  private hasRichTextMarkup(text: string): boolean {
+    // Check for rich text patterns
+    const patterns = [
+      /\*\*[^*]+\*\*/,           // **bold**
+      /\*[^*]+\*/,              // *italic*
+      /\[character:[^\]]+\]/,   // [character:Name]
+      /\[item:[^\]]+\]/,        // [item:Name]
+      /\[![a-zA-Z]+\]/          // [!warning], [!discovery], etc.
+    ];
+    
+    return patterns.some(pattern => pattern.test(text));
+  }
+
+  private renderRichTextForDebug(text: string): string {
+    // Use the actual RichTextParser for proper text flow
+    const fragment = this.richTextParser.renderContent(text);
+    
+    // Convert the DocumentFragment to HTML string
+    const tempDiv = document.createElement('div');
+    tempDiv.appendChild(fragment);
+    
+    // Remove clickable behavior for debug view
+    const clickableElements = tempDiv.querySelectorAll('.clickable-element');
+    clickableElements.forEach(element => {
+      element.classList.add('debug-no-click');
+      element.classList.remove('clickable-element');
+      element.removeAttribute('data-clickable-text');
+      element.removeAttribute('title');
+      (element as HTMLElement).style.cursor = 'default';
+    });
+    
+    // Add debug-alert class to alerts for debug-specific styling
+    const alertElements = tempDiv.querySelectorAll('.rich-alert');
+    alertElements.forEach(element => {
+      element.classList.add('debug-alert');
+    });
+    
+    return tempDiv.innerHTML;
   }
 
   public scrollToTop(): void {

@@ -75,7 +75,7 @@ export class GameEngine {
     }
 
     try {
-      // Phase 2: Use LLM for command interpretation when available
+      // Use LLM for command interpretation when available
       if (this.anthropicService.isConfigured()) {
         return await this.processWithLLM(action.input);
       } else {
@@ -160,12 +160,18 @@ export class GameEngine {
       // Note: Flow tracking is now handled locally within this method
       
       if (this.gameState.gameEnded && this.gameState.endingId) {
-        // Check if ending is defined as a separate ending (legacy)
-        const ending = this.story!.endings?.find(e => e.id === this.gameState.endingId);
-        if (ending) {
-          responseText += `\n\n${ending.content}`;
+        // Format v2: Check for success condition ending first
+        const successCondition = this.story!.success_conditions?.find(sc => sc.id === this.gameState.endingId);
+        if (successCondition) {
+          responseText += `\n\n${successCondition.ending}`;
+        } else {
+          // Fallback: Check if ending is defined as a separate ending (legacy)
+          const ending = this.story!.endings?.find(e => e.id === this.gameState.endingId);
+          if (ending) {
+            responseText += `\n\n${ending.content}`;
+          }
+          // If ending is defined as a flow, the content is already included above
         }
-        // If ending is defined as a flow, the content is already included above
       }
 
       // Track this interaction for conversation memory
@@ -928,22 +934,78 @@ This is a basic MVP version. More natural language understanding will be added i
       return true;
     }
     
+    // Check if condition is an item ID or name/alias (for success conditions)
+    if (this.story) {
+      // First try exact item ID match
+      if (this.gameState.inventory.includes(condition)) {
+        console.log(`  direct item ID check: "${condition}" found in inventory = true`);
+        return true;
+      }
+      
+      // Then try to find item by name or alias
+      const item = this.story.items.find(item => {
+        if (item.id === condition) return true;
+        if (item.name === condition) return true;
+        if (item.aliases && item.aliases.includes(condition)) return true;
+        return false;
+      });
+      
+      if (item && this.gameState.inventory.includes(item.id)) {
+        console.log(`  item name/alias check: "${condition}" maps to "${item.id}" found in inventory = true`);
+        return true;
+      }
+    }
+    
     console.log(`  condition not met: "${condition}" = false`);
     return false;
   }
 
   private checkEndingConditions(): void {
-    if (!this.story || this.gameState.gameEnded || !this.story.endings) return;
+    if (!this.story || this.gameState.gameEnded) return;
 
-    for (const ending of this.story.endings) {
-      if (this.checkFlowRequirements({ requirements: ending.requires } as Flow)) {
+    // Format v2: Check success conditions first (higher priority)
+    if (this.story.success_conditions) {
+      const matchedCondition = this.checkSuccessConditions();
+      if (matchedCondition) {
         this.gameState.gameEnded = true;
-        this.gameState.endingId = ending.id;
-        console.log(`Game ended with ending: ${ending.name}`);
-        break;
+        this.gameState.endingId = matchedCondition.id;
+        console.log(`Game ended with success condition: ${matchedCondition.description}`);
+        return;
+      }
+    }
+
+    // Fallback to traditional endings
+    if (this.story.endings) {
+      for (const ending of this.story.endings) {
+        if (this.checkFlowRequirements({ requirements: ending.requires } as Flow)) {
+          this.gameState.gameEnded = true;
+          this.gameState.endingId = ending.id;
+          console.log(`Game ended with ending: ${ending.name}`);
+          break;
+        }
       }
     }
   }
+
+  private checkSuccessConditions(): any {
+    if (!this.story?.success_conditions) return null;
+
+    for (const condition of this.story.success_conditions) {
+      // Check if all requirements are met
+      const requirementsMet = condition.requires.every(requirement => {
+        return this.evaluateCondition(requirement);
+      });
+
+      if (requirementsMet) {
+        console.log(`✅ Success condition matched: ${condition.description}`);
+        return condition;
+      }
+    }
+
+    return null;
+  }
+
+
 
   private validateStateChanges(stateChanges: any): string[] {
     const issues: string[] = [];
@@ -1067,6 +1129,21 @@ Remember: Items can only be obtained in their designated locations according to 
         }
         
         this.checkEndingConditions();
+      }
+      
+      // Handle ending content for success conditions
+      if (this.gameState.gameEnded && this.gameState.endingId) {
+        // Format v2: Check for success condition ending first
+        const successCondition = this.story!.success_conditions?.find(sc => sc.id === this.gameState.endingId);
+        if (successCondition) {
+          responseText += `\n\n${successCondition.ending}`;
+        } else {
+          // Fallback: Check if ending is defined as a separate ending (legacy)
+          const ending = this.story!.endings?.find(e => e.id === this.gameState.endingId);
+          if (ending) {
+            responseText += `\n\n${ending.content}`;
+          }
+        }
       }
       
       // Note: Flow tracking is now handled locally within each method

@@ -1,0 +1,213 @@
+title: "The Great Sandwich Crisis v2"
+author: "Iffy Engine Team"
+version: "2.0"
+
+metadata:
+  setting:
+    time: "A fateful Tuesday afternoon, 12:17 PM"
+    place: "Jennifer's modest kitchen - stage of EPIC DRAMA"
+  tone:
+    overall: "Ridiculously over-the-top soap opera melodrama applied to mundane sandwich-making"
+    narrative_voice: "Breathlessly dramatic soap opera narrator who treats every action like a life-or-death crisis"
+  themes:
+    - "The EPIC struggle of everyday decisions"
+    - "Betrayal by inanimate objects"
+    - "The heroic quest for lunch"
+    - "Kitchen appliances as dramatic antagonists"
+  ui:
+    colors:
+      primary: "#ff1493"
+      background: "#000000"
+      text: "#ffffff"
+
+characters:
+  - id: "player"
+    name: "Jennifer"
+    traits: ["hungry", "dramatic_protagonist", "sandwich_seeker", "easily_betrayed_by_condiments"]
+    voice: "Inner thoughts increasingly influenced by soap opera narrator's dramatic style"
+    description: "An ordinary person thrust into the EXTRAORDINARY drama of lunch preparation"
+
+locations:
+  - id: "kitchen"
+    name: "The Kitchen of Destiny"
+    connections: ["pantry", "refrigerator_zone"]
+    description: |
+      THIS IS IT! The battleground where DREAMS are made and HOPES are crushed! 
+      Sunlight streams through the window like the tears of a thousand forgotten 
+      meals! The counter stands before you - cold, unforgiving, WAITING for the 
+      epic sandwich that will CHANGE EVERYTHING!
+    objects:
+      - name: "counter"
+        description: "This sacred altar of culinary creation has witnessed TRIUMPHS and TRAGEDIES!"
+      - name: "toaster"
+        description: "The chrome sentinel that could be your GREATEST ALLY... or your most BITTER ENEMY!"
+
+  - id: "pantry"
+    name: "The Pantry of Broken Dreams"
+    connections: ["kitchen"]
+    description: |
+      You step into the shadowy realm where HOPE goes to die! Shelves stretch 
+      before you like the years you've wasted NOT making the perfect sandwich! 
+      What SECRETS lie hidden behind these canned goods?
+    objects:
+      - name: "bread shelf"
+        description: "The throne where carbohydrate royalty should reign supreme!"
+      - name: "condiment collection"
+        description: "Jars and bottles that MOCK you with their false promises!"
+
+  - id: "refrigerator_zone"
+    name: "The Frigid Fortress of Solitude"
+    connections: ["kitchen"]
+    description: |
+      The humming MONOLITH of preservation! Behind these sealed doors lie the 
+      PERISHABLE SECRETS that will make or break your sandwich destiny!
+    objects:
+      - name: "dairy shelf"
+        description: "The calcium-rich sanctuary where milk products plot their REVENGE!"
+
+items:
+  - id: "bread"
+    name: "Stale Bread"
+    description: "Once soft and yielding, now hardened by the cruel passage of time!"
+    discoverable_in: "pantry"
+    discovery_objects: ["bread shelf", "shelf"]
+    aliases: ["stale bread", "loaf", "bread of betrayal"]
+    can_become: "toasted bread"
+
+  - id: "toasted_bread"
+    name: "Golden Toast"
+    description: "Perfectly toasted bread, transformed by fire into something MAGNIFICENT!"
+    created_from: "bread"
+    aliases: ["toast", "toasted bread", "golden bread"]
+
+  - id: "cheese"
+    name: "Cheese of Last Hope"
+    description: "A single slice of processed cheese - your FINAL chance at sandwich glory!"
+    discoverable_in: "refrigerator_zone"
+    discovery_objects: ["dairy shelf", "cheese drawer"]
+    aliases: ["slice", "processed cheese", "hope", "heroic cheese"]
+
+  - id: "mystery_jar"
+    name: "Mystery Condiment"
+    description: "A jar without a label containing a dark, VISCOUS liquid that smells powerfully fishy and fermented - like the ocean's revenge in condiment form!"
+    discoverable_in: "pantry"
+    discovery_objects: ["condiment collection", "jar"]
+    aliases: ["jar", "condiment", "mystery condiment", "unlabeled jar"]
+
+# Format v2: Success conditions define story goals
+success_conditions:
+  - id: "mystery_disaster"
+    description: "Player eats sandwich made with the mystery condiment (fish sauce)"
+    requires: ["sandwich has mystery condiment", "player has eaten sandwich"]
+    ending: |
+      [!danger] OH NO! OH THE **HUBRIS**! OH THE *HUMANITY*!
+      
+      Against all wisdom, you have trusted the [item:mystery condiment]! With hands shaking 
+      like leaves in a HURRICANE OF REGRET, you take a bite and...
+      
+      **THE TASTE!** *THE UNGODLY TASTE!*
+      
+      [!warning] It's **FISH SAUCE**! Ancient, fermented, *AGGRESSIVE* fish sauce 
+      that has been lurking in your pantry since the CARTER ADMINISTRATION!
+      
+      [!danger] **BETRAYAL MOST FOUL!** Your taste buds REVOLT! Your stomach **MUTINIES**! 
+      The sandwich of your dreams has become the NIGHTMARE OF YOUR REALITY!
+      
+      As you run to the sink, spitting and gasping, you realize the terrible truth: 
+      sometimes the greatest mysteries are mysteries for a **REASON**!
+
+  - id: "perfect_ending"
+    description: "Player makes and eats a sandwich with toasted bread and cheese"
+    requires: ["sandwich has toasted bread", "sandwich has cheese", "player has eaten sandwich"]
+    ending: |
+      [!discovery] THIS IS IT! The moment of **TRUTH**! The *CLIMAX* of our epic tale!
+      
+      With trembling hands, you bite into your masterpiece - [item:golden toast] crowned 
+      with [item:cheese of last hope]! Will love conquer all? Will processed dairy 
+      overcome the forces of staleness?
+      
+      [!discovery] IT'S... it's actually pretty AMAZING! The toast is golden and crispy, 
+      the [item:cheese] has **TRIUMPHED** over adversity! Your hunger is *VANQUISHED*!
+      
+      As you savor this [item:sandwich of DESTINY], you realize that sometimes the 
+      greatest victories come from the perfect combination of transformation and hope!
+      
+      *Fade to black as triumphant soap opera music swells*
+
+  - id: "decent_ending"
+    description: "Player makes and eats a sandwich with regular bread and cheese"
+    requires: ["sandwich has bread", "sandwich has cheese", "player has eaten sandwich"]
+    ending: |
+      [!discovery] The moment of truth arrives! You bite into your creation - 
+      [item:stale bread] embracing [item:cheese of last hope]!
+      
+      [!warning] It's... it's actually pretty okay! Not great, but definitely edible! 
+      The [item:cheese] has overcome the staleness! Your hunger is satisfied!
+      
+      Sometimes simple victories are the sweetest ones of all.
+
+flows:
+  - id: "start"
+    name: "The Crisis Begins"
+    type: "narrative"
+    content: |
+      **Dramatic music swells**
+      
+      IT'S **12:17 PM** ON A TUESDAY! The *SUN* shines with **CRUEL** indifference as our 
+      HEROINE, [character:Jennifer], stands at the crossroads of *DESTINY*! Her stomach 
+      **RUMBLES** with the fury of a thousand unfed souls!
+      
+      [!warning] "I need... a sandwich," she whispers, not knowing that these simple words will set in motion events of EARTH-SHATTERING importance!
+      
+      The **kitchen** awaits... but what *TRIALS* lie ahead?
+
+start:
+  text: |
+    [!danger] Welcome to... **THE GREAT SANDWICH CRISIS v2**!
+    
+    Your stomach rumbles ominously. Time to make the most DRAMATIC sandwich in history!
+  location: "kitchen"
+  first_flow: "start"
+
+# Format v2: LLM story guidelines for intelligent behavior
+llm_story_guidelines: |
+  STORY GOAL: Player should find bread and cheese to make a winning sandwich. Bread can be toasted for best results.
+  
+  DRAMATIC TONE: Everything is ridiculously over-the-top soap opera melodrama. Use ALL CAPS, dramatic exclamations, and treat mundane actions like epic struggles.
+  
+  ITEM TRANSFORMATIONS:
+  - When player toasts/cooks "Stale Bread" → becomes "toasted bread"
+  - Be flexible about toasting methods (toaster, oven, pan, etc.)
+  - "Toasted bread" creates a better ending than regular bread
+  
+  SUCCESS CONDITIONS:
+  - Perfect ending: Player eats sandwich with "toasted bread" + "cheese"
+  - Decent ending: Player eats sandwich with "bread" + "cheese"  
+  - Mystery disaster: Player specifically uses the mystery condiment in their sandwich
+  
+  SANDWICH COMPOSITION TRACKING:
+  When the player makes a sandwich, set knowledge flags to track what ingredients are used:
+  - If using toasted bread in sandwich → set knowledge "sandwich has toasted bread"
+  - If using regular bread in sandwich → set knowledge "sandwich has bread" 
+  - If using cheese in sandwich → set knowledge "sandwich has cheese"
+  - If using mystery condiment in sandwich → set knowledge "sandwich has mystery condiment"
+  
+  IMPORTANT: If mystery condiment is used, it determines the ending regardless of other ingredients. The mystery condiment overrides everything else.
+  
+  EATING ACTION TRACKING:
+  When the player eats their sandwich, set knowledge: "player has eaten sandwich"
+  
+  IMPORTANT - DO NOT WRITE ENDING TEXT:
+  When the player eats their sandwich, respond naturally to the eating action but DO NOT write any ending text, game over messages, or story conclusions. The game engine will automatically detect when success conditions are met and display the appropriate ending. Just describe the immediate experience of eating the sandwich.
+  
+  SUCCESS CONDITION LOGIC:
+  Endings are automatically triggered by the engine when all requirements are met:
+  - Mystery disaster: requires "sandwich has mystery condiment" + "player has eaten sandwich"
+  - Perfect ending: requires "sandwich has toasted bread" + "sandwich has cheese" + "player has eaten sandwich"
+  - Decent ending: requires "sandwich has bread" + "sandwich has cheese" + "player has eaten sandwich"
+  
+  MARKUP: Always use [item:Name] for items, [character:Jennifer] for player, [!danger]/[!warning]/[!discovery] for dramatic alerts. Do NOT use [location:Name] - just use location names directly.
+  
+  DISCOVERY: Let players find items by examining objects. Be dramatic about everything!
+  
+  MYSTERY CONDIMENT KNOWLEDGE: The mystery condiment is ancient fish sauce with a powerfully fishy, fermented smell. When describing it or when players examine it, emphasize the oceanic, fishy, fermented characteristics that hint at its true nature. This will make the fish sauce revelation in the ending feel natural and consistent.

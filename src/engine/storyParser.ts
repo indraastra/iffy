@@ -45,7 +45,10 @@ export class StoryParser {
       knowledge: this.validateKnowledge(data.knowledge || []),
       flows: this.validateFlows(data.flows || []),
       start: this.validateStart(data.start),
-      endings: this.validateEndings(data.endings || [])
+      endings: this.validateEndings(data.endings || []),
+      // Format v2 features
+      success_conditions: this.validateSuccessConditions(data.success_conditions || []),
+      llm_story_guidelines: data.llm_story_guidelines
     };
 
     // Validate reference integrity
@@ -146,7 +149,10 @@ export class StoryParser {
         hidden: item.hidden || false,
         discoverable_in: item.discoverable_in,
         discovery_objects: item.discovery_objects,
-        aliases: item.aliases
+        aliases: item.aliases,
+        // Format v2: Smart item relationships
+        can_become: item.can_become,
+        created_from: item.created_from
       };
     });
   }
@@ -292,6 +298,27 @@ export class StoryParser {
       if (flow.location && !locationIds.has(flow.location)) {
         throw new StoryParseError(`Flow ${flow.id} references unknown location: ${flow.location}`);
       }
+    });
+  }
+
+  private static validateSuccessConditions(successConditions: any[]): Story['success_conditions'] {
+    if (!Array.isArray(successConditions)) {
+      throw new StoryParseError('success_conditions must be an array');
+    }
+
+    return successConditions.map((condition, index) => {
+      this.validateRequired(condition, ['id', 'description', 'requires', 'ending'], `success_condition[${index}]`);
+      
+      if (!Array.isArray(condition.requires)) {
+        throw new StoryParseError(`success_condition[${index}].requires must be an array`);
+      }
+
+      return {
+        id: condition.id,
+        description: condition.description,
+        requires: condition.requires,
+        ending: condition.ending
+      };
     });
   }
 }

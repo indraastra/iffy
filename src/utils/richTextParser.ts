@@ -179,7 +179,7 @@ export class RichTextParser {
         element.className = 'rich-character clickable-element';
         element.textContent = component.content;
         element.setAttribute('data-clickable-text', component.content);
-        element.setAttribute('title', `Click to add "${component.content}" to input`);
+        element.setAttribute('title', `Click to append "${component.content}" to your command`);
         element.style.cursor = 'pointer';
         break;
         
@@ -188,7 +188,7 @@ export class RichTextParser {
         element.className = 'rich-item clickable-element';
         element.textContent = component.content;
         element.setAttribute('data-clickable-text', component.content);
-        element.setAttribute('title', `Click to add "${component.content}" to input`);
+        element.setAttribute('title', `Click to append "${component.content}" to your command`);
         element.style.cursor = 'pointer';
         break;
         

@@ -1,5 +1,5 @@
 #!/usr/bin/env tsx
-import { readFile } from 'fs/promises';
+import { readFile } from 'node:fs/promises';
 import { StoryParser, StoryParseError } from '../src/engine/storyParser';
 
 async function validateStory(filePath: string): Promise<void> {
@@ -24,7 +24,37 @@ async function validateStory(filePath: string): Promise<void> {
     console.log(`   Items: ${story.items.length}`);
     console.log(`   Knowledge: ${story.knowledge.length}`);
     console.log(`   Flows: ${story.flows.length}`);
-    console.log(`   Endings: ${story.endings.length}`);
+    console.log(`   Endings: ${story.endings?.length || 0}`);
+    
+    // Format v2 features
+    if (story.success_conditions && story.success_conditions.length > 0) {
+      console.log(`   Success Conditions: ${story.success_conditions.length}`);
+      
+      // Show success condition details
+      console.log(`\n🎯 Success Conditions:`);
+      story.success_conditions.forEach(sc => {
+        console.log(`   - ${sc.id}: ${sc.description}`);
+        console.log(`     Requires: [${sc.requires.join(', ')}]`);
+        console.log(`     All requirements must be met for this ending`);
+      });
+    }
+    if (story.llm_story_guidelines) {
+      console.log(`   LLM Guidelines: ${story.llm_story_guidelines.length} characters`);
+    }
+    
+    // Show Format v2 item relationships
+    const itemsWithRelationships = story.items.filter(item => item.can_become || item.created_from);
+    if (itemsWithRelationships.length > 0) {
+      console.log(`\n🔄 Item Transformations:`);
+      itemsWithRelationships.forEach(item => {
+        if (item.can_become) {
+          console.log(`   - ${item.name} → can become: ${item.can_become}`);
+        }
+        if (item.created_from) {
+          console.log(`   - ${item.name} ← created from: ${item.created_from}`);
+        }
+      });
+    }
     
     // Validate references
     console.log(`\n🔗 Reference Validation:`);

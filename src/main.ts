@@ -75,8 +75,14 @@ class IffyApp {
       if (target.classList.contains('clickable-element')) {
         const text = target.getAttribute('data-clickable-text');
         if (text) {
-          this.commandInput.value = text;
+          // Append to existing input with a space if needed
+          const currentValue = this.commandInput.value;
+          const needsSpace = currentValue.length > 0 && !currentValue.endsWith(' ');
+          this.commandInput.value = currentValue + (needsSpace ? ' ' : '') + text;
           this.commandInput.focus();
+          
+          // Position cursor at the end
+          this.commandInput.setSelectionRange(this.commandInput.value.length, this.commandInput.value.length);
         }
       }
     });
