@@ -1,14 +1,17 @@
 import { Story, GameState, PlayerAction, GameResponse, Flow, FlowTransition, InteractionPair, Result } from '@/types/story';
 import { AnthropicService, LLMResponse } from '@/services/anthropicService';
+import { GamePromptBuilder } from './gamePromptBuilder';
 
 export class GameEngine {
   private story: Story | null = null;
   private gameState: GameState = this.createInitialState();
   private anthropicService: AnthropicService;
+  private promptBuilder: GamePromptBuilder;
   private debugPane: any = null;
 
   constructor(anthropicService?: AnthropicService) {
     this.anthropicService = anthropicService || new AnthropicService();
+    this.promptBuilder = new GamePromptBuilder();
   }
 
   loadStory(story: Story): Result<GameState> {
@@ -100,7 +103,9 @@ export class GameEngine {
         input,
         this.gameState,
         this.story!,
-        currentLocation
+        currentLocation,
+        this.promptBuilder,
+        this.promptBuilder
       );
 
       // Validate state changes and response content
@@ -1099,7 +1104,9 @@ Remember: Items can only be obtained in their designated locations according to 
         feedbackPrompt,
         this.gameState,
         this.story!,
-        this.getCurrentLocation()
+        this.getCurrentLocation(),
+        this.promptBuilder,
+        this.promptBuilder
       );
 
       // Capture the current flow before applying state changes

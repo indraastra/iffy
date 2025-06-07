@@ -43,21 +43,41 @@ metadata:
   # ... other metadata
 ```
 
-### LLM Guidelines Integration
-The freedom level would be incorporated into the `llm_story_guidelines` automatically:
+### Engine Integration (Zero Author Burden)
+The freedom level is handled entirely by the game engine. Authors just set the level - no additional guidelines needed.
 
-```yaml
-llm_story_guidelines: |
-  PLAYER FREEDOM LEVEL: MEDIUM
+**Engine Implementation:**
+```typescript
+// In GamePromptBuilder or AnthropicService
+private buildFreedomGuidelines(freedomLevel: string): string {
+  const guidelines = {
+    low: `
+PLAYER FREEDOM: STRICT ADHERENCE
+- Only allow interactions with explicitly defined items and locations
+- Reject improvised actions not directly supported by story definition
+- Actions must closely match authored content and success conditions
+- When players try unsupported actions, redirect to available options`,
+    
+    medium: `
+PLAYER FREEDOM: GUIDED FLEXIBILITY  
+- Allow reasonable improvisation with authored items and locations
+- Accept logical extensions that don't conflict with core story goals
+- Players can discover plausible items in appropriate locations
+- Encourage creativity while maintaining story coherence`,
+    
+    high: `
+PLAYER FREEDOM: CREATIVE SANDBOX
+- Prioritize "yes, and..." approach to player actions
+- Allow players to introduce new elements and take creative liberties
+- Only block actions that would completely break story world
+- Embrace improvisation and collaborative storytelling`
+  };
   
-  FREEDOM GUIDELINES:
-  - Allow reasonable improvisation with authored items (e.g., adding condiments, using items creatively)
-  - Accept logical extensions that don't conflict with success conditions
-  - Encourage player creativity while maintaining story coherence
-  - Reject actions that would break the core narrative or make success impossible
-  
-  # ... rest of story-specific guidelines
+  return guidelines[freedomLevel] || guidelines.medium;
+}
 ```
+
+The freedom guidelines are automatically injected into the system prompt, so authors never need to write them.
 
 ## Examples
 
@@ -81,10 +101,11 @@ LLM: "In a stroke of culinary GENIUS, you discover forgotten pizza in the depths
 
 ## Benefits
 
-1. **Author Control**: Clear, simple setting to match gameplay to story intent
-2. **Player Clarity**: Players learn the "rules" quickly through feedback
-3. **Reusability**: Same story can be tuned for different audiences (strict puzzle vs. creative sandbox)
-4. **Implementation Simplicity**: Just modifies LLM prompt instructions, no engine changes needed
+1. **Zero Author Burden**: Authors just set one simple field - engine handles all guidelines
+2. **Author Control**: Clear, simple setting to match gameplay to story intent  
+3. **Player Clarity**: Players learn the "rules" quickly through consistent feedback
+4. **Reusability**: Same story can be tuned for different audiences (strict puzzle vs. creative sandbox)
+5. **Implementation Simplicity**: Engine automatically injects appropriate guidelines into system prompt
 
 ## Default Behavior
 
@@ -107,6 +128,11 @@ metadata:
   setting:
     time: "A fateful Tuesday afternoon, 12:17 PM"
     # ... rest of metadata
+
+# No additional llm_story_guidelines needed - engine handles freedom level automatically!
+llm_story_guidelines: |
+  STORY GOAL: Player should find bread and cheese to make a winning sandwich...
+  # Only story-specific guidelines, no freedom rules needed
 ```
 
-This would allow players to add reasonable sandwich ingredients (pickles, lettuce, etc.) while still maintaining the dramatic soap opera tone and core success conditions around bread, cheese, and the mystery condiment.
+**Result:** Players can add reasonable sandwich ingredients (pickles, lettuce, etc.) while maintaining the dramatic soap opera tone and core success conditions. The engine automatically injects the appropriate freedom guidelines based on the `medium` setting.
