@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { AnthropicService } from '../services/anthropicService'
-import { GamePromptBuilder } from '../engine/gamePromptBuilder'
+import { GamePromptBuilder } from '../engine/gameLLMAdapter'
 
 // Mock Anthropic SDK
 vi.mock('@anthropic-ai/sdk', () => {
@@ -133,35 +133,35 @@ describe('AnthropicService', () => {
       expect(typeof response).toBe('string')
     })
 
-    it('should process commands with prompt builder and parser', async () => {
-      const result = await service.processCommand(
+    it('should send prompts and return raw text', async () => {
+      const prompt = promptBuilder.buildPrompt(
         'examine the room',
         mockGameState,
         mockStory,
-        mockLocation,
-        promptBuilder,
-        promptBuilder
+        mockLocation
       )
-
-      expect(result).toBeDefined()
-      expect(result.action).toBe('examine')
-      expect(result.response).toBe('You examine the object carefully.')
+      
+      const response = await service.sendPrompt(prompt)
+      expect(response).toBeDefined()
+      expect(typeof response).toBe('string')
+      
+      // Parse the response using the prompt builder
+      const parsed = promptBuilder.parseResponse(response)
+      expect(parsed.action).toBe('examine')
+      expect(parsed.response).toBe('You examine the object carefully.')
     })
 
     it('should handle API errors gracefully', async () => {
       const unconfiguredService = new AnthropicService()
       
-      const result = await unconfiguredService.processCommand(
-        'test command',
-        mockGameState,
-        mockStory,
-        mockLocation,
-        promptBuilder,
-        promptBuilder
-      )
-
-      expect(result.action).toBe('error')
-      expect(result.error).toBeDefined()
+      try {
+        await unconfiguredService.sendPrompt('test prompt')
+        // Should not reach here
+        expect(true).toBe(false)
+      } catch (error) {
+        expect(error).toBeInstanceOf(Error)
+        expect((error as Error).message).toContain('Anthropic API not configured')
+      }
     })
   })
 
@@ -171,14 +171,7 @@ describe('AnthropicService', () => {
       service.setDebugCallback(mockCallback)
       service.setApiKey('test-api-key')
       
-      await service.processCommand(
-        'test command',
-        mockGameState,
-        mockStory,
-        mockLocation,
-        promptBuilder,
-        promptBuilder
-      )
+      await service.sendPrompt('test prompt')
       
       expect(mockCallback).toHaveBeenCalled()
     })

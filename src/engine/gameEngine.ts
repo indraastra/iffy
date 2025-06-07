@@ -1,6 +1,6 @@
 import { Story, GameState, PlayerAction, GameResponse, Flow, FlowTransition, InteractionPair, Result } from '@/types/story';
-import { AnthropicService, LLMResponse } from '@/services/anthropicService';
-import { GamePromptBuilder } from './gamePromptBuilder';
+import { AnthropicService } from '@/services/anthropicService';
+import { GamePromptBuilder, LLMResponse } from './gameLLMAdapter';
 
 export class GameEngine {
   private story: Story | null = null;
@@ -95,11 +95,12 @@ export class GameEngine {
     }
   }
 
-  private async processWithLLM(input: string): Promise<GameResponse> {
-    const currentLocation = this.getCurrentLocation();
-    
+  /**
+   * Process a command with the LLM using game-specific logic
+   */
+  private async processCommandWithLLM(input: string, currentLocation: any): Promise<LLMResponse> {
     try {
-      const llmResponse = await this.anthropicService.processCommand(
+      return await this.anthropicService.processCommand(
         input,
         this.gameState,
         this.story!,
@@ -107,6 +108,25 @@ export class GameEngine {
         this.promptBuilder,
         this.promptBuilder
       );
+    } catch (error) {
+      console.error('Command processing error:', error);
+      
+      // Return a structured error response
+      return {
+        action: 'error',
+        reasoning: 'API call failed',
+        stateChanges: {},
+        response: error instanceof Error ? error.message : 'Unknown error occurred',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  private async processWithLLM(input: string): Promise<GameResponse> {
+    const currentLocation = this.getCurrentLocation();
+    
+    try {
+      const llmResponse = await this.processCommandWithLLM(input, currentLocation);
 
       // Validate state changes and response content
       const stateValidationIssues = this.validateStateChanges(llmResponse.stateChanges);
@@ -206,33 +226,33 @@ export class GameEngine {
 
     // Update inventory
     if (changes.addToInventory) {
-      changes.addToInventory.forEach(itemId => {
+      changes.addToInventory.forEach((itemId: string) => {
         this.addItemToInventory(itemId);
       });
     }
 
     if (changes.removeFromInventory) {
-      changes.removeFromInventory.forEach(itemId => {
+      changes.removeFromInventory.forEach((itemId: string) => {
         this.removeItemFromInventory(itemId);
       });
     }
 
     // Update flags
     if (changes.setFlags) {
-      changes.setFlags.forEach(flag => {
+      changes.setFlags.forEach((flag: string) => {
         this.setFlag(flag);
       });
     }
 
     if (changes.unsetFlags) {
-      changes.unsetFlags.forEach(flag => {
+      changes.unsetFlags.forEach((flag: string) => {
         this.unsetFlag(flag);
       });
     }
 
     // Update knowledge
     if (changes.addKnowledge) {
-      changes.addKnowledge.forEach(knowledge => {
+      changes.addKnowledge.forEach((knowledge: string) => {
         this.addKnowledge(knowledge);
       });
     }
@@ -1100,14 +1120,7 @@ Please provide a corrected response that:
 Remember: Items can only be obtained in their designated locations according to the story data.`;
 
     try {
-      const correctedResponse = await this.anthropicService.processCommand(
-        feedbackPrompt,
-        this.gameState,
-        this.story!,
-        this.getCurrentLocation(),
-        this.promptBuilder,
-        this.promptBuilder
-      );
+      const correctedResponse = await this.processCommandWithLLM(feedbackPrompt, this.getCurrentLocation());
 
       // Capture the current flow before applying state changes
       const flowBeforeStateChanges = this.getCurrentFlow();

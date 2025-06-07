@@ -1,4 +1,17 @@
-import { LLMResponse } from '@/services/anthropicService';
+export interface LLMResponse {
+  action: string;
+  reasoning: string;
+  stateChanges: {
+    newLocation?: string;
+    addToInventory?: string[];
+    removeFromInventory?: string[];
+    setFlags?: string[];
+    unsetFlags?: string[];
+    addKnowledge?: string[];
+  };
+  response: string;
+  error?: string;
+}
 
 /**
  * Handles building prompts and parsing responses for the Iffy game engine.

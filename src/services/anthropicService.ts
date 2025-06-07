@@ -1,19 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-export interface LLMResponse {
-  action: string;
-  reasoning: string;
-  stateChanges: {
-    newLocation?: string;
-    addToInventory?: string[];
-    removeFromInventory?: string[];
-    setFlags?: string[];
-    unsetFlags?: string[];
-    addKnowledge?: string[];
-  };
-  response: string;
-  error?: string;
-}
 
 /**
  * Generic LLM service for communicating with Anthropic's Claude API.
@@ -66,6 +52,37 @@ export class AnthropicService {
    */
   public isConfigured(): boolean {
     return this.client !== null && this.apiKey !== null;
+  }
+
+  /**
+   * Process a command using dependency injection for prompt building and response parsing.
+   * This keeps the service generic while allowing game-specific logic to be injected.
+   */
+  public async processCommand(
+    command: string,
+    gameState: any,
+    story: any,
+    currentLocation: any,
+    promptBuilder: { buildPrompt: (command: string, gameState: any, story: any, currentLocation: any) => string },
+    responseParser: { parseResponse: (responseText: string) => any }
+  ): Promise<any> {
+    if (!this.client) {
+      throw new Error('Anthropic API not configured. Please set your API key in settings.');
+    }
+
+    try {
+      // Use the injected prompt builder to create the prompt
+      const prompt = promptBuilder.buildPrompt(command, gameState, story, currentLocation);
+      
+      // Send the prompt and get the raw response
+      const responseText = await this.sendPrompt(prompt);
+      
+      // Use the injected response parser to parse the response
+      return responseParser.parseResponse(responseText);
+    } catch (error) {
+      console.error('Command processing error:', error);
+      throw error;
+    }
   }
 
   /**
@@ -128,33 +145,4 @@ export class AnthropicService {
     }
   }
 
-  /**
-   * Process a command using a provided prompt builder and response parser.
-   * This allows different game systems to use different prompt formats.
-   */
-  public async processCommand(
-    command: string,
-    gameState: any,
-    story: any,
-    currentLocation: any,
-    promptBuilder: { buildPrompt: (command: string, gameState: any, story: any, currentLocation: any) => string },
-    responseParser: { parseResponse: (responseText: string) => LLMResponse }
-  ): Promise<LLMResponse> {
-    try {
-      const prompt = promptBuilder.buildPrompt(command, gameState, story, currentLocation);
-      const responseText = await this.sendPrompt(prompt);
-      return responseParser.parseResponse(responseText);
-    } catch (error) {
-      console.error('Command processing error:', error);
-      
-      // Return a structured error response
-      return {
-        action: 'error',
-        reasoning: 'API call failed',
-        stateChanges: {},
-        response: error instanceof Error ? error.message : 'Unknown error occurred',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
-    }
-  }
 }
