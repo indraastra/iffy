@@ -5,14 +5,17 @@
   "main": "src/main.ts",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "npm run bundle-examples && tsc && vite build",
     "build:gh-pages": "NODE_ENV=production npm run build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "validate-story": "tsx scripts/validate-story.ts",
+    "bundle-examples": "tsx scripts/bundle-examples.ts",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "docs:serve": "npx http-server docs -p 8080 -o",
+    "docs:dev": "echo 'Documentation available at: http://localhost:8080' && npm run docs:serve"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.0",
