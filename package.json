@@ -16,6 +16,7 @@
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.0",
+    "@types/node": "^22.15.30",
     "@vitest/ui": "^1.0.0",
     "jsdom": "^23.0.0",
     "tsx": "^4.19.4",
