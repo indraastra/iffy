@@ -2,7 +2,8 @@
 
 **Status:** 💡 New Proposal  
 **Priority:** High  
-**Motivation:** Prevent progress loss from accidental tab closures and browser crashes
+**Motivation:** Prevent progress loss from accidental tab closures and browser crashes  
+**GitHub Issue:** [#11](https://github.com/indraastra/iffy/issues/11)
 
 ## Problem Statement
 
