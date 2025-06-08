@@ -160,8 +160,7 @@ export class SaveManager {
 
       const result = this.gameEngine.loadGame(saveData);
       if (result.success) {
-        this.messageDisplay.addMessage('Game loaded successfully!', 'system');
-        this.messageDisplay.addMessage('You can continue from where you left off.', 'system');
+        // Success message is handled by MessageDisplay.restoreConversationHistory()
         return true;
       } else {
         this.messageDisplay.addMessage(result.error || 'Failed to load game.', 'error');
