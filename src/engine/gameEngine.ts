@@ -254,15 +254,20 @@ export class GameEngine {
       // Get memory context for ending generation
       const memoryContext = this.memoryManager.getMemories(endingCommand, this.gameState);
       
-      const llmResponse = await this.anthropicService.processCommand(
+      // Build the prompt for ending generation
+      const prompt = this.promptBuilder.buildPrompt(
         endingCommand,
         this.gameState,
         this.story!,
         currentLocation,
-        this.promptBuilder,
-        this.promptBuilder,
         memoryContext
       );
+      
+      // Send the prompt to the LLM service
+      const responseText = await this.anthropicService.makeRequest(prompt);
+      
+      // Parse the response
+      const llmResponse = this.promptBuilder.parseResponse(responseText);
       
       // Extract just the response text, ignoring any state changes since the game has ended
       return llmResponse.response || `*The story concludes as you achieve: ${successCondition.description}*`;
@@ -277,15 +282,58 @@ export class GameEngine {
       // Get memory context from memory manager
       const memoryContext = this.memoryManager.getMemories(input, this.gameState);
       
-      return await this.anthropicService.processCommand(
+      // Prepare structured debug data before making the call
+      const debugGameState = {
+        location: this.gameState.currentLocation,
+        inventory: this.gameState.inventory,
+        flags: Array.from(this.gameState.flags),
+        currentFlow: this.gameState.currentFlow
+      };
+      
+      const debugMemoryStats = this.memoryManager.getStats();
+      
+      // Get prompt sections for structured debugging
+      const promptSections = this.promptBuilder.getSections(
         input,
         this.gameState,
         this.story!,
         currentLocation,
-        this.promptBuilder,
-        this.promptBuilder,
         memoryContext
       );
+      
+      // Build the prompt using the prompt builder
+      const prompt = this.promptBuilder.buildPrompt(
+        input,
+        this.gameState,
+        this.story!,
+        currentLocation,
+        memoryContext
+      );
+      
+      // Send the prompt to the LLM service
+      const responseText = await this.anthropicService.makeRequest(prompt);
+      
+      // Parse the response using the prompt builder (which also handles parsing)
+      const result = this.promptBuilder.parseResponse(responseText);
+      
+      // Log the structured LLM call to debug pane
+      if (this.debugPane) {
+        this.debugPane.logLlmCall({
+          prompt: {
+            sections: promptSections,
+            tokenCount: undefined // TODO: Add token counting
+          },
+          response: {
+            raw: JSON.stringify(result, null, 2),
+            parsed: result,
+            tokenCount: undefined // TODO: Add token counting
+          },
+          gameState: debugGameState,
+          memoryStats: debugMemoryStats
+        });
+      }
+      
+      return result;
     } catch (error) {
       console.error('Command processing error:', error);
       
@@ -320,7 +368,16 @@ export class GameEngine {
       if (allValidationIssues.length > 0) {
         // Log validation failure to debug pane
         if (this.debugPane) {
-          this.debugPane.logValidation(allValidationIssues, input);
+          this.debugPane.logValidationIssue({
+            input,
+            issues: allValidationIssues,
+            gameState: {
+              location: this.gameState.currentLocation,
+              inventory: this.gameState.inventory,
+              flags: Array.from(this.gameState.flags),
+              currentFlow: this.gameState.currentFlow
+            }
+          });
         }
         
         // Ask LLM to retry with validation feedback
@@ -1277,11 +1334,11 @@ This is a basic MVP version. More natural language understanding will be added i
 
   public setDebugPane(debugPane: any): void {
     this.debugPane = debugPane;
-    // Also set it on the anthropic service
-    this.anthropicService.setDebugCallback((prompt: string, response: string) => {
-      if (prompt) debugPane.logRequest(prompt);
-      if (response) debugPane.logResponse(response);
-    });
+    
+    // Set it on the memory manager for memory operation logging
+    this.memoryManager.setDebugPane(debugPane);
+    
+    // No longer need legacy debug callback - structured logging provides better visibility
   }
 
   private async retryWithValidationFeedback(

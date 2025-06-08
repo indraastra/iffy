@@ -8,19 +8,12 @@ import Anthropic from '@anthropic-ai/sdk';
 export class AnthropicService {
   private client: Anthropic | null = null;
   private apiKey: string | null = null;
-  private debugCallback?: (prompt: string, response: string) => void;
   private activeRequestController: AbortController | null = null;
 
   constructor() {
     this.loadApiKey();
   }
 
-  /**
-   * Set debug callback for logging prompts and responses
-   */
-  public setDebugCallback(callback: (prompt: string, response: string) => void): void {
-    this.debugCallback = callback;
-  }
 
   /**
    * Load API key from environment or localStorage
@@ -70,11 +63,6 @@ export class AnthropicService {
     this.activeRequestController = new AbortController();
 
     try {
-      // Log prompt if debug callback is set
-      if (this.debugCallback) {
-        this.debugCallback(prompt, '');
-      }
-
       const response = await this.client.messages.create({
         model: options?.model || 'claude-3-5-sonnet-20241022',
         max_tokens: 4000,
@@ -85,11 +73,6 @@ export class AnthropicService {
 
       if (response.content && response.content.length > 0) {
         const responseText = response.content[0].type === 'text' ? response.content[0].text : '';
-        
-        // Log response if debug callback is set
-        if (this.debugCallback) {
-          this.debugCallback('', responseText);
-        }
         
         return responseText;
       } else {
@@ -105,37 +88,6 @@ export class AnthropicService {
     }
   }
 
-  /**
-   * Process a command using dependency injection for prompt building and response parsing.
-   * This keeps the service generic while allowing game-specific logic to be injected.
-   */
-  public async processCommand(
-    command: string,
-    gameState: any,
-    story: any,
-    currentLocation: any,
-    promptBuilder: { buildPrompt: (command: string, gameState: any, story: any, currentLocation: any, memoryContext?: any) => string },
-    responseParser: { parseResponse: (responseText: string) => any },
-    memoryContext?: any
-  ): Promise<any> {
-    if (!this.client) {
-      throw new Error('Anthropic API not configured. Please set your API key in settings.');
-    }
-
-    try {
-      // Use the injected prompt builder to create the prompt
-      const prompt = promptBuilder.buildPrompt(command, gameState, story, currentLocation, memoryContext);
-      
-      // Send the prompt and get the raw response
-      const responseText = await this.sendPrompt(prompt);
-      
-      // Use the injected response parser to parse the response
-      return responseParser.parseResponse(responseText);
-    } catch (error) {
-      console.error('Command processing error:', error);
-      throw error;
-    }
-  }
 
   /**
    * Cancel any ongoing requests
@@ -167,11 +119,6 @@ export class AnthropicService {
     }
 
     try {
-      // Log prompt to debug callback
-      if (this.debugCallback) {
-        this.debugCallback(prompt, '');
-      }
-      
       // Also log to console for debugging
       console.log('🤖 LLM REQUEST:', prompt);
       
@@ -191,11 +138,6 @@ export class AnthropicService {
       const content = response.content[0];
       if (content.type !== 'text') {
         throw new Error('Unexpected response type from API');
-      }
-
-      // Log response to debug callback
-      if (this.debugCallback) {
-        this.debugCallback('', content.text);
       }
 
       return content.text;

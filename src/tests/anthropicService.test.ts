@@ -165,15 +165,4 @@ describe('AnthropicService', () => {
     })
   })
 
-  describe('Debug Callback', () => {
-    it('should call debug callback when set', async () => {
-      const mockCallback = vi.fn()
-      service.setDebugCallback(mockCallback)
-      service.setApiKey('test-api-key')
-      
-      await service.sendPrompt('test prompt')
-      
-      expect(mockCallback).toHaveBeenCalled()
-    })
-  })
 })

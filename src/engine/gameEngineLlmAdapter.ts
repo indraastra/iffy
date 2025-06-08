@@ -132,6 +132,121 @@ RULES:
   }
 
   /**
+   * Get prompt sections as structured data for debug visibility
+   */
+  getSections(
+    command: string,
+    gameState: any,
+    story: any,
+    currentLocation: any,
+    memoryContext?: any
+  ): Record<string, string> {
+    const sections: Record<string, string> = {};
+
+    sections['STORY'] = `${story.title} | ${story.metadata.tone.overall} | ${story.metadata.tone.narrative_voice}`;
+
+    sections['STATE'] = `Location: ${currentLocation?.name || 'Unknown'} | ${formatKeyValue('Exits', currentLocation?.connections)}
+Inventory: ${this.getInventoryDisplay(gameState, story)}
+Flow: ${gameState.currentFlow || 'None'} | Status: ${gameState.gameEnded ? 'COMPLETED' : 'ACTIVE'}`;
+
+    sections['LOCATIONS'] = formatStructuredList(story.locations, {
+      transform: (loc: any) => {
+        let info = `${loc.name} (${loc.id})`;
+        
+        const itemsHere = story.items?.filter((item: any) => item.location === loc.id) || [];
+        const discoverableHere = story.items?.filter((item: any) => item.discoverable_in === loc.id) || [];
+        
+        if (itemsHere.length > 0) {
+          info += ` | ${formatKeyValue('Items', itemsHere.map((item: any) => item.name))}`;
+        }
+        if (discoverableHere.length > 0) {
+          info += ` | ${formatKeyValue('Discoverable', discoverableHere.map((item: any) => 
+            `${item.name} (search: ${formatList(item.discovery_objects, { separator: '/', fallback: 'any' })})`
+          ))}`;
+        }
+        
+        return info;
+      }
+    });
+
+    sections['ITEMS & TRANSFORMATIONS'] = formatStructuredList(story.items, {
+      transform: (item: any) => {
+        let info = `${item.name} (${item.id})`;
+        if (item.can_become) {
+          info += ` → can become: ${item.can_become}`;
+        }
+        if (item.created_from) {
+          info += ` ← created from: ${item.created_from}`;
+        }
+        const aliases = formatAliases(item.aliases);
+        if (aliases) {
+          info += ` | ${aliases}`;
+        }
+        return info;
+      }
+    });
+
+    if (story.success_conditions) {
+      sections['SUCCESS CONDITIONS'] = TextFormatter.formatSection('', story.success_conditions, {
+        transform: (sc: any) => `${sc.id}: ${sc.description}\n  ${formatRequirements(sc.requires)}`
+      });
+    }
+
+    sections['PLAYER CHARACTER'] = this.getPlayerCharacterInfo(story);
+    sections['NPC CHARACTERS'] = this.getNPCCharacterInfo(story);
+    sections['FLOWS'] = formatKeyValue('', story.flows?.map((flow: any) => `${flow.name}${flow.ends_game ? ' [END]' : ''}`) || []);
+    sections['CURRENT FLOW CONTEXT'] = this.getCurrentFlowContext(story, gameState);
+
+    if (story.llm_guidelines) {
+      sections['LLM STORY GUIDELINES'] = story.llm_guidelines;
+    }
+
+    sections['CONVERSATION MEMORY'] = memoryContext ? this.formatMemoryContext(memoryContext) : this.getConversationContext(gameState);
+    sections['DISCOVERY STATUS'] = 'Based on recent interactions, analyze if player has already examined/opened/checked containers or objects that would reveal items.';
+
+    if (gameState.gameEnded) {
+      sections['GAME COMPLETED'] = this.getEndingContext(story, gameState);
+    }
+
+    sections['MARKUP'] = 'Use [character:Name] for characters, [item:item_id] for items (use the item\'s ID, not name), **bold** for emphasis, [!warning]/[!discovery]/[!danger] for alerts. Do NOT use [location:Name] markup - just use the location name directly.';
+    sections['PLAYER COMMAND'] = `"${command}"`;
+    sections['CRITICAL'] = 'You must respond with valid JSON only. No text before or after the JSON object.';
+
+    sections['FORMAT'] = `Use this exact format with properly escaped strings for multiline content:
+{
+  "action": "look|move|take|drop|talk|examine|help|inventory|other",
+  "reasoning": "Brief explanation of what the player is trying to do",
+  "stateChanges": {
+    "newLocation": "location_id or null",
+    "addToInventory": ["item_id1", "item_id2"] or [],
+    "removeFromInventory": ["item_id1"] or [],
+    "setFlags": ["flag_name1"] or [],
+    "unsetFlags": ["flag_name1"] or []
+  },
+  "response": "The narrative response to show the player. Use \\n for line breaks, escape quotes as \\", and ensure all strings are properly JSON-formatted."
+}`;
+
+    sections['RULES'] = `1. Interpret natural language commands flexibly - the whole point is to avoid rigid syntax
+2. Allow reasonable interactions with objects/appliances even if not explicitly defined (like using appliances, opening containers, etc.)
+3. Items in discoverable_in locations can be taken if player has examined/opened/checked discovery_objects OR explicitly searched
+4. Discovery commands (examine/search/look/check/open) reveal items and make them available for taking
+5. Taking commands (take/grab) add to inventory - allow if item is accessible in current location
+6. Use natural language understanding for actions like "cook X with Y", "put X in Y", "use X on Y"
+7. Movement commands change location, but be flexible about phrasing
+8. If game COMPLETED, allow reflection but no major state changes
+9. Be permissive with item discovery - if player has clearly interacted with containers/objects, items inside are available
+10. NEVER demand specific syntax - interpret intent and respond naturally
+11. The player IS the player character. If they try to "talk to" or interact with the player character, explain that they ARE that character - don't treat it as a separate NPC conversation
+12. ITEM TRANSFORMATIONS: When players perform actions that logically transform items, intelligently create the new item. For example, if "bread" can_become "toasted bread" and player toasts it, remove "bread" from inventory and add "toasted bread".
+13. SUCCESS CONDITION AWARENESS: Understand story goals from success conditions and guide players toward meaningful achievements.
+14. FLEXIBLE TRANSFORMATION METHODS: Be creative about how transformations can occur - "toast bread" could use toaster, oven, pan, fire, etc. Focus on logical outcomes, not rigid methods.
+15. NATURAL ITEM RELATIONSHIPS: When items have can_become/created_from relationships, understand these as logical possibilities, not rigid requirements.
+16. STORY GOAL GUIDANCE: Use success conditions and LLM guidelines to understand the story's intended experience and help guide players toward meaningful interactions.`;
+
+    return sections;
+  }
+
+  /**
    * Parse game state LLM response text into structured GameStateResponse object using Zod validation
    */
   parseResponse(responseText: string): GameStateResponse {
