@@ -283,18 +283,6 @@ export class LoadMenuManager {
     // Add the start text to conversation history for LLM context
     this.gameEngine.trackStartText(initialText);
     
-    // Show first flow content if it exists
-    const firstFlowId = story.start.first_flow;
-    if (firstFlowId) {
-      const normalizedContent = this.gameEngine.getFlowContent(firstFlowId);
-      if (normalizedContent) {
-        // Show the first flow's content
-        this.messageDisplay.addMessage(normalizedContent, 'story');
-        // Also add flow content to conversation history
-        this.gameEngine.trackStartText(normalizedContent);
-      }
-    }
-    
     this.commandInput.focus();
   }
 

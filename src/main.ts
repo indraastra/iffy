@@ -35,6 +35,17 @@ class IffyApp {
     this.gameEngine.setUIResetCallback(() => {
       this.commandProcessor.resetUIState();
     });
+
+    // Set up loading state callback for ending generation
+    this.gameEngine.setLoadingStateCallback((message: string) => {
+      this.commandProcessor.showLoading(message);
+    });
+
+    // Set up ending callback for asynchronous ending generation
+    this.gameEngine.setEndingCallback((endingText: string) => {
+      this.commandProcessor.hideLoading('Generating conclusion...');
+      this.messageDisplay.addMessage(endingText.trim(), 'story');
+    });
     
     this.initializeApp();
   }

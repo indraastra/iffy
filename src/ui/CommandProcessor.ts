@@ -131,4 +131,21 @@ export class CommandProcessor {
     this.commandInput.disabled = false;
     this.hasShownCompletionMessage = false;
   }
+
+  /**
+   * Show loading state and disable input
+   */
+  showLoading(message: string = 'Processing...'): void {
+    this.commandInput.disabled = true;
+    this.messageDisplay.addMessage(message, 'system');
+  }
+
+  /**
+   * Hide loading state and re-enable input
+   */
+  hideLoading(loadingMessage: string = 'Processing...'): void {
+    this.messageDisplay.removeLastMessageIfMatches(loadingMessage);
+    this.commandInput.disabled = false;
+    this.commandInput.focus();
+  }
 }

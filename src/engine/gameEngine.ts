@@ -10,6 +10,8 @@ export class GameEngine {
   private debugPane: any = null;
   private uiResetCallback?: () => void;
   private hasShownEndingContent: boolean = false;
+  private endingCallback?: (endingText: string) => void;
+  private loadingStateCallback?: (message: string) => void;
 
   constructor(anthropicService?: AnthropicService) {
     this.anthropicService = anthropicService || new AnthropicService();
@@ -21,6 +23,20 @@ export class GameEngine {
    */
   public setUIResetCallback(callback: () => void): void {
     this.uiResetCallback = callback;
+  }
+
+  /**
+   * Set callback for asynchronous ending generation
+   */
+  public setEndingCallback(callback: (endingText: string) => void): void {
+    this.endingCallback = callback;
+  }
+
+  /**
+   * Set callback for showing loading state during ending generation
+   */
+  public setLoadingStateCallback(callback: (message: string) => void): void {
+    this.loadingStateCallback = callback;
   }
 
   /**
@@ -182,15 +198,71 @@ export class GameEngine {
    * Process a command with the LLM using game-specific logic
    */
   /**
+   * Generate ending text asynchronously without blocking the main response
+   */
+  private generateEndingAsynchronously(successCondition: SuccessCondition, currentLocation: any): void {
+    if (!this.endingCallback) {
+      console.warn('No ending callback set - cannot generate asynchronous ending');
+      return;
+    }
+
+    // Show loading state
+    if (this.loadingStateCallback) {
+      this.loadingStateCallback('Generating conclusion...');
+    }
+
+    // Run ending generation in the background
+    this.generateEndingWithLLM(successCondition, currentLocation)
+      .then(endingText => {
+        if (this.endingCallback) {
+          this.endingCallback(endingText);
+        }
+      })
+      .catch(error => {
+        console.error('Failed to generate ending:', error);
+        if (this.endingCallback) {
+          this.endingCallback(`*The story concludes as you achieve: ${successCondition.description}*`);
+        }
+      });
+  }
+
+  /**
    * Generate ending text using LLM when success condition has no predefined ending
    */
-  private async generateEndingWithLLM(successCondition: SuccessCondition, lastCommand: string, currentLocation: any): Promise<string> {
-    // Create a synthetic command that asks the LLM to generate the ending
-    const syntheticCommand = `[SYSTEM: Generate an ending for this story. The player has just achieved: "${successCondition.description}". Create a satisfying conclusion that reflects the story's tone and wraps up the narrative. The last player action was: "${lastCommand}"]`;
+  private async generateEndingWithLLM(successCondition: SuccessCondition, currentLocation: any): Promise<string> {
+    // Initialize conversation memory if not present
+    if (!this.gameState.conversationMemory) {
+      this.gameState.conversationMemory = {
+        immediateContext: { recentInteractions: [] },
+        significantMemories: []
+      };
+    }
+
+    // Add a [STORY END] interaction to the conversation history to signal the LLM
+    // what needs to happen next, rather than repeating the player command
+    const storyEndInteraction: InteractionPair = {
+      playerInput: '[STORY END]',
+      llmResponse: `Success condition achieved: "${successCondition.description}"`,
+      timestamp: new Date(),
+      importance: 'high'
+    };
+    
+    // Add to the end of recent interactions as this should be the latest context
+    this.gameState.conversationMemory.immediateContext.recentInteractions.push(storyEndInteraction);
+
+    console.log(`🏁 Tracked story end signal for LLM context: "${successCondition.description}"`);
+    
+    // Log to debug pane if available
+    if (this.debugPane) {
+      this.debugPane.logMemory(this.gameState.conversationMemory, 'high');
+    }
+    
+    // Create a simple command that will use the conversation context
+    const endingCommand = '[SYSTEM] Conclude the story (as needed) to wrap up the narrative in a satisfying way and provide closure to the player.';
     
     try {
       const llmResponse = await this.anthropicService.processCommand(
-        syntheticCommand,
+        endingCommand,
         this.gameState,
         this.story!,
         currentLocation,
@@ -296,6 +368,10 @@ export class GameEngine {
         console.log('Post-game interaction, using LLM response:', llmResponse.response);
       }
       
+      // Track this interaction for conversation memory BEFORE handling endings
+      // so that the final winning interaction is included in conversation context
+      this.trackInteraction(input, responseText);
+      
       // Note: Flow tracking is now handled locally within this method
       
       if (this.gameState.gameEnded && this.gameState.endingId && !this.hasShownEndingContent) {
@@ -303,20 +379,13 @@ export class GameEngine {
         const successCondition = this.story!.success_conditions?.find(sc => sc.id === this.gameState.endingId);
         if (successCondition) {
           if (successCondition.ending) {
-            // Pre-written ending text available
+            // Pre-written ending text available - append immediately
             responseText += `\n\n${successCondition.ending}`;
             this.hasShownEndingContent = true;
           } else {
-            // No ending text - generate with LLM
-            try {
-              const generatedEnding = await this.generateEndingWithLLM(successCondition, input, currentLocation);
-              responseText += `\n\n${generatedEnding}`;
-              this.hasShownEndingContent = true;
-            } catch (error) {
-              console.error('Failed to generate ending:', error);
-              responseText += `\n\n*The story concludes as you achieve: ${successCondition.description}*`;
-              this.hasShownEndingContent = true;
-            }
+            // No ending text - generate with LLM asynchronously
+            this.hasShownEndingContent = true; // Mark as handled to prevent duplicate calls
+            this.generateEndingAsynchronously(successCondition, currentLocation);
           }
         } else {
           // Fallback: Check if ending is defined as a separate ending (legacy)
@@ -328,9 +397,6 @@ export class GameEngine {
           // If ending is defined as a flow, the content is already included above
         }
       }
-
-      // Track this interaction for conversation memory
-      this.trackInteraction(input, responseText);
 
       return {
         text: responseText,
@@ -1295,10 +1361,10 @@ Remember: Items can only be obtained in their designated locations according to 
         }
       }
       
-      // Note: Flow tracking is now handled locally within each method
-
-      // Track this interaction for conversation memory
+      // Track this interaction for conversation memory BEFORE handling endings
       this.trackInteraction(originalInput, responseText);
+      
+      // Note: Flow tracking is now handled locally within each method
 
       return {
         text: responseText,
@@ -1419,6 +1485,7 @@ Remember: Items can only be obtained in their designated locations according to 
    * Track story start text in conversation memory for LLM context
    */
   trackStartText(startText: string): void {
+    // Initialize conversation memory if not present
     if (!this.gameState.conversationMemory) {
       this.gameState.conversationMemory = {
         immediateContext: { recentInteractions: [] },
