@@ -62,6 +62,7 @@ export class CommandProcessor {
     
     // Clear input and disable input during processing
     this.commandInput.value = '';
+    this.commandInput.style.height = 'auto'; // Reset height immediately
     this.commandInput.disabled = true;
     this.messageDisplay.addMessage('Processing...', 'system');
 
