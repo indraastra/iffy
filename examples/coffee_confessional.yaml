@@ -21,10 +21,10 @@ characters:
     name: "You"
     traits: ["caring", "observant", "patient", "hopeful"]
     voice: "Warm and genuine, someone who listens carefully"
-    description: "A close friend who has noticed something has been weighing on Jamie lately"
+    description: "A close friend who has noticed something has been weighing on Alex lately"
 
-  - id: "jamie"
-    name: "Jamie"
+  - id: "alex"
+    name: "Alex"
     traits: ["conflicted", "guarded", "thoughtful", "secretly vulnerable"]
     voice: "Careful with words, but warmth shows through despite trying to keep distance"
     description: "Your friend who has been acting differently lately - more distant, distracted, as if carrying a secret"
@@ -48,14 +48,14 @@ locations:
 
 items:
   - id: "unfinished_coffee"
-    name: "Jamie's Coffee"
+    name: "Alex's Coffee"
     display_name: "coffee"
-    description: "A nearly full latte that's gone cold while Jamie stares out the window"
+    description: "A nearly full cup that's gone cold while Alex stares out the window"
     location: "corner_cafe"
-    aliases: ["coffee", "latte", "jamie's cup"]
+    aliases: ["coffee", "alex's cup"]
 
   - id: "phone"
-    name: "Jamie's Phone"
+    name: "Alex's Phone"
     display_name: "phone"
     description: "Face down on the table, but you noticed it buzzing with unread messages earlier"
     location: "corner_cafe"
@@ -64,10 +64,10 @@ items:
 # Format v2: Success conditions define story outcomes
 success_conditions:
   - id: "full_confession"
-    description: "Jamie opens up completely about their feelings and what's been troubling them"
-    requires: ["jamie vulnerable", "admitted feelings", "secret revealed", "trust established"]
+    description: "Alex opens up completely about their feelings and what's been troubling them"
+    requires: ["alex vulnerable", "admitted feelings", "secret revealed", "trust established"]
     ending: |
-      Jamie reaches across the small table and gently takes your hand. "Thank you," they say quietly, 
+      Alex reaches across the small table and gently takes your hand. "Thank you," they say quietly, 
       "for not giving up on me. For seeing through all my walls."
       
       The café around you seems to fade away as you sit together in this moment of honesty. 
@@ -76,26 +76,26 @@ success_conditions:
       Outside, the rain has stopped, and the evening feels full of new possibilities.
 
   - id: "partial_opening"
-    description: "Jamie admits something is wrong but doesn't reveal the full truth"
-    requires: ["jamie conflicted", "acknowledged distance", "partial trust"]
+    description: "Alex admits something is wrong but doesn't reveal the full truth"
+    requires: ["alex conflicted", "acknowledged distance", "partial trust"]
     ending: |
-      Jamie sighs and looks down at their cold coffee. "I know I've been weird lately. 
+      Alex sighs and looks down at their cold coffee. "I know I've been weird lately. 
       I'm sorry you have to deal with that."
       
-      It's not everything, but it's a start. You sense there's more Jamie wants to say, 
+      It's not everything, but it's a start. You sense there's more Alex wants to say, 
       but some walls take time to come down. At least they've acknowledged something is wrong.
       
       "Want to walk for a bit?" you suggest. Sometimes conversations continue better in motion.
 
   - id: "walls_stay_up"
-    description: "Jamie remains guarded and deflects attempts to connect"
-    requires: ["jamie defensive", "topic avoided", "distance maintained"]
+    description: "Alex remains guarded and deflects attempts to connect"
+    requires: ["alex defensive", "topic avoided", "distance maintained"]
     ending: |
-      Jamie glances at their watch and stands up abruptly. "I should get going. 
+      Alex glances at their watch and stands up abruptly. "I should get going. 
       Thanks for the coffee."
       
       You watch them gather their things, that familiar distance still firmly in place. 
-      Whatever Jamie is carrying, they're not ready to share it yet.
+      Whatever Alex is carrying, they're not ready to share it yet.
       
       As they head to the door, you wonder if you pushed too hard, or not hard enough.
 
@@ -104,47 +104,57 @@ flows: []
 
 start:
   content: |
-    You're sitting across from Jamie in a quiet corner café. They've been acting distant lately, 
+    You're sitting across from Alex in a quiet corner café. They've been acting distant lately, 
     and tonight feels different - like there's something they want to say but can't.
     
-    "So..." they begin, then trail off, stirring their untouched latte.
+    The barista approaches, wiping her hands on her apron. "I noticed your coffee's 
+    gone cold. Should I warm it up for you?"
+    
+    Alex doesn't respond, still stirring absently while staring out the rain-spotted window. 
+    The barista glances at you with a gentle, questioning look.
   location: "corner_cafe"
 
 # Format v2: LLM story guidelines for intelligent behavior
 llm_guidelines: |
   STORY TONE: This is an intimate, realistic conversation between close friends where one is hiding something important. Focus on subtle emotional cues, meaningful silences, and the gradual building of trust.
   
-  CHARACTER DYNAMICS:
-  - Player: Caring friend who has noticed Jamie's distance. Wants to help but must be patient and gentle.
-  - Jamie: Struggling with unspoken feelings (romantic feelings for the player). Torn between wanting to confess and fear of ruining the friendship.
+  PRONOUN USAGE: 
+  - Start by using "they/them" pronouns for Alex or avoiding pronouns by using Alex's name
+  - If the player uses specific pronouns (he/him, she/her, they/them) when referring to Alex, adopt those same pronouns consistently throughout the rest of the story
+  - This should feel natural - once established, maintain consistency
+  - Example: If player says "She's fine, thanks" then use she/her for Alex going forward
   
-  JAMIE'S EMOTIONAL ARC:
-  Jamie starts guarded and conflicted, slowly opening up based on the player's approach:
+  CHARACTER DYNAMICS:
+  - Player: Caring friend who has noticed Alex's distance. Wants to help but must be patient and gentle.
+  - Alex: Struggling with unspoken feelings (romantic feelings for the player). Torn between wanting to confess and fear of ruining the friendship.
+  
+  ALEX'S EMOTIONAL ARC:
+  Alex starts guarded and conflicted, slowly opening up based on the player's approach:
   - Defensive → Conflicted → Vulnerable → Open
-  - Patient, empathetic responses help Jamie feel safe to share
-  - Pushy or judgmental responses make Jamie shut down
+  - Patient, empathetic responses help Alex feel safe to share
+  - Pushy or judgmental responses make Alex shut down
   
   THE SECRET:
-  Jamie has developed romantic feelings for the player but is terrified of ruining their friendship. They've been pulling away to protect themselves and the relationship, but it's making everything worse. This is why they've been distant lately.
+  Alex has developed romantic feelings for the player but is terrified of ruining their friendship. They've been pulling away to protect themselves and the relationship, but it's making everything worse. This is why they've been distant lately.
   
   CONVERSATION GOALS:
   - Create realistic dialogue that feels natural, not scripted
-  - Show Jamie's internal struggle through body language and hesitation
+  - Show Alex's internal struggle through body language and hesitation
   - Let the player discover the truth through careful conversation
   - Build emotional intimacy gradually through the scene
   
   KNOWLEDGE PROGRESSION:
   Set these knowledge flags as the conversation develops:
-  - "acknowledged distance" → when Jamie admits they've been acting differently
-  - "jamie conflicted" → when internal struggle becomes apparent
-  - "partial trust" → when Jamie starts to open up a little
-  - "topic avoided" → if Jamie deflects or changes subject
-  - "jamie defensive" → if Jamie shuts down or gets defensive
-  - "jamie vulnerable" → when Jamie's emotional walls start coming down
-  - "trust established" → when Jamie feels safe with the player
-  - "admitted feelings" → when Jamie confesses their romantic feelings
+  - "acknowledged distance" → when Alex admits they've been acting differently
+  - "alex conflicted" → when internal struggle becomes apparent
+  - "partial trust" → when Alex starts to open up a little
+  - "topic avoided" → if Alex deflects or changes subject
+  - "alex defensive" → if Alex shuts down or gets defensive
+  - "alex vulnerable" → when Alex's emotional walls start coming down
+  - "trust established" → when Alex feels safe with the player
+  - "admitted feelings" → when Alex confesses their romantic feelings
   - "secret revealed" → when the full truth about their behavior comes out
-  - "distance maintained" → if Jamie keeps emotional walls up
+  - "distance maintained" → if Alex keeps emotional walls up
   
   ENVIRONMENTAL DETAILS:
   Use the café setting to enhance intimacy - the quiet atmosphere, the rain outside, the dim lighting, the nearly empty space. These details can reflect the emotional tone of the conversation.
@@ -152,7 +162,7 @@ llm_guidelines: |
   REALISTIC DIALOGUE:
   - Include natural hesitations, incomplete sentences, and meaningful silences
   - Show emotions through actions: stirring coffee, looking away, fidgeting
-  - Let Jamie's feelings emerge gradually, not all at once
+  - Let Alex's feelings emerge gradually, not all at once
   - Make the player work for trust through genuine care and patience
   
   IMPORTANT: Do not write ending text when success conditions are met. Let the engine handle the conclusion while you focus on authentic character interactions and emotional development.
