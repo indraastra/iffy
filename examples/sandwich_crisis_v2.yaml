@@ -206,8 +206,6 @@ llm_story_guidelines: |
   - Perfect ending: requires "sandwich has toasted bread" + "sandwich has cheese" + "player has eaten sandwich"
   - Decent ending: requires "sandwich has bread" + "sandwich has cheese" + "player has eaten sandwich"
   
-  MARKUP: Always use [item:Name] for items, [character:Jennifer] for player, [!danger]/[!warning]/[!discovery] for dramatic alerts. Do NOT use [location:Name] - just use location names directly.
-  
   DISCOVERY: Let players find items by examining objects. Be dramatic about everything!
   
   MYSTERY CONDIMENT KNOWLEDGE: The mystery condiment is ancient fish sauce with a powerfully fishy, fermented smell. When describing it or when players examine it, emphasize the oceanic, fishy, fermented characteristics that hint at its true nature. This will make the fish sauce revelation in the ending feel natural and consistent.

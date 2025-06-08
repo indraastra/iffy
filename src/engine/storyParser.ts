@@ -145,6 +145,7 @@ export class StoryParser {
         id: item.id,
         name: item.name,
         description: item.description,
+        display_name: item.display_name,
         location: item.location,
         hidden: item.hidden || false,
         discoverable_in: item.discoverable_in,

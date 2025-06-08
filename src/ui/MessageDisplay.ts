@@ -1,4 +1,4 @@
-import { richTextParser } from '@/utils/richTextParser';
+import { richTextParser, RenderContext } from '@/utils/richTextParser';
 
 export type MessageType = 'story' | 'input' | 'error' | 'system' | 'choices' | 'title';
 
@@ -7,9 +7,17 @@ export type MessageType = 'story' | 'input' | 'error' | 'system' | 'choices' | '
  */
 export class MessageDisplay {
   private storyOutput: HTMLElement;
+  private getItem?: (itemId: string) => { name: string; display_name?: string } | undefined;
 
   constructor(storyOutputElement: HTMLElement) {
     this.storyOutput = storyOutputElement;
+  }
+
+  /**
+   * Set the item lookup function for rich text rendering
+   */
+  setItemLookup(getItem: (itemId: string) => { name: string; display_name?: string } | undefined): void {
+    this.getItem = getItem;
   }
 
   /**
@@ -21,7 +29,11 @@ export class MessageDisplay {
     
     // Use rich text formatting for story content, plain text for others
     if (type === 'story') {
-      const richContent = richTextParser.renderContent(text);
+      const context: RenderContext = {
+        type: 'narrative',
+        getItem: this.getItem
+      };
+      const richContent = richTextParser.renderContent(text, context);
       messageDiv.appendChild(richContent);
     } else {
       messageDiv.textContent = text;

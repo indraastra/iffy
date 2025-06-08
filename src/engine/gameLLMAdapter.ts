@@ -89,7 +89,7 @@ DISCOVERY STATUS: Based on recent interactions, analyze if player has already ex
 
 ${gameState.gameEnded ? this.getEndingContext(story, gameState) : ''}
 
-MARKUP: Use [character:Name] for characters, [item:Name] for items, **bold** for emphasis, [!warning]/[!discovery]/[!danger] for alerts. Do NOT use [location:Name] markup - just use the location name directly.
+MARKUP: Use [character:Name] for characters, [item:item_id] for items (use the item's ID, not name), **bold** for emphasis, [!warning]/[!discovery]/[!danger] for alerts. Do NOT use [location:Name] markup - just use the location name directly.
 
 IMPORTANT: The player IS the player character. Do NOT treat the player character as a separate NPC they can talk to. When players try to "talk to" or interact with the player character, explain that they ARE that character.
 
