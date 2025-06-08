@@ -205,4 +205,84 @@ describe('GameEngine', () => {
       expect(initialText).toContain('No story loaded')
     })
   })
+
+  describe('Save and Load Game', () => {
+    beforeEach(() => {
+      const result = gameEngine.loadStory(mockStory)
+      expect(result.success).toBe(true)
+    })
+
+    it('should save game state as JSON string', () => {
+      const saveData = gameEngine.saveGame()
+      
+      expect(typeof saveData).toBe('string')
+      expect(() => JSON.parse(saveData)).not.toThrow()
+      
+      const parsed = JSON.parse(saveData)
+      expect(parsed.gameState).toBeDefined()
+      expect(parsed.memoryState).toBeDefined()
+      expect(parsed.storyTitle).toBe('Test Story')
+    })
+
+    it('should save and restore complete game state', () => {
+      // Modify game state
+      gameEngine.addItemToInventory('test_item')
+      gameEngine.setFlag('test_flag')
+      gameEngine.setLocation('test_room')
+      
+      const originalState = gameEngine.getGameState()
+      const saveData = gameEngine.saveGame()
+      
+      // Create new engine and load the save
+      const newEngine = new GameEngine()
+      const loadStoryResult = newEngine.loadStory(mockStory)
+      expect(loadStoryResult.success).toBe(true)
+      
+      const loadResult = newEngine.loadGame(saveData)
+      expect(loadResult.success).toBe(true)
+      
+      const restoredState = newEngine.getGameState()
+      
+      // Verify state was restored correctly
+      expect(restoredState.currentLocation).toBe(originalState.currentLocation)
+      expect(restoredState.inventory).toEqual(originalState.inventory)
+      expect(Array.from(restoredState.flags)).toEqual(Array.from(originalState.flags))
+      expect(restoredState.gameStarted).toBe(originalState.gameStarted)
+    })
+
+    it('should fail to load save without story loaded', () => {
+      const saveData = gameEngine.saveGame()
+      const emptyEngine = new GameEngine()
+      
+      const result = emptyEngine.loadGame(saveData)
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('No story loaded')
+    })
+
+    it('should fail to load save for different story', () => {
+      const saveData = gameEngine.saveGame()
+      
+      const differentStory = { ...mockStory, title: 'Different Story' }
+      const newEngine = new GameEngine()
+      newEngine.loadStory(differentStory)
+      
+      const result = newEngine.loadGame(saveData)
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('Test Story')
+      expect(result.error).toContain('Different Story')
+    })
+
+    it('should handle invalid save data', () => {
+      const result = gameEngine.loadGame('invalid json')
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('Failed to load save file')
+    })
+
+    it('should handle save data without gameState', () => {
+      const invalidSave = JSON.stringify({ storyTitle: 'Test Story' })
+      const result = gameEngine.loadGame(invalidSave)
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('missing gameState')
+    })
+  })
 })
