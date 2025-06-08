@@ -2,6 +2,7 @@ import { StoryParser, StoryParseError } from '@/engine/storyParser';
 import { GameEngine } from '@/engine/gameEngine';
 import { getBundledStoryTitles, getBundledStory } from '@/bundled-examples';
 import { MessageDisplay } from './MessageDisplay';
+import { GameManager } from './GameManager';
 
 /**
  * Manages the story loading menu and file operations
@@ -10,11 +11,13 @@ export class LoadMenuManager {
   private gameEngine: GameEngine;
   private messageDisplay: MessageDisplay;
   private commandInput: HTMLTextAreaElement;
+  private gameManager: GameManager;
 
-  constructor(gameEngine: GameEngine, messageDisplay: MessageDisplay, commandInput: HTMLTextAreaElement) {
+  constructor(gameEngine: GameEngine, messageDisplay: MessageDisplay, commandInput: HTMLTextAreaElement, gameManager: GameManager) {
     this.gameEngine = gameEngine;
     this.messageDisplay = messageDisplay;
     this.commandInput = commandInput;
+    this.gameManager = gameManager;
   }
 
   /**
@@ -282,6 +285,9 @@ export class LoadMenuManager {
     
     // Add the start text to conversation history for LLM context
     this.gameEngine.trackStartText(initialText);
+    
+    // Check for recovery after story is loaded
+    this.gameManager.getSaveManager().checkForStoryRecovery();
     
     this.commandInput.focus();
   }
