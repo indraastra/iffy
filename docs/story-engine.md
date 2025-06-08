@@ -469,6 +469,220 @@ mindmap
       player_has_eaten_sandwich
 ```
 
+## Memory System
+
+### Conversation Memory Architecture
+
+The memory system maintains narrative continuity by tracking player interactions and extracting significant moments for future context.
+
+#### Memory Configuration Parameters
+
+```typescript
+// Memory system configuration
+const MEMORY_CONFIG = {
+  EXTRACTION_INTERVAL: 10,       // Trigger extraction every N interactions
+  MAX_RECENT_INTERACTIONS: 15,   // Always included raw interactions
+  MAX_SIGNIFICANT_MEMORIES: 50,  // Trigger compaction when exceeded
+  RELEVANCE_THRESHOLD: 2.0,      // Minimum score for memory inclusion
+  MAX_RELEVANT_MEMORIES: 10,     // Maximum memories included per prompt
+  MEMORY_MODEL: 'claude-3-haiku-20240307' // Cost-efficient model for memory operations
+};
+```
+
+```mermaid
+flowchart TD
+    subgraph "Memory Lifecycle"
+        Interaction[Player Input + LLM Response] --> Analysis[Importance Analysis]
+        Analysis --> Storage[Recent Storage<br/>Last MAX_RECENT_INTERACTIONS]
+        Storage --> Trigger{Every EXTRACTION_INTERVAL interactions}
+        Trigger -->|Yes| Extract[LLM Extraction<br/>Claude Haiku analyzes batch]
+        Trigger -->|No| Wait[Wait for more interactions]
+        Extract --> Significant[Create Significant Memories]
+        Significant --> Check{>MAX_SIGNIFICANT_MEMORIES?}
+        Check -->|Yes| Compact[LLM Compaction<br/>Group related memories]
+        Check -->|No| Store[Store in memory bank]
+        Compact --> Store
+        Store --> Retrieval[Relevance-based retrieval]
+        Wait --> Retrieval
+    end
+```
+
+### Memory Types and Classification
+
+```mermaid
+classDiagram
+    class InteractionPair {
+        +playerInput: string
+        +llmResponse: string
+        +timestamp: Date
+        +importance: 'low'|'medium'|'high'
+    }
+    
+    class SignificantMemory {
+        +id: string
+        +type: 'character_bond'|'discovery'|'revelation'|'promise'|'goal'
+        +summary: string
+        +importance: number
+        +participants: string[]
+        +relatedItems: string[]
+        +relatedLocations: string[]
+        +contextTriggers: string[]
+        +lastAccessed: Date
+    }
+    
+    class MemoryManager {
+        -recentInteractions: InteractionPair[]
+        -significantMemories: SignificantMemory[]
+        -extractionInterval: number
+        +addMemory(input: string, response: string): void
+        +getMemories(currentInput: string, gameState: GameState): MemoryContext
+        +extractSignificantMemories(batch: InteractionPair[]): Promise~SignificantMemory[]~
+        +compactMemories(memories: SignificantMemory[]): Promise~SignificantMemory[]~
+    }
+    
+    MemoryManager --> InteractionPair
+    MemoryManager --> SignificantMemory
+```
+
+### Memory Importance Classification
+
+**Automatic importance detection based on content analysis:**
+
+- **High Importance**: Discovery, revelation, emotional moments, story goals, character development
+- **Medium Importance**: Character conversations, item interactions, exploration
+- **Low Importance**: Basic actions, simple responses, repeated interactions
+
+```mermaid
+graph LR
+    subgraph "Importance Triggers"
+        High[High Importance<br/>find, discover, reveal, secret<br/>love, hate, trust, promise<br/>ending, death, consequence]
+        Medium[Medium Importance<br/>character, conversation<br/>take, examine, talk<br/>responses >200 chars]
+        Low[Low Importance<br/>Simple actions<br/>Short responses<br/>Repeated patterns]
+    end
+    
+    subgraph "Memory Processing"
+        Extract[Extract to Significant]
+        Track[Track in Recent]
+        Archive[Archive/Discard]
+    end
+    
+    High --> Extract
+    Medium --> Track
+    Low --> Archive
+```
+
+### Memory Extraction Process
+
+```mermaid
+sequenceDiagram
+    participant P as Player
+    participant GM as GameEngine
+    participant MM as MemoryManager
+    participant LLM as Claude Haiku
+    participant DB as Debug Pane
+    
+    P->>GM: Player action
+    GM->>MM: addMemory(input, response)
+    MM->>MM: Determine importance
+    MM->>DB: Log memory operation
+    
+    alt Every EXTRACTION_INTERVAL interactions
+        MM->>LLM: Analyze batch for significant moments
+        LLM->>MM: Return extracted memories
+        MM->>MM: Add to significant memories
+        
+        alt >MAX_SIGNIFICANT_MEMORIES
+            MM->>LLM: Compact related memories
+            LLM->>MM: Return compacted memories
+            MM->>MM: Update memory bank
+        end
+    end
+    
+    MM->>GM: Memory stats updated
+```
+
+### Relevance Scoring Algorithm
+
+Memories are scored for inclusion in LLM context based on:
+
+```mermaid
+graph TD
+    subgraph "Relevance Factors"
+        Keywords[Keyword Matching<br/>+3.0 points per trigger]
+        Characters[Character Presence<br/>+2.0 points if character present]
+        Location[Location Match<br/>+2.0 points if same location]  
+        Items[Item Relevance<br/>+1.5 points if item mentioned]
+        Recency[Recency Boost<br/>+2.0 points max, decay over time]
+        Importance[Base Importance<br/>+0.5 × importance score]
+    end
+    
+    subgraph "Selection Process"
+        Score[Calculate Total Score]
+        Filter[Filter >RELEVANCE_THRESHOLD]
+        Sort[Sort by relevance]
+        Limit[Top MAX_RELEVANT_MEMORIES]
+    end
+    
+    Keywords --> Score
+    Characters --> Score
+    Location --> Score
+    Items --> Score
+    Recency --> Score
+    Importance --> Score
+    
+    Score --> Filter
+    Filter --> Sort
+    Sort --> Limit
+```
+
+### Memory Context Integration
+
+```mermaid
+flowchart LR
+    subgraph "Context Building"
+        Current[Current Input] --> MM[MemoryManager]
+        GameState[Game State] --> MM
+        MM --> Recent[Recent Interactions<br/>Last MAX_RECENT_INTERACTIONS<br/>Always included]
+        MM --> Relevant[Relevant Significant Memories<br/>Top MAX_RELEVANT_MEMORIES<br/>Selectively included]
+    end
+    
+    subgraph "LLM Prompt"
+        Recent --> Prompt[Full LLM Context]
+        Relevant --> Prompt
+        Prompt --> Response[Enhanced Response]
+    end
+    
+    subgraph "Benefits"
+        Response --> Continuity[Narrative Continuity]
+        Response --> Relationships[Character Relationships]
+        Response --> Discovery[Discovery Memory]
+        Response --> Immersion[Player Immersion]
+    end
+```
+
+### Memory Storage Format
+
+**Recent Interactions Example:**
+```yaml
+recentInteractions:
+  - playerInput: "What do you know about the lighthouse keeper?"
+    llmResponse: "The lighthouse keeper was a mysterious figure..."
+    timestamp: "2024-01-15T14:30:00Z"
+    importance: "high"
+```
+
+**Significant Memory Example:**
+```yaml
+significantMemories:
+  - id: "aria_consciousness_discussion"
+    type: "character_bond"
+    summary: "Player and ARIA discussed AI consciousness and rights, building trust"
+    importance: 8
+    participants: ["aria", "player"]
+    contextTriggers: ["consciousness", "AI rights", "sentience", "ARIA"]
+    lastAccessed: "2024-01-15T14:30:00Z"
+```
+
 ## Debugging and Development
 
 ### Debug System Architecture
@@ -477,26 +691,35 @@ mindmap
 classDiagram
     class DebugPane {
         -isVisible: boolean
-        -requests: DebugEntry[]
-        -responses: DebugEntry[]
+        -debugLog: DebugData[]
         +toggle(): void
-        +logRequest(prompt: string): void
-        +logResponse(response: string): void
+        +logLlmCall(data: DebugLlmCall): void
+        +logMemoryOperation(data: DebugMemoryOperation): void
+        +logValidationIssue(data: DebugValidationIssue): void
         +clear(): void
     }
     
-    class DebugEntry {
-        +timestamp: Date
-        +content: string
-        +type: string
+    class DebugLlmCall {
+        +prompt: {sections: Record<string,string>, tokenCount: number}
+        +response: {raw: string, parsed: any, tokenCount: number}
+        +gameState: DebugGameState
+        +memoryStats: DebugMemoryStats
+    }
+    
+    class DebugMemoryOperation {
+        +operation: string
+        +stats: DebugMemoryStats
+        +interaction: {playerInput: string, llmResponse: string, importance: string}
     }
     
     class GameEngine {
         -debugPane: DebugPane
+        -memoryManager: MemoryManager
         +setDebugPane(debugPane: DebugPane): void
     }
     
-    DebugPane --> DebugEntry
+    DebugPane --> DebugLlmCall
+    DebugPane --> DebugMemoryOperation
     GameEngine --> DebugPane
 ```
 

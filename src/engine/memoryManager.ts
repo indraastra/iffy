@@ -20,6 +20,7 @@ export interface MemoryContext {
 export class MemoryManager {
   private anthropicService: AnthropicService;
   private memoryModel: string = 'claude-3-haiku-20240307'; // Cheaper model for memory tasks
+  private debugPane?: any; // Debug pane for logging operations
   
   // Configuration
   private readonly DEFAULT_EXTRACTION_INTERVAL = 10;
@@ -40,6 +41,13 @@ export class MemoryManager {
     if (memoryModel) {
       this.memoryModel = memoryModel;
     }
+  }
+
+  /**
+   * Set debug pane for logging memory operations
+   */
+  setDebugPane(debugPane: any): void {
+    this.debugPane = debugPane;
   }
 
   /**
@@ -75,6 +83,19 @@ export class MemoryManager {
     
     if (this.interactionsSinceLastExtraction >= this.extractionInterval) {
       this.triggerAsyncProcessing();
+    }
+
+    // Log memory operation to debug pane
+    if (this.debugPane) {
+      this.debugPane.logMemoryOperation({
+        operation: 'add_interaction',
+        stats: this.getStats(),
+        interaction: {
+          playerInput,
+          llmResponse,
+          importance
+        }
+      });
     }
 
     console.log(`💭 Added memory (${importance} importance). Recent: ${this.recentInteractions.length}, Significant: ${this.significantMemories.length}`);

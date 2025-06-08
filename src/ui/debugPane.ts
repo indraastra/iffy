@@ -1,15 +1,73 @@
 import { RichTextParser } from '@/utils/richTextParser';
 
+// Structured debug data interfaces
+export interface DebugGameState {
+  location: string;
+  inventory: string[];
+  flags: string[];
+  currentFlow?: string;
+}
+
+export interface DebugMemoryStats {
+  recentInteractions: number;
+  significantMemories: number;
+  isProcessing: boolean;
+  extractionInterval?: number;
+  interactionsSinceLastExtraction?: number;
+}
+
+export interface DebugLlmCall {
+  prompt: {
+    sections: Record<string, string>;
+    tokenCount?: number;
+  };
+  response: {
+    raw: string;
+    parsed?: any;
+    tokenCount?: number;
+  };
+  gameState: DebugGameState;
+  memoryStats: DebugMemoryStats;
+}
+
+export interface DebugMemoryOperation {
+  operation: string;
+  stats: DebugMemoryStats;
+  interaction?: {
+    playerInput: string;
+    llmResponse: string;
+    importance: string;
+  };
+  details?: any;
+}
+
+export interface DebugValidationIssue {
+  input: string;
+  issues: string[];
+  gameState: DebugGameState;
+  retryAttempt?: number;
+}
+
+export interface DebugGameStateChange {
+  change: string;
+  before: any;
+  after: any;
+  reason: string;
+  gameState: DebugGameState;
+}
+
+// Legacy interface for backward compatibility
 export interface DebugData {
   prompt?: string;
   response?: string;
   timestamp: Date;
-  type: 'request' | 'response' | 'error' | 'validation' | 'memory' | 'retry';
+  type: 'request' | 'response' | 'error' | 'validation' | 'memory' | 'retry' | 'llm_call' | 'memory_operation' | 'game_state_change';
   metadata?: {
     validationIssues?: string[];
     originalInput?: string;
     conversationMemory?: any;
     importance?: string;
+    structured?: DebugLlmCall | DebugMemoryOperation | DebugValidationIssue | DebugGameStateChange;
   };
 }
 
@@ -144,6 +202,57 @@ export class DebugPane {
     this.renderLogEntry(data);
   }
 
+  // New structured debug methods
+  public logLlmCall(llmData: DebugLlmCall): void {
+    const data: DebugData = {
+      timestamp: new Date(),
+      type: 'llm_call',
+      metadata: {
+        structured: llmData
+      }
+    };
+    this.debugLog.push(data);
+    this.renderLogEntry(data);
+  }
+
+  public logMemoryOperation(memoryData: DebugMemoryOperation): void {
+    const data: DebugData = {
+      timestamp: new Date(),
+      type: 'memory_operation',
+      metadata: {
+        structured: memoryData
+      }
+    };
+    this.debugLog.push(data);
+    this.renderLogEntry(data);
+  }
+
+  public logValidationIssue(validationData: DebugValidationIssue): void {
+    const data: DebugData = {
+      timestamp: new Date(),
+      type: 'validation',
+      metadata: {
+        structured: validationData,
+        validationIssues: validationData.issues,
+        originalInput: validationData.input
+      }
+    };
+    this.debugLog.push(data);
+    this.renderLogEntry(data);
+  }
+
+  public logGameStateChange(stateData: DebugGameStateChange): void {
+    const data: DebugData = {
+      timestamp: new Date(),
+      type: 'game_state_change',
+      metadata: {
+        structured: stateData
+      }
+    };
+    this.debugLog.push(data);
+    this.renderLogEntry(data);
+  }
+
   private renderLogEntry(data: DebugData): void {
     const logContainer = this.container.querySelector('.debug-log') as HTMLElement;
     const entry = document.createElement('div');
@@ -226,6 +335,12 @@ export class DebugPane {
           </div>
         </div>
       `;
+    } else if (data.type === 'llm_call' && data.metadata?.structured) {
+      entry.innerHTML = this.renderLlmCall(timestamp, data.metadata.structured as DebugLlmCall);
+    } else if (data.type === 'memory_operation' && data.metadata?.structured) {
+      entry.innerHTML = this.renderMemoryOperation(timestamp, data.metadata.structured as DebugMemoryOperation);
+    } else if (data.type === 'game_state_change' && data.metadata?.structured) {
+      entry.innerHTML = this.renderGameStateChange(timestamp, data.metadata.structured as DebugGameStateChange);
     }
 
     logContainer.appendChild(entry);
@@ -362,6 +477,102 @@ export class DebugPane {
     });
     
     return tempDiv.innerHTML;
+  }
+
+  // New structured rendering methods
+  private renderLlmCall(timestamp: string, data: DebugLlmCall): string {
+    const tokenInfo = data.prompt.tokenCount && data.response.tokenCount 
+      ? ` (${data.prompt.tokenCount} → ${data.response.tokenCount} tokens)`
+      : '';
+
+    return `
+      <div class="debug-timestamp">[${timestamp}] 🤖 LLM CALL${tokenInfo}</div>
+      <div class="debug-content-section debug-llm-content">
+        <div class="debug-subsection">
+          <strong>Game State:</strong> 
+          <span class="game-state-summary">${data.gameState.location} | ${data.gameState.inventory.length} items | ${data.gameState.flags.length} flags${data.gameState.currentFlow ? ` | flow: ${data.gameState.currentFlow}` : ''}</span>
+        </div>
+        <div class="debug-subsection">
+          <strong>Memory:</strong> 
+          <span class="memory-summary">${data.memoryStats.recentInteractions} recent, ${data.memoryStats.significantMemories} significant${data.memoryStats.isProcessing ? ' (processing...)' : ''}</span>
+        </div>
+        <div class="debug-subsection">
+          <strong>Prompt Sections:</strong>
+          <div class="prompt-sections">
+            ${Object.entries(data.prompt.sections).map(([section, content]) => {
+              // No character limit for conversation memory to aid debugging
+              const isMemorySection = section.toLowerCase().includes('conversation') || section.toLowerCase().includes('memory');
+              const displayContent = isMemorySection ? content : content.substring(0, 800);
+              const truncated = !isMemorySection && content.length > 800 ? '\n...[truncated]' : '';
+              
+              return `
+              <div class="prompt-section prompt-${section.toLowerCase().replace(/[^a-z0-9]/g, '-')}">
+                <div class="prompt-section-header">${section}</div>
+                <div class="prompt-section-content"><pre>${this.escapeHtml(displayContent)}${truncated}</pre></div>
+              </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+        <div class="debug-subsection">
+          <strong>Response:</strong>
+          <div class="response-content">
+            ${this.formatResponse(data.response.raw)}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private renderMemoryOperation(timestamp: string, data: DebugMemoryOperation): string {
+    return `
+      <div class="debug-timestamp">[${timestamp}] 💭 MEMORY: ${data.operation.toUpperCase()}</div>
+      <div class="debug-content-section debug-memory-content">
+        <div class="debug-subsection">
+          <strong>Stats:</strong> ${data.stats.recentInteractions} recent, ${data.stats.significantMemories} significant
+          ${data.stats.isProcessing ? ' (processing...)' : ''}
+          ${data.stats.extractionInterval ? ` | extract every ${data.stats.extractionInterval}` : ''}
+          ${data.stats.interactionsSinceLastExtraction !== undefined ? ` | ${data.stats.interactionsSinceLastExtraction} since last` : ''}
+        </div>
+        ${data.interaction ? `
+          <div class="debug-subsection">
+            <strong>Interaction Added:</strong>
+            <div class="memory-interaction">
+              <span class="memory-importance">[${data.interaction.importance}]</span>
+              <span class="memory-input">Player: "${this.escapeHtml(data.interaction.playerInput)}"</span>
+              <span class="memory-response">Response: "${this.escapeHtml(data.interaction.llmResponse.substring(0, 60))}${data.interaction.llmResponse.length > 60 ? '...' : ''}"</span>
+            </div>
+          </div>
+        ` : ''}
+        ${data.details ? `
+          <div class="debug-subsection">
+            <strong>Details:</strong> <pre>${this.escapeHtml(JSON.stringify(data.details, null, 2))}</pre>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  private renderGameStateChange(timestamp: string, data: DebugGameStateChange): string {
+    return `
+      <div class="debug-timestamp">[${timestamp}] 🎯 STATE CHANGE: ${data.change.toUpperCase()}</div>
+      <div class="debug-content-section debug-state-change-content">
+        <div class="debug-subsection">
+          <strong>Reason:</strong> ${this.escapeHtml(data.reason)}
+        </div>
+        <div class="debug-subsection">
+          <strong>Current State:</strong> 
+          <span class="game-state-summary">${data.gameState.location} | ${data.gameState.inventory.length} items | ${data.gameState.flags.length} flags</span>
+        </div>
+        <div class="debug-subsection">
+          <strong>Change:</strong>
+          <div class="state-change-details">
+            <div class="change-before"><strong>Before:</strong> <pre>${this.escapeHtml(JSON.stringify(data.before, null, 2))}</pre></div>
+            <div class="change-after"><strong>After:</strong> <pre>${this.escapeHtml(JSON.stringify(data.after, null, 2))}</pre></div>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   public scrollToTop(): void {
