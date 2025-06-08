@@ -1,12 +1,14 @@
-import { Story, GameState, PlayerAction, GameResponse, Flow, FlowTransition, InteractionPair, Result, SuccessCondition } from '@/types/story';
+import { Story, GameState, PlayerAction, GameResponse, Flow, FlowTransition, Result, SuccessCondition } from '@/types/story';
 import { AnthropicService } from '@/services/anthropicService';
-import { GamePromptBuilder, GameStateResponse } from './gameLLMAdapter';
+import { GamePromptBuilder, GameStateResponse } from './gameEngineLlmAdapter';
+import { MemoryManager } from './memoryManager';
 
 export class GameEngine {
   private story: Story | null = null;
   private gameState: GameState = this.createInitialState();
   private anthropicService: AnthropicService;
   private promptBuilder: GamePromptBuilder;
+  private memoryManager: MemoryManager;
   private debugPane: any = null;
   private uiResetCallback?: () => void;
   private hasShownEndingContent: boolean = false;
@@ -16,6 +18,7 @@ export class GameEngine {
   constructor(anthropicService?: AnthropicService) {
     this.anthropicService = anthropicService || new AnthropicService();
     this.promptBuilder = new GamePromptBuilder();
+    this.memoryManager = new MemoryManager(this.anthropicService);
   }
 
   /**
@@ -49,6 +52,9 @@ export class GameEngine {
     
     // Reset game state
     this.gameState = this.createInitialState();
+    
+    // Reset memory manager
+    this.memoryManager.reset();
     
     // Reset ending content flag
     this.hasShownEndingContent = false;
@@ -231,44 +237,31 @@ export class GameEngine {
    * Generate ending text using LLM when success condition has no predefined ending
    */
   private async generateEndingWithLLM(successCondition: SuccessCondition, currentLocation: any): Promise<string> {
-    // Initialize conversation memory if not present
-    if (!this.gameState.conversationMemory) {
-      this.gameState.conversationMemory = {
-        immediateContext: { recentInteractions: [] },
-        significantMemories: []
-      };
-    }
-
-    // Add a [STORY END] interaction to the conversation history to signal the LLM
+    // Add a [STORY END] interaction to memory to signal the LLM
     // what needs to happen next, rather than repeating the player command
-    const storyEndInteraction: InteractionPair = {
-      playerInput: '[STORY END]',
-      llmResponse: `Success condition achieved: "${successCondition.description}"`,
-      timestamp: new Date(),
-      importance: 'high'
-    };
-    
-    // Add to the end of recent interactions as this should be the latest context
-    this.gameState.conversationMemory.immediateContext.recentInteractions.push(storyEndInteraction);
+    this.memoryManager.addMemory(
+      '[STORY END]',
+      `Success condition achieved: "${successCondition.description}"`,
+      this.gameState
+    );
 
     console.log(`🏁 Tracked story end signal for LLM context: "${successCondition.description}"`);
-    
-    // Log to debug pane if available
-    if (this.debugPane) {
-      this.debugPane.logMemory(this.gameState.conversationMemory, 'high');
-    }
     
     // Create a simple command that will use the conversation context
     const endingCommand = '[SYSTEM] Conclude the story (as needed) to wrap up the narrative in a satisfying way and provide closure to the player.';
     
     try {
+      // Get memory context for ending generation
+      const memoryContext = this.memoryManager.getMemories(endingCommand, this.gameState);
+      
       const llmResponse = await this.anthropicService.processCommand(
         endingCommand,
         this.gameState,
         this.story!,
         currentLocation,
         this.promptBuilder,
-        this.promptBuilder
+        this.promptBuilder,
+        memoryContext
       );
       
       // Extract just the response text, ignoring any state changes since the game has ended
@@ -281,13 +274,17 @@ export class GameEngine {
 
   private async processCommandWithLLM(input: string, currentLocation: any): Promise<GameStateResponse> {
     try {
+      // Get memory context from memory manager
+      const memoryContext = this.memoryManager.getMemories(input, this.gameState);
+      
       return await this.anthropicService.processCommand(
         input,
         this.gameState,
         this.story!,
         currentLocation,
         this.promptBuilder,
-        this.promptBuilder
+        this.promptBuilder,
+        memoryContext
       );
     } catch (error) {
       console.error('Command processing error:', error);
@@ -369,7 +366,7 @@ export class GameEngine {
         console.log('Post-game interaction, using LLM response:', llmResponse.response);
       }
       
-      // Track this interaction for conversation memory BEFORE handling endings
+      // Track this interaction in memory manager BEFORE handling endings
       // so that the final winning interaction is included in conversation context
       this.trackInteraction(input, responseText);
       
@@ -663,13 +660,7 @@ This is a basic MVP version. More natural language understanding will be added i
       inventory: [],
       flags: new Set(),
       gameStarted: false,
-      gameEnded: false,
-      conversationMemory: {
-        immediateContext: {
-          recentInteractions: []
-        },
-        significantMemories: []
-      }
+      gameEnded: false
     };
   }
 
@@ -1365,7 +1356,7 @@ Remember: Items can only be obtained in their designated locations according to 
         }
       }
       
-      // Track this interaction for conversation memory BEFORE handling endings
+      // Track this interaction in memory manager BEFORE handling endings
       this.trackInteraction(originalInput, responseText);
       
       // Note: Flow tracking is now handled locally within each method
@@ -1404,17 +1395,16 @@ Remember: Items can only be obtained in their designated locations according to 
     }
     
     // Enhanced discovery logic: Check if player has recently examined discovery objects
-    if (item.discovery_objects && this.gameState.conversationMemory?.immediateContext?.recentInteractions) {
-      const recentInputs = this.gameState.conversationMemory.immediateContext.recentInteractions
-        .slice(-10) // Check last 10 interactions
-        .map(interaction => interaction.playerInput.toLowerCase());
+    if (item.discovery_objects) {
+      const memoryContext = this.memoryManager.getMemories();
+      const recentInteractions = memoryContext.recentInteractions;
       
-      // Check if player has examined any of the discovery objects for this item
+      // Extract recent inputs from the formatted context
       const hasExaminedDiscoveryObject = item.discovery_objects.some(obj => 
-        recentInputs.some(input => 
-          (input.includes('examine') || input.includes('open') || input.includes('check') || input.includes('look')) &&
-          input.includes(obj.toLowerCase())
-        )
+        recentInteractions.toLowerCase().includes(`examine ${obj.toLowerCase()}`) ||
+        recentInteractions.toLowerCase().includes(`open ${obj.toLowerCase()}`) ||
+        recentInteractions.toLowerCase().includes(`check ${obj.toLowerCase()}`) ||
+        recentInteractions.toLowerCase().includes(`look ${obj.toLowerCase()}`)
       );
       
       if (hasExaminedDiscoveryObject && item.discoverable_in === this.gameState.currentLocation) {
@@ -1427,116 +1417,34 @@ Remember: Items can only be obtained in their designated locations according to 
   }
 
   private trackInteraction(playerInput: string, llmResponse: string): void {
-    if (!this.gameState.conversationMemory) {
-      this.gameState.conversationMemory = {
-        immediateContext: { recentInteractions: [] },
-        significantMemories: []
-      };
-    }
+    // Add to memory manager (importance determined automatically)
+    this.memoryManager.addMemory(playerInput, llmResponse, this.gameState);
 
-    // Determine importance based on content length and keywords
-    const importance = this.determineInteractionImportance(playerInput, llmResponse);
-
-    const interaction: InteractionPair = {
-      playerInput,
-      llmResponse,
-      timestamp: new Date(),
-      importance
-    };
-
-    // Add to recent interactions
-    this.gameState.conversationMemory.immediateContext.recentInteractions.push(interaction);
-
-    // Keep only last 5 interactions for Phase 1
-    const maxRecentInteractions = 5;
-    if (this.gameState.conversationMemory.immediateContext.recentInteractions.length > maxRecentInteractions) {
-      this.gameState.conversationMemory.immediateContext.recentInteractions = 
-        this.gameState.conversationMemory.immediateContext.recentInteractions.slice(-maxRecentInteractions);
-    }
-
-    console.log(`💭 Tracked interaction (${importance} importance): "${playerInput}" -> "${llmResponse.substring(0, 50)}..."`);
-    
-    // Log to debug pane if available
-    if (this.debugPane) {
-      this.debugPane.logMemory(this.gameState.conversationMemory, importance);
-    }
+    console.log(`💭 Tracked interaction: "${playerInput}" -> "${llmResponse.substring(0, 50)}..."`);
   }
 
-  private determineInteractionImportance(playerInput: string, llmResponse: string): 'low' | 'medium' | 'high' {
-    // Simple heuristics for Phase 1
-    const combinedText = (playerInput + ' ' + llmResponse).toLowerCase();
-    
-    // High importance indicators
-    const highImportanceKeywords = ['find', 'discover', 'reveal', 'secret', 'important', 'remember', 'promise', 'love', 'hate', 'trust', 'betray'];
-    if (highImportanceKeywords.some(keyword => combinedText.includes(keyword))) {
-      return 'high';
-    }
-    
-    // Medium importance indicators
-    const mediumImportanceKeywords = ['character', 'conversation', 'tell', 'ask', 'explain', 'story', 'past', 'future'];
-    if (mediumImportanceKeywords.some(keyword => combinedText.includes(keyword)) || llmResponse.length > 200) {
-      return 'medium';
-    }
-    
-    return 'low';
-  }
 
   getAnthropicService(): AnthropicService {
     return this.anthropicService;
   }
 
   /**
-   * Track story start text in conversation memory for LLM context
+   * Track story start text in memory manager for LLM context
    */
   trackStartText(startText: string): void {
-    // Initialize conversation memory if not present
-    if (!this.gameState.conversationMemory) {
-      this.gameState.conversationMemory = {
-        immediateContext: { recentInteractions: [] },
-        significantMemories: []
-      };
-    }
-
     // Add start text as a special interaction for LLM context
-    const startInteraction: InteractionPair = {
-      playerInput: '[STORY START]',
-      llmResponse: startText,
-      timestamp: new Date(),
-      importance: 'high'
-    };
-
-    // Add to the beginning of recent interactions so it's always available as context
-    this.gameState.conversationMemory.immediateContext.recentInteractions.unshift(startInteraction);
+    this.memoryManager.addMemory('[STORY START]', startText, this.gameState);
 
     console.log(`📖 Tracked story start text for LLM context: "${startText.substring(0, 50)}..."`);
-    
-    // Log to debug pane if available
-    if (this.debugPane) {
-      this.debugPane.logMemory(this.gameState.conversationMemory, 'high');
-    }
   }
 
   saveGame(): string {
     return JSON.stringify({
       gameState: {
         ...this.gameState,
-        flags: Array.from(this.gameState.flags),
-        conversationMemory: this.gameState.conversationMemory ? {
-          ...this.gameState.conversationMemory,
-          // Convert timestamps to strings for JSON serialization
-          immediateContext: {
-            ...this.gameState.conversationMemory.immediateContext,
-            recentInteractions: this.gameState.conversationMemory.immediateContext.recentInteractions.map(interaction => ({
-              ...interaction,
-              timestamp: interaction.timestamp.toISOString()
-            }))
-          },
-          significantMemories: this.gameState.conversationMemory.significantMemories.map(memory => ({
-            ...memory,
-            lastAccessed: memory.lastAccessed.toISOString()
-          }))
-        } : undefined
+        flags: Array.from(this.gameState.flags)
       },
+      memoryState: this.memoryManager.exportState(),
       storyTitle: this.story?.title
     });
   }
@@ -1574,26 +1482,15 @@ Remember: Items can only be obtained in their designated locations according to 
 
       this.gameState = {
         ...data.gameState,
-        flags: new Set(data.gameState.flags),
-        conversationMemory: data.gameState.conversationMemory ? {
-          ...data.gameState.conversationMemory,
-          // Convert timestamp strings back to Date objects
-          immediateContext: {
-            ...data.gameState.conversationMemory.immediateContext,
-            recentInteractions: data.gameState.conversationMemory.immediateContext.recentInteractions.map((interaction: any) => ({
-              ...interaction,
-              timestamp: new Date(interaction.timestamp)
-            }))
-          },
-          significantMemories: data.gameState.conversationMemory.significantMemories.map((memory: any) => ({
-            ...memory,
-            lastAccessed: new Date(memory.lastAccessed)
-          }))
-        } : {
-          immediateContext: { recentInteractions: [] },
-          significantMemories: []
-        }
+        flags: new Set(data.gameState.flags)
       };
+
+      // Load memory state if available
+      if (data.memoryState) {
+        this.memoryManager.importState(data.memoryState);
+      } else {
+        this.memoryManager.reset();
+      }
 
       return {
         success: true,

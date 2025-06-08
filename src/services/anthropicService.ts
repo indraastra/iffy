@@ -56,6 +56,56 @@ export class AnthropicService {
   }
 
   /**
+   * Generic request method for custom prompts with options
+   */
+  public async makeRequest(prompt: string, options?: { model?: string }): Promise<string> {
+    if (!this.client) {
+      throw new Error('Anthropic API not configured. Please set your API key in settings.');
+    }
+
+    // Cancel any existing request
+    this.cancelActiveRequests();
+
+    // Create new abort controller for this request
+    this.activeRequestController = new AbortController();
+
+    try {
+      // Log prompt if debug callback is set
+      if (this.debugCallback) {
+        this.debugCallback(prompt, '');
+      }
+
+      const response = await this.client.messages.create({
+        model: options?.model || 'claude-3-5-sonnet-20241022',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: prompt }]
+      }, {
+        signal: this.activeRequestController.signal
+      });
+
+      if (response.content && response.content.length > 0) {
+        const responseText = response.content[0].type === 'text' ? response.content[0].text : '';
+        
+        // Log response if debug callback is set
+        if (this.debugCallback) {
+          this.debugCallback('', responseText);
+        }
+        
+        return responseText;
+      } else {
+        throw new Error('No response content received from Claude');
+      }
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        throw new Error('Request was cancelled');
+      }
+      throw error;
+    } finally {
+      this.activeRequestController = null;
+    }
+  }
+
+  /**
    * Process a command using dependency injection for prompt building and response parsing.
    * This keeps the service generic while allowing game-specific logic to be injected.
    */
@@ -64,8 +114,9 @@ export class AnthropicService {
     gameState: any,
     story: any,
     currentLocation: any,
-    promptBuilder: { buildPrompt: (command: string, gameState: any, story: any, currentLocation: any) => string },
-    responseParser: { parseResponse: (responseText: string) => any }
+    promptBuilder: { buildPrompt: (command: string, gameState: any, story: any, currentLocation: any, memoryContext?: any) => string },
+    responseParser: { parseResponse: (responseText: string) => any },
+    memoryContext?: any
   ): Promise<any> {
     if (!this.client) {
       throw new Error('Anthropic API not configured. Please set your API key in settings.');
@@ -73,7 +124,7 @@ export class AnthropicService {
 
     try {
       // Use the injected prompt builder to create the prompt
-      const prompt = promptBuilder.buildPrompt(command, gameState, story, currentLocation);
+      const prompt = promptBuilder.buildPrompt(command, gameState, story, currentLocation, memoryContext);
       
       // Send the prompt and get the raw response
       const responseText = await this.sendPrompt(prompt);

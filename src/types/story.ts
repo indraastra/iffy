@@ -185,7 +185,6 @@ export interface GameState {
   gameStarted: boolean;
   gameEnded: boolean;
   endingId?: string;
-  conversationMemory?: ConversationMemory;
 }
 
 // Engine types

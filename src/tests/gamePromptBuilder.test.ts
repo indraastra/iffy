@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { GamePromptBuilder } from '../engine/gameLLMAdapter'
+import { GamePromptBuilder } from '../engine/gameEngineLlmAdapter'
 
 describe('GamePromptBuilder', () => {
   let promptBuilder: GamePromptBuilder

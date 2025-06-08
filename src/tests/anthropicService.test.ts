@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { AnthropicService } from '../services/anthropicService'
-import { GamePromptBuilder } from '../engine/gameLLMAdapter'
+import { GamePromptBuilder } from '../engine/gameEngineLlmAdapter'
 
 // Mock Anthropic SDK
 vi.mock('@anthropic-ai/sdk', () => {
