@@ -4,7 +4,7 @@ import {
   ValidatedGameStateResponseSchema,
   type GameStateResponse,
   type ValidatedGameStateResponse
-} from '@/schemas/gameStateResponses';
+} from '../schemas/gameStateResponses';
 
 /**
  * Result type for safe parsing operations
@@ -132,8 +132,7 @@ export class GameStateResponseParser {
         addToInventory: [],
         removeFromInventory: [],
         setFlags: [],
-        unsetFlags: [],
-        addKnowledge: []
+        unsetFlags: []
       },
       response
     };

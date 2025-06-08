@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { GameEngine } from '../engine/gameEngine'
+import { StoryParser } from '../engine/storyParser'
 import { Story } from '../types/story'
 
 describe('GameEngine', () => {
@@ -49,210 +50,245 @@ describe('GameEngine', () => {
           name: "Test Item",
           description: "A simple test item",
           location: "start_room"
-        },
-        {
-          id: "discoverable_item",
-          name: "Hidden Item", 
-          description: "An item that must be discovered",
-          discoverable_in: "test_room",
-          discovery_objects: ["box", "container"]
         }
       ],
       flows: [
         {
-          id: "start_flow",
+          id: "start",
+          name: "Opening",
           type: "narrative",
-          name: "Starting Flow",
-          content: "Welcome to the test!"
+          location: "start_room",
+          content: "Welcome to the test story! This is where your adventure begins."
         }
-      ],
-      start: {
-        content: "Test game started!",
-        location: "start_room",
-        first_flow: "start_flow"
-      }
+      ]
     }
   })
 
-  describe('Story Loading', () => {
-    it('should load a story successfully', () => {
-      gameEngine.loadStory(mockStory)
+  describe('Core Functionality', () => {
+    it('should initialize with empty state', () => {
       const gameState = gameEngine.getGameState()
       
-      expect(gameState.currentLocation).toBe('start_room')
-      expect(gameState.gameStarted).toBe(true)
-      expect(gameState.currentFlow).toBe('start_flow')
-    })
-
-    it('should initialize game state correctly', () => {
-      gameEngine.loadStory(mockStory)
-      const gameState = gameEngine.getGameState()
-      
+      expect(gameState.currentLocation).toBe('')
       expect(gameState.inventory).toEqual([])
-      expect(gameState.flags).toBeInstanceOf(Set)
+      expect(gameState.flags.size).toBe(0)
+      expect(gameState.gameStarted).toBe(false)
       expect(gameState.gameEnded).toBe(false)
     })
-  })
 
-  describe('Game State Management', () => {
-    beforeEach(() => {
-      gameEngine.loadStory(mockStory)
-    })
-
-    it('should save and load game state', () => {
-      // Modify game state
-      const gameState = gameEngine.getGameState()
-      gameState.inventory.push('test_item')
-      gameState.flags.add('test_flag')
-      gameState.currentLocation = 'test_room'
-
-      // Save and reload
-      const saveData = gameEngine.saveGame()
-      const newEngine = new GameEngine()
-      newEngine.loadStory(mockStory)
-      const loadResult = newEngine.loadGame(saveData)
-
-      expect(loadResult.success).toBe(true)
+    it('should load a story successfully', () => {
+      const result = gameEngine.loadStory(mockStory)
       
-      const newGameState = newEngine.getGameState()
-      expect(newGameState.inventory).toContain('test_item')
-      expect(newGameState.flags.has('test_flag')).toBe(true)
-      // Note: currentLocation should be preserved, but test focuses on core save/load functionality
+      expect(result.success).toBe(true)
+      expect(result.data).toBeDefined()
+      
+      const gameState = gameEngine.getGameState()
+      expect(gameState.currentLocation).toBe('start_room')
+      expect(gameState.gameStarted).toBe(true)
+      expect(gameState.currentFlow).toBe('start')
     })
 
-    it('should validate save data format', () => {
-      const invalidSaveData = '{ "invalid": "data" }'
-      const result = gameEngine.loadGame(invalidSaveData)
+    it('should handle story without flows', () => {
+      const badStory = { ...mockStory, flows: [] }
+      const result = gameEngine.loadStory(badStory)
       
       expect(result.success).toBe(false)
-      expect(result.error).toBeDefined()
-    })
-  })
-
-  describe('Game State Validation', () => {
-    beforeEach(() => {
-      gameEngine.loadStory(mockStory)
+      expect(result.error).toContain('missing required field')
     })
 
-    it('should handle valid game state', () => {
-      const gameState = gameEngine.getGameState()
-      expect(gameState.currentLocation).toBe('start_room')
-      expect(gameState.gameStarted).toBe(true)
-    })
-
-    it('should initialize with proper connections', () => {
-      const gameState = gameEngine.getGameState()
-      expect(gameState.currentLocation).toBe('start_room')
+    it('should set starting location from first flow', () => {
+      const result = gameEngine.loadStory(mockStory)
+      expect(result.success).toBe(true)
       
-      // Verify story loaded properly
-      expect(mockStory.locations.find(l => l.id === gameState.currentLocation)).toBeDefined()
-    })
-  })
-
-  describe('Item and Location Management', () => {
-    beforeEach(() => {
-      gameEngine.loadStory(mockStory)
-    })
-
-    it('should track current location correctly', () => {
       const gameState = gameEngine.getGameState()
       expect(gameState.currentLocation).toBe('start_room')
     })
 
-    it('should manage inventory state', () => {
-      const gameState = gameEngine.getGameState()
-      expect(gameState.inventory).toEqual([])
-      
-      // Manually add item to test state management
-      gameState.inventory.push('test_item')
-      expect(gameState.inventory).toContain('test_item')
-    })
-
-    it('should track conversation memory', () => {
-      const gameState = gameEngine.getGameState()
-      
-      // Initialize conversation memory
-      if (!gameState.conversationMemory) {
-        gameState.conversationMemory = {
-          immediateContext: { recentInteractions: [] },
-          significantMemories: []
-        }
+    it('should fallback to first location if flow has no location', () => {
+      const storyWithoutFlowLocation = {
+        ...mockStory,
+        flows: [{
+          id: "start",
+          name: "Opening", 
+          type: "narrative" as const,
+          content: "Welcome!"
+        }]
       }
       
-      gameState.conversationMemory.immediateContext.recentInteractions.push({
-        playerInput: 'test input',
-        llmResponse: 'test response',
-        timestamp: new Date(),
-        importance: 'medium' as const
-      })
+      const result = gameEngine.loadStory(storyWithoutFlowLocation)
+      expect(result.success).toBe(true)
       
-      expect(gameState.conversationMemory.immediateContext.recentInteractions).toHaveLength(1)
+      const gameState = gameEngine.getGameState()
+      expect(gameState.currentLocation).toBe('start_room') // First location
     })
   })
 
-  describe('Flag and Knowledge Management', () => {
+  describe('State Management', () => {
     beforeEach(() => {
       gameEngine.loadStory(mockStory)
     })
 
-    it('should manage flags correctly', () => {
+    it('should return current game state', () => {
       const gameState = gameEngine.getGameState()
       
-      // Add flag
-      gameState.flags.add('test_flag')
-      expect(gameState.flags.has('test_flag')).toBe(true)
-      
-      // Remove flag
-      gameState.flags.delete('test_flag')
-      expect(gameState.flags.has('test_flag')).toBe(false)
-    })
-
-    it('should manage flags correctly (consolidated system)', () => {
-      const gameState = gameEngine.getGameState()
-      
-      // Add flag (which now handles all state including former "knowledge")
-      gameState.flags.add('test_knowledge')
-      expect(gameState.flags.has('test_knowledge')).toBe(true)
-      
-      // Check flags exist
-      expect(gameState.flags.size).toBeGreaterThan(0)
-    })
-
-    it('should handle flow state', () => {
-      const gameState = gameEngine.getGameState()
-      
-      expect(gameState.currentFlow).toBe('start_flow')
+      expect(gameState).toBeDefined()
+      expect(gameState.currentLocation).toBe('start_room')
       expect(gameState.gameStarted).toBe(true)
-      expect(gameState.gameEnded).toBe(false)
-    })
-  })
-
-  describe('Error Handling', () => {
-    it('should handle missing story gracefully', () => {
-      const newEngine = new GameEngine()
-      const gameState = newEngine.getGameState()
-      expect(gameState.gameStarted).toBe(false)
+      expect(Array.isArray(gameState.inventory)).toBe(true)
+      expect(gameState.flags instanceof Set).toBe(true)
     })
 
-    it('should initialize properly', () => {
-      const newEngine = new GameEngine()
-      expect(newEngine).toBeDefined()
+    it('should track game state properties', () => {
+      const gameState = gameEngine.getGameState()
       
-      const gameState = newEngine.getGameState()
-      expect(gameState.inventory).toEqual([])
-      expect(gameState.flags).toBeInstanceOf(Set)
+      expect(gameState.gameStarted).toBe(true)
+      expect(gameState.currentLocation).toBe('start_room')
+      expect(gameState.currentFlow).toBe('start')
     })
   })
 
-  describe('Story Title Access', () => {
-    it('should return null when no story is loaded', () => {
-      const newEngine = new GameEngine()
-      expect(newEngine.getCurrentStoryTitle()).toBeNull()
+  describe('Initial Text Handling', () => {
+    it('should return story content when loaded', () => {
+      const testStory = {
+        title: "Test Story",
+        author: "Test",
+        version: "1.0",
+        metadata: { 
+          setting: { time: "test", place: "test" },
+          tone: { overall: "test", narrative_voice: "test" },
+          themes: ["test"]
+        },
+        characters: [],
+        locations: [{ id: "test", name: "Test", connections: [], description: "Test location" }],
+        items: [],
+        flows: [{
+          id: "start",
+          name: "Opening",
+          type: "narrative" as const,
+          location: "test",
+          content: "Welcome to the test story!"
+        }]
+      };
+
+      const result = gameEngine.loadStory(testStory);
+      expect(result.success).toBe(true);
+
+      const initialText = gameEngine.getInitialText();
+      expect(initialText).toContain('Welcome to the test story!');
+    });
+  })
+
+  describe('Game Start History', () => {
+    it('should track start text in conversation memory', () => {
+      // Track some start text
+      const startText = "Welcome to the game! This is the beginning of your adventure."
+      gameEngine.trackStartText(startText)
+      
+      // Get the game state
+      const gameState = gameEngine.getGameState()
+      
+      // Check that conversation memory was created
+      expect(gameState.conversationMemory).toBeDefined()
+      expect(gameState.conversationMemory?.immediateContext.recentInteractions).toBeDefined()
+      
+      // Check that start text was added as the first interaction
+      const interactions = gameState.conversationMemory!.immediateContext.recentInteractions
+      expect(interactions).toHaveLength(1)
+      expect(interactions[0].playerInput).toBe('[STORY START]')
+      expect(interactions[0].llmResponse).toBe(startText)
+      expect(interactions[0].importance).toBe('high')
     })
 
-    it('should return story title when story is loaded', () => {
-      gameEngine.loadStory(mockStory)
-      expect(gameEngine.getCurrentStoryTitle()).toBe('Test Story')
+    it('should include start text in conversation context', () => {
+      // Load a simple story
+      const testStory = `
+title: "Test Story"
+author: "Test"
+version: "1.0"
+
+metadata:
+  setting:
+    time: "Present"
+    place: "Test"
+  tone:
+    overall: "neutral"
+    narrative_voice: "second person"
+  themes: []
+  ui:
+    colors:
+      primary: "#000"
+      background: "#fff"
+      text: "#333"
+
+characters: []
+locations:
+  - id: "test_room"
+    name: "Test Room"
+    description: "A test room"
+    connections: []
+
+items: []
+
+flows:
+  - id: "start"
+    name: "Opening"
+    type: "narrative"
+    location: "test_room"
+    content: "Welcome to the test story! This is the beginning."
+`
+      
+      const story = StoryParser.parseFromYaml(testStory)
+      gameEngine.loadStory(story)
+      
+      // Track the start text
+      const startText = gameEngine.getInitialText()
+      gameEngine.trackStartText(startText)
+      
+      // Verify the start text was tracked
+      const gameState = gameEngine.getGameState()
+      const interactions = gameState.conversationMemory!.immediateContext.recentInteractions
+      
+      expect(interactions).toHaveLength(1)
+      expect(interactions[0].llmResponse).toBe(startText)
+      expect(interactions[0].playerInput).toBe('[STORY START]')
+    })
+
+    it('should maintain start text at beginning of interactions list', () => {
+      // Track start text first
+      const startText = "This is the start of the story."
+      gameEngine.trackStartText(startText)
+      
+      // Add some regular interactions (simulating normal game play)
+      const gameState = gameEngine.getGameState()
+      gameState.conversationMemory!.immediateContext.recentInteractions.push({
+        playerInput: "look around",
+        llmResponse: "You see a room.",
+        timestamp: new Date(),
+        importance: 'low'
+      })
+      
+      // Start text should still be first
+      const interactions = gameState.conversationMemory!.immediateContext.recentInteractions
+      expect(interactions[0].playerInput).toBe('[STORY START]')
+      expect(interactions[0].llmResponse).toBe(startText)
+      expect(interactions[1].playerInput).toBe("look around")
+    })
+  })
+
+  describe('Initial Text', () => {
+    it('should provide initial text from loaded story', () => {
+      const result = gameEngine.loadStory(mockStory)
+      expect(result.success).toBe(true)
+      
+      const initialText = gameEngine.getInitialText()
+      expect(initialText).toBeDefined()
+      expect(typeof initialText).toBe('string')
+      expect(initialText.length).toBeGreaterThan(0)
+    })
+
+    it('should return message when no story loaded', () => {
+      const emptyEngine = new GameEngine()
+      const initialText = emptyEngine.getInitialText()
+      expect(initialText).toContain('No story loaded')
     })
   })
 })

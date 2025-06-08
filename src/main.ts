@@ -148,7 +148,6 @@ class IffyApp {
         
         // Get parent bounds for constraint
         const parent = element.parentElement!;
-        const parentRect = parent.getBoundingClientRect();
         const elementRect = element.getBoundingClientRect();
         
         const maxX = parent.clientWidth - elementRect.width;
