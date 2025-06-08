@@ -1,17 +1,7 @@
-export interface LLMResponse {
-  action: string;
-  reasoning: string;
-  stateChanges: {
-    newLocation?: string;
-    addToInventory?: string[];
-    removeFromInventory?: string[];
-    setFlags?: string[];
-    unsetFlags?: string[];
-    addKnowledge?: string[];
-  };
-  response: string;
-  error?: string;
-}
+import { GameStateResponseParser } from '@/utils/gameStateResponseParser';
+import type { GameStateResponse } from '@/schemas/gameStateResponses';
+
+export type { GameStateResponse } from '@/schemas/gameStateResponses';
 
 /**
  * Handles building prompts and parsing responses for the Iffy game engine.
@@ -135,62 +125,18 @@ FORMAT v2 INTELLIGENCE:
   }
 
   /**
-   * Parse LLM response text into structured LLMResponse object
+   * Parse game state LLM response text into structured GameStateResponse object using Zod validation
    */
-  parseResponse(responseText: string): LLMResponse {
-    try {
-      console.log('Raw LLM response:', responseText); // Debug log
-      
-      // With JSON mode, the response should be pure JSON
-      const trimmedResponse = responseText.trim();
-      
-      // Direct JSON parsing since we're using JSON mode
-      const parsed = JSON.parse(trimmedResponse);
-      console.log('Parsed JSON:', parsed); // Debug log
-      
-      // Validate required fields
-      if (!parsed.action || !parsed.response) {
-        throw new Error('Invalid response format: missing required fields');
-      }
+  parseResponse(responseText: string): GameStateResponse {
+    // Use the safe parser with automatic fallback
+    return GameStateResponseParser.parseWithFallback(responseText);
+  }
 
-      return {
-        action: parsed.action || 'other',
-        reasoning: parsed.reasoning || '',
-        stateChanges: {
-          newLocation: parsed.stateChanges?.newLocation || null,
-          addToInventory: parsed.stateChanges?.addToInventory || [],
-          removeFromInventory: parsed.stateChanges?.removeFromInventory || [],
-          setFlags: parsed.stateChanges?.setFlags || [],
-          unsetFlags: parsed.stateChanges?.unsetFlags || [],
-          addKnowledge: parsed.stateChanges?.addKnowledge || []
-        },
-        response: parsed.response
-      };
-    } catch (error) {
-      console.error('Failed to parse LLM response:', error);
-      console.error('Raw response:', responseText);
-      
-      // Log the specific parsing error for debugging
-      if (error instanceof SyntaxError) {
-        console.error('JSON Syntax Error:', error.message);
-        // Try to identify the problem area
-        const lines = responseText.split('\n');
-        console.error('Response has', lines.length, 'lines');
-        lines.forEach((line, i) => {
-          if (line.includes('"') && !line.includes('\\"')) {
-            console.warn(`Potential unescaped quote on line ${i + 1}: ${line}`);
-          }
-        });
-      }
-      
-      // Never show raw JSON to the user - always provide a clean error message
-      return {
-        action: 'other',
-        reasoning: 'Failed to parse LLM response',
-        stateChanges: {},
-        response: 'I had trouble understanding that command. The AI system seems to be having formatting issues. Could you try rephrasing your request?'
-      };
-    }
+  /**
+   * Parse game state LLM response with detailed error information (for debugging)
+   */
+  parseResponseDetailed(responseText: string, useValidation: boolean = false) {
+    return GameStateResponseParser.safeParse(responseText, useValidation);
   }
 
   /**

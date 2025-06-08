@@ -1,0 +1,174 @@
+title: "Coffee and Confessions"
+author: "Iffy Engine Team"
+version: "2.0"
+
+metadata:
+  setting:
+    time: "Friday evening, 6:30 PM"
+    place: "Small corner café, almost closing time"
+  tone:
+    overall: "Intimate, contemplative, with underlying romantic tension"
+    narrative_voice: "Gentle and observant, noticing small details and emotions"
+  themes:
+    - "Unspoken feelings and missed connections"
+    - "The courage to be vulnerable"
+    - "Friendship at a crossroads"
+    - "The weight of secrets"
+
+characters:
+  - id: "player"
+    name: "You"
+    traits: ["caring", "observant", "patient", "hopeful"]
+    voice: "Warm and genuine, someone who listens carefully"
+    description: "A close friend who has noticed something has been weighing on Jamie lately"
+
+  - id: "jamie"
+    name: "Jamie"
+    traits: ["conflicted", "guarded", "thoughtful", "secretly vulnerable"]
+    voice: "Careful with words, but warmth shows through despite trying to keep distance"
+    description: "Your friend who has been acting differently lately - more distant, distracted, as if carrying a secret"
+
+locations:
+  - id: "corner_cafe"
+    name: "The Grind Corner Café"
+    connections: []
+    description: |
+      A cozy café with mismatched furniture and the lingering aroma of coffee beans. 
+      Most customers have left for the evening. Soft jazz plays from hidden speakers, 
+      and warm light filters through rain-spotted windows. The barista is quietly 
+      cleaning up behind the counter.
+    objects:
+      - name: "small round table"
+        description: "A wobbly table by the window with two steaming coffee cups"
+      - name: "rain-spotted window"
+        description: "Shows the quiet street outside, with streetlights beginning to glow"
+      - name: "coffee cups"
+        description: "Two ceramic mugs - one barely touched, the other empty"
+
+items:
+  - id: "unfinished_coffee"
+    name: "Jamie's Coffee"
+    description: "A nearly full latte that's gone cold while Jamie stares out the window"
+    location: "corner_cafe"
+    aliases: ["coffee", "latte", "jamie's cup"]
+
+  - id: "phone"
+    name: "Jamie's Phone"
+    description: "Face down on the table, but you noticed it buzzing with unread messages earlier"
+    location: "corner_cafe"
+    aliases: ["phone", "cell phone", "mobile"]
+
+# Format v2: Success conditions define story outcomes
+success_conditions:
+  - id: "full_confession"
+    description: "Jamie opens up completely about their feelings and what's been troubling them"
+    requires: ["jamie vulnerable", "admitted feelings", "secret revealed", "trust established"]
+    ending: |
+      Jamie reaches across the small table and gently takes your hand. "Thank you," they say quietly, 
+      "for not giving up on me. For seeing through all my walls."
+      
+      The café around you seems to fade away as you sit together in this moment of honesty. 
+      Sometimes the most important conversations happen in the most ordinary places.
+      
+      Outside, the rain has stopped, and the evening feels full of new possibilities.
+
+  - id: "partial_opening"
+    description: "Jamie admits something is wrong but doesn't reveal the full truth"
+    requires: ["jamie conflicted", "acknowledged distance", "partial trust"]
+    ending: |
+      Jamie sighs and looks down at their cold coffee. "I know I've been weird lately. 
+      I'm sorry you have to deal with that."
+      
+      It's not everything, but it's a start. You sense there's more Jamie wants to say, 
+      but some walls take time to come down. At least they've acknowledged something is wrong.
+      
+      "Want to walk for a bit?" you suggest. Sometimes conversations continue better in motion.
+
+  - id: "walls_stay_up"
+    description: "Jamie remains guarded and deflects attempts to connect"
+    requires: ["jamie defensive", "topic avoided", "distance maintained"]
+    ending: |
+      Jamie glances at their watch and stands up abruptly. "I should get going. 
+      Thanks for the coffee."
+      
+      You watch them gather their things, that familiar distance still firmly in place. 
+      Whatever Jamie is carrying, they're not ready to share it yet.
+      
+      As they head to the door, you wonder if you pushed too hard, or not hard enough.
+
+# No dialogue flows - pure LLM conversation
+flows:
+  - id: "opening_scene"
+    name: "The Setup"
+    type: "narrative"
+    content: |
+      You've been watching Jamie fidget with their coffee cup for the past ten minutes. 
+      They invited you here "just to catch up," but something feels different. 
+      
+      Jamie keeps glancing at their phone, then out the window, then back to you with 
+      a smile that doesn't quite reach their eyes. The easy conversation you used to 
+      have feels strained, like there's something important hanging in the air between you.
+      
+      The café is nearly empty now, just you two and the soft clink of dishes being 
+      washed in the back. It feels like the perfect time for an honest conversation.
+
+start:
+  text: |
+    The corner café feels different tonight. Maybe it's the way Jamie keeps avoiding 
+    eye contact, or how they've barely touched their latte. You've been friends for 
+    years, but lately something has changed.
+    
+    They stir their coffee absently and glance out at the drizzling rain. "So..." 
+    they start, then trail off, as if the words they really want to say are too 
+    heavy to lift.
+    
+    You sense this might be your chance to finally address the elephant in the room.
+  location: "corner_cafe"
+  first_flow: "opening_scene"
+
+# Format v2: LLM story guidelines for intelligent behavior
+llm_story_guidelines: |
+  STORY TONE: This is an intimate, realistic conversation between close friends where one is hiding something important. Focus on subtle emotional cues, meaningful silences, and the gradual building of trust.
+  
+  CHARACTER DYNAMICS:
+  - Player: Caring friend who has noticed Jamie's distance. Wants to help but must be patient and gentle.
+  - Jamie: Struggling with unspoken feelings (romantic feelings for the player). Torn between wanting to confess and fear of ruining the friendship.
+  
+  JAMIE'S EMOTIONAL ARC:
+  Jamie starts guarded and conflicted, slowly opening up based on the player's approach:
+  - Defensive → Conflicted → Vulnerable → Open
+  - Patient, empathetic responses help Jamie feel safe to share
+  - Pushy or judgmental responses make Jamie shut down
+  
+  THE SECRET:
+  Jamie has developed romantic feelings for the player but is terrified of ruining their friendship. They've been pulling away to protect themselves and the relationship, but it's making everything worse. This is why they've been distant lately.
+  
+  CONVERSATION GOALS:
+  - Create realistic dialogue that feels natural, not scripted
+  - Show Jamie's internal struggle through body language and hesitation
+  - Let the player discover the truth through careful conversation
+  - Build emotional intimacy gradually through the scene
+  
+  KNOWLEDGE PROGRESSION:
+  Set these knowledge flags as the conversation develops:
+  - "acknowledged distance" → when Jamie admits they've been acting differently
+  - "jamie conflicted" → when internal struggle becomes apparent
+  - "partial trust" → when Jamie starts to open up a little
+  - "topic avoided" → if Jamie deflects or changes subject
+  - "jamie defensive" → if Jamie shuts down or gets defensive
+  - "jamie vulnerable" → when Jamie's emotional walls start coming down
+  - "trust established" → when Jamie feels safe with the player
+  - "admitted feelings" → when Jamie confesses their romantic feelings
+  - "secret revealed" → when the full truth about their behavior comes out
+  - "distance maintained" → if Jamie keeps emotional walls up
+  
+  ENVIRONMENTAL DETAILS:
+  Use the café setting to enhance intimacy - the quiet atmosphere, the rain outside, the dim lighting, the nearly empty space. These details can reflect the emotional tone of the conversation.
+  
+  REALISTIC DIALOGUE:
+  - Include natural hesitations, incomplete sentences, and meaningful silences
+  - Show emotions through actions: stirring coffee, looking away, fidgeting
+  - Let Jamie's feelings emerge gradually, not all at once
+  - Make the player work for trust through genuine care and patience
+  
+  IMPORTANT: Do not write ending text when success conditions are met. Let the engine handle the conclusion while you focus on authentic character interactions and emotional development.

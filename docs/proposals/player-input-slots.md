@@ -1,5 +1,9 @@
 # Player Input Slots: Structured Story Customization
 
+**Status:** ❌ Not Implemented  
+**Priority:** Low  
+**Current State:** No player customization system; stories are entirely pre-authored  
+
 ## Problem Statement
 
 Interactive fiction authors currently have two extremes for player input:

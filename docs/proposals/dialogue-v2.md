@@ -1,5 +1,9 @@
 # Dialogue System v2: Emergent Conversations with Authored Beats
 
+**Status:** ❌ Not Implemented  
+**Priority:** Low  
+**Current State:** Using original dialogue flows, which work but are over-engineered compared to proposal vision  
+
 ## Problem Statement
 
 Current dialogue flows are **over-engineered** and create a disconnect between authorial intent and the engine's natural conversational strengths:

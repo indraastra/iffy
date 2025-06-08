@@ -196,7 +196,8 @@ describe('GamePromptBuilder', () => {
     it('should provide default values for optional fields', () => {
       const minimalResponse = JSON.stringify({
         action: 'look',
-        response: 'You look around.'
+        response: 'You look around.',
+        stateChanges: {} // Include minimal stateChanges
       })
 
       const parsed = promptBuilder.parseResponse(minimalResponse)

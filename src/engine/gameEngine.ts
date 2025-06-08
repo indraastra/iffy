@@ -1,6 +1,6 @@
 import { Story, GameState, PlayerAction, GameResponse, Flow, FlowTransition, InteractionPair, Result } from '@/types/story';
 import { AnthropicService } from '@/services/anthropicService';
-import { GamePromptBuilder, LLMResponse } from './gameLLMAdapter';
+import { GamePromptBuilder, GameStateResponse } from './gameLLMAdapter';
 
 export class GameEngine {
   private story: Story | null = null;
@@ -53,7 +53,32 @@ export class GameEngine {
   getInitialText(): string {
     if (!this.story) return 'No story loaded. Please load a story file to begin.';
     
-    return this.story.start.text;
+    return this.normalizeYamlText(this.story.start.text);
+  }
+
+  /**
+   * Get normalized content for a flow by its ID
+   */
+  getFlowContent(flowId: string): string | null {
+    if (!this.story) return null;
+    
+    const flow = this.story.flows.find(f => f.id === flowId);
+    if (!flow || !flow.content) return null;
+    
+    return this.normalizeYamlText(flow.content);
+  }
+
+  /**
+   * Normalize YAML text by removing manual line breaks while preserving paragraph breaks
+   */
+  private normalizeYamlText(text: string): string {
+    return text
+      // Split into paragraphs (double newlines or more)
+      .split(/\n\s*\n/)
+      // For each paragraph, remove single line breaks but keep the text
+      .map(paragraph => paragraph.replace(/\n/g, ' ').trim())
+      // Join paragraphs back with double newlines
+      .join('\n\n');
   }
 
   getCurrentFlow(): Flow | null {
@@ -98,7 +123,7 @@ export class GameEngine {
   /**
    * Process a command with the LLM using game-specific logic
    */
-  private async processCommandWithLLM(input: string, currentLocation: any): Promise<LLMResponse> {
+  private async processCommandWithLLM(input: string, currentLocation: any): Promise<GameStateResponse> {
     try {
       return await this.anthropicService.processCommand(
         input,
@@ -113,9 +138,16 @@ export class GameEngine {
       
       // Return a structured error response
       return {
-        action: 'error',
+        action: 'other',
         reasoning: 'API call failed',
-        stateChanges: {},
+        stateChanges: {
+          newLocation: null,
+          addToInventory: [],
+          removeFromInventory: [],
+          setFlags: [],
+          unsetFlags: [],
+          addKnowledge: []
+        },
         response: error instanceof Error ? error.message : 'Unknown error occurred',
         error: error instanceof Error ? error.message : 'Unknown error'
       };
@@ -215,7 +247,7 @@ export class GameEngine {
     }
   }
 
-  private applyStateChanges(llmResponse: LLMResponse): void {
+  private applyStateChanges(llmResponse: GameStateResponse): void {
     const changes = llmResponse.stateChanges;
     console.log('🔄 Applying state changes:', changes);
 

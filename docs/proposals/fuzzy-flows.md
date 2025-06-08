@@ -1,5 +1,9 @@
 # Fuzzy Flow Definitions: LLM-Driven Story Connections
 
+**Status:** ❌ Not Implemented  
+**Priority:** Medium  
+**Current State:** Authors must still explicitly define all interactions; high authoring burden remains  
+
 ## Problem Statement
 
 Currently, authors must explicitly define every possible interaction and transition in their stories. This creates several issues:

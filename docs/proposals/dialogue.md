@@ -1,5 +1,9 @@
 # Dialogue Integration in LLM-IF Stories
 
+**Status:** ❌ Superseded by Dialogue v2 Proposal  
+**Priority:** N/A  
+**Note:** Original dialogue proposal replaced by v2 approach emphasizing emergent conversation beats  
+
 ## Current Problem
 The current format has separate `beats` and `dialogue` sections, but it's unclear:
 - When dialogues trigger during gameplay

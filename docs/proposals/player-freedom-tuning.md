@@ -1,8 +1,8 @@
 # Player Freedom Tuning
 
-**Status:** 💡 New Proposal  
+**Status:** ❌ Not Implemented  
 **Priority:** Medium  
-**Motivation:** Allow authors to control how much creative improvisation and freedom players have during gameplay
+**Current State:** No freedom level controls; updated proposal with zero-burden engine implementation approach
 
 ## Problem Statement
 

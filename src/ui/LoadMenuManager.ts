@@ -279,10 +279,21 @@ export class LoadMenuManager {
     this.messageDisplay.addMessage(this.gameEngine.getInitialText(), 'story');
     
     // Show first flow content if it exists, otherwise issue automatic "look"
-    const firstFlow = story.flows.find((flow: any) => flow.id === story.start.first_flow);
-    if (firstFlow && firstFlow.content) {
-      // Show the first flow's content
-      this.messageDisplay.addMessage(firstFlow.content, 'story');
+    const firstFlowId = story.start.first_flow;
+    if (firstFlowId) {
+      const normalizedContent = this.gameEngine.getFlowContent(firstFlowId);
+      if (normalizedContent) {
+        // Show the first flow's content
+        this.messageDisplay.addMessage(normalizedContent, 'story');
+      } else {
+        // Flow exists but has no content, issue automatic "look"
+        const response = await this.gameEngine.processAction({ 
+          type: 'command', 
+          input: 'look', 
+          timestamp: new Date() 
+        });
+        this.messageDisplay.addMessage(response.text, 'story');
+      }
     } else {
       // Issue automatic "look" command for flows without content
       const response = await this.gameEngine.processAction({ 

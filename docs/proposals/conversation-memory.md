@@ -1,5 +1,9 @@
 # Conversation Memory and Context Preservation
 
+**Status:** 🟡 Phase 1 Complete, Phases 2-4 Pending  
+**Priority:** Medium  
+**Implementation:** Basic memory tracking in `src/engine/gameEngine.ts:1217-1270`, missing significant memory extraction  
+
 ## Problem Statement
 
 The current engine treats each player interaction independently, only providing the LLM with static game state (location, inventory, flags, knowledge). This creates several critical issues:
