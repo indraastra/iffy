@@ -13,6 +13,7 @@ class IffyApp {
   private loadMenuManager: LoadMenuManager;
   private settingsManager: SettingsManager;
   private commandProcessor: CommandProcessor;
+  private gameManager: GameManager;
   private commandInput: HTMLTextAreaElement;
   
   constructor() {
@@ -27,8 +28,8 @@ class IffyApp {
     this.messageDisplay = new MessageDisplay(storyOutput);
     this.messageDisplay.setItemLookup((itemId: string) => this.gameEngine.getItem(itemId));
     this.commandProcessor = new CommandProcessor(this.gameEngine, this.messageDisplay, this.commandInput);
-    new GameManager(this.gameEngine, this.messageDisplay); // GameManager sets up its own event listeners
-    this.loadMenuManager = new LoadMenuManager(this.gameEngine, this.messageDisplay, this.commandInput);
+    this.gameManager = new GameManager(this.gameEngine, this.messageDisplay);
+    this.loadMenuManager = new LoadMenuManager(this.gameEngine, this.messageDisplay, this.commandInput, this.gameManager);
     this.settingsManager = new SettingsManager(this.gameEngine, this.messageDisplay);
     
     // Set up UI reset callback so GameEngine can reset UI state when needed
@@ -59,6 +60,9 @@ class IffyApp {
     this.createDebugToggle();
     this.setupDebugLogging();
     this.setupAutoResizeTextarea();
+    
+    // Initialize save manager
+    this.gameManager.initialize();
   }
 
   /**

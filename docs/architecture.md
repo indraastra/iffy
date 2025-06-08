@@ -103,9 +103,25 @@ classDiagram
     }
     
     class GameManager {
-        -gameEngine: GameEngine
+        -saveManager: SaveManager
         +saveGame()
-        +generateSaveFilename()
+        +initialize()
+        +getSaveManager(): SaveManager
+    }
+    
+    class SaveManager {
+        -gameEngine: GameEngine
+        -messageDisplay: MessageDisplay
+        -autoSaveInterval: number
+        -options: SaveOptions
+        +initialize()
+        +startAutoSave()
+        +stopAutoSave()
+        +saveGame()
+        +loadGame(storyTitle: string): boolean
+        +deleteSave(storyTitle: string)
+        +getSavedGames(): SaveMetadata[]
+        +checkForStoryRecovery()
     }
     
     IffyApp --> MessageDisplay
@@ -115,9 +131,11 @@ classDiagram
     IffyApp --> GameManager
     
     LoadMenuManager --> MessageDisplay
+    LoadMenuManager --> GameManager
     SettingsManager --> MessageDisplay
     CommandProcessor --> MessageDisplay
-    GameManager --> MessageDisplay
+    GameManager --> SaveManager
+    SaveManager --> MessageDisplay
 ```
 
 ### Engine Layer
@@ -133,7 +151,9 @@ classDiagram
         +loadStory(story: Story)
         +processAction(action: PlayerAction)
         +saveGame(): string
-        +loadGame(saveData: string): boolean
+        +loadGame(saveData: string): Result
+        +trackInteraction(input: string, response: string)
+        +getCurrentStoryTitle(): string
     }
     
     class StoryParser {
@@ -163,6 +183,94 @@ classDiagram
     GameEngine --> AnthropicService
     GameEngine --> Story
     StoryParser --> Story
+```
+
+## Save System Architecture
+
+### Enhanced Save System (Phase 1)
+
+The save system has been enhanced to provide auto-save functionality, complete interaction history preservation, and crash recovery:
+
+```mermaid
+classDiagram
+    class SaveManager {
+        -gameEngine: GameEngine
+        -messageDisplay: MessageDisplay
+        -autoSaveInterval: number
+        -options: SaveOptions
+        -sessionStartTime: Date
+        +initialize()
+        +startAutoSave()
+        +stopAutoSave()
+        +performAutoSave()
+        +saveGame()
+        +loadGame(storyTitle: string): boolean
+        +deleteSave(storyTitle: string)
+        +getSavedGames(): SaveMetadata[]
+        +checkForStoryRecovery()
+        +updateOptions(options: SaveOptions)
+    }
+    
+    class SaveOptions {
+        +autoSaveEnabled: boolean
+        +autoSaveIntervalMinutes: number
+    }
+    
+    class SaveMetadata {
+        +storyTitle: string
+        +timestamp: Date
+        +location: string
+        +playtime: number
+    }
+    
+    SaveManager --> SaveOptions
+    SaveManager --> SaveMetadata
+    SaveManager --> GameEngine
+    SaveManager --> MessageDisplay
+```
+
+### Save System Features
+
+1. **Auto-Save**: Automatic saves every 2 minutes during active gameplay
+2. **LocalStorage Persistence**: Saves persist across browser sessions
+3. **Complete History**: Removed 5-interaction limit for full session preservation
+4. **Recovery Detection**: Prompts for recent saves (<30 minutes old) on story load
+5. **Save Management**: One save per story with delete functionality
+6. **Dual Format**: Both localStorage and JSON download support
+
+### Save Data Flow
+
+```mermaid
+sequenceDiagram
+    participant Player
+    participant SM as SaveManager
+    participant GE as GameEngine
+    participant LS as LocalStorage
+    participant MD as MessageDisplay
+    
+    Note over SM: Auto-save Timer (2 minutes)
+    SM->>GE: getCurrentStoryTitle()
+    GE-->>SM: "Story Title"
+    SM->>GE: saveGame()
+    GE-->>SM: JSON save data
+    SM->>LS: Store save + metadata
+    
+    Note over Player: Manual Save
+    Player->>SM: saveGame()
+    SM->>GE: saveGame()
+    GE-->>SM: JSON save data
+    SM->>LS: Store save + metadata
+    SM->>SM: Download JSON file
+    SM->>MD: "Game saved" message
+    
+    Note over Player: Recovery Check
+    SM->>LS: Check for recent save
+    LS-->>SM: Save metadata
+    SM->>Player: Confirm recovery dialog
+    Player-->>SM: Accept recovery
+    SM->>GE: loadGame(saveData)
+    GE-->>SM: Load result
+    SM->>MD: "Game restored" message
 ```
 
 ## Data Flow
@@ -345,10 +453,12 @@ mindmap
       GameEngine
       AnthropicService
       RichTextParser
+      SaveManager
     Integration Tests
       End-to-End Success
       Story Validation
       Command Processing
+      Save/Load Flow
     Build Tests
       Example Validation
       Bundle Generation
@@ -357,6 +467,7 @@ mindmap
       Component Isolation
       Event Handling
       State Management
+      Auto-save Functionality
 ```
 
 ## Deployment
