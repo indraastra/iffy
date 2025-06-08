@@ -62,10 +62,14 @@ graph TD
 classDiagram
     class MessageDisplay {
         -storyOutput: HTMLElement
+        -getItem?: Function
         +addMessage(text: string, type: MessageType)
         +clearOutput()
         +addCustomElement(element: HTMLElement)
         +removeLastMessageIfMatches(text: string)
+        +restoreConversationHistory(interactions: InteractionPair[])
+        +setItemLookup(getItem: Function)
+        -createAndAppendMessage(text: string, type: MessageType)
         -scrollToBottom()
     }
     
@@ -79,14 +83,58 @@ classDiagram
         title
     }
     
+    class InteractionPair {
+        +playerInput: string
+        +llmResponse: string
+        +timestamp: Date
+        +importance: string
+    }
+    
     MessageDisplay --> MessageType
+    MessageDisplay --> InteractionPair
 ```
 
 **Key Features**:
-- Rich text rendering for story content
+- Rich text rendering for story content with clickable elements
 - Type-specific styling (errors, system messages, etc.)
 - Automatic scrolling management
 - Custom element insertion (API key prompts, etc.)
+- **Conversation history restoration** from saved games
+- Item lookup integration for rich text formatting
+
+#### Conversation History Restoration
+
+When loading a saved game, MessageDisplay automatically restores the previous conversation:
+
+```mermaid
+sequenceDiagram
+    participant GE as GameEngine
+    participant MM as MemoryManager  
+    participant MD as MessageDisplay
+    participant UI as User Interface
+    
+    GE->>MM: getRecentInteractions()
+    MM-->>GE: InteractionPair[]
+    GE->>MD: restoreConversationHistory(interactions)
+    
+    MD->>UI: Clear current display
+    MD->>UI: Show "📖 Restoring conversation..."
+    
+    loop For each interaction
+        MD->>UI: Display "> [player input]"
+        MD->>UI: Display "[LLM response]"
+    end
+    
+    MD->>UI: Show "✅ Save loaded. Continue from here."
+    MD->>UI: Scroll to bottom
+```
+
+**Restoration Process**:
+1. **Clear Display**: Removes current messages (but preserves history tracking)
+2. **Show Status**: Displays restoration message to user
+3. **Replay Interactions**: Shows player inputs (prefixed with ">") and LLM responses
+4. **Rich Text Rendering**: Applies full rich text formatting to restored story content
+5. **Completion Message**: Indicates successful load and continuation point
 
 ### LoadMenuManager
 **Purpose**: Handles all story loading functionality
@@ -163,25 +211,54 @@ classDiagram
 - Error handling and recovery
 
 ### GameManager
-**Purpose**: Manages game save/load operations
+**Purpose**: Manages game save/load operations with auto-save and recovery
 
 ```mermaid
 classDiagram
     class GameManager {
-        -gameEngine: GameEngine
-        -messageDisplay: MessageDisplay
+        -saveManager: SaveManager
         +saveGame()
-        -generateSaveFilename(): string
-        -sanitizeFilename(filename: string): string
+        +initialize()
+        +getSaveManager(): SaveManager
         -setupEventListeners()
     }
+    
+    class SaveManager {
+        -gameEngine: GameEngine
+        -messageDisplay: MessageDisplay
+        -autoSaveInterval: number
+        -options: SaveOptions
+        +saveGame(): void
+        +loadGame(storyTitle: string): boolean
+        +getSavedGames(): SaveMetadata[]
+        +deleteSave(storyTitle: string): void
+        +checkForStoryRecovery(): void
+        +startAutoSave(): void
+        +stopAutoSave(): void
+        -performAutoSave(): void
+        -offerGameRecovery(): void
+    }
+    
+    class SaveMetadata {
+        +storyTitle: string
+        +timestamp: Date
+        +location: string
+        +playtime: number
+    }
+    
+    GameManager --> SaveManager
+    SaveManager --> SaveMetadata
 ```
 
 **Key Features**:
-- Automatic filename generation
-- Browser download integration
-- Filename sanitization
-- Timestamp-based naming
+- **Auto-save system** with configurable intervals (default: 2 minutes)
+- **Recovery system** that offers to restore recent saves when loading stories
+- **LocalStorage persistence** for quick save/load access
+- **Download backup** creation for manual saves
+- **Save metadata tracking** including playtime and location
+- **Conversation history restoration** integration
+- Automatic filename generation and sanitization
+- Error handling with graceful degradation
 
 ## Event Flow Patterns
 
