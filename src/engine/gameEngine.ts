@@ -1369,6 +1369,36 @@ Remember: Items can only be obtained in their designated locations according to 
     return this.anthropicService;
   }
 
+  /**
+   * Track story start text in conversation memory for LLM context
+   */
+  trackStartText(startText: string): void {
+    if (!this.gameState.conversationMemory) {
+      this.gameState.conversationMemory = {
+        immediateContext: { recentInteractions: [] },
+        significantMemories: []
+      };
+    }
+
+    // Add start text as a special interaction for LLM context
+    const startInteraction: InteractionPair = {
+      playerInput: '[STORY START]',
+      llmResponse: startText,
+      timestamp: new Date(),
+      importance: 'high'
+    };
+
+    // Add to the beginning of recent interactions so it's always available as context
+    this.gameState.conversationMemory.immediateContext.recentInteractions.unshift(startInteraction);
+
+    console.log(`📖 Tracked story start text for LLM context: "${startText.substring(0, 50)}..."`);
+    
+    // Log to debug pane if available
+    if (this.debugPane) {
+      this.debugPane.logMemory(this.gameState.conversationMemory, 'high');
+    }
+  }
+
   saveGame(): string {
     return JSON.stringify({
       gameState: {

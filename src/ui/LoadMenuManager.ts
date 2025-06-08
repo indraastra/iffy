@@ -276,32 +276,23 @@ export class LoadMenuManager {
     // Clear output and show story start
     this.messageDisplay.clearOutput();
     this.messageDisplay.addMessage(`${story.title} by ${story.author}`, 'title');
-    this.messageDisplay.addMessage(this.gameEngine.getInitialText(), 'story');
     
-    // Show first flow content if it exists, otherwise issue automatic "look"
+    const initialText = this.gameEngine.getInitialText();
+    this.messageDisplay.addMessage(initialText, 'story');
+    
+    // Add the start text to conversation history for LLM context
+    this.gameEngine.trackStartText(initialText);
+    
+    // Show first flow content if it exists
     const firstFlowId = story.start.first_flow;
     if (firstFlowId) {
       const normalizedContent = this.gameEngine.getFlowContent(firstFlowId);
       if (normalizedContent) {
         // Show the first flow's content
         this.messageDisplay.addMessage(normalizedContent, 'story');
-      } else {
-        // Flow exists but has no content, issue automatic "look"
-        const response = await this.gameEngine.processAction({ 
-          type: 'command', 
-          input: 'look', 
-          timestamp: new Date() 
-        });
-        this.messageDisplay.addMessage(response.text, 'story');
+        // Also add flow content to conversation history
+        this.gameEngine.trackStartText(normalizedContent);
       }
-    } else {
-      // Issue automatic "look" command for flows without content
-      const response = await this.gameEngine.processAction({ 
-        type: 'command', 
-        input: 'look', 
-        timestamp: new Date() 
-      });
-      this.messageDisplay.addMessage(response.text, 'story');
     }
     
     this.commandInput.focus();
@@ -337,17 +328,12 @@ export class LoadMenuManager {
         reader.onload = async (e) => {
           try {
             const saveData = e.target?.result as string;
-            if (this.gameEngine.loadGame(saveData)) {
+            const result = this.gameEngine.loadGame(saveData);
+            if (result.success) {
               this.messageDisplay.addMessage('Game loaded successfully!', 'system');
-              // Refresh display
-              const response = await this.gameEngine.processAction({ 
-                type: 'command', 
-                input: 'look', 
-                timestamp: new Date() 
-              });
-              this.messageDisplay.addMessage(response.text, 'story');
+              this.messageDisplay.addMessage('You can continue from where you left off.', 'system');
             } else {
-              this.messageDisplay.addMessage('Failed to load save file. Make sure you have the correct story loaded.', 'error');
+              this.messageDisplay.addMessage(result.error || 'Failed to load save file. Make sure you have the correct story loaded.', 'error');
             }
           } catch (error) {
             this.messageDisplay.addMessage('Invalid save file format.', 'error');

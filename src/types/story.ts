@@ -139,7 +139,7 @@ export interface Story {
   endings?: Ending[]; // Optional - endings can be defined as flows instead
   // Format v2: LLM-driven story intelligence
   success_conditions?: SuccessCondition[]; // Story goals for LLM to track
-  llm_story_guidelines?: string; // Natural language guidance for LLM
+  llm_guidelines?: string; // Natural language guidance for LLM
 }
 
 // Conversation memory types
