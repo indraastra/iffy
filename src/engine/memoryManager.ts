@@ -678,6 +678,13 @@ Aim for around ${targetCount} total memories after compaction. Prioritize narrat
   }
 
   /**
+   * Get recent interactions for conversation history restoration
+   */
+  getRecentInteractions(): InteractionPair[] {
+    return [...this.recentInteractions];
+  }
+
+  /**
    * Export memory state for persistence
    */
   exportState(): any {

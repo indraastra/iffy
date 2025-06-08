@@ -134,6 +134,27 @@ export class CommandProcessor {
   }
 
   /**
+   * Restore UI state when loading a saved game to match game state
+   */
+  restoreUIState(gameState: any, conversationHistory?: any[]): void {
+    this.commandInput.disabled = false;
+    
+    // Update placeholder and completion state based on game state
+    if (gameState.gameEnded) {
+      this.commandInput.placeholder = "Story complete! Ask questions, reflect, or explore...";
+      this.hasShownCompletionMessage = true;
+    } else {
+      this.commandInput.placeholder = "Enter your command...";
+      this.hasShownCompletionMessage = false;
+    }
+
+    // Restore conversation history if provided
+    if (conversationHistory && conversationHistory.length > 0) {
+      this.messageDisplay.restoreConversationHistory(conversationHistory);
+    }
+  }
+
+  /**
    * Show loading state and disable input
    */
   showLoading(message: string = 'Processing...'): void {

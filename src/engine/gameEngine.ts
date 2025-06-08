@@ -11,6 +11,7 @@ export class GameEngine {
   private memoryManager: MemoryManager;
   private debugPane: any = null;
   private uiResetCallback?: () => void;
+  private uiRestoreCallback?: (gameState: any, conversationHistory?: any[]) => void;
   private hasShownEndingContent: boolean = false;
   private endingCallback?: (endingText: string) => void;
   private loadingStateCallback?: (message: string) => void;
@@ -26,6 +27,13 @@ export class GameEngine {
    */
   public setUIResetCallback(callback: () => void): void {
     this.uiResetCallback = callback;
+  }
+
+  /**
+   * Set callback to restore UI state when game is loaded from save
+   */
+  public setUIRestoreCallback(callback: (gameState: any, conversationHistory?: any[]) => void): void {
+    this.uiRestoreCallback = callback;
   }
 
   /**
@@ -1531,11 +1539,8 @@ Remember: Items can only be obtained in their designated locations according to 
         };
       }
 
-      // Cancel any outstanding requests and reset UI when loading save
+      // Cancel any outstanding requests
       this.anthropicService.cancelActiveRequests();
-      if (this.uiResetCallback) {
-        this.uiResetCallback();
-      }
 
       this.gameState = {
         ...data.gameState,
@@ -1547,6 +1552,12 @@ Remember: Items can only be obtained in their designated locations according to 
         this.memoryManager.importState(data.memoryState);
       } else {
         this.memoryManager.reset();
+      }
+
+      // Restore UI state to match loaded game state
+      if (this.uiRestoreCallback) {
+        const conversationHistory = this.memoryManager.getRecentInteractions();
+        this.uiRestoreCallback(this.gameState, conversationHistory);
       }
 
       return {
