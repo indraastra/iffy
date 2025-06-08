@@ -12,8 +12,7 @@ export const GameStateChangesSchema = z.object({
   addToInventory: z.array(z.string()).optional().default([]),
   removeFromInventory: z.array(z.string()).optional().default([]),
   setFlags: z.array(z.string()).optional().default([]),
-  unsetFlags: z.array(z.string()).optional().default([]),
-  addKnowledge: z.array(z.string()).optional().default([])
+  unsetFlags: z.array(z.string()).optional().default([])
 });
 
 // Schema for LLM responses to game commands (main game state interaction format)
@@ -64,8 +63,7 @@ export const ValidatedGameStateChangesSchema = GameStateChangesSchema.extend({
   addToInventory: z.array(ItemIdSchema).optional().default([]),
   removeFromInventory: z.array(ItemIdSchema).optional().default([]),
   setFlags: z.array(FlagNameSchema).optional().default([]),
-  unsetFlags: z.array(FlagNameSchema).optional().default([]),
-  addKnowledge: z.array(z.string().min(1)).optional().default([])
+  unsetFlags: z.array(FlagNameSchema).optional().default([])
 });
 
 export const ValidatedGameStateResponseSchema = GameStateResponseSchema.extend({

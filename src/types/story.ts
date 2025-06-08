@@ -55,11 +55,6 @@ export interface Item {
   created_from?: string; // What item this was created from (e.g., "bread")
 }
 
-export interface Knowledge {
-  id: string;
-  description: string;
-  requires: string[];
-}
 
 export interface FlowTransition {
   type: 'narrative' | 'dialogue';
@@ -103,12 +98,6 @@ export interface Flow {
   ends_game?: boolean; // Marks this flow as a game ending
 }
 
-export interface StartSection {
-  content: string;
-  location: string;
-  first_flow?: string;  // Made optional since we might not always need flows
-  sets?: string[];
-}
 
 export interface Ending {
   id: string;
@@ -122,7 +111,7 @@ export interface SuccessCondition {
   id: string;
   description: string; // Natural language description of the goal
   requires: string[]; // Items/flags/knowledge needed (including action requirements)
-  ending: string; // Rich text content for this ending
+  ending?: string; // Rich text content for this ending (optional - will be LLM-generated if missing)
 }
 
 export interface Story {
@@ -134,9 +123,7 @@ export interface Story {
   characters: Character[];
   locations: Location[];
   items: Item[];
-  knowledge: Knowledge[];
   flows: Flow[];
-  start: StartSection;
   endings?: Ending[]; // Optional - endings can be defined as flows instead
   // Format v2: LLM-driven story intelligence
   success_conditions?: SuccessCondition[]; // Story goals for LLM to track
@@ -194,7 +181,6 @@ export interface GameState {
   currentLocation: string;
   inventory: string[];
   flags: Set<string>;
-  knowledge: Set<string>;
   currentFlow?: string;
   gameStarted: boolean;
   gameEnded: boolean;

@@ -57,7 +57,7 @@ success_conditions:
   - id: "good_ending"
     description: "Player successfully makes and eats a sandwich with toasted bread and cheese"
     requires: ["toasted bread", "cheese"]
-    trigger_action: "eat sandwich"
+    # ending field is optional - if omitted, LLM generates contextual ending
     ending: |
       [!discovery] Perfect! You've made the ideal sandwich with golden toast and cheese.
       Your hunger is satisfied!
@@ -65,11 +65,13 @@ success_conditions:
   - id: "bad_ending"
     description: "Player eats sandwich with the mystery condiment (fish sauce)"
     requires: ["bread", "mystery condiment"]
-    trigger_action: "eat sandwich"
     priority: 10  # Higher priority than good ending
-    ending: |
-      [!danger] Oh no! The mystery condiment was ancient fish sauce! 
-      You rush to the sink, gagging!
+    # No ending field - LLM will generate appropriate ending based on description
+    
+  - id: "minimal_ending"
+    description: "Player achieves basic sandwich completion"
+    requires: ["bread", "cheese"]
+    # Completely LLM-generated ending based on story context and description
 ```
 
 ### 2. Smart Item Relationships (Instead of Manual Transformations)
@@ -207,14 +209,30 @@ llm_story_guidelines: |
 
 **Result**: 25 lines instead of 100+, and the LLM handles all the complexity!
 
+## LLM-Generated Endings
+
+When a success condition is reached but has no predefined `ending` field, the game engine automatically generates an ending using the LLM. This provides:
+
+1. **Dynamic Conclusions**: Endings that reflect the specific player journey and story context
+2. **Reduced Authoring Effort**: Authors only need to define ending conditions, not ending text
+3. **Contextual Relevance**: Generated endings incorporate the player's final action and current story state
+4. **Consistent Tone**: Endings match the story's established tone and style
+
+The LLM generation process:
+- Receives the success condition description and requirements
+- Gets full story context and tone guidance
+- Considers the player's final action that triggered the ending
+- Generates appropriate conclusion text using the story's narrative voice
+
 ## Benefits of LLM-Driven Approach
 
 1. **Reduced Authoring Burden**: Authors describe goals, not implementation details
 2. **Natural Language for Authors**: Write what you want, not how to achieve it
 3. **Flexible Player Actions**: LLM handles variations and synonyms naturally
 4. **Intelligent Inference**: System understands logical relationships (bread → toasted bread)
-5. **Simpler Debugging**: Fewer moving parts, clearer intent
-6. **Future-Proof**: New LLM capabilities automatically benefit stories
+5. **Dynamic Content**: Endings generated contextually when not pre-written
+6. **Simpler Debugging**: Fewer moving parts, clearer intent
+7. **Future-Proof**: New LLM capabilities automatically benefit stories
 
 ## Key Insights
 

@@ -58,13 +58,6 @@ describe('GameEngine', () => {
           discovery_objects: ["box", "container"]
         }
       ],
-      knowledge: [
-        {
-          id: "test_knowledge",
-          description: "Test knowledge",
-          requires: []
-        }
-      ],
       flows: [
         {
           id: "start_flow",
@@ -97,7 +90,6 @@ describe('GameEngine', () => {
       
       expect(gameState.inventory).toEqual([])
       expect(gameState.flags).toBeInstanceOf(Set)
-      expect(gameState.knowledge).toBeInstanceOf(Set)
       expect(gameState.gameEnded).toBe(false)
     })
   })
@@ -215,15 +207,15 @@ describe('GameEngine', () => {
       expect(gameState.flags.has('test_flag')).toBe(false)
     })
 
-    it('should manage knowledge correctly', () => {
+    it('should manage flags correctly (consolidated system)', () => {
       const gameState = gameEngine.getGameState()
       
-      // Add knowledge
-      gameState.knowledge.add('test_knowledge')
-      expect(gameState.knowledge.has('test_knowledge')).toBe(true)
+      // Add flag (which now handles all state including former "knowledge")
+      gameState.flags.add('test_knowledge')
+      expect(gameState.flags.has('test_knowledge')).toBe(true)
       
-      // Check knowledge exists
-      expect(gameState.knowledge.size).toBeGreaterThan(0)
+      // Check flags exist
+      expect(gameState.flags.size).toBeGreaterThan(0)
     })
 
     it('should handle flow state', () => {
@@ -249,7 +241,6 @@ describe('GameEngine', () => {
       const gameState = newEngine.getGameState()
       expect(gameState.inventory).toEqual([])
       expect(gameState.flags).toBeInstanceOf(Set)
-      expect(gameState.knowledge).toBeInstanceOf(Set)
     })
   })
 

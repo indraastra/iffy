@@ -1,4 +1,4 @@
-import { Story, GameState, PlayerAction, GameResponse, Flow, FlowTransition, InteractionPair, Result } from '@/types/story';
+import { Story, GameState, PlayerAction, GameResponse, Flow, FlowTransition, InteractionPair, Result, SuccessCondition } from '@/types/story';
 import { AnthropicService } from '@/services/anthropicService';
 import { GamePromptBuilder, GameStateResponse } from './gameLLMAdapter';
 
@@ -60,13 +60,32 @@ export class GameEngine {
       // Apply story-specific theming
       this.applyTheme(story);
       
-      // Set initial state from story start
-      this.gameState.currentLocation = story.start.location;
-      if (story.start.sets) {
-        story.start.sets.forEach(flag => this.gameState.flags.add(flag));
+      // Set initial state - use first flow as starting point
+      const firstFlow = story.flows[0];
+      if (!firstFlow) {
+        return {
+          success: false,
+          error: 'Story must have at least one flow'
+        };
       }
+      
+      // Set starting location from first flow, or fallback to first location
+      this.gameState.currentLocation = firstFlow.location || story.locations?.[0]?.id || '';
+      
+      if (!this.gameState.currentLocation) {
+        return {
+          success: false,
+          error: 'Could not determine starting location: first flow has no location and no locations defined'
+        };
+      }
+      
+      // Set starting flags from first flow
+      if (firstFlow.sets) {
+        firstFlow.sets.forEach(flag => this.gameState.flags.add(flag));
+      }
+      
       this.gameState.gameStarted = true;
-      this.gameState.currentFlow = story.start.first_flow;
+      this.gameState.currentFlow = firstFlow.id;
 
       return {
         success: true,
@@ -83,7 +102,12 @@ export class GameEngine {
   getInitialText(): string {
     if (!this.story) return 'No story loaded. Please load a story file to begin.';
     
-    return this.normalizeYamlText(this.story.start.content);
+    const firstFlow = this.story.flows[0];
+    if (!firstFlow || !firstFlow.content) {
+      return 'Story loaded, but no initial content available.';
+    }
+    
+    return this.normalizeYamlText(firstFlow.content);
   }
 
   /**
@@ -157,6 +181,31 @@ export class GameEngine {
   /**
    * Process a command with the LLM using game-specific logic
    */
+  /**
+   * Generate ending text using LLM when success condition has no predefined ending
+   */
+  private async generateEndingWithLLM(successCondition: SuccessCondition, lastCommand: string, currentLocation: any): Promise<string> {
+    // Create a synthetic command that asks the LLM to generate the ending
+    const syntheticCommand = `[SYSTEM: Generate an ending for this story. The player has just achieved: "${successCondition.description}". Create a satisfying conclusion that reflects the story's tone and wraps up the narrative. The last player action was: "${lastCommand}"]`;
+    
+    try {
+      const llmResponse = await this.anthropicService.processCommand(
+        syntheticCommand,
+        this.gameState,
+        this.story!,
+        currentLocation,
+        this.promptBuilder,
+        this.promptBuilder
+      );
+      
+      // Extract just the response text, ignoring any state changes since the game has ended
+      return llmResponse.response || `*The story concludes as you achieve: ${successCondition.description}*`;
+    } catch (error) {
+      console.error('LLM ending generation failed:', error);
+      throw error;
+    }
+  }
+
   private async processCommandWithLLM(input: string, currentLocation: any): Promise<GameStateResponse> {
     try {
       return await this.anthropicService.processCommand(
@@ -180,7 +229,6 @@ export class GameEngine {
           removeFromInventory: [],
           setFlags: [],
           unsetFlags: [],
-          addKnowledge: []
         },
         response: error instanceof Error ? error.message : 'Unknown error occurred',
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -254,8 +302,22 @@ export class GameEngine {
         // Format v2: Check for success condition ending first
         const successCondition = this.story!.success_conditions?.find(sc => sc.id === this.gameState.endingId);
         if (successCondition) {
-          responseText += `\n\n${successCondition.ending}`;
-          this.hasShownEndingContent = true;
+          if (successCondition.ending) {
+            // Pre-written ending text available
+            responseText += `\n\n${successCondition.ending}`;
+            this.hasShownEndingContent = true;
+          } else {
+            // No ending text - generate with LLM
+            try {
+              const generatedEnding = await this.generateEndingWithLLM(successCondition, input, currentLocation);
+              responseText += `\n\n${generatedEnding}`;
+              this.hasShownEndingContent = true;
+            } catch (error) {
+              console.error('Failed to generate ending:', error);
+              responseText += `\n\n*The story concludes as you achieve: ${successCondition.description}*`;
+              this.hasShownEndingContent = true;
+            }
+          }
         } else {
           // Fallback: Check if ending is defined as a separate ending (legacy)
           const ending = this.story!.endings?.find(e => e.id === this.gameState.endingId);
@@ -318,12 +380,6 @@ export class GameEngine {
       });
     }
 
-    // Update knowledge
-    if (changes.addKnowledge) {
-      changes.addKnowledge.forEach((knowledge: string) => {
-        this.addKnowledge(knowledge);
-      });
-    }
 
     console.log('📋 Final inventory after changes:', this.gameState.inventory);
 
@@ -498,9 +554,6 @@ This is a basic MVP version. More natural language understanding will be added i
           if (!this.gameState.inventory.includes(itemId)) {
             this.gameState.inventory.push(itemId);
           }
-        } else if (flag.startsWith('knows:')) {
-          const knowledgeId = flag.substring(6);
-          this.gameState.knowledge.add(knowledgeId);
         } else {
           this.gameState.flags.add(flag);
         }
@@ -539,7 +592,6 @@ This is a basic MVP version. More natural language understanding will be added i
       currentLocation: '',
       inventory: [],
       flags: new Set(),
-      knowledge: new Set(),
       gameStarted: false,
       gameEnded: false,
       conversationMemory: {
@@ -842,18 +894,6 @@ This is a basic MVP version. More natural language understanding will be added i
     }
   }
 
-  addKnowledge(knowledgeId: string): Result<void> {
-    try {
-      this.gameState.knowledge.add(knowledgeId);
-      console.log(`Added knowledge: ${knowledgeId}`);
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        error: `Failed to add knowledge: ${error instanceof Error ? error.message : 'Unknown error'}`
-      };
-    }
-  }
 
   setLocation(locationId: string): Result<void> {
     try {
@@ -1015,37 +1055,11 @@ This is a basic MVP version. More natural language understanding will be added i
       return hasItem;
     }
     
-    if (condition.startsWith('flag:')) {
-      const flag = condition.substring('flag:'.length);
-      const hasFlag = this.gameState.flags.has(flag);
-      console.log(`  flag check: "${flag}" in [${Array.from(this.gameState.flags).join(', ')}] = ${hasFlag}`);
-      return hasFlag;
-    }
-    
-    if (condition.startsWith('knows:')) {
-      const knowledge = condition.substring('knows:'.length);
-      const hasKnowledge = this.gameState.knowledge.has(knowledge);
-      console.log(`  knowledge check: "${knowledge}" in [${Array.from(this.gameState.knowledge).join(', ')}] = ${hasKnowledge}`);
-      return hasKnowledge;
-    }
-    
     if (condition.startsWith('location:')) {
       const location = condition.substring('location:'.length);
       const atLocation = this.gameState.currentLocation === location;
       console.log(`  location check: "${location}" === "${this.gameState.currentLocation}" = ${atLocation}`);
       return atLocation;
-    }
-    
-    // Direct flag check (no prefix)
-    if (this.gameState.flags.has(condition)) {
-      console.log(`  direct flag check: "${condition}" found in flags = true`);
-      return true;
-    }
-    
-    // Direct knowledge check
-    if (this.gameState.knowledge.has(condition)) {
-      console.log(`  direct knowledge check: "${condition}" found in knowledge = true`);
-      return true;
     }
     
     // Check if condition is an item ID or name/alias (for success conditions)
@@ -1068,6 +1082,12 @@ This is a basic MVP version. More natural language understanding will be added i
         console.log(`  item name/alias check: "${condition}" maps to "${item.id}" found in inventory = true`);
         return true;
       }
+    }
+    
+    // Everything else is treated as a natural language flag (with normalization)
+    if (this.hasFlagNormalized(condition)) {
+      console.log(`  flag check: "${condition}" found in flags = true`);
+      return true;
     }
     
     console.log(`  condition not met: "${condition}" = false`);
@@ -1117,6 +1137,26 @@ This is a basic MVP version. More natural language understanding will be added i
     }
 
     return null;
+  }
+
+  /**
+   * Normalize flag names by treating underscores and spaces as identical
+   */
+  private normalizeFlag(flag: string): string {
+    return flag.replace(/\s+/g, '_').toLowerCase();
+  }
+
+  /**
+   * Check if a flag exists with normalization (treats spaces and underscores as identical)
+   */
+  private hasFlagNormalized(flag: string): boolean {
+    const normalizedFlag = this.normalizeFlag(flag);
+    for (const existingFlag of this.gameState.flags) {
+      if (this.normalizeFlag(existingFlag) === normalizedFlag) {
+        return true;
+      }
+    }
+    return false;
   }
 
 
@@ -1410,7 +1450,6 @@ Remember: Items can only be obtained in their designated locations according to 
       gameState: {
         ...this.gameState,
         flags: Array.from(this.gameState.flags),
-        knowledge: Array.from(this.gameState.knowledge),
         conversationMemory: this.gameState.conversationMemory ? {
           ...this.gameState.conversationMemory,
           // Convert timestamps to strings for JSON serialization
@@ -1465,7 +1504,6 @@ Remember: Items can only be obtained in their designated locations according to 
       this.gameState = {
         ...data.gameState,
         flags: new Set(data.gameState.flags),
-        knowledge: new Set(data.gameState.knowledge),
         conversationMemory: data.gameState.conversationMemory ? {
           ...data.gameState.conversationMemory,
           // Convert timestamp strings back to Date objects

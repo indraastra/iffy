@@ -90,7 +90,7 @@ class IffyApp {
     toggleBtn.className = 'debug-toggle-btn';
     toggleBtn.innerHTML = '🐛';
     toggleBtn.title = 'Toggle Debug Pane (Ctrl+D) - Drag to move';
-    toggleBtn.addEventListener('click', (e) => {
+    toggleBtn.addEventListener('click', () => {
       if (!this.isDragging) {
         this.debugPane.toggle();
       }
@@ -109,22 +109,23 @@ class IffyApp {
    */
   private makeDraggable(element: HTMLElement): void {
     let isDragging = false;
+    let hasMoved = false;
     let startX = 0;
     let startY = 0;
     let elementX = 0;
     let elementY = 0;
+    const dragThreshold = 5; // Minimum pixels to move before considering it a drag
 
     const handleMouseDown = (e: MouseEvent) => {
       isDragging = true;
-      this.isDragging = true;
+      hasMoved = false;
       
       const rect = element.getBoundingClientRect();
-      const parentRect = element.parentElement!.getBoundingClientRect();
       
       startX = e.clientX;
       startY = e.clientY;
-      elementX = rect.left - parentRect.left;
-      elementY = rect.top - parentRect.top;
+      elementX = rect.left;
+      elementY = rect.top;
       
       element.style.transition = 'none';
       e.preventDefault();
@@ -135,35 +136,49 @@ class IffyApp {
       
       const deltaX = e.clientX - startX;
       const deltaY = e.clientY - startY;
+      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
       
-      const newX = elementX + deltaX;
-      const newY = elementY + deltaY;
-      
-      // Get parent bounds for constraint
-      const parent = element.parentElement!;
-      const parentRect = parent.getBoundingClientRect();
-      const elementRect = element.getBoundingClientRect();
-      
-      const maxX = parent.clientWidth - elementRect.width;
-      const maxY = parent.clientHeight - elementRect.height;
-      
-      const constrainedX = Math.max(0, Math.min(newX, maxX));
-      const constrainedY = Math.max(0, Math.min(newY, maxY));
-      
-      element.style.left = constrainedX + 'px';
-      element.style.top = constrainedY + 'px';
-      element.style.right = 'auto';
-      element.style.bottom = 'auto';
+      // Only start actual dragging if we've moved beyond the threshold
+      if (distance > dragThreshold) {
+        hasMoved = true;
+        this.isDragging = true;
+        
+        const newX = elementX + deltaX;
+        const newY = elementY + deltaY;
+        
+        // Get parent bounds for constraint
+        const parent = element.parentElement!;
+        const parentRect = parent.getBoundingClientRect();
+        const elementRect = element.getBoundingClientRect();
+        
+        const maxX = parent.clientWidth - elementRect.width;
+        const maxY = parent.clientHeight - elementRect.height;
+        
+        const constrainedX = Math.max(0, Math.min(newX, maxX));
+        const constrainedY = Math.max(0, Math.min(newY, maxY));
+        
+        element.style.left = constrainedX + 'px';
+        element.style.top = constrainedY + 'px';
+        element.style.right = 'auto';
+        element.style.bottom = 'auto';
+      }
     };
 
     const handleMouseUp = () => {
       if (isDragging) {
         element.style.transition = 'all 0.2s';
         isDragging = false;
-        // Small delay to prevent click event from firing
-        setTimeout(() => {
+        
+        // Only set the global isDragging flag if we actually moved
+        if (hasMoved) {
+          // Small delay to prevent click event from firing after drag
+          setTimeout(() => {
+            this.isDragging = false;
+          }, 100);
+        } else {
+          // Reset immediately for clicks
           this.isDragging = false;
-        }, 100);
+        }
       }
     };
 
