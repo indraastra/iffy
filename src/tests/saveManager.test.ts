@@ -275,7 +275,8 @@ describe('SaveManager', () => {
       
       expect(result).toBe(true);
       expect(gameEngine.loadGame).toHaveBeenCalledWith(saveData);
-      expect(messageDisplay.addMessage).toHaveBeenCalledWith(
+      // Success messages are handled by MessageDisplay.restoreConversationHistory()
+      expect(messageDisplay.addMessage).not.toHaveBeenCalledWith(
         'Game loaded successfully!',
         'system'
       );

@@ -683,9 +683,214 @@ significantMemories:
     lastAccessed: "2024-01-15T14:30:00Z"
 ```
 
+## Save/Load System
+
+### Save System Architecture
+
+The save/load system provides seamless game state persistence with automatic conversation history restoration.
+
+```mermaid
+classDiagram
+    class SaveManager {
+        -gameEngine: GameEngine
+        -messageDisplay: MessageDisplay
+        -autoSaveInterval: number
+        +saveGame(): void
+        +loadGame(storyTitle: string): boolean
+        +getSavedGames(): SaveMetadata[]
+        +deleteSave(storyTitle: string): void
+        +checkForStoryRecovery(): void
+    }
+    
+    class SaveMetadata {
+        +storyTitle: string
+        +timestamp: Date
+        +location: string
+        +playtime: number
+    }
+    
+    class GameState {
+        +currentLocation: string
+        +inventory: string[]
+        +knowledge: Set~string~
+        +gameEnded: boolean
+        +endingId: string
+        +actionHistory: PlayerAction[]
+    }
+    
+    class MemoryState {
+        +recentInteractions: InteractionPair[]
+        +significantMemories: SignificantMemory[]
+        +interactionsSinceLastExtraction: number
+    }
+    
+    SaveManager --> SaveMetadata
+    SaveManager --> GameState
+    SaveManager --> MemoryState
+```
+
+### Save Data Format
+
+```yaml
+# Complete save file structure
+saveData:
+  storyTitle: "Coffee Confessional"
+  timestamp: "2024-01-15T14:30:00Z"
+  gameState:
+    currentLocation: "corner_cafe"
+    inventory: ["unfinished_coffee"]
+    knowledge: ["alex_conflicted", "acknowledged_distance"]
+    gameEnded: false
+    endingId: null
+    actionHistory: [...] # Recent player actions
+  memoryState:
+    recentInteractions:
+      - playerInput: "Tell me what's bothering you"
+        llmResponse: "Alex looks away, stirring their coffee..."
+        timestamp: "2024-01-15T14:25:00Z"
+        importance: "high"
+    significantMemories: [...] # Extracted significant moments
+    interactionsSinceLastExtraction: 5
+```
+
+### Conversation History Restoration
+
+When loading a saved game, the system automatically restores the conversation context:
+
+```mermaid
+sequenceDiagram
+    participant P as Player
+    participant SM as SaveManager
+    participant GE as GameEngine
+    participant MM as MemoryManager
+    participant MD as MessageDisplay
+    
+    P->>SM: Load saved game
+    SM->>GE: loadGame(saveData)
+    GE->>MM: importState(memoryState)
+    MM->>MM: Restore interactions & memories
+    GE->>MD: restoreConversationHistory(interactions)
+    
+    MD->>MD: Clear current display
+    MD->>MD: Show "📖 Restoring conversation..."
+    
+    loop For each interaction
+        MD->>MD: Display "> [player input]"
+        MD->>MD: Display "[LLM response]"
+    end
+    
+    MD->>MD: Show "✅ Save loaded. Continue from here."
+    MD->>P: Restored conversation displayed
+```
+
+### Auto-Save System
+
+```mermaid
+flowchart TD
+    subgraph "Auto-Save Configuration"
+        Config[Auto-save every 2 minutes]
+        Storage[LocalStorage persistence]
+        Recovery[Recovery on story load]
+    end
+    
+    subgraph "Save Triggers"
+        Timer[Timer-based saves]
+        Manual[Manual save button]
+        Critical[Critical story moments]
+    end
+    
+    subgraph "Recovery Flow"
+        Load[Story loaded] --> Check{Recent save exists?}
+        Check -->|Yes| Offer[Offer recovery]
+        Check -->|No| Start[Start fresh]
+        Offer --> Accept[Player accepts] --> Restore[Load save]
+        Offer --> Decline[Player declines] --> Start
+    end
+    
+    Config --> Timer
+    Timer --> Storage
+    Manual --> Storage
+    Storage --> Recovery
+```
+
+### UI State Restoration
+
+The system provides comprehensive UI state restoration:
+
+```typescript
+// UI restoration includes:
+interface UIRestoration {
+  messageHistory: InteractionPair[];     // Conversation context
+  completionState: boolean;              // Game ended status
+  placeholderText: string;               // Input field guidance
+  buttonStates: Record<string, boolean>; // UI element states
+}
+
+// Restoration process
+class GameEngine {
+  private uiRestoreCallback?: (gameState: any, conversationHistory?: any[]) => void;
+  
+  loadGame(saveData: string): Result<GameState> {
+    // ... load game state and memory
+    
+    // Restore UI with conversation history
+    if (this.uiRestoreCallback) {
+      const conversationHistory = this.memoryManager.getRecentInteractions();
+      this.uiRestoreCallback(this.gameState, conversationHistory);
+    }
+  }
+}
+```
+
+### Save File Management
+
+```mermaid
+graph LR
+    subgraph "Storage Locations"
+        LS[LocalStorage<br/>Auto-saves & quick access]
+        Download[Downloaded Files<br/>Manual backups]
+    end
+    
+    subgraph "Save Operations"
+        QuickSave[Quick Save<br/>Ctrl+S or button]
+        AutoSave[Auto Save<br/>Every 2 minutes]
+        Export[Export Save<br/>Download JSON]
+    end
+    
+    subgraph "Load Operations"
+        QuickLoad[Quick Load<br/>From localStorage]
+        Import[Import Save<br/>Upload JSON file]
+        Recovery[Recovery<br/>Recent auto-save]
+    end
+    
+    QuickSave --> LS
+    AutoSave --> LS
+    Export --> Download
+    
+    LS --> QuickLoad
+    Download --> Import
+    LS --> Recovery
+```
+
+### Best Practices
+
+**For Players:**
+- Auto-save runs every 2 minutes when a story is loaded
+- Manual saves create both localStorage and downloadable backups
+- Recovery system offers to restore recent progress when reloading
+- Conversation history shows your previous interactions for context
+
+**For Developers:**
+- Save data includes complete game state and memory context
+- UI restoration maintains player immersion across sessions
+- Error handling gracefully degrades on save/load failures
+- Memory system provides conversation continuity
+
 ## Debugging and Development
 
 ### Debug System Architecture
+
+The debug system uses structured data interfaces instead of string parsing for reliable debugging information.
 
 ```mermaid
 classDiagram
@@ -696,6 +901,7 @@ classDiagram
         +logLlmCall(data: DebugLlmCall): void
         +logMemoryOperation(data: DebugMemoryOperation): void
         +logValidationIssue(data: DebugValidationIssue): void
+        +logGameStateChange(data: DebugGameStateChange): void
         +clear(): void
     }
     
@@ -704,12 +910,31 @@ classDiagram
         +response: {raw: string, parsed: any, tokenCount: number}
         +gameState: DebugGameState
         +memoryStats: DebugMemoryStats
+        +timestamp: Date
     }
     
     class DebugMemoryOperation {
-        +operation: string
+        +operation: 'addMemory'|'extraction'|'compaction'|'retrieval'
         +stats: DebugMemoryStats
-        +interaction: {playerInput: string, llmResponse: string, importance: string}
+        +interaction?: {playerInput: string, llmResponse: string, importance: string}
+        +extractedCount?: number
+        +compactedFrom?: number
+        +compactedTo?: number
+    }
+    
+    class DebugGameState {
+        +currentLocation: string
+        +inventory: string[]
+        +knowledgeFlags: string[]
+        +gameEnded: boolean
+        +endingId?: string
+    }
+    
+    class DebugMemoryStats {
+        +recentInteractions: number
+        +significantMemories: number
+        +interactionsSinceExtraction: number
+        +lastExtractionTime?: Date
     }
     
     class GameEngine {
@@ -718,9 +943,59 @@ classDiagram
         +setDebugPane(debugPane: DebugPane): void
     }
     
+    class GamePromptBuilder {
+        +getSections(command: string, gameState: any, story: any, currentLocation: any, memoryContext?: any): Record<string, string>
+    }
+    
     DebugPane --> DebugLlmCall
     DebugPane --> DebugMemoryOperation
+    DebugPane --> DebugGameState
+    DebugPane --> DebugMemoryStats
     GameEngine --> DebugPane
+    GameEngine --> GamePromptBuilder
+```
+
+#### Structured Debug Data Benefits
+
+**Reliable Data Access:**
+- No string parsing brittleness when prompt formats change
+- Type-safe debug information with proper interfaces
+- Consistent data structure across all debug operations
+
+**Rich Debug Information:**
+```typescript
+// Example debug data structure
+interface DebugLlmCall {
+  prompt: {
+    sections: {
+      'STORY': 'Coffee Confessional | Intimate, contemplative...',
+      'CURRENT_STATE': 'Location: corner_cafe...',
+      'CONVERSATION_MEMORY': 'Recent interactions: ...',
+      'PLAYER_INPUT': 'Tell me what\'s bothering you'
+    },
+    tokenCount: 2847
+  },
+  response: {
+    raw: 'Alex looks down at their hands...',
+    parsed: {
+      narrativeText: 'Alex looks down at their hands...',
+      knowledgeFlags: ['alex_conflicted', 'emotional_walls'],
+      stateChanges: {}
+    },
+    tokenCount: 892
+  },
+  gameState: {
+    currentLocation: 'corner_cafe',
+    inventory: ['unfinished_coffee'],
+    knowledgeFlags: ['acknowledged_distance'],
+    gameEnded: false
+  },
+  memoryStats: {
+    recentInteractions: 8,
+    significantMemories: 3,
+    interactionsSinceExtraction: 8
+  }
+}
 ```
 
 ### Development Tools
