@@ -1,4 +1,4 @@
-title: "The Minimal Room"
+title: "A Blank Slate"
 author: "Iffy Engine Team"
 version: "2.0"
 description: "A demonstration of minimal authoring with maximum emergent potential"
@@ -8,7 +8,7 @@ metadata:
     time: "present day"
     place: "anywhere"
   tone:
-    overall: "neutral"
+    overall: "hopeful and open"
     narrative_voice: "second person"
   themes: ["exploration", "creativity", "emergence"]
   ui:
@@ -38,8 +38,8 @@ characters:
 
 locations:
   - id: "room"
-    name: "The Room"
-    description: "A simple room. There might be more here than meets the eye."
+    name: "A Blank Slate"
+    description: "A welcoming space full of potential. There might be more here than meets the eye."
     connections: []
     objects: []
 
@@ -48,7 +48,7 @@ items: []
 flows: []
 
 start:
-  content: "You find yourself in a simple room. Someone else is here with you, looking around with the same curiosity you feel. What would you like to do?"
+  content: "You find yourself in a welcoming space that feels like a blank slate - full of potential and possibilities. Someone else is here with you, looking around with the same curiosity you feel. What would you like to do?"
   location: "room"
   sets: []
 
@@ -56,7 +56,7 @@ success_conditions:
   - id: "creative_exploration"
     description: "Discovered something through creative interaction"
     requires: ["found_something_interesting"]
-    ending: "Through your creativity and curiosity, you've discovered that this simple room holds infinite possibilities. Sometimes the most minimal beginnings lead to the richest experiences."
+    ending: "Through your creativity and curiosity, you've discovered that this blank slate holds infinite possibilities. Sometimes the most open beginnings lead to the richest experiences."
 
 endings: []
 
@@ -80,7 +80,7 @@ llm_guidelines: |
   BOUNDARIES:
   - No dangerous items (weapons, explosives, etc.)
   - No items worth more than $50
-  - Stay within the single room unless player explicitly creates reasons to expand
+  - Stay within the single space unless player explicitly creates reasons to expand
   - Maintain friendly, helpful tone
   
   EXAMPLES OF GOOD EMERGENT CONTENT:
