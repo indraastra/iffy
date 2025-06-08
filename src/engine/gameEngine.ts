@@ -8,10 +8,34 @@ export class GameEngine {
   private anthropicService: AnthropicService;
   private promptBuilder: GamePromptBuilder;
   private debugPane: any = null;
+  private uiResetCallback?: () => void;
 
   constructor(anthropicService?: AnthropicService) {
     this.anthropicService = anthropicService || new AnthropicService();
     this.promptBuilder = new GamePromptBuilder();
+  }
+
+  /**
+   * Set callback to reset UI state when game is reset
+   */
+  public setUIResetCallback(callback: () => void): void {
+    this.uiResetCallback = callback;
+  }
+
+  /**
+   * Reset game state, cancel requests, and reset UI
+   */
+  private resetForNewGame(): void {
+    // Cancel any outstanding LLM requests
+    this.anthropicService.cancelActiveRequests();
+    
+    // Reset game state
+    this.gameState = this.createInitialState();
+    
+    // Reset UI state via callback
+    if (this.uiResetCallback) {
+      this.uiResetCallback();
+    }
   }
 
   loadStory(story: Story): Result<GameState> {
@@ -24,8 +48,10 @@ export class GameEngine {
         };
       }
 
+      // Reset everything for new game
+      this.resetForNewGame();
+
       this.story = story;
-      this.gameState = this.createInitialState();
       
       // Apply story-specific theming
       this.applyTheme(story);
@@ -1371,6 +1397,12 @@ Remember: Items can only be obtained in their designated locations according to 
           success: false,
           error: 'Invalid save file format: missing gameState'
         };
+      }
+
+      // Cancel any outstanding requests and reset UI when loading save
+      this.anthropicService.cancelActiveRequests();
+      if (this.uiResetCallback) {
+        this.uiResetCallback();
       }
 
       this.gameState = {
