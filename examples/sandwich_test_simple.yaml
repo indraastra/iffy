@@ -1,6 +1,7 @@
 title: "Simple Sandwich Test"
 author: "Test"
 version: "2.0"
+blurb: "A straightforward story about making sandwiches - perfect for testing game mechanics."
 
 metadata:
   setting:

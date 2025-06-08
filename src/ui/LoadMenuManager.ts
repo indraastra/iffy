@@ -40,7 +40,7 @@ export class LoadMenuManager {
             `<button class="example-story-btn" data-filename="${story.filename}">
               <div class="story-title">${story.title}</div>
               <div class="story-author">by ${story.author}</div>
-              <div class="story-description">${story.description}</div>
+              <div class="story-blurb">${story.blurb}</div>
             </button>`
           ).join('')}
         </div>
@@ -124,7 +124,7 @@ export class LoadMenuManager {
    */
   private attachEventListeners(
     menu: HTMLElement, 
-    exampleStories: Array<{filename: string, title: string, author: string, description: string}>,
+    exampleStories: Array<{filename: string, title: string, author: string, blurb: string}>,
     options: Array<{text: string, action: () => void}>
   ): void {
     // Add event listeners for example stories
@@ -196,11 +196,11 @@ export class LoadMenuManager {
     // Style individual elements within the button
     const titleEl = btn.querySelector('.story-title') as HTMLElement;
     const authorEl = btn.querySelector('.story-author') as HTMLElement;
-    const descEl = btn.querySelector('.story-description') as HTMLElement;
+    const blurbEl = btn.querySelector('.story-blurb') as HTMLElement;
     
     if (titleEl) titleEl.style.cssText = 'font-weight: bold; font-size: 1.1em; margin-bottom: 0.25rem;';
     if (authorEl) authorEl.style.cssText = 'font-size: 0.9em; opacity: 0.8; margin-bottom: 0.5rem;';
-    if (descEl) descEl.style.cssText = 'font-size: 0.85em; opacity: 0.7; line-height: 1.3;';
+    if (blurbEl) blurbEl.style.cssText = 'font-size: 0.85em; opacity: 0.7; line-height: 1.3;';
     
     btn.addEventListener('mouseenter', () => {
       btn.style.backgroundColor = 'var(--accent-color)';

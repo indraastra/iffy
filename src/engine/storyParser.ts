@@ -38,6 +38,7 @@ export class StoryParser {
       title: data.title,
       author: data.author,
       version: data.version,
+      blurb: data.blurb, // Optional field for game selection
       metadata: this.validateMetadata(data.metadata),
       characters: this.validateCharacters(data.characters || []),
       locations: this.validateLocations(data.locations || []),
