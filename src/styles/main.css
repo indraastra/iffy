@@ -86,6 +86,9 @@ body {
   overflow-y: auto;
   background-color: var(--background-color);
   position: relative;
+  /* Hide scrollbar unless needed, then make it minimal */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
 }
 
 .story-text {
@@ -134,6 +137,9 @@ body {
   line-height: 1.4;
   overflow-y: auto;
   transition: height 0.1s ease;
+  /* Hide scrollbar unless needed, then make it minimal */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
 }
 
 .command-input:focus {
@@ -1042,4 +1048,65 @@ body {
     padding: 0.4rem 0.8rem;
     margin-right: 0.5rem;
   }
+}
+
+/* Custom Scrollbar Styling */
+/* For Webkit browsers (Chrome, Safari, Edge) */
+.story-output::-webkit-scrollbar,
+.command-input::-webkit-scrollbar,
+.debug-log::-webkit-scrollbar,
+.modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.story-output::-webkit-scrollbar-track,
+.command-input::-webkit-scrollbar-track,
+.debug-log::-webkit-scrollbar-track,
+.modal-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.story-output::-webkit-scrollbar-thumb,
+.command-input::-webkit-scrollbar-thumb,
+.debug-log::-webkit-scrollbar-thumb,
+.modal-content::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.story-output::-webkit-scrollbar-thumb:hover,
+.command-input::-webkit-scrollbar-thumb:hover,
+.debug-log::-webkit-scrollbar-thumb:hover,
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background-color: var(--button-hover);
+}
+
+/* Hide scrollbars when not needed */
+.story-output::-webkit-scrollbar,
+.command-input::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+/* Show scrollbar only on hover or when actively scrolling */
+.story-output:hover::-webkit-scrollbar,
+.command-input:hover::-webkit-scrollbar,
+.story-output:focus::-webkit-scrollbar,
+.command-input:focus::-webkit-scrollbar {
+  width: 8px;
+}
+
+/* For the debug pane and modal, always show but make them minimal */
+.debug-log::-webkit-scrollbar,
+.modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+/* Minimal scrollbar styling for debug and modal areas */
+.debug-log,
+.modal-content {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
 }
