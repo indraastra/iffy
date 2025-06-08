@@ -48,12 +48,14 @@ locations:
 items:
   - id: "unfinished_coffee"
     name: "Jamie's Coffee"
+    display_name: "coffee"
     description: "A nearly full latte that's gone cold while Jamie stares out the window"
     location: "corner_cafe"
     aliases: ["coffee", "latte", "jamie's cup"]
 
   - id: "phone"
     name: "Jamie's Phone"
+    display_name: "phone"
     description: "Face down on the table, but you noticed it buzzing with unread messages earlier"
     location: "corner_cafe"
     aliases: ["phone", "cell phone", "mobile"]
