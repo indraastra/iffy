@@ -47,22 +47,7 @@ export class MessageDisplay {
    * Clear all messages from the output
    */
   clearOutput(): void {
-    // Preserve the debug toggle button and other non-message elements
-    const elementsToPreserve: HTMLElement[] = [];
-    
-    // Find elements that should be preserved (debug button, etc.)
-    const debugBtn = this.storyOutput.querySelector('.debug-toggle-btn') as HTMLElement;
-    if (debugBtn) {
-      elementsToPreserve.push(debugBtn);
-    }
-    
-    // Clear all content
     this.storyOutput.innerHTML = '';
-    
-    // Re-add preserved elements
-    elementsToPreserve.forEach(element => {
-      this.storyOutput.appendChild(element);
-    });
   }
 
   /**

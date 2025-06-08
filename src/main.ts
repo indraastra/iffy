@@ -98,9 +98,8 @@ class IffyApp {
     
     this.makeDraggable(toggleBtn);
     
-    // Append to story output instead of body
-    const storyOutput = document.getElementById('story-output')!;
-    storyOutput.appendChild(toggleBtn);
+    // Append to body for absolute positioning overlay
+    document.body.appendChild(toggleBtn);
   }
 
   private isDragging = false;
