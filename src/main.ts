@@ -1,5 +1,5 @@
 import { GameEngine } from '@/engine/gameEngine';
-import { DebugPane } from '@/components/debugPane';
+import { DebugPane } from '@/ui/debugPane';
 import { MessageDisplay } from '@/ui/MessageDisplay';
 import { LoadMenuManager } from '@/ui/LoadMenuManager';
 import { SettingsManager } from '@/ui/SettingsManager';
