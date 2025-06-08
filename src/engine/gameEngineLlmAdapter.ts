@@ -1,6 +1,6 @@
 import { GameStateResponseParser } from '@/utils/gameStateResponseParser';
 import type { GameStateResponse } from '@/schemas/gameStateResponses';
-import { TextFormatter, formatList, formatStructuredList, formatKeyValue, formatRequirements, formatAliases, formatTraits } from '@/utils/textFormatting';
+import { formatList, formatKeyValue, formatRequirements, formatAliases, formatTraits, formatSectionContent } from '@/utils/textFormatting';
 
 export type { GameStateResponse } from '@/schemas/gameStateResponses';
 
@@ -29,7 +29,7 @@ Inventory: ${this.getInventoryDisplay(gameState, story)}
 Flow: ${gameState.currentFlow || 'None'} | Status: ${gameState.gameEnded ? 'COMPLETED' : 'ACTIVE'}
 
 LOCATIONS:
-${formatStructuredList(story.locations, {
+${formatSectionContent(story.locations, {
   transform: (loc: any) => {
     let info = `${loc.name} (${loc.id})`;
     
@@ -50,7 +50,7 @@ ${formatStructuredList(story.locations, {
 })}
 
 ITEMS & TRANSFORMATIONS:
-${formatStructuredList(story.items, {
+${formatSectionContent(story.items, {
   transform: (item: any) => {
     let info = `${item.name} (${item.id})`;
     if (item.can_become) {
@@ -67,7 +67,8 @@ ${formatStructuredList(story.items, {
   }
 })}
 
-${TextFormatter.formatSection('SUCCESS CONDITIONS', story.success_conditions, {
+SUCCESS CONDITIONS:
+${formatSectionContent(story.success_conditions, {
   transform: (sc: any) => `${sc.id}: ${sc.description}\n  ${formatRequirements(sc.requires)}`
 })}
 
@@ -149,7 +150,7 @@ RULES:
 Inventory: ${this.getInventoryDisplay(gameState, story)}
 Flow: ${gameState.currentFlow || 'None'} | Status: ${gameState.gameEnded ? 'COMPLETED' : 'ACTIVE'}`;
 
-    sections['LOCATIONS'] = formatStructuredList(story.locations, {
+    sections['LOCATIONS'] = formatSectionContent(story.locations, {
       transform: (loc: any) => {
         let info = `${loc.name} (${loc.id})`;
         
@@ -169,7 +170,7 @@ Flow: ${gameState.currentFlow || 'None'} | Status: ${gameState.gameEnded ? 'COMP
       }
     });
 
-    sections['ITEMS & TRANSFORMATIONS'] = formatStructuredList(story.items, {
+    sections['ITEMS & TRANSFORMATIONS'] = formatSectionContent(story.items, {
       transform: (item: any) => {
         let info = `${item.name} (${item.id})`;
         if (item.can_become) {
@@ -187,14 +188,14 @@ Flow: ${gameState.currentFlow || 'None'} | Status: ${gameState.gameEnded ? 'COMP
     });
 
     if (story.success_conditions) {
-      sections['SUCCESS CONDITIONS'] = TextFormatter.formatSection('', story.success_conditions, {
+      sections['SUCCESS CONDITIONS'] = formatSectionContent(story.success_conditions, {
         transform: (sc: any) => `${sc.id}: ${sc.description}\n  ${formatRequirements(sc.requires)}`
       });
     }
 
     sections['PLAYER CHARACTER'] = this.getPlayerCharacterInfo(story);
     sections['NPC CHARACTERS'] = this.getNPCCharacterInfo(story);
-    sections['FLOWS'] = formatKeyValue('', story.flows?.map((flow: any) => `${flow.name}${flow.ends_game ? ' [END]' : ''}`) || []);
+    sections['FLOWS'] = formatList(story.flows?.map((flow: any) => `${flow.name}${flow.ends_game ? ' [END]' : ''}`) || []);
     sections['CURRENT FLOW CONTEXT'] = this.getCurrentFlowContext(story, gameState);
 
     if (story.llm_guidelines) {
@@ -315,6 +316,27 @@ The player has successfully concluded this story path.`;
     
     if (currentFlow.exchanges && currentFlow.exchanges.length > 0) {
       context += `\nDialogue Context: ${currentFlow.exchanges.length} exchanges available`;
+    }
+    
+    // Include transition information for LLM to understand flow progression
+    if (currentFlow.transitions && currentFlow.transitions.length > 0) {
+      context += `\n\nFLOW TRANSITIONS: This flow can transition when conditions are met:`;
+      for (const transition of currentFlow.transitions) {
+        const requirementsList = transition.requires.join(', ');
+        context += `\n  → ${transition.to_flow} when: [${requirementsList}]`;
+        if (transition.description) {
+          context += ` (${transition.description})`;
+        }
+      }
+      context += `\n\nIMPORTANT: Set appropriate flags in your response to enable flow transitions when story beats are hit!`;
+    }
+    
+    // Legacy support for old completion_transitions
+    if (currentFlow.completion_transitions && currentFlow.completion_transitions.length > 0) {
+      context += `\n\nLEGACY TRANSITIONS: This flow can transition when conditions are met:`;
+      for (const transition of currentFlow.completion_transitions) {
+        context += `\n  → ${transition.to_flow} when: ${transition.condition}`;
+      }
     }
     
     return context;

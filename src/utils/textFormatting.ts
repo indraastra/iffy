@@ -154,6 +154,7 @@ export class TextFormatter {
 
   /**
    * Format a section with title and content
+   * Use this when you need a complete standalone section with title and colon.
    * 
    * @example
    * formatSection('CHARACTERS', ['Hero', 'Villain'])
@@ -174,6 +175,33 @@ export class TextFormatter {
         return '';  // Don't show empty sections
       }
       return `${title}:\n${formattedContent}`;
+    }
+
+    return '';
+  }
+
+  /**
+   * Format content for use in an existing section (no title, no colon)
+   * Use this when the section title is already provided by the container.
+   * 
+   * @example
+   * formatSectionContent(['Hero', 'Villain'])
+   * // "- Hero\n- Villain"
+   */
+  static formatSectionContent(
+    content: any[] | string | null | undefined,
+    options: StructuredListOptions = {}
+  ): string {
+    if (typeof content === 'string') {
+      return content.trim();
+    }
+
+    if (Array.isArray(content)) {
+      const formattedContent = this.formatStructuredList(content, options);
+      if (formattedContent === (options.fallback || 'None')) {
+        return '';  // Don't show empty sections
+      }
+      return formattedContent;
     }
 
     return '';
@@ -284,6 +312,7 @@ export const formatList = TextFormatter.formatList.bind(TextFormatter);
 export const formatStructuredList = TextFormatter.formatStructuredList.bind(TextFormatter);
 export const formatKeyValue = TextFormatter.formatKeyValue.bind(TextFormatter);
 export const formatSection = TextFormatter.formatSection.bind(TextFormatter);
+export const formatSectionContent = TextFormatter.formatSectionContent.bind(TextFormatter);
 export const formatRequirements = TextFormatter.formatRequirements.bind(TextFormatter);
 export const formatAliases = TextFormatter.formatAliases.bind(TextFormatter);
 export const formatTraits = TextFormatter.formatTraits.bind(TextFormatter);

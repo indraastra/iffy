@@ -57,14 +57,9 @@ export interface Item {
 
 
 export interface FlowTransition {
-  type: 'narrative' | 'dialogue';
-  trigger: string;
-  flow_id: string;
-}
-
-export interface CompletionTransition {
-  condition: string;
+  requires: string[];  // Array of flags/conditions that must be met (analogous to success_conditions.requires)
   to_flow: string;
+  description?: string; // Optional description for LLM context
 }
 
 export interface DialogueChoice {
@@ -85,11 +80,9 @@ export interface Flow {
   id: string;
   type: 'narrative' | 'dialogue';
   name: string;
-  requirements?: string[];
   sets?: string[];
   content?: string;
-  next?: FlowTransition[];
-  completion_transitions?: CompletionTransition[];
+  transitions?: FlowTransition[];  // Renamed from completion_transitions, uses new structure
   participants?: string[];
   location?: string;
   exchanges?: DialogueExchange[];

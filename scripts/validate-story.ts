@@ -22,7 +22,6 @@ async function validateStory(filePath: string): Promise<void> {
     console.log(`   Characters: ${story.characters.length}`);
     console.log(`   Locations: ${story.locations.length}`);
     console.log(`   Items: ${story.items.length}`);
-    console.log(`   Knowledge: ${story.knowledge.length}`);
     console.log(`   Flows: ${story.flows.length}`);
     console.log(`   Endings: ${story.endings?.length || 0}`);
     
@@ -38,8 +37,8 @@ async function validateStory(filePath: string): Promise<void> {
         console.log(`     All requirements must be met for this ending`);
       });
     }
-    if (story.llm_story_guidelines) {
-      console.log(`   LLM Guidelines: ${story.llm_story_guidelines.length} characters`);
+    if (story.llm_guidelines) {
+      console.log(`   LLM Guidelines: ${story.llm_guidelines.length} characters`);
     }
     
     // Show Format v2 item relationships
@@ -58,18 +57,24 @@ async function validateStory(filePath: string): Promise<void> {
     
     // Validate references
     console.log(`\n🔗 Reference Validation:`);
-    console.log(`   Start location: ${story.start.location} - ${story.locations.find(l => l.id === story.start.location) ? '✅' : '❌'}`);
-    console.log(`   Start flow: ${story.start.first_flow} - ${story.flows.find(f => f.id === story.start.first_flow) ? '✅' : '❌'}`);
+    if (story.flows.length > 0) {
+      console.log(`   First flow (auto-start): ${story.flows[0].id} - ✅`);
+      if (story.flows[0].location) {
+        console.log(`   Start location: ${story.flows[0].location} - ${story.locations.find(l => l.id === story.flows[0].location) ? '✅' : '❌'}`);
+      }
+    }
     
     // Check for common issues
     console.log(`\n🧪 Common Issues Check:`);
     
     // Check for unreferenced flows
-    const referencedFlows = new Set([story.start.first_flow]);
+    const referencedFlows = new Set(story.flows.length > 0 ? [story.flows[0].id] : []);
     story.flows.forEach(flow => {
-      if (flow.next) {
-        flow.next.forEach(transition => referencedFlows.add(transition.flow_id));
+      // New transitions format
+      if (flow.transitions) {
+        flow.transitions.forEach(transition => referencedFlows.add(transition.to_flow));
       }
+      // Legacy completion_transitions support
       if (flow.completion_transitions) {
         flow.completion_transitions.forEach(transition => referencedFlows.add(transition.to_flow));
       }
@@ -97,13 +102,15 @@ async function validateStory(filePath: string): Promise<void> {
     const missingRefs: string[] = [];
     
     story.flows.forEach(flow => {
-      if (flow.next) {
-        flow.next.forEach(transition => {
-          if (!allFlowIds.has(transition.flow_id)) {
-            missingRefs.push(`${flow.id} -> ${transition.flow_id}`);
+      // New transitions format
+      if (flow.transitions) {
+        flow.transitions.forEach(transition => {
+          if (!allFlowIds.has(transition.to_flow)) {
+            missingRefs.push(`${flow.id} -> ${transition.to_flow} (transition)`);
           }
         });
       }
+      // Legacy completion_transitions support
       if (flow.completion_transitions) {
         flow.completion_transitions.forEach(transition => {
           if (!allFlowIds.has(transition.to_flow)) {

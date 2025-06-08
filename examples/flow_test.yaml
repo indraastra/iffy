@@ -1,0 +1,144 @@
+title: "Flow Test Story"
+author: "Test Author"
+version: "2.0"
+blurb: "A simple narrative to test the flow transition system."
+
+metadata:
+  setting:
+    time: "A timeless moment"
+    place: "A testing environment"
+  tone:
+    overall: "Educational and clear"
+    narrative_voice: "Direct and informative"
+  themes:
+    - "Testing flow mechanics"
+    - "Sequential progression"
+
+characters:
+  - id: "player"
+    name: "Tester"
+    traits: ["curious", "methodical"]
+    voice: "Analytical"
+    description: "Someone testing the flow system"
+
+locations:
+  - id: "test_room"
+    name: "Test Room"
+    connections: []
+    description: "A simple room designed for testing flow transitions."
+    objects:
+      - name: "control panel"
+        description: "A panel with various testing controls"
+
+items:
+  - id: "test_item"
+    name: "Test Item"
+    description: "An item that will be discovered during the test"
+    discoverable_in: "test_room"
+    discovery_objects: ["control panel"]
+
+# Success conditions to test ending triggers
+success_conditions:
+  - id: "test_complete"
+    description: "All flow tests completed successfully"
+    requires: ["flow_1_complete", "flow_2_complete", "flow_3_complete", "item_found"]
+    ending: |
+      **Test Complete!**
+      
+      All flow transitions worked correctly:
+      - Sequential flow progression ✓
+      - Flag-based transitions ✓  
+      - Item discovery transitions ✓
+      
+      The narrative flow system is functioning properly.
+
+flows:
+  - id: "start_flow"
+    name: "Initial Test"
+    type: "narrative"
+    location: "test_room"
+    content: |
+      **Flow Test Story - Beginning**
+      
+      This is the starting flow. You are in a test room designed to validate 
+      the flow transition system.
+      
+      The system should automatically progress to the next flow when you 
+      perform any action.
+    transitions:
+      - requires: ["game_started"]
+        to_flow: "flow_1"
+        description: "Transition immediately when game starts"
+    sets: ["test_begun"]
+
+  - id: "flow_1"
+    name: "First Sequential Flow"
+    type: "narrative"
+    location: "test_room"
+    content: |
+      **Flow 1 - Sequential Progression Test**
+      
+      You have successfully transitioned to Flow 1! This demonstrates that 
+      transitions work correctly.
+      
+      This flow will complete when you take any action, triggering the next 
+      transition.
+    transitions:
+      - requires: ["any_action_taken"]
+        to_flow: "flow_2"
+        description: "Transition when player takes any action"
+    sets: ["flow_1_complete"]
+
+  - id: "flow_2" 
+    name: "Second Sequential Flow"
+    type: "narrative"
+    location: "test_room"
+    content: |
+      **Flow 2 - Flag Requirement Test**
+      
+      Excellent! You've reached Flow 2! This demonstrates that:
+      
+      - Flow transitions work correctly
+      - Flag setting from previous flows functions
+      - Sequential gating is operational
+      
+      Try examining the control panel to discover an item and trigger the next flow.
+    transitions:
+      - requires: ["has_item:test_item"]
+        to_flow: "flow_3"
+        description: "Transition when test item is discovered"
+    sets: ["flow_2_complete"]
+
+  - id: "flow_3"
+    name: "Final Flow"
+    type: "narrative" 
+    location: "test_room"
+    content: |
+      **Flow 3 - Item-Based Transition Test**
+      
+      Perfect! You've reached the final flow by:
+      1. Completing the previous flows in sequence
+      2. Discovering the test item
+      3. Meeting the item-based transition condition
+      
+      This demonstrates that the flow system can handle:
+      - Sequential progression
+      - Flag-based requirements
+      - Item-based transitions
+      - Multiple requirement combinations
+      
+      The test will complete automatically now.
+    sets: ["flow_3_complete", "item_found"]
+
+# LLM guidelines for the test story
+llm_guidelines: |
+  TEST STORY: Simple flow transition testing.
+  
+  ITEM DISCOVERY:
+  When player examines "control panel", let them discover "test_item".
+  
+  FLAG SETTING:
+  Set "game_started" on any action in start_flow.
+  Set "any_action_taken" on any action in flow_1.
+  
+  Keep responses simple and focus on testing flow mechanics.
