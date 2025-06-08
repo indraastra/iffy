@@ -346,7 +346,7 @@ flows:
         sets: ["complete confession"]
 
 start:
-  text: |
+  content: |
     The fluorescent lights hum overhead as you enter the interrogation room. 
     Alex Rivera sits at the metal table, still wearing the same clothes from 
     the security footage - now wrinkled and stained with the weight of the day.

@@ -48,7 +48,7 @@ const mockStoryV2: Story = {
     { id: "start", name: "Start", type: "narrative", content: "test start" }
   ],
   start: {
-    text: "test start",
+    content: "test start",
     location: "kitchen",
     first_flow: "start"
   },

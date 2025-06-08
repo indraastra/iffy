@@ -53,7 +53,7 @@ export class GameEngine {
   getInitialText(): string {
     if (!this.story) return 'No story loaded. Please load a story file to begin.';
     
-    return this.normalizeYamlText(this.story.start.text);
+    return this.normalizeYamlText(this.story.start.content);
   }
 
   /**

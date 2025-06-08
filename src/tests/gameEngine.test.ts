@@ -74,7 +74,7 @@ describe('GameEngine', () => {
         }
       ],
       start: {
-        text: "Test game started!",
+        content: "Test game started!",
         location: "start_room",
         first_flow: "start_flow"
       }

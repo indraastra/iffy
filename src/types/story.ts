@@ -103,9 +103,9 @@ export interface Flow {
 }
 
 export interface StartSection {
-  text: string;
+  content: string;
   location: string;
-  first_flow: string;
+  first_flow?: string;  // Made optional since we might not always need flows
   sets?: string[];
 }
 

@@ -52,7 +52,7 @@ flows:
     content: "Welcome!"
 
 start:
-  text: "Game begins!"
+  content: "Game begins!"
   location: "start_room"
   first_flow: "start_flow"
 `
@@ -137,7 +137,7 @@ flows:
     content: "Test content"
 
 start:
-  text: "Game starts!"
+  content: "Game starts!"
   location: "room1"
   first_flow: "flow1"
 `
@@ -189,7 +189,7 @@ flows:
     content: "Welcome!"
 
 start:
-  text: "Minimal game"
+  content: "Minimal game"
   location: "room1"
   first_flow: "start_flow"
 `

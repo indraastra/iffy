@@ -211,12 +211,12 @@ export class StoryParser {
   }
 
   private static validateStart(start: any): Story['start'] {
-    this.validateRequired(start, ['text', 'location', 'first_flow'], 'start');
+    this.validateRequired(start, ['content', 'location'], 'start');
     
     return {
-      text: start.text,
+      content: start.content,
       location: start.location,
-      first_flow: start.first_flow,
+      first_flow: start.first_flow, // Optional now
       sets: start.sets
     };
   }
@@ -252,7 +252,7 @@ export class StoryParser {
     if (!locationIds.has(story.start.location)) {
       throw new StoryParseError(`start.location references unknown location: ${story.start.location}`);
     }
-    if (!flowIds.has(story.start.first_flow)) {
+    if (story.start.first_flow && !flowIds.has(story.start.first_flow)) {
       throw new StoryParseError(`start.first_flow references unknown flow: ${story.start.first_flow}`);
     }
 

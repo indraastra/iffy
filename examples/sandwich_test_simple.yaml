@@ -88,7 +88,7 @@ flows:
       Welcome to the simple sandwich test!
 
 start:
-  text: |
+  content: |
     You're in a kitchen. Everything you need is on the table.
   location: "kitchen"
   first_flow: "start"

@@ -162,7 +162,7 @@ flows:
       The **kitchen** awaits... but what *TRIALS* lie ahead?
 
 start:
-  text: |
+  content: |
     [!danger] Welcome to... **THE GREAT SANDWICH CRISIS v2**!
     
     Your stomach rumbles ominously. Time to make the most DRAMATIC sandwich in history!

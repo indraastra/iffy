@@ -26,7 +26,7 @@ describe('Text Normalization', () => {
       start: {
         location: "test",
         first_flow: "test_flow",
-        text: "The corner café feels different tonight. Maybe it's the way Jamie keeps avoiding \neye contact, or how they've barely touched their latte. You've been friends for \nyears, but lately something has changed.\n\nThey stir their coffee absently."
+        content: "The corner café feels different tonight. Maybe it's the way Jamie keeps avoiding \neye contact, or how they've barely touched their latte. You've been friends for \nyears, but lately something has changed.\n\nThey stir their coffee absently."
       }
     };
 
@@ -65,7 +65,7 @@ describe('Text Normalization', () => {
       start: {
         location: "test",
         first_flow: "test_flow",
-        text: "Text with   multiple    spaces\nand\tsome\ttabs\nand   mixed   \n   whitespace."
+        content: "Text with   multiple    spaces\nand\tsome\ttabs\nand   mixed   \n   whitespace."
       }
     };
 
@@ -96,7 +96,7 @@ describe('Text Normalization', () => {
       start: {
         location: "test",
         first_flow: "test_flow",
-        text: "First paragraph with\nline breaks.\n\nSecond paragraph with\nmore line breaks.\n\n\nThird paragraph after\nextra spacing."
+        content: "First paragraph with\nline breaks.\n\nSecond paragraph with\nmore line breaks.\n\n\nThird paragraph after\nextra spacing."
       }
     };
 

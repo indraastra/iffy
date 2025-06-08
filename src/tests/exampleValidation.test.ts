@@ -38,8 +38,10 @@ describe('Example Story Validation', () => {
           // Start location should exist
           expect(story.locations.find(l => l.id === story.start.location)).toBeDefined();
           
-          // Start flow should exist
-          expect(story.flows.find(f => f.id === story.start.first_flow)).toBeDefined();
+          // Start flow should exist if specified
+          if (story.start.first_flow) {
+            expect(story.flows.find(f => f.id === story.start.first_flow)).toBeDefined();
+          }
           
         }).not.toThrow();
       });
