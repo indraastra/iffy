@@ -48,7 +48,7 @@ export class StoryParser {
       endings: this.validateEndings(data.endings || []),
       // Format v2 features
       success_conditions: this.validateSuccessConditions(data.success_conditions || []),
-      llm_story_guidelines: data.llm_story_guidelines
+      llm_guidelines: data.llm_guidelines
     };
 
     // Validate reference integrity

@@ -79,8 +79,8 @@ ${formatKeyValue('FLOWS', story.flows?.map((flow: any) => `${flow.name}${flow.en
 CURRENT FLOW CONTEXT:
 ${this.getCurrentFlowContext(story, gameState)}
 
-${story.llm_story_guidelines ? `LLM STORY GUIDELINES:
-${story.llm_story_guidelines}` : ''}
+${story.llm_guidelines ? `LLM STORY GUIDELINES:
+${story.llm_guidelines}` : ''}
 
 CONVERSATION MEMORY:
 ${this.getConversationContext(gameState)}

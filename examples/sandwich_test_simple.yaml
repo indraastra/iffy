@@ -94,7 +94,7 @@ start:
   first_flow: "start"
 
 # Format v2: LLM story guidelines
-llm_story_guidelines: |
+llm_guidelines: |
   STORY GOAL: Player should find ingredients on the table, make a sandwich, and eat it.
   
   SANDWICH COMPOSITION TRACKING:

@@ -358,7 +358,7 @@ start:
   first_flow: "why_did_you_do_it"
 
 # Format v2: LLM story guidelines for intelligent behavior
-llm_story_guidelines: |
+llm_guidelines: |
   STORY TONE: This is a serious crime drama exploring themes of desperation, parental love, and moral complexity. Maintain a respectful, realistic tone throughout.
   
   CHARACTER VOICES:
