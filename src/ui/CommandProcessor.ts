@@ -119,4 +119,12 @@ export class CommandProcessor {
   focus(): void {
     this.commandInput.focus();
   }
+
+  /**
+   * Reset UI state when loading a new game
+   */
+  resetUIState(): void {
+    this.commandInput.placeholder = "Enter your command...";
+    this.commandInput.disabled = false;
+  }
 }

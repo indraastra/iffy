@@ -9,6 +9,7 @@ export class AnthropicService {
   private client: Anthropic | null = null;
   private apiKey: string | null = null;
   private debugCallback?: (prompt: string, response: string) => void;
+  private activeRequestController: AbortController | null = null;
 
   constructor() {
     this.loadApiKey();
@@ -86,12 +87,32 @@ export class AnthropicService {
   }
 
   /**
+   * Cancel any ongoing requests
+   */
+  public cancelActiveRequests(): void {
+    if (this.activeRequestController) {
+      this.activeRequestController.abort();
+      this.activeRequestController = null;
+    }
+  }
+
+  /**
    * Send a prompt to the LLM and get the raw response text.
    * This method is agnostic to prompt format and response parsing.
    */
   public async sendPrompt(prompt: string): Promise<string> {
     if (!this.client) {
       throw new Error('Anthropic API not configured. Please set your API key in settings.');
+    }
+
+    // Cancel any existing request
+    this.cancelActiveRequests();
+    
+    // Create new abort controller for this request (if available)
+    let signal;
+    if (typeof AbortController !== 'undefined') {
+      this.activeRequestController = new AbortController();
+      signal = this.activeRequestController.signal;
     }
 
     try {
@@ -111,7 +132,7 @@ export class AnthropicService {
         ],
         // Use JSON mode for more reliable parsing
         system: "You must respond with valid JSON only. Do not include any text before or after the JSON object."
-      });
+      }, signal ? { signal } : {});
 
       const content = response.content[0];
       if (content.type !== 'text') {
@@ -125,6 +146,14 @@ export class AnthropicService {
 
       return content.text;
     } catch (error) {
+      // Clear the controller since request completed (either successfully or with error)
+      this.activeRequestController = null;
+      
+      // Handle aborted requests gracefully
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request was cancelled');
+      }
+      
       console.error('Anthropic API error:', error);
       
       let errorMessage = 'Sorry, I\'m having trouble processing that command.';
@@ -142,6 +171,9 @@ export class AnthropicService {
       }
       
       throw new Error(errorMessage);
+    } finally {
+      // Clear the controller when request completes successfully
+      this.activeRequestController = null;
     }
   }
 

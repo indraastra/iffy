@@ -12,8 +12,7 @@ class IffyApp {
   private messageDisplay: MessageDisplay;
   private loadMenuManager: LoadMenuManager;
   private settingsManager: SettingsManager;
-  // Note: CommandProcessor and GameManager are initialized in constructor but don't need explicit references
-  // since they set up their own event listeners
+  private commandProcessor: CommandProcessor;
   private commandInput: HTMLInputElement;
   
   constructor() {
@@ -26,12 +25,15 @@ class IffyApp {
     
     // Initialize UI managers
     this.messageDisplay = new MessageDisplay(storyOutput);
+    this.commandProcessor = new CommandProcessor(this.gameEngine, this.messageDisplay, this.commandInput);
+    new GameManager(this.gameEngine, this.messageDisplay); // GameManager sets up its own event listeners
     this.loadMenuManager = new LoadMenuManager(this.gameEngine, this.messageDisplay, this.commandInput);
     this.settingsManager = new SettingsManager(this.gameEngine, this.messageDisplay);
     
-    // Initialize CommandProcessor and GameManager (they set up their own event listeners)
-    new CommandProcessor(this.gameEngine, this.messageDisplay, this.commandInput);
-    new GameManager(this.gameEngine, this.messageDisplay);
+    // Set up UI reset callback so GameEngine can reset UI state when needed
+    this.gameEngine.setUIResetCallback(() => {
+      this.commandProcessor.resetUIState();
+    });
     
     this.initializeApp();
   }

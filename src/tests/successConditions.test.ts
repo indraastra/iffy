@@ -80,6 +80,7 @@ class MockAnthropicService {
   isConfigured() { return false; } // Force fallback to basic commands
   async processCommand() { throw new Error("Should not be called in tests"); }
   setDebugCallback() {}
+  cancelActiveRequests() {} // Add missing method
 }
 
 describe('Success Conditions Testing', () => {
