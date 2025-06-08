@@ -9,9 +9,9 @@ import { MessageDisplay } from './MessageDisplay';
 export class LoadMenuManager {
   private gameEngine: GameEngine;
   private messageDisplay: MessageDisplay;
-  private commandInput: HTMLInputElement;
+  private commandInput: HTMLTextAreaElement;
 
-  constructor(gameEngine: GameEngine, messageDisplay: MessageDisplay, commandInput: HTMLInputElement) {
+  constructor(gameEngine: GameEngine, messageDisplay: MessageDisplay, commandInput: HTMLTextAreaElement) {
     this.gameEngine = gameEngine;
     this.messageDisplay = messageDisplay;
     this.commandInput = commandInput;
