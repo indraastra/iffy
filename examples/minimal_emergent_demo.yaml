@@ -1,0 +1,92 @@
+title: "The Minimal Room"
+author: "Iffy Engine Team"
+version: "2.0"
+description: "A demonstration of minimal authoring with maximum emergent potential"
+
+metadata:
+  setting:
+    time: "present day"
+    place: "anywhere"
+  tone:
+    overall: "neutral"
+    narrative_voice: "second person"
+  themes: ["exploration", "creativity", "emergence"]
+  ui:
+    colors:
+      primary: "#2c3e50"
+      background: "#ecf0f1"
+      text: "#2c3e50"
+  emergent_content:
+    enabled: true
+    item_generation:
+      max_value: 50
+      forbidden_categories: ["weapons", "explosives"]
+      style_guide: "Items should feel mundane and everyday"
+    character_development:
+      allow_npc_memory: true
+      relationship_tracking: true
+    world_modification:
+      allow_environment_changes: true
+      allow_new_locations: false
+
+characters:
+  - id: "person"
+    name: "Someone"
+    traits: ["helpful", "mysterious"]
+    voice: "casual and friendly"
+    description: "A person who seems to know more than they let on"
+
+locations:
+  - id: "room"
+    name: "The Room"
+    description: "A simple room. There might be more here than meets the eye."
+    connections: []
+    objects: []
+
+items: []
+
+flows: []
+
+start:
+  content: "You find yourself in a simple room. Someone else is here with you, looking around with the same curiosity you feel. What would you like to do?"
+  location: "room"
+  sets: []
+
+success_conditions:
+  - id: "creative_exploration"
+    description: "Discovered something through creative interaction"
+    requires: ["found_something_interesting"]
+    ending: "Through your creativity and curiosity, you've discovered that this simple room holds infinite possibilities. Sometimes the most minimal beginnings lead to the richest experiences."
+
+endings: []
+
+llm_guidelines: |
+  This story is designed to demonstrate emergent content generation with minimal authoring.
+  
+  CORE PRINCIPLE: Say "yes, and..." to player creativity within reasonable bounds.
+  
+  EMERGENT CONTENT OPPORTUNITIES:
+  - If player asks someone for something → generate appropriate everyday items
+  - If player examines something not explicitly defined → describe interesting details
+  - If player tries to create/find something → consider generating it if reasonable
+  - If player interacts socially → develop "Someone" as a character with emergent personality
+  
+  WORLD CONSISTENCY:
+  - Modern day, ordinary setting
+  - No magic, supernatural, or high-tech elements
+  - Items should be everyday objects (coins, pens, books, food, etc.)
+  - Keep interactions grounded and believable
+  
+  BOUNDARIES:
+  - No dangerous items (weapons, explosives, etc.)
+  - No items worth more than $50
+  - Stay within the single room unless player explicitly creates reasons to expand
+  - Maintain friendly, helpful tone
+  
+  EXAMPLES OF GOOD EMERGENT CONTENT:
+  - Player: "Do you have a pen?" → Generate a pen item
+  - Player: "Look under the cushions" → Find loose change or small items
+  - Player: "What's your name?" → Someone develops a name and backstory
+  - Player: "Is there a book here?" → Generate an interesting book
+  
+  Remember: The goal is to make the player feel heard and to reward creativity while maintaining a consistent, believable world.
