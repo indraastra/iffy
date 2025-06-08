@@ -619,6 +619,246 @@ sequenceDiagram
 - [ ] **Style**: Does the code follow project conventions?
 - [ ] **Breaking Changes**: Are breaking changes properly documented?
 
+## Save/Load System Best Practices
+
+### Architecture Principles
+
+The save/load system is designed with several key principles:
+
+```mermaid
+graph TB
+    subgraph "Core Principles"
+        Seamless[Seamless UX<br/>No interruption to flow]
+        Complete[Complete State<br/>Game + Memory + UI]
+        Resilient[Resilient Storage<br/>Multiple backup strategies]
+        Fast[Fast Restoration<br/>Minimal loading time]
+    end
+    
+    subgraph "Implementation Strategy"
+        AutoSave[Auto-save<br/>Every 2 minutes]
+        LocalStorage[LocalStorage<br/>Quick access]
+        Downloads[File Downloads<br/>Permanent backups]
+        Recovery[Recovery System<br/>Session restoration]
+    end
+    
+    subgraph "User Experience"
+        Context[Conversation History<br/>Full context restoration]
+        Status[Clear Status<br/>Loading indicators]
+        Choice[User Choice<br/>Accept/decline recovery]
+        Continuation[Smooth Continuation<br/>Pick up where left off]
+    end
+    
+    Seamless --> AutoSave
+    Complete --> LocalStorage
+    Resilient --> Downloads
+    Fast --> Recovery
+    
+    AutoSave --> Context
+    LocalStorage --> Status
+    Downloads --> Choice
+    Recovery --> Continuation
+```
+
+### Save Data Structure
+
+```typescript
+// Complete save data format
+interface SaveData {
+  storyTitle: string;
+  timestamp: string;
+  gameState: {
+    currentLocation: string;
+    inventory: string[];
+    knowledge: string[];  // Converted from Set for JSON serialization
+    gameEnded: boolean;
+    endingId?: string;
+    actionHistory: PlayerAction[];
+  };
+  memoryState: {
+    recentInteractions: InteractionPair[];
+    significantMemories: SignificantMemory[];
+    interactionsSinceLastExtraction: number;
+  };
+}
+```
+
+### Testing Save/Load Functionality
+
+```typescript
+// Example test patterns for save/load
+describe('Save/Load System', () => {
+  it('should preserve complete game state', () => {
+    // Setup game state
+    gameEngine.processAction({ type: 'command', input: 'take coffee' });
+    
+    // Save current state
+    const saveData = gameEngine.saveGame();
+    
+    // Reset and load
+    gameEngine.resetForNewGame();
+    const result = gameEngine.loadGame(saveData);
+    
+    expect(result.success).toBe(true);
+    expect(gameEngine.gameState.inventory).toContain('coffee');
+  });
+  
+  it('should restore conversation history', () => {
+    // Mock conversation history
+    const interactions = [
+      { playerInput: 'test', llmResponse: 'response', ... }
+    ];
+    
+    messageDisplay.restoreConversationHistory(interactions);
+    
+    // Verify DOM contains restored messages
+    expect(storyOutput.textContent).toContain('test');
+    expect(storyOutput.textContent).toContain('response');
+  });
+});
+```
+
+### Error Handling Patterns
+
+```typescript
+// Graceful degradation for save/load errors
+class SaveManager {
+  saveGame(): void {
+    try {
+      const saveData = this.gameEngine.saveGame();
+      this.saveToLocalStorage(saveData);
+      this.downloadSaveFile(saveData); // Backup strategy
+    } catch (error) {
+      if (error.name === 'QuotaExceededError') {
+        this.messageDisplay.addMessage(
+          'Storage full. Please delete old saves.',
+          'error'
+        );
+      } else {
+        this.messageDisplay.addMessage(
+          'Save failed. Game progress may be lost.',
+          'error'
+        );
+      }
+      console.error('Save failed:', error);
+    }
+  }
+  
+  loadGame(storyTitle: string): boolean {
+    try {
+      const saveData = localStorage.getItem(this.getSaveKey(storyTitle));
+      if (!saveData) {
+        this.messageDisplay.addMessage(
+          `No saved game found for: ${storyTitle}`,
+          'error'
+        );
+        return false;
+      }
+      
+      const result = this.gameEngine.loadGame(saveData);
+      if (!result.success) {
+        this.messageDisplay.addMessage(
+          result.error || 'Failed to load game.',
+          'error'
+        );
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      this.messageDisplay.addMessage(
+        'Save file may be corrupted.',
+        'error'
+      );
+      return false;
+    }
+  }
+}
+```
+
+### Performance Considerations
+
+```mermaid
+flowchart TD
+    subgraph "Save Performance"
+        SaveTrigger[Save Triggered] --> CheckState{State Changed?}
+        CheckState -->|No| SkipSave[Skip Save]
+        CheckState -->|Yes| SerializeState[Serialize State]
+        SerializeState --> CompressData[Compress Data]
+        CompressData --> StoreLocal[Store in LocalStorage]
+        
+        SaveTrigger --> AsyncDownload[Async Download Creation]
+        AsyncDownload --> BackgroundSave[Background Save]
+    end
+    
+    subgraph "Load Performance"
+        LoadTrigger[Load Triggered] --> ReadLocal[Read from LocalStorage]
+        ReadLocal --> ParseJSON[Parse JSON]
+        ParseJSON --> ValidateData[Validate Data Structure]
+        ValidateData --> RestoreState[Restore Game State]
+        RestoreState --> RestoreUI[Restore UI State]
+        RestoreUI --> RestoreHistory[Restore Conversation]
+    end
+    
+    subgraph "Optimization Strategies"
+        BatchUpdates[Batch UI Updates]
+        DeferredRestore[Deferred History Restore]
+        ProgressiveLoading[Progressive Loading]
+        CacheValidation[Cache Validation Results]
+    end
+    
+    RestoreState --> BatchUpdates
+    RestoreUI --> DeferredRestore
+    RestoreHistory --> ProgressiveLoading
+    ParseJSON --> CacheValidation
+```
+
+### Development Guidelines
+
+**When Adding New Save Data:**
+1. **Update interfaces** in `types/story.ts`
+2. **Extend saveGame()** method in GameEngine
+3. **Extend loadGame()** method with validation
+4. **Add migration logic** for backward compatibility
+5. **Update tests** to cover new data
+
+**When Modifying UI State:**
+1. **Consider save/load impact** - does this state need restoration?
+2. **Update restoration callbacks** if UI state affects player experience
+3. **Test with saved games** from previous versions
+4. **Document breaking changes** in save format
+
+**Memory Management:**
+- Auto-save runs every 2 minutes - avoid expensive operations in save path
+- Conversation history restoration happens on UI thread - keep it fast
+- Use `InteractionPair[]` from MemoryManager instead of duplicating storage
+- Clean up old saves periodically to avoid storage bloat
+
+### Debugging Save/Load Issues
+
+```typescript
+// Debug utilities for save/load
+class SaveManager {
+  debugSaveData(): void {
+    const saveData = this.gameEngine.saveGame();
+    console.group('💾 Save Data Debug');
+    console.log('Game State:', saveData.gameState);
+    console.log('Memory State:', saveData.memoryState);
+    console.log('Size:', JSON.stringify(saveData).length, 'bytes');
+    console.groupEnd();
+  }
+  
+  validateSaveCompatibility(saveData: string): boolean {
+    try {
+      const data = JSON.parse(saveData);
+      const requiredFields = ['storyTitle', 'gameState', 'memoryState'];
+      return requiredFields.every(field => field in data);
+    } catch {
+      return false;
+    }
+  }
+}
+```
+
 ## Troubleshooting
 
 ### Common Issues
