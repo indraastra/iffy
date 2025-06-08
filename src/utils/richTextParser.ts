@@ -11,6 +11,11 @@ export interface ParsedContent {
   components: FormattedComponent[];
 }
 
+export interface RenderContext {
+  type: 'narrative' | 'inventory' | 'examine';
+  getItem?: (itemId: string) => { name: string; display_name?: string } | undefined;
+}
+
 export class RichTextParser {
   private componentIdCounter = 0;
 
@@ -18,7 +23,7 @@ export class RichTextParser {
     return `component_${++this.componentIdCounter}`;
   }
 
-  public parseContent(content: string): ParsedContent {
+  public parseContent(content: string, context?: RenderContext): ParsedContent {
     let parsed = content;
     const components: FormattedComponent[] = [];
 
@@ -59,7 +64,22 @@ export class RichTextParser {
       {
         regex: /\[item:([^\]]+)\]/g,
         type: 'Item',
-        extractContent: (match: RegExpMatchArray) => match[1]
+        extractContent: (match: RegExpMatchArray) => {
+          const itemId = match[1];
+          if (context?.getItem) {
+            const item = context.getItem(itemId);
+            if (item) {
+              // Use display_name for narrative context, name for others
+              if (context.type === 'narrative' && item.display_name) {
+                return item.display_name;
+              }
+              return item.name;
+            }
+          }
+          // Fallback to the raw ID if no context or item not found
+          return itemId;
+        },
+        extractProps: (match: RegExpMatchArray) => ({ itemId: match[1] })
       }
     ];
 
@@ -89,7 +109,7 @@ export class RichTextParser {
     return { text: parsed, components };
   }
 
-  public renderToDOM(parsedContent: ParsedContent): DocumentFragment {
+  public renderToDOM(parsedContent: ParsedContent, context?: RenderContext): DocumentFragment {
     const { text, components } = parsedContent;
     const fragment = document.createDocumentFragment();
     
@@ -187,8 +207,10 @@ export class RichTextParser {
         element = document.createElement('span');
         element.className = 'rich-item clickable-element';
         element.textContent = component.content;
-        element.setAttribute('data-clickable-text', component.content);
-        element.setAttribute('title', `Click to append "${component.content}" to your command`);
+        // Use the original itemId for clickable text, but display the contextual name
+        const clickableText = component.props.itemId || component.content;
+        element.setAttribute('data-clickable-text', clickableText);
+        element.setAttribute('title', `Click to append "${clickableText}" to your command`);
         element.style.cursor = 'pointer';
         break;
         
@@ -239,9 +261,9 @@ export class RichTextParser {
   }
 
   // Convenience method that parses and renders in one step
-  public renderContent(content: string): DocumentFragment {
-    const parsed = this.parseContent(content);
-    return this.renderToDOM(parsed);
+  public renderContent(content: string, context?: RenderContext): DocumentFragment {
+    const parsed = this.parseContent(content, context);
+    return this.renderToDOM(parsed, context);
   }
 }
 

@@ -44,6 +44,7 @@ export interface Item {
   id: string;
   name: string;
   description: string;
+  display_name?: string; // Contextual name for narrative text (e.g., "coffee" instead of "Jamie's Coffee")
   location?: string; // Starting location (if item starts visible/accessible)
   hidden?: boolean; // If true, item must be discovered even if location is specified
   discoverable_in?: string; // Alternative: location where this can be found through exploration

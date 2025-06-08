@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { RichTextParser } from '../utils/richTextParser'
+import { RichTextParser, RenderContext } from '../utils/richTextParser'
 
 describe('RichTextParser', () => {
   let parser: RichTextParser
@@ -352,6 +352,188 @@ As your eyes scan the shadowy depths, you spot it - [item:The Bread of Betrayal]
       expect(segments[0]).toBe('text before ')
       expect(segments[1]).toBe('comp1') // captured component ID  
       expect(segments[2]).toBe('') // empty string after component
+    })
+  })
+
+  describe('Display Name Context', () => {
+    // Mock item data for testing
+    const mockItems = {
+      'unfinished_coffee': { name: "Jamie's Coffee", display_name: 'coffee' },
+      'phone': { name: "Jamie's Phone", display_name: 'phone' },
+      'golden_key': { name: 'Golden Key of Power' }, // No display_name
+      'unknown_item': undefined // Item not found
+    }
+
+    const mockGetItem = (itemId: string) => mockItems[itemId as keyof typeof mockItems]
+
+    it('should use display_name for narrative context', () => {
+      const narrativeContext: RenderContext = {
+        type: 'narrative',
+        getItem: mockGetItem
+      }
+
+      const result = parser.renderContent(
+        'Jamie looks down at their [item:unfinished_coffee].',
+        narrativeContext
+      )
+      const html = fragmentToHTML(result)
+
+      // Should display "coffee" not "Jamie's Coffee"
+      expect(html).toContain('coffee')
+      expect(html).not.toContain("Jamie's Coffee")
+      
+      // Should still be clickable with original itemId
+      expect(html).toContain('data-clickable-text="unfinished_coffee"')
+      expect(html).toContain('class="rich-item clickable-element"')
+    })
+
+    it('should use name for inventory context', () => {
+      const inventoryContext: RenderContext = {
+        type: 'inventory',
+        getItem: mockGetItem
+      }
+
+      const result = parser.renderContent(
+        'You have [item:unfinished_coffee].',
+        inventoryContext
+      )
+      const html = fragmentToHTML(result)
+
+      // Should display full name "Jamie's Coffee" in inventory
+      expect(html).toContain("Jamie's Coffee")
+      expect(html).not.toContain('coffee">') // Avoid false positive
+      
+      // Should still be clickable with original itemId
+      expect(html).toContain('data-clickable-text="unfinished_coffee"')
+    })
+
+    it('should use name for examine context', () => {
+      const examineContext: RenderContext = {
+        type: 'examine',
+        getItem: mockGetItem
+      }
+
+      const result = parser.renderContent(
+        'This is [item:unfinished_coffee].',
+        examineContext
+      )
+      const html = fragmentToHTML(result)
+
+      // Should display full name "Jamie's Coffee" when examining
+      expect(html).toContain("Jamie's Coffee")
+      expect(html).not.toContain('coffee">') // Avoid false positive
+    })
+
+    it('should fallback to name when no display_name is provided', () => {
+      const narrativeContext: RenderContext = {
+        type: 'narrative',
+        getItem: mockGetItem
+      }
+
+      const result = parser.renderContent(
+        'You found [item:golden_key].',
+        narrativeContext
+      )
+      const html = fragmentToHTML(result)
+
+      // Should display name since no display_name is available
+      expect(html).toContain('Golden Key of Power')
+      expect(html).toContain('data-clickable-text="golden_key"')
+    })
+
+    it('should fallback to itemId when item not found', () => {
+      const narrativeContext: RenderContext = {
+        type: 'narrative',
+        getItem: mockGetItem
+      }
+
+      const result = parser.renderContent(
+        'Looking for [item:unknown_item].',
+        narrativeContext
+      )
+      const html = fragmentToHTML(result)
+
+      // Should display and use the raw itemId when item not found
+      expect(html).toContain('unknown_item')
+      expect(html).toContain('data-clickable-text="unknown_item"')
+    })
+
+    it('should fallback to itemId when no context provided', () => {
+      // No context provided - should use raw itemId
+      const result = parser.renderContent(
+        'Jamie looks at their [item:unfinished_coffee].'
+      )
+      const html = fragmentToHTML(result)
+
+      // Should display and use the raw itemId without context
+      expect(html).toContain('unfinished_coffee')
+      expect(html).toContain('data-clickable-text="unfinished_coffee"')
+    })
+
+    it('should handle multiple items with different contexts', () => {
+      const narrativeContext: RenderContext = {
+        type: 'narrative',
+        getItem: mockGetItem
+      }
+
+      const result = parser.renderContent(
+        'Jamie fidgets with their [item:phone] while staring at their [item:unfinished_coffee].',
+        narrativeContext
+      )
+      const html = fragmentToHTML(result)
+
+      // Both items should use display_name in narrative context
+      expect(html).toContain('phone')
+      expect(html).toContain('coffee')
+      expect(html).not.toContain("Jamie's Phone")
+      expect(html).not.toContain("Jamie's Coffee")
+      
+      // Both should have correct clickable data
+      expect(html).toContain('data-clickable-text="phone"')
+      expect(html).toContain('data-clickable-text="unfinished_coffee"')
+    })
+
+    it('should handle mixed scenarios with context and no context', () => {
+      const narrativeContext: RenderContext = {
+        type: 'narrative',
+        getItem: mockGetItem
+      }
+
+      const result = parser.renderContent(
+        'The [item:golden_key] sits next to [item:unfinished_coffee].',
+        narrativeContext
+      )
+      const html = fragmentToHTML(result)
+
+      // golden_key has no display_name, should use name
+      expect(html).toContain('Golden Key of Power')
+      // unfinished_coffee has display_name, should use it
+      expect(html).toContain('coffee')
+      expect(html).not.toContain("Jamie's Coffee")
+    })
+
+    it('should work with parseContent and renderToDOM separately', () => {
+      const narrativeContext: RenderContext = {
+        type: 'narrative',
+        getItem: mockGetItem
+      }
+
+      const parsed = parser.parseContent(
+        'Jamie stirs their [item:unfinished_coffee].',
+        narrativeContext
+      )
+      
+      // Check parsed content has correct display name
+      expect(parsed.components).toHaveLength(1)
+      expect(parsed.components[0].type).toBe('Item')
+      expect(parsed.components[0].content).toBe('coffee') // display_name used
+      expect(parsed.components[0].props.itemId).toBe('unfinished_coffee') // original ID preserved
+
+      const fragment = parser.renderToDOM(parsed, narrativeContext)
+      const html = fragmentToHTML(fragment)
+
+      expect(html).toContain('coffee')
+      expect(html).toContain('data-clickable-text="unfinished_coffee"')
     })
   })
 })
