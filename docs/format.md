@@ -15,7 +15,6 @@ metadata: Object
 characters: Array
 locations: Array
 items: Array
-knowledge: Array
 flows: Array
 ```
 
@@ -119,16 +118,6 @@ items:
   aliases: ["key", "brass key"]
 ```
 
-### Knowledge States
-
-```yaml
-knowledge:
-  - id: "knowledge_id"
-    description: "What the player has learned"
-    requires:
-      - "prerequisite_knowledge_id"
-      - "has_item:item_id"
-```
 
 ### Flow System
 
@@ -144,10 +133,10 @@ flows:
     requirements:
       - "previous_flow_id"
       - "has_item:key"
-      - "knows:secret_knowledge"
+      - "learned_secret"
     sets:
       - "flag_name"
-      - "knows:new_knowledge"
+      - "gained_new_knowledge"
     content: |
       The narrative content for this flow.
       Can be multiple paragraphs.
@@ -171,7 +160,7 @@ flows:
       - "player"
     location: "location_id"  # Optional
     requirements:
-      - "knows:prerequisite"
+      - "learned_prerequisite"
     exchanges:
       - speaker: "character_id"
         text: "What they say"
@@ -230,9 +219,8 @@ flows:
 
 ### Basic Conditions
 - Item possession: `has_item:item_id`
-- Knowledge state: `knows:knowledge_id`  
 - Location: `at_location:location_id`
-- Flag: `flag_name`
+- Flag: `flag_name` (natural language supported)
 - Beat completion: `completed:beat_id`
 
 ### Operators
@@ -241,10 +229,10 @@ flows:
   ```yaml
   requirements:
     - - "has_item:key"
-      - "knows:lockpick_skill"
+      - "learned_lockpicking"
     - "has_item:master_key"
   ```
-  (This means: (has key AND knows lockpicking) OR has master key)
+  (This means: (has key AND learned lockpicking) OR has master key)
 
 ## Example Story Structure
 
@@ -267,10 +255,6 @@ locations:
 items:
   - id: "brass_key"
     # ... item details ...
-
-knowledge:
-  - id: "door_locked"
-    # ... knowledge details ...
 
 flows:
   - id: "introduction"

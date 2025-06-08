@@ -31,7 +31,7 @@ export class StoryParser {
     this.validateRequired(data, ['title', 'author', 'version'], 'root');
     
     // Validate required sections
-    this.validateRequired(data, ['metadata', 'characters', 'locations', 'flows', 'start'], 'root');
+    this.validateRequired(data, ['metadata', 'characters', 'locations', 'flows'], 'root');
 
     // Transform and validate each section
     const story: Story = {
@@ -43,9 +43,7 @@ export class StoryParser {
       characters: this.validateCharacters(data.characters || []),
       locations: this.validateLocations(data.locations || []),
       items: this.validateItems(data.items || []),
-      knowledge: this.validateKnowledge(data.knowledge || []),
       flows: this.validateFlows(data.flows || []),
-      start: this.validateStart(data.start),
       endings: this.validateEndings(data.endings || []),
       // Format v2 features
       success_conditions: this.validateSuccessConditions(data.success_conditions || []),
@@ -159,25 +157,6 @@ export class StoryParser {
     });
   }
 
-  private static validateKnowledge(knowledge: any[]): Story['knowledge'] {
-    if (!Array.isArray(knowledge)) {
-      throw new StoryParseError('knowledge must be an array');
-    }
-
-    return knowledge.map((know, index) => {
-      this.validateRequired(know, ['id', 'description', 'requires'], `knowledge[${index}]`);
-      
-      if (!Array.isArray(know.requires)) {
-        throw new StoryParseError(`knowledge[${index}].requires must be an array`);
-      }
-
-      return {
-        id: know.id,
-        description: know.description,
-        requires: know.requires
-      };
-    });
-  }
 
   private static validateFlows(flows: any[]): Story['flows'] {
     if (!Array.isArray(flows)) {
@@ -212,16 +191,6 @@ export class StoryParser {
     });
   }
 
-  private static validateStart(start: any): Story['start'] {
-    this.validateRequired(start, ['content', 'location'], 'start');
-    
-    return {
-      content: start.content,
-      location: start.location,
-      first_flow: start.first_flow, // Optional now
-      sets: start.sets
-    };
-  }
 
   private static validateEndings(endings: any[]): Story['endings'] {
     if (!Array.isArray(endings)) {
@@ -250,12 +219,9 @@ export class StoryParser {
     const locationIds = new Set(story.locations.map(l => l.id));
     const flowIds = new Set(story.flows.map(f => f.id));
 
-    // Validate start section references
-    if (!locationIds.has(story.start.location)) {
-      throw new StoryParseError(`start.location references unknown location: ${story.start.location}`);
-    }
-    if (story.start.first_flow && !flowIds.has(story.start.first_flow)) {
-      throw new StoryParseError(`start.first_flow references unknown flow: ${story.start.first_flow}`);
+    // Validate that at least one flow exists (since first flow is now the starting point)
+    if (story.flows.length === 0) {
+      throw new StoryParseError('Story must have at least one flow');
     }
 
     // Validate location connections
@@ -309,7 +275,7 @@ export class StoryParser {
     }
 
     return successConditions.map((condition, index) => {
-      this.validateRequired(condition, ['id', 'description', 'requires', 'ending'], `success_condition[${index}]`);
+      this.validateRequired(condition, ['id', 'description', 'requires'], `success_condition[${index}]`);
       
       if (!Array.isArray(condition.requires)) {
         throw new StoryParseError(`success_condition[${index}].requires must be an array`);
@@ -319,7 +285,7 @@ export class StoryParser {
         id: condition.id,
         description: condition.description,
         requires: condition.requires,
-        ending: condition.ending
+        ...(condition.ending && { ending: condition.ending })
       };
     });
   }

@@ -43,7 +43,6 @@ const mockStoryV2: Story = {
       description: "unknown condiment"
     }
   ],
-  knowledge: [],
   flows: [
     { id: "start", name: "Start", type: "narrative", content: "test start" }
   ],
@@ -95,15 +94,15 @@ describe('Success Conditions Testing', () => {
   describe('Perfect Ending Reachability', () => {
     it('should reach perfect ending when player has toasted bread and cheese', () => {
       // Simulate making and eating a sandwich with toasted bread and cheese
-      gameEngine.addKnowledge('sandwich has toasted bread');
-      gameEngine.addKnowledge('sandwich has cheese');
-      gameEngine.addKnowledge('player has eaten sandwich');
+      gameEngine.setFlag('sandwich has toasted bread');
+      gameEngine.setFlag('sandwich has cheese');
+      gameEngine.setFlag('player has eaten sandwich');
       
       // Check that the knowledge is set
       const gameState = gameEngine.getGameState();
-      expect(gameState.knowledge.has('sandwich has toasted bread')).toBe(true);
-      expect(gameState.knowledge.has('sandwich has cheese')).toBe(true);
-      expect(gameState.knowledge.has('player has eaten sandwich')).toBe(true);
+      expect(gameState.flags.has('sandwich has toasted bread')).toBe(true);
+      expect(gameState.flags.has('sandwich has cheese')).toBe(true);
+      expect(gameState.flags.has('player has eaten sandwich')).toBe(true);
       
       // Manually check success condition logic
       const successCondition = mockStoryV2.success_conditions?.find(sc => sc.id === 'perfect_ending');
@@ -111,7 +110,7 @@ describe('Success Conditions Testing', () => {
       
       if (successCondition) {
         const requirementsMet = successCondition.requires.every(req => 
-          gameState.knowledge.has(req)
+          gameState.flags.has(req)
         );
         expect(requirementsMet).toBe(true);
       }
@@ -119,21 +118,21 @@ describe('Success Conditions Testing', () => {
 
     it('should NOT reach perfect ending with only bread (not toasted)', () => {
       // Simulate making and eating sandwich with regular bread instead of toasted
-      gameEngine.addKnowledge('sandwich has bread'); // Regular bread, not toasted!
-      gameEngine.addKnowledge('sandwich has cheese');
-      gameEngine.addKnowledge('player has eaten sandwich');
+      gameEngine.setFlag('sandwich has bread'); // Regular bread, not toasted!
+      gameEngine.setFlag('sandwich has cheese');
+      gameEngine.setFlag('player has eaten sandwich');
       
       const gameState = gameEngine.getGameState();
-      expect(gameState.knowledge.has('sandwich has bread')).toBe(true);
-      expect(gameState.knowledge.has('sandwich has cheese')).toBe(true);
-      expect(gameState.knowledge.has('player has eaten sandwich')).toBe(true);
-      expect(gameState.knowledge.has('sandwich has toasted bread')).toBe(false);
+      expect(gameState.flags.has('sandwich has bread')).toBe(true);
+      expect(gameState.flags.has('sandwich has cheese')).toBe(true);
+      expect(gameState.flags.has('player has eaten sandwich')).toBe(true);
+      expect(gameState.flags.has('sandwich has toasted bread')).toBe(false);
       
       // Check that perfect ending requirements are NOT met
       const successCondition = mockStoryV2.success_conditions?.find(sc => sc.id === 'perfect_ending');
       if (successCondition) {
         const requirementsMet = successCondition.requires.every(req => 
-          gameState.knowledge.has(req)
+          gameState.flags.has(req)
         );
         expect(requirementsMet).toBe(false); // Should fail because no toasted bread
       }
@@ -143,39 +142,39 @@ describe('Success Conditions Testing', () => {
   describe('Decent Ending Reachability', () => {
     it('should reach decent ending with bread and cheese', () => {
       // Simulate making and eating sandwich with regular bread and cheese
-      gameEngine.addKnowledge('sandwich has bread');
-      gameEngine.addKnowledge('sandwich has cheese');
-      gameEngine.addKnowledge('player has eaten sandwich');
+      gameEngine.setFlag('sandwich has bread');
+      gameEngine.setFlag('sandwich has cheese');
+      gameEngine.setFlag('player has eaten sandwich');
       
       const gameState = gameEngine.getGameState();
-      expect(gameState.knowledge.has('sandwich has bread')).toBe(true);
-      expect(gameState.knowledge.has('sandwich has cheese')).toBe(true);
-      expect(gameState.knowledge.has('player has eaten sandwich')).toBe(true);
+      expect(gameState.flags.has('sandwich has bread')).toBe(true);
+      expect(gameState.flags.has('sandwich has cheese')).toBe(true);
+      expect(gameState.flags.has('player has eaten sandwich')).toBe(true);
       
       // Check success condition
       const successCondition = mockStoryV2.success_conditions?.find(sc => sc.id === 'decent_ending');
       if (successCondition) {
         const requirementsMet = successCondition.requires.every(req => 
-          gameState.knowledge.has(req)
+          gameState.flags.has(req)
         );
         expect(requirementsMet).toBe(true);
       }
     });
 
     it('should NOT reach decent ending with only cheese', () => {
-      gameEngine.addKnowledge('sandwich has cheese');
-      gameEngine.addKnowledge('player has eaten sandwich');
+      gameEngine.setFlag('sandwich has cheese');
+      gameEngine.setFlag('player has eaten sandwich');
       // No bread knowledge set
       
       const gameState = gameEngine.getGameState();
-      expect(gameState.knowledge.has('sandwich has cheese')).toBe(true);
-      expect(gameState.knowledge.has('player has eaten sandwich')).toBe(true);
-      expect(gameState.knowledge.has('sandwich has bread')).toBe(false);
+      expect(gameState.flags.has('sandwich has cheese')).toBe(true);
+      expect(gameState.flags.has('player has eaten sandwich')).toBe(true);
+      expect(gameState.flags.has('sandwich has bread')).toBe(false);
       
       const successCondition = mockStoryV2.success_conditions?.find(sc => sc.id === 'decent_ending');
       if (successCondition) {
         const requirementsMet = successCondition.requires.every(req => 
-          gameState.knowledge.has(req)
+          gameState.flags.has(req)
         );
         expect(requirementsMet).toBe(false);
       }
@@ -184,17 +183,17 @@ describe('Success Conditions Testing', () => {
 
   describe('Disaster Ending Reachability', () => {
     it('should reach disaster ending with mystery jar', () => {
-      gameEngine.addKnowledge('sandwich has mystery condiment');
-      gameEngine.addKnowledge('player has eaten sandwich');
+      gameEngine.setFlag('sandwich has mystery condiment');
+      gameEngine.setFlag('player has eaten sandwich');
       
       const gameState = gameEngine.getGameState();
-      expect(gameState.knowledge.has('sandwich has mystery condiment')).toBe(true);
-      expect(gameState.knowledge.has('player has eaten sandwich')).toBe(true);
+      expect(gameState.flags.has('sandwich has mystery condiment')).toBe(true);
+      expect(gameState.flags.has('player has eaten sandwich')).toBe(true);
       
       const successCondition = mockStoryV2.success_conditions?.find(sc => sc.id === 'disaster_ending');
       if (successCondition) {
         const requirementsMet = successCondition.requires.every(req => 
-          gameState.knowledge.has(req)
+          gameState.flags.has(req)
         );
         expect(requirementsMet).toBe(true);
       }
@@ -205,9 +204,9 @@ describe('Success Conditions Testing', () => {
     it('should handle multiple ending conditions appropriately', () => {
       // In practice, conditions shouldn't overlap due to natural sandwich logic
       // But test that the system can handle multiple valid conditions
-      gameEngine.addKnowledge('sandwich has bread');
-      gameEngine.addKnowledge('sandwich has cheese');
-      gameEngine.addKnowledge('player has eaten sandwich');
+      gameEngine.setFlag('sandwich has bread');
+      gameEngine.setFlag('sandwich has cheese');
+      gameEngine.setFlag('player has eaten sandwich');
       
       const gameState = gameEngine.getGameState();
       
@@ -222,9 +221,9 @@ describe('Success Conditions Testing', () => {
       
       if (perfectCondition && decentCondition && disasterCondition) {
         // Only decent should have requirements met
-        expect(perfectCondition.requires.every(req => gameState.knowledge.has(req))).toBe(false); // Missing toasted bread
-        expect(decentCondition.requires.every(req => gameState.knowledge.has(req))).toBe(true);
-        expect(disasterCondition.requires.every(req => gameState.knowledge.has(req))).toBe(false); // Missing mystery condiment
+        expect(perfectCondition.requires.every(req => gameState.flags.has(req))).toBe(false); // Missing toasted bread
+        expect(decentCondition.requires.every(req => gameState.flags.has(req))).toBe(true);
+        expect(disasterCondition.requires.every(req => gameState.flags.has(req))).toBe(false); // Missing mystery condiment
       }
     });
   });
@@ -232,29 +231,29 @@ describe('Success Conditions Testing', () => {
   describe('Sandwich Composition Logic', () => {
     it('should support different bread types leading to different endings', () => {
       // Test that toasted bread leads to perfect ending
-      gameEngine.addKnowledge('sandwich has toasted bread');
-      gameEngine.addKnowledge('sandwich has cheese');
-      gameEngine.addKnowledge('player has eaten sandwich');
+      gameEngine.setFlag('sandwich has toasted bread');
+      gameEngine.setFlag('sandwich has cheese');
+      gameEngine.setFlag('player has eaten sandwich');
       
       let gameState = gameEngine.getGameState();
-      expect(gameState.knowledge.has('sandwich has toasted bread')).toBe(true);
-      expect(gameState.knowledge.has('sandwich has cheese')).toBe(true);
-      expect(gameState.knowledge.has('player has eaten sandwich')).toBe(true);
+      expect(gameState.flags.has('sandwich has toasted bread')).toBe(true);
+      expect(gameState.flags.has('sandwich has cheese')).toBe(true);
+      expect(gameState.flags.has('player has eaten sandwich')).toBe(true);
       
       // Should reach perfect ending
       const perfectCondition = mockStoryV2.success_conditions?.find(sc => sc.id === 'perfect_ending');
       if (perfectCondition) {
         const requirementsMet = perfectCondition.requires.every(req => 
-          gameState.knowledge.has(req)
+          gameState.flags.has(req)
         );
         expect(requirementsMet).toBe(true);
       }
       
       // Clear knowledge and test regular bread
-      gameState.knowledge.clear();
-      gameEngine.addKnowledge('sandwich has bread');
-      gameEngine.addKnowledge('sandwich has cheese');
-      gameEngine.addKnowledge('player has eaten sandwich');
+      gameState.flags.clear();
+      gameEngine.setFlag('sandwich has bread');
+      gameEngine.setFlag('sandwich has cheese');
+      gameEngine.setFlag('player has eaten sandwich');
       
       gameState = gameEngine.getGameState();
       
@@ -262,7 +261,7 @@ describe('Success Conditions Testing', () => {
       const decentCondition = mockStoryV2.success_conditions?.find(sc => sc.id === 'decent_ending');
       if (decentCondition) {
         const requirementsMet = decentCondition.requires.every(req => 
-          gameState.knowledge.has(req)
+          gameState.flags.has(req)
         );
         expect(requirementsMet).toBe(true);
       }

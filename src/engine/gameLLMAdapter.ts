@@ -106,8 +106,7 @@ Use this exact format with properly escaped strings for multiline content:
     "addToInventory": ["item_id1", "item_id2"] or [],
     "removeFromInventory": ["item_id1"] or [],
     "setFlags": ["flag_name1"] or [],
-    "unsetFlags": ["flag_name1"] or [],
-    "addKnowledge": ["knowledge_id1"] or []
+    "unsetFlags": ["flag_name1"] or []
   },
   "response": "The narrative response to show the player. Use \\n for line breaks, escape quotes as \\", and ensure all strings are properly JSON-formatted."
 }

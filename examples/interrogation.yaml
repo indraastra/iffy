@@ -95,6 +95,25 @@ success_conditions:
       Sometimes the most important conversations happen when the recorder isn't running.
 
 flows:
+  - id: "interrogation_opening"
+    name: "Beginning the Interrogation"
+    type: "narrative" 
+    location: "interrogation_room"
+    content: |
+      The fluorescent lights hum overhead as you enter the interrogation room. 
+      Alex Rivera sits at the metal table, still wearing the same clothes from 
+      the security footage - now wrinkled and stained with the weight of the day.
+      
+      This should be straightforward. Armed robbery of a convenience store, 
+      caught on camera, suspect in custody. But something about their demeanor 
+      suggests there's more to this story.
+      
+      You settle into your chair and open the case file, studying Alex's face 
+      for any tells. Time to begin.
+    completion_transitions:
+      - condition: "game_started"
+        to_flow: "why_did_you_do_it"
+  
   - id: "opening_question"
     name: "The First Question"
     type: "dialogue"
@@ -346,17 +365,6 @@ flows:
         emotion: "honest_confession"
         sets: ["complete confession"]
 
-start:
-  content: |
-    The fluorescent lights hum overhead as you enter the interrogation room. 
-    Alex Rivera sits at the metal table, still wearing the same clothes from 
-    the security footage - now wrinkled and stained with the weight of the day.
-    
-    This should be straightforward. Armed robbery of a convenience store, 
-    caught on camera, suspect in custody. But something about their demeanor 
-    suggests there's more to this story.
-  location: "interrogation_room"
-  first_flow: "why_did_you_do_it"
 
 # Format v2: LLM story guidelines for intelligent behavior
 llm_guidelines: |
@@ -372,8 +380,8 @@ llm_guidelines: |
   - Aggressive approaches → prisoner becomes more defensive
   - Patient approaches → allows prisoner to reveal information at their own pace
   
-  KNOWLEDGE PROGRESSION:
-  Set knowledge flags as information is revealed:
+  FLAG PROGRESSION:
+  Set flags as information is revealed:
   - "learned child sick" → when prisoner mentions their child's illness
   - "learned financial desperation" → when financial situation is revealed
   - "learned child died" → when the tragic outcome is disclosed

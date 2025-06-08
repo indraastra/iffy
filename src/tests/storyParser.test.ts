@@ -43,7 +43,6 @@ items:
     description: "A test item"
     location: "start_room"
 
-knowledge: []
 
 flows:
   - id: "start_flow"
@@ -149,7 +148,6 @@ start:
       expect(story.characters).toHaveLength(1)
       expect(story.locations).toHaveLength(2)
       expect(story.items).toHaveLength(1)
-      expect(story.knowledge).toHaveLength(1)
       expect(story.flows).toHaveLength(1)
     })
 
@@ -181,7 +179,6 @@ locations:
     connections: []
 
 items: []
-knowledge: []
 flows:
   - id: "start_flow"
     type: "narrative"
@@ -255,7 +252,6 @@ items:
     description: "Item with some optional fields"
     aliases: ["partial_alias"]
 
-knowledge: []
 flows:
   - id: "start_flow"
     type: "narrative"
@@ -348,7 +344,6 @@ items:
     name: "Item Without Display Name"
     description: "No display name field"
 
-knowledge: []
 flows:
   - id: "start_flow"
     type: "narrative"
@@ -409,7 +404,6 @@ items:
     discovery_objects: []
     aliases: []
 
-knowledge: []
 flows:
   - id: "start_flow"
     type: "narrative"
@@ -477,7 +471,6 @@ items:
     description: "A mobile device"
     location: "cafe"
 
-knowledge: []
 flows:
   - id: "start_flow"
     type: "narrative"

@@ -65,54 +65,31 @@ items:
 success_conditions:
   - id: "full_confession"
     description: "Alex opens up completely about their feelings and what's been troubling them"
-    requires: ["alex vulnerable", "admitted feelings", "secret revealed", "trust established"]
-    ending: |
-      Alex reaches across the small table and gently takes your hand. "Thank you," they say quietly, 
-      "for not giving up on me. For seeing through all my walls."
-      
-      The café around you seems to fade away as you sit together in this moment of honesty. 
-      Sometimes the most important conversations happen in the most ordinary places.
-      
-      Outside, the rain has stopped, and the evening feels full of new possibilities.
+    requires: ["alex_vulnerable", "admitted_feelings", "secret_revealed", "trust_established", "conversation_ending"]
 
   - id: "partial_opening"
-    description: "Alex admits something is wrong but doesn't reveal the full truth"
-    requires: ["alex conflicted", "acknowledged distance", "partial trust"]
-    ending: |
-      Alex sighs and looks down at their cold coffee. "I know I've been weird lately. 
-      I'm sorry you have to deal with that."
-      
-      It's not everything, but it's a start. You sense there's more Alex wants to say, 
-      but some walls take time to come down. At least they've acknowledged something is wrong.
-      
-      "Want to walk for a bit?" you suggest. Sometimes conversations continue better in motion.
+    description: "Alex admits something is wrong but doesn't reveal the full truth, and the conversation naturally ends"
+    requires: ["alex_conflicted", "acknowledged_distance", "partial_trust", "conversation_ending"]
 
   - id: "walls_stay_up"
     description: "Alex remains guarded and deflects attempts to connect"
-    requires: ["alex defensive", "topic avoided", "distance maintained"]
-    ending: |
-      Alex glances at their watch and stands up abruptly. "I should get going. 
-      Thanks for the coffee."
-      
-      You watch them gather their things, that familiar distance still firmly in place. 
-      Whatever Alex is carrying, they're not ready to share it yet.
-      
-      As they head to the door, you wonder if you pushed too hard, or not hard enough.
+    requires: ["alex_defensive", "topic_avoided", "distance_maintained", "conversation_ending"]
 
-# Minimal flows - let LLM develop the story
-flows: []
-
-start:
-  content: |
-    You're sitting across from Alex in a quiet corner café. They've been acting distant lately, 
-    and tonight feels different - like there's something they want to say but can't.
-    
-    The barista approaches, wiping her hands on her apron. "I noticed your coffee's 
-    gone cold. Should I warm it up for you?"
-    
-    Alex doesn't respond, still stirring absently while staring out the rain-spotted window. 
-    The barista glances at you with a gentle, questioning look.
-  location: "corner_cafe"
+# First flow automatically becomes the starting point
+flows:
+  - id: "opening"
+    name: "A Quiet Moment"
+    type: "narrative"
+    location: "corner_cafe"
+    content: |
+      You're sitting across from Alex in a quiet corner café. They've been acting distant lately, 
+      and tonight feels different - like there's something they want to say but can't.
+      
+      The barista approaches, wiping her hands on her apron. "I noticed your coffee's 
+      gone cold. Should I warm it up for you?"
+      
+      Alex doesn't respond, still stirring absently while staring out the rain-spotted window. 
+      The barista glances at you with a gentle, questioning look.
 
 # Format v2: LLM story guidelines for intelligent behavior
 llm_guidelines: |
@@ -143,18 +120,25 @@ llm_guidelines: |
   - Let the player discover the truth through careful conversation
   - Build emotional intimacy gradually through the scene
   
-  KNOWLEDGE PROGRESSION:
-  Set these knowledge flags as the conversation develops:
-  - "acknowledged distance" → when Alex admits they've been acting differently
-  - "alex conflicted" → when internal struggle becomes apparent
-  - "partial trust" → when Alex starts to open up a little
-  - "topic avoided" → if Alex deflects or changes subject
-  - "alex defensive" → if Alex shuts down or gets defensive
-  - "alex vulnerable" → when Alex's emotional walls start coming down
-  - "trust established" → when Alex feels safe with the player
-  - "admitted feelings" → when Alex confesses their romantic feelings
-  - "secret revealed" → when the full truth about their behavior comes out
-  - "distance maintained" → if Alex keeps emotional walls up
+  FLAG PROGRESSION:
+  Set these flags as the conversation develops:
+  - "acknowledged_distance" → when Alex admits they've been acting differently
+  - "alex_conflicted" → when internal struggle becomes apparent
+  - "partial_trust" → when Alex starts to open up a little
+  - "topic_avoided" → if Alex deflects or changes subject
+  - "alex_defensive" → if Alex shuts down or gets defensive
+  - "alex_vulnerable" → when Alex's emotional walls start coming down
+  - "trust_established" → when Alex feels safe with the player
+  - "admitted_feelings" → when Alex confesses their romantic feelings
+  - "secret_revealed" → when the full truth about their behavior comes out
+  - "distance_maintained" → if Alex keeps emotional walls up
+  - "conversation_ending" → ONLY when Alex or the player makes moves to leave (getting up, checking time, saying goodbye, etc.)
+  
+  CONVERSATION FLOW DESIGN:
+  - The story should progress naturally: partial_trust can lead to alex_vulnerable if the player continues being supportive
+  - Only set "conversation_ending" if someone actually indicates they want to leave
+  - If Alex reaches partial_trust but the player keeps engaging supportively, Alex can progress to being more vulnerable
+  - The "partial_opening" ending should only trigger if there's a natural conclusion (like the ending text suggests a walk)
   
   ENVIRONMENTAL DETAILS:
   Use the café setting to enhance intimacy - the quiet atmosphere, the rain outside, the dim lighting, the nearly empty space. These details can reflect the emotional tone of the conversation.
