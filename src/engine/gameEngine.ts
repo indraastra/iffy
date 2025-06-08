@@ -76,7 +76,11 @@ export class GameEngine {
       // Split into paragraphs (double newlines or more)
       .split(/\n\s*\n/)
       // For each paragraph, remove single line breaks but keep the text
-      .map(paragraph => paragraph.replace(/\n/g, ' ').trim())
+      .map(paragraph => paragraph
+        .replace(/\n/g, ' ')  // Replace newlines with spaces
+        .replace(/\s+/g, ' ') // Normalize multiple spaces to single space
+        .trim()               // Remove leading/trailing whitespace
+      )
       // Join paragraphs back with double newlines
       .join('\n\n');
   }
