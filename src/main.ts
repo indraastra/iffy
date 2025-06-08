@@ -25,6 +25,7 @@ class IffyApp {
     
     // Initialize UI managers
     this.messageDisplay = new MessageDisplay(storyOutput);
+    this.messageDisplay.setItemLookup((itemId: string) => this.gameEngine.getItem(itemId));
     this.commandProcessor = new CommandProcessor(this.gameEngine, this.messageDisplay, this.commandInput);
     new GameManager(this.gameEngine, this.messageDisplay); // GameManager sets up its own event listeners
     this.loadMenuManager = new LoadMenuManager(this.gameEngine, this.messageDisplay, this.commandInput);

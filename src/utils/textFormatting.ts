@@ -280,14 +280,12 @@ export class TextFormatter {
 }
 
 // Export convenience functions for common patterns
-export const {
-  formatList,
-  formatStructuredList, 
-  formatKeyValue,
-  formatSection,
-  formatRequirements,
-  formatAliases,
-  formatTraits,
-  escapePromptText,
-  indent
-} = TextFormatter;
+export const formatList = TextFormatter.formatList.bind(TextFormatter);
+export const formatStructuredList = TextFormatter.formatStructuredList.bind(TextFormatter);
+export const formatKeyValue = TextFormatter.formatKeyValue.bind(TextFormatter);
+export const formatSection = TextFormatter.formatSection.bind(TextFormatter);
+export const formatRequirements = TextFormatter.formatRequirements.bind(TextFormatter);
+export const formatAliases = TextFormatter.formatAliases.bind(TextFormatter);
+export const formatTraits = TextFormatter.formatTraits.bind(TextFormatter);
+export const escapePromptText = TextFormatter.escapePromptText.bind(TextFormatter);
+export const indent = TextFormatter.indent.bind(TextFormatter);

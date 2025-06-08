@@ -757,6 +757,27 @@ This is a basic MVP version. More natural language understanding will be added i
     return this.story?.title || null;
   }
 
+  /**
+   * Get item by ID, name, or display_name for rich text rendering
+   */
+  getItem(itemIdentifier: string): { name: string; display_name?: string } | undefined {
+    if (!this.story) return undefined;
+    
+    // Search by id, name, or display_name
+    const item = this.story.items.find(i => 
+      i.id === itemIdentifier || 
+      i.name === itemIdentifier || 
+      i.display_name === itemIdentifier
+    );
+    
+    if (!item) return undefined;
+    
+    return {
+      name: item.name,
+      display_name: item.display_name
+    };
+  }
+
   // Action-based state management methods
   addItemToInventory(itemId: string): Result<void> {
     try {
