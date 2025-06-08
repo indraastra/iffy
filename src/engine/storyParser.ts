@@ -170,15 +170,28 @@ export class StoryParser {
         throw new StoryParseError(`flow[${index}].type must be 'narrative' or 'dialogue'`);
       }
 
+      // Validate transitions if present
+      if (flow.transitions) {
+        if (!Array.isArray(flow.transitions)) {
+          throw new StoryParseError(`flow[${index}].transitions must be an array`);
+        }
+        
+        flow.transitions.forEach((transition: any, transIndex: number) => {
+          this.validateRequired(transition, ['requires', 'to_flow'], `flow[${index}].transitions[${transIndex}]`);
+          
+          if (!Array.isArray(transition.requires)) {
+            throw new StoryParseError(`flow[${index}].transitions[${transIndex}].requires must be an array`);
+          }
+        });
+      }
+
       const result: Story['flows'][0] = {
         id: flow.id,
         type: flow.type,
         name: flow.name,
-        requirements: flow.requirements,
         sets: flow.sets,
         content: flow.content,
-        next: flow.next,
-        completion_transitions: flow.completion_transitions,
+        transitions: flow.transitions, // New transition system
         participants: flow.participants,
         location: flow.location,
         exchanges: flow.exchanges,
@@ -247,10 +260,11 @@ export class StoryParser {
 
     // Validate flow references
     story.flows.forEach(flow => {
-      if (flow.next) {
-        flow.next.forEach(transition => {
-          if (!flowIds.has(transition.flow_id)) {
-            throw new StoryParseError(`Flow ${flow.id} references unknown flow: ${transition.flow_id}`);
+      // Validate new transitions
+      if (flow.transitions) {
+        flow.transitions.forEach(transition => {
+          if (!flowIds.has(transition.to_flow)) {
+            throw new StoryParseError(`Flow ${flow.id} transition references unknown flow: ${transition.to_flow}`);
           }
         });
       }

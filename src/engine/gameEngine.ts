@@ -1,4 +1,4 @@
-import { Story, GameState, PlayerAction, GameResponse, Flow, FlowTransition, Result, SuccessCondition } from '@/types/story';
+import { Story, GameState, PlayerAction, GameResponse, Flow, Result, SuccessCondition } from '@/types/story';
 import { AnthropicService } from '@/services/anthropicService';
 import { GamePromptBuilder, GameStateResponse } from './gameEngineLlmAdapter';
 import { MemoryManager } from './memoryManager';
@@ -692,11 +692,11 @@ This is a basic MVP version. More natural language understanding will be added i
       });
     }
 
-    // Show available next actions
-    if (currentFlow.next && currentFlow.next.length > 0) {
-      text += '\n\nAvailable actions:';
-      currentFlow.next.forEach(transition => {
-        text += `\n• ${transition.trigger}`;
+    // Show available transitions
+    if (currentFlow.transitions && currentFlow.transitions.length > 0) {
+      text += '\n\nAvailable transitions:';
+      currentFlow.transitions.forEach(transition => {
+        text += `\n• To ${transition.to_flow} when: [${transition.requires.join(', ')}]`;
       });
     }
 
@@ -1081,33 +1081,30 @@ This is a basic MVP version. More natural language understanding will be added i
     }
 
     console.log(`Checking flow transitions for: ${currentFlow.id} (${currentFlow.name})`);
+    console.log('Current flags:', Array.from(this.gameState.flags));
     console.log('Current inventory:', this.gameState.inventory);
 
-    // Check completion transitions first (these are condition-based)
-    if (currentFlow.completion_transitions) {
-      console.log(`Found ${currentFlow.completion_transitions.length} completion transitions`);
-      for (const transition of currentFlow.completion_transitions) {
-        console.log(`Evaluating condition: ${transition.condition}`);
-        const conditionMet = this.evaluateCondition(transition.condition);
-        console.log(`Condition "${transition.condition}" result: ${conditionMet}`);
+    // Check new transition system
+    if (currentFlow.transitions) {
+      console.log(`Found ${currentFlow.transitions.length} transitions`);
+      for (const transition of currentFlow.transitions) {
+        console.log(`Evaluating transition requirements: [${transition.requires.join(', ')}]`);
         
-        if (conditionMet) {
-          // Check if target flow's requirements are met
-          const targetFlow = this.story.flows.find(f => f.id === transition.to_flow);
-          if (targetFlow) {
-            const targetRequirementsMet = this.checkFlowRequirements(targetFlow);
-            console.log(`Target flow "${targetFlow.id}" requirements met: ${targetRequirementsMet}`);
-            
-            if (!targetRequirementsMet) {
-              console.log(`⚠️ Transition blocked: target flow requirements not met`);
-              continue; // Try next transition
-            }
-          }
-          
-          console.log(`✅ Completion transition triggered: ${currentFlow.id} -> ${transition.to_flow}`);
+        // Check if all requirements are met (analogous to success conditions)
+        const requirementsMet = transition.requires.every(requirement => {
+          const result = this.evaluateCondition(requirement);
+          console.log(`  - Requirement "${requirement}": ${result}`);
+          return result;
+        });
+        
+        console.log(`All requirements met: ${requirementsMet}`);
+        
+        if (requirementsMet) {
+          console.log(`✅ Flow transition triggered: ${currentFlow.id} -> ${transition.to_flow}`);
           this.gameState.currentFlow = transition.to_flow;
           
           // Apply flow sets if the target flow has them
+          const targetFlow = this.story.flows.find(f => f.id === transition.to_flow);
           if (targetFlow) {
             console.log(`Applying sets from target flow: ${targetFlow.id}`);
             this.applyFlowSets(targetFlow);
@@ -1117,50 +1114,14 @@ This is a basic MVP version. More natural language understanding will be added i
         }
       }
     } else {
-      console.log('No completion transitions found');
-    }
-
-    // Check regular flow transitions (trigger-based)
-    if (currentFlow.next) {
-      console.log(`Found ${currentFlow.next.length} regular transitions`);
-      for (const transition of currentFlow.next) {
-        if (this.canTriggerTransition(transition)) {
-          console.log(`Flow transition: ${currentFlow.id} -> ${transition.flow_id}`);
-          this.gameState.currentFlow = transition.flow_id;
-          break;
-        }
-      }
-    } else {
-      console.log('No regular transitions found');
+      console.log('No transitions found');
     }
     
     console.log('Flow transition check complete');
   }
 
-  private canTriggerTransition(_transition: FlowTransition): boolean {
-    // For now, implement basic trigger checking
-    // This can be enhanced based on the specific trigger logic needed
-    return true; // Allow all transitions for MVP
-  }
 
 
-  private checkFlowRequirements(flow: Flow): boolean {
-    if (!flow.requirements) {
-      console.log(`  Flow "${flow.id}" has no requirements - allowing`);
-      return true;
-    }
-    
-    console.log(`  Checking requirements for flow "${flow.id}": [${flow.requirements.join(', ')}]`);
-    
-    const allMet = flow.requirements.every(requirement => {
-      const met = this.evaluateCondition(requirement);
-      console.log(`    Requirement "${requirement}": ${met}`);
-      return met;
-    });
-    
-    console.log(`  All requirements for "${flow.id}" met: ${allMet}`);
-    return allMet;
-  }
 
   private applyFlowSets(flow: Flow): void {
     if (!flow.sets) return;
@@ -1237,7 +1198,11 @@ This is a basic MVP version. More natural language understanding will be added i
     // Fallback to traditional endings
     if (this.story.endings) {
       for (const ending of this.story.endings) {
-        if (this.checkFlowRequirements({ requirements: ending.requires } as Flow)) {
+        const requirementsMet = ending.requires.every(requirement => {
+          return this.evaluateCondition(requirement);
+        });
+        
+        if (requirementsMet) {
           this.gameState.gameEnded = true;
           this.gameState.endingId = ending.id;
           console.log(`Game ended with ending: ${ending.name}`);

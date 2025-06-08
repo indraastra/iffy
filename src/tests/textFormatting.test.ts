@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { TextFormatter, formatList, formatStructuredList, formatKeyValue, formatSection, formatRequirements, formatAliases, formatTraits } from '../utils/textFormatting'
+import { TextFormatter, formatList, formatStructuredList, formatKeyValue, formatSection, formatSectionContent, formatRequirements, formatAliases, formatTraits } from '../utils/textFormatting'
 
 describe('TextFormatter', () => {
   
@@ -146,6 +146,40 @@ describe('TextFormatter', () => {
     it('should pass options to structured list formatter', () => {
       expect(formatSection('ITEMS', ['a', 'b'], { itemPrefix: '• ' }))
         .toBe('ITEMS:\n• a\n• b')
+    })
+  })
+
+  describe('formatSectionContent', () => {
+    it('should format array content without title', () => {
+      expect(formatSectionContent(['sword', 'shield']))
+        .toBe('- sword\n- shield')
+    })
+
+    it('should format string content without title', () => {
+      expect(formatSectionContent('A dark room'))
+        .toBe('A dark room')
+    })
+
+    it('should return empty for null/empty content', () => {
+      expect(formatSectionContent([])).toBe('')
+      expect(formatSectionContent(null)).toBe('')
+      expect(formatSectionContent('   ')).toBe('')
+    })
+
+    it('should pass options to structured list formatter', () => {
+      expect(formatSectionContent(['a', 'b'], { itemPrefix: '• ' }))
+        .toBe('• a\n• b')
+    })
+
+    it('should work well in debug pane context', () => {
+      // Simulate how debug pane uses sections
+      const sections: Record<string, string> = {};
+      sections['SUCCESS CONDITIONS'] = formatSectionContent(['condition1: desc1', 'condition2: desc2']);
+      sections['FLOWS'] = formatSectionContent(['flow1', 'flow2']);
+      
+      // Verify no duplicate colons or titles
+      expect(sections['SUCCESS CONDITIONS']).toBe('- condition1: desc1\n- condition2: desc2');
+      expect(sections['FLOWS']).toBe('- flow1\n- flow2');
     })
   })
 
