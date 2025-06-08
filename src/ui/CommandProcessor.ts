@@ -8,9 +8,10 @@ import { MessageDisplay } from './MessageDisplay';
 export class CommandProcessor {
   private gameEngine: GameEngine;
   private messageDisplay: MessageDisplay;
-  private commandInput: HTMLInputElement;
+  private commandInput: HTMLTextAreaElement;
+  private hasShownCompletionMessage: boolean = false;
 
-  constructor(gameEngine: GameEngine, messageDisplay: MessageDisplay, commandInput: HTMLInputElement) {
+  constructor(gameEngine: GameEngine, messageDisplay: MessageDisplay, commandInput: HTMLTextAreaElement) {
     this.gameEngine = gameEngine;
     this.messageDisplay = messageDisplay;
     this.commandInput = commandInput;
@@ -85,9 +86,10 @@ export class CommandProcessor {
         this.messageDisplay.addMessage(response.text, 'story');
       }
 
-      // Show completion message if game ended
-      if (response.gameState.gameEnded && response.gameState.endingId) {
+      // Show completion message if game ended (only once)
+      if (response.gameState.gameEnded && response.gameState.endingId && !this.hasShownCompletionMessage) {
         this.messageDisplay.addMessage('🎉 Story Complete! You can continue exploring or reflecting on your choices.', 'system');
+        this.hasShownCompletionMessage = true;
       }
 
       // Show choices if available
@@ -126,5 +128,6 @@ export class CommandProcessor {
   resetUIState(): void {
     this.commandInput.placeholder = "Enter your command...";
     this.commandInput.disabled = false;
+    this.hasShownCompletionMessage = false;
   }
 }
