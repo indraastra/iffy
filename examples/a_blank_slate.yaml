@@ -55,8 +55,8 @@ flows:
 
 success_conditions:
   - id: "creative_exploration"
-    description: "Discovered something through creative interaction"
-    requires: ["found_something_interesting"]
+    description: "Made a meaningful discovery or created something through sustained creative interaction"
+    requires: ["found_something_interesting", "engaged_deeply"]
     ending: "Through your creativity and curiosity, you've discovered that this blank slate holds infinite possibilities. Sometimes the most open beginnings lead to the richest experiences."
 
 endings: []
@@ -90,4 +90,10 @@ llm_guidelines: |
   - Player: "What's your name?" → Someone develops a name and backstory
   - Player: "Is there a book here?" → Generate an interesting book
   
-  Remember: The goal is to make the player feel heard and to reward creativity while maintaining a consistent, believable world.
+  FLAG SETTING GUIDELINES:
+  - Set "found_something_interesting" ONLY when player discovers something significant (items, hidden features, meaningful details)
+  - Set "engaged_deeply" when player shows sustained creativity across multiple interactions or creates something meaningful
+  - Simple exploration (looking around, touching walls) should NOT trigger ending flags
+  - Reserve flags for moments that feel like genuine discoveries or creative achievements
+  
+  Remember: The goal is to make the player feel heard and to reward creativity while maintaining a consistent, believable world. The story should encourage exploration but not end too quickly.

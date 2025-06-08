@@ -16,7 +16,8 @@ export class GamePromptBuilder {
     command: string,
     gameState: any,
     story: any,
-    currentLocation: any
+    currentLocation: any,
+    memoryContext?: any
   ): string {
     return `You are an interactive fiction game interpreter processing natural language commands.
 
@@ -83,7 +84,7 @@ ${story.llm_guidelines ? `LLM STORY GUIDELINES:
 ${story.llm_guidelines}` : ''}
 
 CONVERSATION MEMORY:
-${this.getConversationContext(gameState)}
+${memoryContext ? this.formatMemoryContext(memoryContext) : this.getConversationContext(gameState)}
 
 DISCOVERY STATUS: Based on recent interactions, analyze if player has already examined/opened/checked containers or objects that would reveal items.
 
@@ -205,7 +206,22 @@ The player has successfully concluded this story path.`;
   }
 
   /**
-   * Get conversation history context
+   * Format memory context from MemoryManager
+   */
+  private formatMemoryContext(memoryContext: any): string {
+    let context = memoryContext.recentInteractions;
+    
+    if (memoryContext.significantMemories && memoryContext.significantMemories !== 'No significant memories stored.') {
+      context += `\n\n${memoryContext.significantMemories}`;
+    }
+    
+    context += `\n\nMemory Stats: ${memoryContext.stats.recentCount} recent interactions, ${memoryContext.stats.significantCount} significant memories`;
+    
+    return context;
+  }
+
+  /**
+   * Get conversation history context (fallback for old system)
    */
   private getConversationContext(gameState: any): string {
     if (!gameState.conversationMemory?.immediateContext?.recentInteractions?.length) {
