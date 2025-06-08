@@ -13,7 +13,7 @@ class IffyApp {
   private loadMenuManager: LoadMenuManager;
   private settingsManager: SettingsManager;
   private commandProcessor: CommandProcessor;
-  private commandInput: HTMLInputElement;
+  private commandInput: HTMLTextAreaElement;
   
   constructor() {
     this.gameEngine = new GameEngine();
@@ -21,7 +21,7 @@ class IffyApp {
     
     // Get DOM elements
     const storyOutput = document.getElementById('story-output')!;
-    this.commandInput = document.getElementById('command-input') as HTMLInputElement;
+    this.commandInput = document.getElementById('command-input') as HTMLTextAreaElement;
     
     // Initialize UI managers
     this.messageDisplay = new MessageDisplay(storyOutput);
@@ -47,6 +47,7 @@ class IffyApp {
     this.displayWelcomeMessage();
     this.createDebugToggle();
     this.setupDebugLogging();
+    this.setupAutoResizeTextarea();
   }
 
   /**
@@ -88,9 +89,88 @@ class IffyApp {
     const toggleBtn = document.createElement('button');
     toggleBtn.className = 'debug-toggle-btn';
     toggleBtn.innerHTML = '🐛';
-    toggleBtn.title = 'Toggle Debug Pane (Ctrl+D)';
-    toggleBtn.addEventListener('click', () => this.debugPane.toggle());
-    document.body.appendChild(toggleBtn);
+    toggleBtn.title = 'Toggle Debug Pane (Ctrl+D) - Drag to move';
+    toggleBtn.addEventListener('click', (e) => {
+      if (!this.isDragging) {
+        this.debugPane.toggle();
+      }
+    });
+    
+    this.makeDraggable(toggleBtn);
+    
+    // Append to story output instead of body
+    const storyOutput = document.getElementById('story-output')!;
+    storyOutput.appendChild(toggleBtn);
+  }
+
+  private isDragging = false;
+
+  /**
+   * Make an element draggable within its parent container
+   */
+  private makeDraggable(element: HTMLElement): void {
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let elementX = 0;
+    let elementY = 0;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      isDragging = true;
+      this.isDragging = true;
+      
+      const rect = element.getBoundingClientRect();
+      const parentRect = element.parentElement!.getBoundingClientRect();
+      
+      startX = e.clientX;
+      startY = e.clientY;
+      elementX = rect.left - parentRect.left;
+      elementY = rect.top - parentRect.top;
+      
+      element.style.transition = 'none';
+      e.preventDefault();
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+      
+      const newX = elementX + deltaX;
+      const newY = elementY + deltaY;
+      
+      // Get parent bounds for constraint
+      const parent = element.parentElement!;
+      const parentRect = parent.getBoundingClientRect();
+      const elementRect = element.getBoundingClientRect();
+      
+      const maxX = parent.clientWidth - elementRect.width;
+      const maxY = parent.clientHeight - elementRect.height;
+      
+      const constrainedX = Math.max(0, Math.min(newX, maxX));
+      const constrainedY = Math.max(0, Math.min(newY, maxY));
+      
+      element.style.left = constrainedX + 'px';
+      element.style.top = constrainedY + 'px';
+      element.style.right = 'auto';
+      element.style.bottom = 'auto';
+    };
+
+    const handleMouseUp = () => {
+      if (isDragging) {
+        element.style.transition = 'all 0.2s';
+        isDragging = false;
+        // Small delay to prevent click event from firing
+        setTimeout(() => {
+          this.isDragging = false;
+        }, 100);
+      }
+    };
+
+    element.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
   }
 
   /**
@@ -109,6 +189,51 @@ class IffyApp {
         this.debugPane.logResponse(response);
       }
     });
+  }
+
+  /**
+   * Set up auto-resize functionality for the textarea
+   */
+  private setupAutoResizeTextarea(): void {
+    const textarea = this.commandInput;
+    
+    const autoResize = () => {
+      // Reset height to recalculate
+      textarea.style.height = 'auto';
+      
+      // Calculate the new height based on scroll height
+      const newHeight = Math.min(textarea.scrollHeight, 160); // max-height: 10rem = 160px
+      
+      // Set the new height
+      textarea.style.height = newHeight + 'px';
+    };
+
+    // Auto-resize on input
+    textarea.addEventListener('input', autoResize);
+    
+    // Auto-resize on paste
+    textarea.addEventListener('paste', () => {
+      setTimeout(autoResize, 0);
+    });
+
+    // Handle Enter key behavior
+    textarea.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        // Trigger submit (the CommandProcessor will handle this)
+        const enterEvent = new KeyboardEvent('keydown', {
+          key: 'Enter',
+          code: 'Enter',
+          keyCode: 13,
+          which: 13,
+          bubbles: true
+        });
+        textarea.dispatchEvent(enterEvent);
+      }
+    });
+
+    // Initial resize
+    autoResize();
   }
 }
 
