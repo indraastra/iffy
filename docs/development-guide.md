@@ -44,6 +44,72 @@ flowchart TD
     Tests --> Build
 ```
 
+### Quick Start for Developers
+
+```bash
+# Clone and setup
+git clone https://github.com/indraastra/iffy.git
+cd iffy
+npm install
+
+# Start development server
+npm run dev
+# Open http://localhost:3000
+
+# Run tests
+npm run test:run
+
+# Build for production
+npm run build
+
+# Validate story files
+npm run validate-story examples/interrogation.yaml
+```
+
+### Development Scripts
+
+```json
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run bundle-examples && tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui",
+    "validate-story": "tsx scripts/validate-story.ts",
+    "bundle-examples": "tsx scripts/bundle-examples.ts",
+    "docs:serve": "python3 -m http.server 8080 --directory docs",
+    "docs:dev": "live-server docs --port=8080"
+  }
+}
+```
+
+### Build Process
+
+The build process includes:
+
+1. **Story Validation** - All example stories must validate successfully
+2. **Example Bundling** - Stories are bundled into the application
+3. **TypeScript Compilation** - Full type checking and compilation
+4. **Asset Optimization** - Vite handles bundling and optimization
+
+If any step fails, the build will abort with detailed error information.
+
+### Test Coverage
+
+The project includes comprehensive testing:
+
+- **Example Story Validation** (4 tests) - All bundled stories validate correctly
+- **Rich Text Parser** (30 tests) - Full semantic markup processing and regression tests
+- **Game Engine** (16 tests) - Story loading, state management, save/load functionality
+- **Story Parser** (5 tests) - YAML parsing, story structure validation, format compliance
+- **Anthropic Service** (23 tests) - Prompt building, response parsing, configuration management  
+- **Success Conditions** (16 tests) - Format v2 ending detection and knowledge flag system
+- **End-to-End** (5 tests) - Complete gameplay workflows and integration testing
+
+**Total: 99 tests** ensuring reliability and preventing regressions.
+
 ### Daily Development Process
 
 ```mermaid
