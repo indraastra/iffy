@@ -109,7 +109,7 @@ export class RichTextParser {
     return { text: parsed, components };
   }
 
-  public renderToDOM(parsedContent: ParsedContent, context?: RenderContext): DocumentFragment {
+  public renderToDOM(parsedContent: ParsedContent, _context?: RenderContext): DocumentFragment {
     const { text, components } = parsedContent;
     const fragment = document.createDocumentFragment();
     
@@ -263,7 +263,7 @@ export class RichTextParser {
   // Convenience method that parses and renders in one step
   public renderContent(content: string, context?: RenderContext): DocumentFragment {
     const parsed = this.parseContent(content, context);
-    return this.renderToDOM(parsed, context);
+    return this.renderToDOM(parsed);
   }
 }
 

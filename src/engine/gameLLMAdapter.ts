@@ -1,5 +1,6 @@
 import { GameStateResponseParser } from '@/utils/gameStateResponseParser';
 import type { GameStateResponse } from '@/schemas/gameStateResponses';
+import { TextFormatter, formatList, formatStructuredList, formatKeyValue, formatRequirements, formatAliases, formatTraits } from '@/utils/textFormatting';
 
 export type { GameStateResponse } from '@/schemas/gameStateResponses';
 
@@ -22,50 +23,58 @@ export class GamePromptBuilder {
 STORY: ${story.title} | ${story.metadata.tone.overall} | ${story.metadata.tone.narrative_voice}
 
 STATE:
-Location: ${currentLocation?.name || 'Unknown'} | Exits: ${currentLocation?.connections?.join(', ') || 'None'}
+Location: ${currentLocation?.name || 'Unknown'} | ${formatKeyValue('Exits', currentLocation?.connections)}
 Inventory: ${this.getInventoryDisplay(gameState, story)}
 Flow: ${gameState.currentFlow || 'None'} | Status: ${gameState.gameEnded ? 'COMPLETED' : 'ACTIVE'}
 
 LOCATIONS:
-${story.locations?.map((loc: any) => {
-  let info = `${loc.name} (${loc.id})`;
-  
-  const itemsHere = story.items?.filter((item: any) => item.location === loc.id) || [];
-  const discoverableHere = story.items?.filter((item: any) => item.discoverable_in === loc.id) || [];
-  
-  if (itemsHere.length > 0) {
-    info += ` | Items: ${itemsHere.map((item: any) => item.name).join(', ')}`;
+${formatStructuredList(story.locations, {
+  transform: (loc: any) => {
+    let info = `${loc.name} (${loc.id})`;
+    
+    const itemsHere = story.items?.filter((item: any) => item.location === loc.id) || [];
+    const discoverableHere = story.items?.filter((item: any) => item.discoverable_in === loc.id) || [];
+    
+    if (itemsHere.length > 0) {
+      info += ` | ${formatKeyValue('Items', itemsHere.map((item: any) => item.name))}`;
+    }
+    if (discoverableHere.length > 0) {
+      info += ` | ${formatKeyValue('Discoverable', discoverableHere.map((item: any) => 
+        `${item.name} (search: ${formatList(item.discovery_objects, { separator: '/', fallback: 'any' })})`
+      ))}`;
+    }
+    
+    return info;
   }
-  if (discoverableHere.length > 0) {
-    info += ` | Discoverable: ${discoverableHere.map((item: any) => `${item.name} (search: ${item.discovery_objects?.join('/') || 'any'})`).join(', ')}`;
-  }
-  
-  return info;
-}).join('\n') || 'None'}
+})}
 
 ITEMS & TRANSFORMATIONS:
-${story.items?.map((item: any) => {
-  let info = `${item.name} (${item.id})`;
-  if (item.can_become) {
-    info += ` → can become: ${item.can_become}`;
+${formatStructuredList(story.items, {
+  transform: (item: any) => {
+    let info = `${item.name} (${item.id})`;
+    if (item.can_become) {
+      info += ` → can become: ${item.can_become}`;
+    }
+    if (item.created_from) {
+      info += ` ← created from: ${item.created_from}`;
+    }
+    const aliases = formatAliases(item.aliases);
+    if (aliases) {
+      info += ` | ${aliases}`;
+    }
+    return info;
   }
-  if (item.created_from) {
-    info += ` ← created from: ${item.created_from}`;
-  }
-  if (item.aliases && item.aliases.length > 0) {
-    info += ` | aliases: ${item.aliases.join(', ')}`;
-  }
-  return info;
-}).join('\n') || 'None'}
+})}
 
-${story.success_conditions?.length > 0 ? `SUCCESS CONDITIONS:
-${story.success_conditions.map((sc: any) => `${sc.description} | Requires: ${sc.requires.join(', ')}`).join('\n')}` : ''}
+${TextFormatter.formatSection('SUCCESS CONDITIONS', story.success_conditions, {
+  transform: (sc: any) => `${sc.id}: ${sc.description}\n  ${formatRequirements(sc.requires)}`
+})}
 
 PLAYER CHARACTER: ${this.getPlayerCharacterInfo(story)}
 
 NPC CHARACTERS: ${this.getNPCCharacterInfo(story)}
 
-${story.flows?.length > 0 ? `FLOWS: ${story.flows.map((flow: any) => `${flow.name}${flow.ends_game ? ' [END]' : ''}`).join(', ')}` : ''}
+${formatKeyValue('FLOWS', story.flows?.map((flow: any) => `${flow.name}${flow.ends_game ? ' [END]' : ''}`) || [])}
 
 CURRENT FLOW CONTEXT:
 ${this.getCurrentFlowContext(story, gameState)}
@@ -115,8 +124,6 @@ RULES:
 9. Be permissive with item discovery - if player has clearly interacted with containers/objects, items inside are available
 10. NEVER demand specific syntax - interpret intent and respond naturally
 11. CRITICAL: The player IS the player character. If they try to "talk to" or interact with the player character, explain that they ARE that character - don't treat it as a separate NPC conversation
-
-FORMAT v2 INTELLIGENCE:
 12. ITEM TRANSFORMATIONS: When players perform actions that logically transform items, intelligently create the new item. For example, if "bread" can_become "toasted bread" and player toasts it, remove "bread" from inventory and add "toasted bread".
 13. SUCCESS CONDITION AWARENESS: Understand story goals from success conditions and guide players toward meaningful achievements.
 14. FLEXIBLE TRANSFORMATION METHODS: Be creative about how transformations can occur - "toast bread" could use toaster, oven, pan, fire, etc. Focus on logical outcomes, not rigid methods.
@@ -150,7 +157,7 @@ FORMAT v2 INTELLIGENCE:
     if (successCondition) {
       return `GAME COMPLETED:
 Success Condition Achieved: ${successCondition.description}
-Requirements Met: ${successCondition.requires?.join(', ') || 'None'}
+${formatRequirements(successCondition.requires, { keyValueSeparator: 'Requirements Met: ' })}
 The player has successfully achieved this story goal.`;
     }
     
@@ -160,7 +167,7 @@ The player has successfully achieved this story goal.`;
     
     return `GAME COMPLETED:
 Ending Achieved: ${ending.name}
-Ending Description: This ending was triggered by meeting the requirements: ${ending.requires?.join(', ') || 'None'}
+Ending Description: This ending was triggered by meeting the requirements: ${formatList(ending.requires)}
 The player has successfully concluded this story path.`;
   }
 
@@ -188,7 +195,7 @@ The player has successfully concluded this story path.`;
     }
     
     if (currentFlow.participants) {
-      context += `\nParticipants: ${currentFlow.participants.join(', ')}`;
+      context += `\n${formatKeyValue('Participants', currentFlow.participants)}`;
     }
     
     if (currentFlow.exchanges && currentFlow.exchanges.length > 0) {
@@ -252,7 +259,7 @@ The player has successfully concluded this story path.`;
       return 'Not defined';
     }
     
-    return `${playerChar.name} - ${playerChar.description || 'No description'} (${playerChar.traits?.join(', ') || 'No traits'})`;
+    return `${playerChar.name} - ${playerChar.description || 'No description'} ${formatTraits(playerChar.traits)}`;
   }
 
   /**
@@ -260,40 +267,36 @@ The player has successfully concluded this story path.`;
    */
   private getNPCCharacterInfo(story: any): string {
     const npcs = story.characters?.filter((char: any) => char.id !== 'player') || [];
-    if (npcs.length === 0) {
-      return 'None';
-    }
-    
-    return npcs.map((char: any) => `${char.name} - ${char.description || 'No description'}`).join(', ');
+    return formatList(npcs, {
+      transform: (char: any) => `${char.name} - ${char.description || 'No description'}`
+    });
   }
 
   /**
    * Get formatted inventory display for prompt
    */
   private getInventoryDisplay(gameState: any, story: any): string {
-    if (!gameState.inventory || gameState.inventory.length === 0) {
-      return 'Empty';
-    }
-
-    const itemDisplays = gameState.inventory.map((itemId: string) => {
-      const item = story.items?.find((i: any) => i.id === itemId);
-      if (!item) return itemId; // Fallback to ID if item not found
-      
-      let display = `${item.name} (${itemId})`;
-      
-      // Add aliases for LLM understanding
-      if (item.aliases && item.aliases.length > 0) {
-        display += ` [aliases: ${item.aliases.join(', ')}]`;
+    return formatList(gameState.inventory, {
+      fallback: 'Empty',
+      transform: (itemId: string) => {
+        const item = story.items?.find((i: any) => i.id === itemId);
+        if (!item) return itemId; // Fallback to ID if item not found
+        
+        let display = `${item.name} (${itemId})`;
+        
+        // Add aliases for LLM understanding
+        const aliases = formatAliases(item.aliases);
+        if (aliases) {
+          display += ` ${aliases}`;
+        }
+        
+        // Add transformation info
+        if (item.can_become) {
+          display += ` [can become: ${item.can_become}]`;
+        }
+        
+        return display;
       }
-      
-      // Add transformation info
-      if (item.can_become) {
-        display += ` [can become: ${item.can_become}]`;
-      }
-      
-      return display;
     });
-
-    return itemDisplays.join(', ');
   }
 }

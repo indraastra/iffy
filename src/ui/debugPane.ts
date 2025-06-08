@@ -234,20 +234,24 @@ export class DebugPane {
 
   private formatPrompt(prompt: string): string {
     // Parse and colorize different sections of the compact prompt
+    // Order matters - more specific patterns first to avoid overlap
     const sections = [
-      { pattern: /STORY:([\s\S]*?)(?=STATE:|$)/g, class: 'prompt-story-context', label: 'Story' },
-      { pattern: /STATE:([\s\S]*?)(?=LOCATIONS:|$)/g, class: 'prompt-game-state', label: 'State' },
-      { pattern: /LOCATIONS:([\s\S]*?)(?=CHARACTERS:|$)/g, class: 'prompt-locations', label: 'Locations' },
-      { pattern: /CHARACTERS:([\s\S]*?)(?=FLOWS:|$)/g, class: 'prompt-characters', label: 'Characters' },
-      { pattern: /FLOWS:([\s\S]*?)(?=CURRENT FLOW CONTEXT:|$)/g, class: 'prompt-flows', label: 'Flows' },
-      { pattern: /CURRENT FLOW CONTEXT:([\s\S]*?)(?=CONVERSATION MEMORY:|$)/g, class: 'prompt-flow-context', label: 'Current Flow' },
-      { pattern: /CONVERSATION MEMORY:([\s\S]*?)(?=DISCOVERY STATUS:|$)/g, class: 'prompt-conversation-memory', label: 'Memory' },
-      { pattern: /DISCOVERY STATUS:([\s\S]*?)(?=GAME COMPLETED:|MARKUP:|$)/g, class: 'prompt-discovery-status', label: 'Discovery Status' },
-      { pattern: /GAME COMPLETED:([\s\S]*?)(?=MARKUP:|$)/g, class: 'prompt-ending-context', label: 'Game Ending' },
-      { pattern: /MARKUP:([\s\S]*?)(?=PLAYER COMMAND:|$)/g, class: 'prompt-markup', label: 'Markup Rules' },
-      { pattern: /PLAYER COMMAND:([\s\S]*?)(?=CRITICAL:|$)/g, class: 'prompt-command', label: 'Command' },
-      { pattern: /CRITICAL:([\s\S]*?)(?=Use this exact format|RULES:|$)/g, class: 'prompt-critical-header', label: 'Instructions' },
-      { pattern: /Use this exact format([\s\S]*?)(?=RULES:|$)/g, class: 'prompt-format', label: 'Format' },
+      { pattern: /STORY:([\s\S]*?)(?=\n\n[A-Z]+:|$)/g, class: 'prompt-story-context', label: 'Story' },
+      { pattern: /STATE:([\s\S]*?)(?=\n\n[A-Z]+:|$)/g, class: 'prompt-game-state', label: 'State' },
+      { pattern: /LOCATIONS:([\s\S]*?)(?=\n\n[A-Z]+:|$)/g, class: 'prompt-locations', label: 'Locations' },
+      { pattern: /PLAYER CHARACTER:([\s\S]*?)(?=\n\n[A-Z]+:|$)/g, class: 'prompt-characters', label: 'Player Character' },
+      { pattern: /NPC CHARACTERS:([\s\S]*?)(?=\n\n[A-Z]+:|$)/g, class: 'prompt-characters', label: 'NPC Characters' },
+      { pattern: /SUCCESS CONDITIONS:([\s\S]*?)(?=\n\n[A-Z]+:|$)/g, class: 'prompt-discovery-status', label: 'Success Conditions' },
+      { pattern: /FLOWS:([\s\S]*?)(?=\n\n[A-Z]+:|$)/g, class: 'prompt-flows', label: 'Flows' },
+      { pattern: /CURRENT FLOW CONTEXT:([\s\S]*?)(?=\n\n[A-Z]+:|$)/g, class: 'prompt-flow-context', label: 'Current Flow' },
+      { pattern: /LLM STORY GUIDELINES:([\s\S]*?)(?=\n\n[A-Z]+:|$)/g, class: 'prompt-story-context', label: 'Story Guidelines' },
+      { pattern: /CONVERSATION MEMORY:([\s\S]*?)(?=\n\n[A-Z]+:|$)/g, class: 'prompt-conversation-memory', label: 'Memory' },
+      { pattern: /DISCOVERY STATUS:([\s\S]*?)(?=\n\n[A-Z]+:|$)/g, class: 'prompt-discovery-status', label: 'Discovery Status' },
+      { pattern: /GAME COMPLETED:([\s\S]*?)(?=\n\n[A-Z]+:|$)/g, class: 'prompt-ending-context', label: 'Game Ending' },
+      { pattern: /MARKUP:([\s\S]*?)(?=\n\n[A-Z]+:|$)/g, class: 'prompt-markup', label: 'Markup Rules' },
+      { pattern: /PLAYER COMMAND:([\s\S]*?)(?=\n\n[A-Z]+:|$)/g, class: 'prompt-command', label: 'Command' },
+      { pattern: /CRITICAL:([\s\S]*?)(?=Use this exact format|\n\n[A-Z]+:|$)/g, class: 'prompt-critical-header', label: 'Instructions' },
+      { pattern: /Use this exact format([\s\S]*?)(?=\n\n[A-Z]+:|$)/g, class: 'prompt-format', label: 'Format' },
       { pattern: /RULES:([\s\S]*?)$/g, class: 'prompt-rules', label: 'Rules' }
     ];
 

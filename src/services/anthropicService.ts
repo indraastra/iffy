@@ -121,6 +121,9 @@ export class AnthropicService {
         this.debugCallback(prompt, '');
       }
       
+      // Also log to console for debugging
+      console.log('🤖 LLM REQUEST:', prompt);
+      
       const response = await this.client.messages.create({
         model: 'claude-3-5-sonnet-20241022',
         max_tokens: 1000,
