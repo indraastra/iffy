@@ -56,12 +56,13 @@ locations:
     connections: []
 
 items: []
-knowledge: []
-flows: []
 
-start:
-  content: "Welcome to the test story! This is the beginning."
-  location: "test_room"
+flows:
+  - id: "start"
+    name: "Opening"
+    type: "narrative"
+    location: "test_room"
+    content: "Welcome to the test story! This is the beginning."
 `
     
     const story = StoryParser.parseFromYaml(testStory)

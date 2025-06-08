@@ -21,13 +21,13 @@ describe('Text Normalization', () => {
       characters: [],
       locations: [{ id: "test", name: "Test", connections: [], description: "Test location" }],
       items: [],
-      flows: [],
-      knowledge: [],
-      start: {
+      flows: [{
+        id: "start",
+        name: "Opening",
+        type: "narrative",
         location: "test",
-        first_flow: "test_flow",
         content: "The corner café feels different tonight. Maybe it's the way Jamie keeps avoiding \neye contact, or how they've barely touched their latte. You've been friends for \nyears, but lately something has changed.\n\nThey stir their coffee absently."
-      }
+      }]
     };
 
     const result = gameEngine.loadStory(testStory);
@@ -60,13 +60,13 @@ describe('Text Normalization', () => {
       characters: [],
       locations: [{ id: "test", name: "Test", connections: [], description: "Test location" }],
       items: [],
-      flows: [],
-      knowledge: [],
-      start: {
+      flows: [{
+        id: "start",
+        name: "Opening",
+        type: "narrative",
         location: "test",
-        first_flow: "test_flow",
         content: "Text with   multiple    spaces\nand\tsome\ttabs\nand   mixed   \n   whitespace."
-      }
+      }]
     };
 
     const result = gameEngine.loadStory(testStory);
@@ -91,13 +91,13 @@ describe('Text Normalization', () => {
       characters: [],
       locations: [{ id: "test", name: "Test", connections: [], description: "Test location" }],
       items: [],
-      flows: [],
-      knowledge: [],
-      start: {
+      flows: [{
+        id: "start",
+        name: "Opening",
+        type: "narrative",
         location: "test",
-        first_flow: "test_flow",
         content: "First paragraph with\nline breaks.\n\nSecond paragraph with\nmore line breaks.\n\n\nThird paragraph after\nextra spacing."
-      }
+      }]
     };
 
     const result = gameEngine.loadStory(testStory);
