@@ -37,6 +37,11 @@ class IffyApp {
       this.commandProcessor.resetUIState();
     });
 
+    // Set up UI restore callback so GameEngine can restore UI state when loading saves
+    this.gameEngine.setUIRestoreCallback((gameState: any, conversationHistory?: any[]) => {
+      this.commandProcessor.restoreUIState(gameState, conversationHistory);
+    });
+
     // Set up loading state callback for ending generation
     this.gameEngine.setLoadingStateCallback((message: string) => {
       this.commandProcessor.showLoading(message);

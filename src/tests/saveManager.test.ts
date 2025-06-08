@@ -68,12 +68,13 @@ describe('SaveManager', () => {
         }
       ],
       items: [],
-      knowledge: [],
-      flows: [],
-      start: {
-        content: "Test game started!",
-        location: "start_room"
-      }
+      flows: [{
+        id: "start",
+        name: "Test Start",
+        type: "narrative",
+        location: "start_room",
+        content: "Test game started!"
+      }]
     };
 
     // Create dependencies
