@@ -10,6 +10,7 @@ Stories are contained in a single `.yaml` file with the following top-level keys
 title: String
 author: String  
 version: String
+blurb: String  # Optional - brief description for game selection
 metadata: Object
 characters: Array
 locations: Array
@@ -26,6 +27,7 @@ flows: Array
 title: "Story Title"
 author: "Author Name"
 version: "1.0"
+blurb: "Brief description of what players will experience"  # Optional
 ```
 
 ### Metadata Section

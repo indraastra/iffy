@@ -129,6 +129,7 @@ export interface Story {
   title: string;
   author: string;
   version: string;
+  blurb?: string; // Brief description of the story for players to see in game selection
   metadata: StoryMetadata;
   characters: Character[];
   locations: Location[];

@@ -7,7 +7,7 @@ interface ExampleStory {
   filename: string;
   title: string;
   author: string;
-  description: string;
+  blurb: string;
   content: string;
 }
 
@@ -47,17 +47,20 @@ function bundleExampleStories() {
       const title = story.title || file.replace(/\.(yaml|yml)$/, '');
       const author = story.author || 'Unknown';
       
-      // Generate description from title and metadata
-      let description = title;
-      if (story.metadata?.setting?.place) {
-        description += ` - ${story.metadata.setting.place}`;
+      // Use blurb if available, otherwise generate from title and metadata
+      let blurb = story.blurb;
+      if (!blurb) {
+        blurb = title;
+        if (story.metadata?.setting?.place) {
+          blurb += ` - ${story.metadata.setting.place}`;
+        }
       }
       
       stories.push({
         filename: file,
         title,
         author,
-        description,
+        blurb,
         content
       });
       
@@ -103,7 +106,7 @@ export interface BundledStory {
   filename: string;
   title: string;
   author: string;
-  description: string;
+  blurb: string;
   content: string;
 }
 
@@ -113,12 +116,12 @@ export function getBundledStory(filename: string): BundledStory | undefined {
   return BUNDLED_STORIES.find(story => story.filename === filename);
 }
 
-export function getBundledStoryTitles(): Array<{filename: string, title: string, author: string, description: string}> {
+export function getBundledStoryTitles(): Array<{filename: string, title: string, author: string, blurb: string}> {
   return BUNDLED_STORIES.map(story => ({
     filename: story.filename,
     title: story.title,
     author: story.author,
-    description: story.description
+    blurb: story.blurb
   }));
 }
 `;
