@@ -24,8 +24,9 @@ export class CommandProcessor {
    */
   private setupEventListeners(): void {
     // Command input handling
-    this.commandInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
+    this.commandInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault(); // Prevent new line
         this.processCommand();
       }
     });
