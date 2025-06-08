@@ -45,10 +45,10 @@ export class GameEngine {
   loadStory(story: Story): Result<GameState> {
     try {
       // Basic validation
-      if (!story || !story.title || !story.start) {
+      if (!story || !story.title || !story.flows || story.flows.length === 0) {
         return {
           success: false,
-          error: 'Invalid story: missing required fields (title, start)'
+          error: 'Invalid story: missing required fields (title, flows)'
         };
       }
 
