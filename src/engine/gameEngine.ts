@@ -39,6 +39,7 @@ export class GameEngine {
     this.loadingStateCallback = callback;
   }
 
+
   /**
    * Reset game state, cancel requests, and reset UI
    */
@@ -383,9 +384,12 @@ export class GameEngine {
             responseText += `\n\n${successCondition.ending}`;
             this.hasShownEndingContent = true;
           } else {
-            // No ending text - generate with LLM asynchronously
+            // No ending text - generate with LLM asynchronously after a short delay
+            // This allows the UI to display the main response and completion message first
             this.hasShownEndingContent = true; // Mark as handled to prevent duplicate calls
-            this.generateEndingAsynchronously(successCondition, currentLocation);
+            setTimeout(() => {
+              this.generateEndingAsynchronously(successCondition, currentLocation);
+            }, 100); // Small delay to let UI update
           }
         } else {
           // Fallback: Check if ending is defined as a separate ending (legacy)

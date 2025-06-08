@@ -240,21 +240,7 @@ class IffyApp {
       setTimeout(autoResize, 0);
     });
 
-    // Handle Enter key behavior
-    textarea.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        // Trigger submit (the CommandProcessor will handle this)
-        const enterEvent = new KeyboardEvent('keydown', {
-          key: 'Enter',
-          code: 'Enter',
-          keyCode: 13,
-          which: 13,
-          bubbles: true
-        });
-        textarea.dispatchEvent(enterEvent);
-      }
-    });
+    // Note: Enter key handling is done by CommandProcessor
 
     // Initial resize
     autoResize();
