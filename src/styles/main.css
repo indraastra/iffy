@@ -85,6 +85,7 @@ body {
   padding: 2rem;
   overflow-y: auto;
   background-color: var(--background-color);
+  position: relative;
 }
 
 .story-text {
@@ -127,6 +128,12 @@ body {
   font-family: inherit;
   font-size: 1rem;
   outline: none;
+  resize: none;
+  min-height: 2.5rem;
+  max-height: 10rem;
+  line-height: 1.4;
+  overflow-y: auto;
+  transition: height 0.1s ease;
 }
 
 .command-input:focus {
@@ -839,15 +846,15 @@ body {
 
 /* Debug toggle button */
 .debug-toggle-btn {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
   padding: 0.75rem;
   background-color: var(--button-bg);
   color: var(--button-text-color, var(--text-color));
   border: 2px solid var(--border-color);
   border-radius: 50%;
-  cursor: pointer;
+  cursor: move;
   font-family: inherit;
   font-size: 1.2rem;
   z-index: 1001;
@@ -857,6 +864,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  user-select: none;
 }
 
 .debug-toggle-btn:hover {
@@ -875,8 +883,11 @@ body {
   }
   
   .debug-toggle-btn {
-    bottom: 1rem;
-    right: 1rem;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
   }
 }
 

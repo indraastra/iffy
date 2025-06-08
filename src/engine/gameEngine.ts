@@ -9,6 +9,7 @@ export class GameEngine {
   private promptBuilder: GamePromptBuilder;
   private debugPane: any = null;
   private uiResetCallback?: () => void;
+  private hasShownEndingContent: boolean = false;
 
   constructor(anthropicService?: AnthropicService) {
     this.anthropicService = anthropicService || new AnthropicService();
@@ -31,6 +32,9 @@ export class GameEngine {
     
     // Reset game state
     this.gameState = this.createInitialState();
+    
+    // Reset ending content flag
+    this.hasShownEndingContent = false;
     
     // Reset UI state via callback
     if (this.uiResetCallback) {
@@ -246,16 +250,18 @@ export class GameEngine {
       
       // Note: Flow tracking is now handled locally within this method
       
-      if (this.gameState.gameEnded && this.gameState.endingId) {
+      if (this.gameState.gameEnded && this.gameState.endingId && !this.hasShownEndingContent) {
         // Format v2: Check for success condition ending first
         const successCondition = this.story!.success_conditions?.find(sc => sc.id === this.gameState.endingId);
         if (successCondition) {
           responseText += `\n\n${successCondition.ending}`;
+          this.hasShownEndingContent = true;
         } else {
           // Fallback: Check if ending is defined as a separate ending (legacy)
           const ending = this.story!.endings?.find(e => e.id === this.gameState.endingId);
           if (ending) {
             responseText += `\n\n${ending.content}`;
+            this.hasShownEndingContent = true;
           }
           // If ending is defined as a flow, the content is already included above
         }
