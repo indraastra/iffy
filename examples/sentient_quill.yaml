@@ -102,7 +102,7 @@ items:
 success_conditions:
   - id: "brilliant_deduction"
     description: "The Inspector and Quill reach a masterful conclusion, impressing even the artificial mind"
-    requires: ["all_evidence_gathered", "correct_theory_presented", "quill_impressed", "investigation_complete"]
+    requires: ["theory_presented", "all_evidence_gathered", "correct_theory_presented"]
     ending: |
       **A Most Satisfactory Resolution**
       
@@ -117,7 +117,7 @@ success_conditions:
 
   - id: "satisfactory_solution"
     description: "A competent investigation yields reasonable conclusions"
-    requires: ["some_evidence_gathered", "reasonable_theory_presented", "investigation_complete"]
+    requires: ["theory_presented", "some_evidence_gathered", "reasonable_theory_presented"]
     ending: |
       **A Serviceable Conclusion**
       
@@ -129,7 +129,7 @@ success_conditions:
 
   - id: "inadequate_investigation"
     description: "The investigation falls short of expectations"
-    requires: ["investigation_complete"]
+    requires: ["theory_presented"]
     ending: |
       **A Rather Disappointing Affair**
       
@@ -217,13 +217,9 @@ flows:
       
       Your reputation as Scotland Yard's finest hangs in the balance, measured against 
       a machine that claims perfect logical reasoning.
-    sets: ["theory_presentation_ready", "investigation_complete"]
+    sets: ["theory_presentation_ready"]
 
 llm_guidelines: |
-  SETTING: Victorian London, 1887. An anachronistic crime scene investigation featuring an AI-powered quill pen as detective partner.
-  
-  TONE: Formal Victorian prose with ornate language, but infused with subtle technological wonder. The quill should write in flowery, verbose Victorian style while betraying hints of inhuman calculation.
-  
   CHARACTER DYNAMICS:
   - Inspector Whitmore: Professional pride conflicting with fascination at this mechanical mind
   - The Analytical Engine Quill: Condescending yet genuinely curious about human reasoning
@@ -234,12 +230,12 @@ llm_guidelines: |
   
   EVIDENCE PROGRESSION:
   - "initial_examination_begun" → when player starts investigating the crime scene
-  - "evidence_gathering_complete" → when player has discovered key items from multiple locations
-  - "some_evidence_gathered" → if player finds partial evidence
-  - "all_evidence_gathered" → if player thoroughly investigates all locations and items
-  - "reasonable_theory_presented" → if player makes logical deductions about poison/business motive
-  - "correct_theory_presented" → if player identifies the full solution accurately
-  - "quill_impressed" → if player's reasoning particularly impresses the artificial mind
+  - "evidence_gathering_complete" → when player has examined locations and is ready to present theories
+  - "some_evidence_gathered" → if player finds at least one key piece of evidence
+  - "all_evidence_gathered" → if player finds all key pieces of evidence
+  - "reasonable_theory_presented" → if player identifies cause of death
+  - "correct_theory_presented" → if player identifies correct means, motive, and opportunity for murder
+  - "theory_presented" → when player has presented their final theory to the Quill
   
   QUILL'S PERSONALITY:
   The quill should be verbose, slightly pompous, yet genuinely helpful. It represents the Victorian fascination with mechanical precision versus human intuition. It should provide hints while maintaining an air of superiority, yet be genuinely curious about human reasoning processes.
@@ -249,6 +245,4 @@ llm_guidelines: |
   - Reward thorough investigation with better evidence flags
   - Let the quill provide mechanical analysis while leaving intuitive leaps to the player
   - The quill should react to the player's investigative approach and conclusions
-  
-  VICTORIAN LANGUAGE:
-  Use period-appropriate vocabulary: "most peculiar," "considerable interest," "decidedly," etc. Avoid modern colloquialisms. The quill should be particularly ornate in its written communications.
+  - Set "theory_presented" flag only when player presents their final deduction to trigger ending
