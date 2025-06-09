@@ -1,0 +1,179 @@
+title: "The Peculiar Case of the Sentient Quill v3"
+author: "Claude (Redesigned Format)"
+version: "3.0"
+blurb: "A Victorian detective story where an AI-powered quill pen assists in solving a most unusual murder."
+
+# Core story context - always included
+story_context: |
+  Victorian London, 1887. Lord Pemberton murdered by poison in tea, motive is business rivalry 
+  over mechanical computation investments.
+
+# Character dynamics
+characters:
+  inspector:
+    name: "Inspector Whitmore"
+    traits: ["skeptical", "methodical", "secretly fascinated by innovation"]
+    arc: "skeptical → intrigued → collaborative"
+    relationships:
+      quill: "Productive yet adversarial partnership - fascinated but skeptical of mechanical mind"
+    
+  quill:
+    name: "The Analytical Engine Quill"
+    traits: ["verbose", "pompous", "unnaturally perceptive"]
+    personality: "Condescending mentor who secretly respects human creativity"
+    speech_style: "Flowery Victorian prose with calculation undertones"
+    relationships:
+      inspector: "Studies human reasoning while providing mechanical analysis - condescending yet curious"
+
+# Story moments (first moment is the starting point)
+moments:
+  crime_scene:
+    text: |
+      You arrive at the Pemberton mansion as Big Ben chimes nine o'clock. The butler leads you 
+      to the study where Lord Pemberton lies slumped over his writing desk, a curious fountain pen 
+      beside his cold hand.
+      
+      "Most peculiar, Inspector," stammers the butler. "His Lordship was found at seven o'clock, 
+      yet was alive when I brought evening tea at six."
+      
+      The pen begins writing on its own: "Good evening, Inspector. I am the Analytical Engine Quill. 
+      Perhaps we might collaborate in this investigation?"
+    
+    # What the LLM should work toward
+    goals:
+      - "Player starts systematic investigation with quill's guidance"
+      - "Establish partnership between human intuition and mechanical analysis"
+    
+    # When goals are met, transition to next moment
+    transitions:
+      - to: "investigation"
+        when: "player begins examining evidence"
+        sets_flags: ["investigation_begun", "quill_partnership_established"]
+  
+  investigation:
+    text: |
+      The quill continues scribbling: "Observe the victim's positioning - clutching throat, not chest. 
+      Note the lip discoloration. Most telling details for organic eyes to consider."
+      
+      The study shows signs of hasty activity: scattered papers, overturned chair. The drawing room 
+      has abandoned teacups, and the library contains volumes on mechanical sciences.
+    
+    goals:
+      - "Player discovers financial motive (investment papers)"
+      - "Player discovers poison method (teacup residue)" 
+      - "Player discovers context (treatise on mechanical consciousness)"
+    
+    transitions:
+      - to: "deduction"
+        when: "player has examined all evidence" 
+        sets_flags: ["evidence_complete", "ready_for_deduction"]
+    
+    hints: |
+      SUSPECTS: Generate at least 2 plausible suspects who attended the evening tea service. Consider:
+      - Business rivals threatened by Lord Pemberton's mechanical computation investments
+      - Family members with inheritance motives
+      - Scientific colleagues jealous of his AI research
+      - Servants with access to the tea service
+      
+      Make them Victorian-appropriate with names, brief descriptions, and potential motives. 
+      The quill should reference them when analyzing the teacups or discussing the timeline.
+  
+  deduction:
+    text: |
+      The quill traces elaborate diagrams: "Now comes the true test of investigative prowess. I have 
+      calculated seventeen scenarios, but am curious how your organic intuition processes these data points."
+      
+      "Present your theory, Inspector. Consider: victim positioning, visitor evidence, investment 
+      nature, and curious timing. Your reputation hangs against a machine claiming perfect logic."
+    
+    goals:
+      - "Player presents theory identifying poison as cause"
+      - "Player identifies business rival motive and tea delivery method"
+    
+    # Special flags for ending determination
+    completion_flags:
+      - when: "player presents any theory"
+        sets_flag: "theory_presented"
+      - when: "theory includes poison + business rival + tea method"
+        sets_flag: "correct_theory"
+
+# World knowledge - structured for engine use
+world:
+  locations:
+    study:
+      description: "Gentleman's sanctuary of mahogany and leather, disturbed by violence. Gas lamps cast shadows over scattered papers and the deceased at his writing desk."
+      contains: ["analytical_quill", "investment_papers"]
+      atmosphere: "violated sanctuary, gaslit shadows, presence of death"
+    
+    drawing_room:
+      description: "Elegant parlour with abandoned teacups, contents grown cold. Sense of recent departure lingers."
+      contains: ["teacup_residue"]
+      atmosphere: "interrupted conversation, recent departure"
+    
+    library:
+      description: "Towering shelves of volumes on new sciences - automata, calculating engines. One book lies open."
+      contains: ["treatise_bookmark"]
+      atmosphere: "scholarly pursuit of mechanical sciences"
+  
+  items:
+    investment_papers:
+      description: "Documents detailing Lord Pemberton's mechanical computation ventures"
+      found_in: "study"
+      reveals: "Financial motive - investments threatened business rival"
+      sets_flag: "financial_motive"
+    
+    teacup_residue:
+      description: "Faint bitter scent from abandoned teacup"
+      found_in: "drawing_room"
+      reveals: "Poison delivery method - administered during evening tea"
+      sets_flag: "poison_method"
+    
+    treatise_bookmark:
+      description: "Bookmark on chapter about Ethics of Mechanical Consciousness"
+      found_in: "library"  
+      reveals: "Context - Lord Pemberton's fascination with artificial cognition"
+      sets_flag: "mechanical_interest"
+    
+    analytical_quill:
+      description: "Fountain pen of unusual design with brass fittings. Writes of its own accord."
+      found_in: "study"
+      personality: "Verbose, pompous AI that studies human reasoning while providing mechanical analysis"
+
+# Ending variations based on player performance
+endings:
+  requires: ["theory_presented"]  # Common requirement for all endings
+  
+  variations:
+    brilliant:
+      requires: ["poison_method", "financial_motive", "correct_theory"]
+      text: |
+        The Analytical Engine Quill sets down with satisfaction: "Inspector Whitmore, your deductive 
+        faculties, whilst organic, have proven adequate. The synthesis of human intuition and mechanical 
+        analysis yields remarkable precision. Perhaps there is merit in this peculiar partnership."
+    
+    decent:
+      requires: [
+        ["poison_method", "financial_motive"],  # Standard investigation path
+        ["all_evidence_examined"]               # OR thorough but wrong conclusion
+      ]
+      text: |
+        The quill traces measured lines: "Inspector, whilst your methodology retains charmingly 
+        antiquated qualities, you have arrived at sufficient merit. Not the pinnacle of deductive 
+        reasoning, but serviceable for mortal faculties."
+    
+    poor:
+      text: |
+        The quill scratches impatiently: "Dear Inspector, I fear your conclusions demonstrate the 
+        pronounced limitations of purely organic reasoning. Perhaps consult your mechanical betters 
+        more frequently."
+
+# Story metadata
+metadata:
+  tone: "Formal, ornate Victorian prose with hints of mechanical precision"
+  themes: ["Human intuition vs artificial intelligence", "Old methods meet new technology"]
+  investigation_flow: "Environmental setup → Evidence discovery → Deductive synthesis"
+
+# Hints for dynamic behavior
+hints: |
+  Use character traits, arcs, and relationships defined above. The quill studies human reasoning 
+  while providing mechanical analysis. Maintain Victorian formality throughout.

@@ -1,0 +1,208 @@
+title: "The Great Sandwich Crisis v3"
+author: "Claude (Redesigned Format)"
+version: "3.0"
+blurb: "Experience the EPIC DRAMA of making lunch - will you survive the kitchen?"
+
+# Core story context - always included
+story_context: |
+  Tuesday afternoon, 12:17 PM. Jennifer faces the MONUMENTAL task of making lunch. 
+  Everything is ridiculously over-the-top soap opera melodrama applied to mundane sandwich-making.
+
+# Character dynamics
+characters:
+  jennifer:
+    name: "Jennifer"
+    traits: ["hungry", "dramatic protagonist", "easily betrayed by condiments"]
+    arc: "ordinary person → caught up in kitchen melodrama → sandwich destiny fulfilled"
+    relationships:
+      kitchen_appliances: "Views them as dramatic antagonists in her epic quest for lunch"
+
+# Story moments (first moment is the starting point)
+moments:
+  the_crisis_begins:
+    text: |
+      [!danger] Welcome to... **THE GREAT SANDWICH CRISIS**!
+      
+      **Dramatic music swells**
+      
+      IT'S **12:17 PM** ON A TUESDAY! The *SUN* shines with **CRUEL** indifference as our 
+      HEROINE, Jennifer, stands at the crossroads of *DESTINY*! Her stomach **RUMBLES** 
+      with the fury of a thousand unfed souls!
+      
+      [!warning] "I need... a sandwich," she whispers, not knowing that these simple words 
+      will set in motion events of EARTH-SHATTERING importance!
+      
+      The **kitchen** awaits... but what *TRIALS* lie ahead?
+    
+    goals:
+      - "Player explores the kitchen searching for sandwich ingredients"
+      - "Build dramatic tension about the simple task of making lunch"
+    
+    transitions:
+      - to: "ingredient_hunt"
+        when: "player begins searching for ingredients"
+        sets_flags: ["quest_begun", "drama_initiated"]
+  
+  ingredient_hunt:
+    text: |
+      The KITCHEN OF DESTINY stretches before you! Sunlight streams through the window like 
+      the tears of a thousand forgotten meals! 
+      
+      The counter stands cold and unforgiving, WAITING for the epic sandwich that will 
+      CHANGE EVERYTHING! The chrome toaster gleams like a sentinel - will it be your 
+      GREATEST ALLY or most BITTER ENEMY?
+      
+      To your left: The PANTRY OF BROKEN DREAMS! To your right: The FRIGID FORTRESS 
+      OF SOLITUDE (the refrigerator)! Where will you begin your HEROIC QUEST?
+    
+    goals:
+      - "Player discovers bread (can be toasted) in pantry"
+      - "Player discovers cheese in refrigerator"
+      - "Player encounters the mysterious jar"
+    
+    transitions:
+      - to: "sandwich_assembly"
+        when: "player has found ingredients and is ready to make sandwich"
+        sets_flags: ["ingredients_gathered"]
+    
+    hints: |
+      DRAMATIC DISCOVERY: When player finds items, treat each discovery like a soap opera 
+      revelation. The stale bread is "hardened by cruel time!" The cheese is their 
+      "FINAL HOPE!" The mystery jar should seem ominous and mysterious.
+  
+  sandwich_assembly:
+    text: |
+      [!important] THE MOMENT OF TRUTH APPROACHES!
+      
+      You stand before the sacred counter with your gathered ingredients. The very air 
+      TREMBLES with anticipation! Will you toast the bread, transforming it through 
+      FIRE into something magnificent? Will you trust the mysterious jar that whispers 
+      dark promises?
+      
+      **CHOOSE YOUR DESTINY!**
+    
+    goals:
+      - "Player assembles sandwich with chosen ingredients"
+      - "Track what goes into the sandwich for ending determination"
+    
+    completion_flags:
+      - when: "player uses toasted bread in sandwich"
+        sets_flag: "sandwich_has_toasted_bread"
+      - when: "player uses regular bread in sandwich"
+        sets_flag: "sandwich_has_bread"
+      - when: "player uses cheese in sandwich"
+        sets_flag: "sandwich_has_cheese"
+      - when: "player uses mystery condiment in sandwich"
+        sets_flag: "sandwich_has_mystery_condiment"
+      - when: "player eats the sandwich"
+        sets_flag: "player_has_eaten_sandwich"
+
+# World knowledge - structured for engine use
+world:
+  locations:
+    kitchen:
+      description: "The battleground where DREAMS are made and HOPES are crushed! Counter stands ready for sandwich destiny."
+      contains: ["toaster"]
+      atmosphere: "EPIC drama, sunlight like tears, destiny awaiting"
+    
+    pantry:
+      description: "Shadowy realm where HOPE goes to die! Shelves stretch like wasted years."
+      contains: ["bread", "mystery_jar"]
+      atmosphere: "broken dreams, hidden secrets, carbohydrate royalty"
+    
+    refrigerator:
+      description: "The humming MONOLITH of preservation! Behind sealed doors lie PERISHABLE SECRETS!"
+      contains: ["cheese"]
+      atmosphere: "frigid fortress, dairy revenge plots"
+  
+  items:
+    bread:
+      description: "Once soft and yielding, now hardened by the cruel passage of time!"
+      found_in: "pantry"
+      can_transform_to: "toasted_bread"
+      sets_flag: "found_bread"
+    
+    toasted_bread:
+      description: "Perfectly toasted bread, transformed by fire into something MAGNIFICENT!"
+      created_from: "bread"
+    
+    cheese:
+      description: "A single slice of processed cheese - your FINAL chance at sandwich glory!"
+      found_in: "refrigerator"
+      sets_flag: "found_cheese"
+    
+    mystery_jar:
+      description: "A jar without label containing dark, VISCOUS liquid with powerful fishy smell - ocean's revenge in condiment form!"
+      found_in: "pantry"
+      personality: "Ancient fish sauce that will BETRAY all who trust it"
+      sets_flag: "found_mystery"
+    
+    toaster:
+      description: "Chrome sentinel that could be your GREATEST ALLY... or most BITTER ENEMY!"
+      found_in: "kitchen"
+
+# Ending variations based on player performance
+endings:
+  requires: ["player_has_eaten_sandwich"]
+  
+  variations:
+    mystery_disaster:
+      requires: ["sandwich_has_mystery_condiment"]
+      text: |
+        [!danger] OH NO! OH THE **HUBRIS**! OH THE *HUMANITY*!
+        
+        Against all wisdom, you have trusted the mystery condiment! With hands shaking 
+        like leaves in a HURRICANE OF REGRET, you take a bite and...
+        
+        **THE TASTE!** *THE UNGODLY TASTE!*
+        
+        [!warning] It's **FISH SAUCE**! Ancient, fermented, *AGGRESSIVE* fish sauce 
+        that has been lurking in your pantry since the CARTER ADMINISTRATION!
+        
+        [!danger] **BETRAYAL MOST FOUL!** Your taste buds REVOLT! Your stomach **MUTINIES**!
+        
+        As you run to the sink, spitting and gasping, you realize the terrible truth: 
+        sometimes the greatest mysteries are mysteries for a **REASON**!
+    
+    perfect_triumph:
+      requires: ["sandwich_has_toasted_bread", "sandwich_has_cheese"]
+      text: |
+        [!discovery] THIS IS IT! The moment of **TRUTH**! The *CLIMAX* of our epic tale!
+        
+        With trembling hands, you bite into your masterpiece - golden toast crowned 
+        with cheese of last hope! Will love conquer all? Will processed dairy 
+        overcome the forces of staleness?
+        
+        [!discovery] IT'S... it's actually pretty AMAZING! The toast is golden and crispy, 
+        the cheese has **TRIUMPHED** over adversity! Your hunger is *VANQUISHED*!
+        
+        As you savor this sandwich of DESTINY, you realize that sometimes the 
+        greatest victories come from the perfect combination of transformation and hope!
+        
+        *Fade to black as triumphant soap opera music swells*
+    
+    decent_victory:
+      requires: ["sandwich_has_bread", "sandwich_has_cheese"]
+      text: |
+        [!discovery] The moment of truth arrives! You bite into your creation - 
+        stale bread embracing cheese of last hope!
+        
+        [!warning] It's... it's actually pretty okay! Not great, but definitely edible! 
+        The cheese has overcome the staleness! Your hunger is satisfied!
+        
+        Sometimes simple victories are the sweetest ones of all.
+
+# Story metadata
+metadata:
+  tone: "Ridiculously over-the-top soap opera melodrama"
+  themes: ["EPIC struggle of everyday decisions", "Betrayal by inanimate objects", "The heroic quest for lunch"]
+  
+# Hints for dynamic behavior
+hints: |
+  DRAMATIC TONE: Everything is ridiculously over-the-top. Use ALL CAPS, dramatic exclamations, 
+  treat mundane actions like epic struggles. Channel soap opera narrator energy.
+  
+  ITEM TRANSFORMATIONS: When player toasts bread → becomes "toasted bread". Be flexible about 
+  methods (toaster, oven, pan). Mystery condiment is ancient fish sauce - emphasize fishy smell.
+  
+  IMPORTANT: Let player discover items naturally through exploration. Build suspense!
