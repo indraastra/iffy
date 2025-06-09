@@ -83,7 +83,8 @@ export class StoryParser {
         narrative_voice: metadata.tone.narrative_voice
       },
       themes: metadata.themes,
-      ui: metadata.ui
+      ui: metadata.ui,
+      emergent_content: metadata.emergent_content
     };
   }
 

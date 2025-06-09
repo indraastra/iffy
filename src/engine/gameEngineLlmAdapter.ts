@@ -573,7 +573,7 @@ GOAL: Create seamless narrative experiences where pre-written content enhances r
             sections.push(objectLine);
           } else {
             // Emergent object - let LLM handle it
-            sections.push(`  • ${objId}: [No description - describe based on context and story needs]`);
+            sections.push(`  • ${objId}: [Emergent object]`);
           }
         });
       }
