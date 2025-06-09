@@ -37,15 +37,7 @@ locations:
       Gas lamps cast wavering shadows across scattered papers and overturned furniture. 
       The deceased lies slumped over his writing desk, a curious [mechanical quill pen](item:analytical_quill) 
       gleaming beside his cold hand.
-    objects:
-      - name: "writing desk"
-        description: "Fine mahogany, now marred by spilled ink and the presence of death"
-      - name: "scattered papers"
-        description: "Investment documents and correspondence, some bearing strange marginalia"
-      - name: "overturned chair"
-        description: "Suggests a struggle, or perhaps a sudden collapse"
-      - name: "gas lamp"
-        description: "Burns with steady flame, casting dancing shadows"
+    objects: ["writing_desk", "scattered_papers", "overturned_chair", "gas_lamp"]
 
   - id: "drawing_room"
     name: "The Drawing Room"
@@ -54,11 +46,7 @@ locations:
       An elegant parlour where the household gathered for evening discourse. 
       **Teacups** sit abandoned, their contents grown cold. A sense of *recent 
       departure* lingers in the air.
-    objects:
-      - name: "abandoned teacups"
-        description: "Three cups, as if conversation was interrupted mid-sentence"
-      - name: "fireplace"
-        description: "Embers still glowing, suggesting recent use"
+    objects: ["abandoned_teacups", "fireplace"]
 
   - id: "library"
     name: "The Extensive Library"
@@ -67,13 +55,10 @@ locations:
       Towering shelves of **leather-bound volumes**, with a particular collection 
       devoted to the *new sciences* - automata, calculating engines, and other 
       **mechanical wonders**. One volume lies open upon a reading stand.
-    objects:
-      - name: "open book"
-        description: "A treatise on 'Mechanical Minds and Artificial Cognition'"
-      - name: "automaton collection"
-        description: "Curious brass figures and clockwork devices"
+    objects: ["open_book", "automaton_collection"]
 
 items:
+  # Investigation items
   - id: "analytical_quill"
     name: "The Analytical Engine Quill"
     display_name: "quill pen"
@@ -85,19 +70,52 @@ items:
     name: "Investment Documents"
     description: "Papers detailing Lord Pemberton's recent ventures into mechanical computation enterprises"
     discoverable_in: "study"
-    discovery_objects: ["scattered papers", "writing desk"]
+    discovery_objects: ["scattered_papers", "writing_desk"]
 
   - id: "teacup_residue"
     name: "Suspicious Residue"
     description: "A faint, bitter scent emanates from one of the abandoned teacups"
     discoverable_in: "drawing_room" 
-    discovery_objects: ["abandoned teacups"]
+    discovery_objects: ["abandoned_teacups"]
 
   - id: "treatise_bookmark"
     name: "Significant Bookmark"
     description: "A leather bookmark marking a chapter on 'The Ethics of Mechanical Consciousness'"
     discoverable_in: "library"
-    discovery_objects: ["open book"]
+    discovery_objects: ["open_book"]
+
+  # Room objects (unified with items)
+  - id: "writing_desk"
+    name: "Writing Desk"
+    description: "Fine mahogany, now marred by spilled ink and the presence of death"
+
+  - id: "scattered_papers"
+    name: "Scattered Papers"
+    description: "Investment documents and correspondence, some bearing strange marginalia"
+
+  - id: "overturned_chair"
+    name: "Overturned Chair"
+    description: "Suggests a struggle, or perhaps a sudden collapse"
+
+  - id: "gas_lamp"
+    name: "Gas Lamp"
+    description: "Burns with steady flame, casting dancing shadows"
+
+  - id: "abandoned_teacups"
+    name: "Abandoned Teacups"
+    description: "Three cups, as if conversation was interrupted mid-sentence"
+
+  - id: "fireplace"
+    name: "Fireplace"
+    description: "Embers still glowing, suggesting recent use"
+
+  - id: "open_book"
+    name: "Open Book"
+    description: "A treatise on 'Mechanical Minds and Artificial Cognition'"
+
+  - id: "automaton_collection"
+    name: "Automaton Collection"
+    description: "Curious brass figures and clockwork devices"
 
 success_conditions:
   - id: "brilliant_deduction"
