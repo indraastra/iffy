@@ -323,10 +323,7 @@ export class LoadMenuManager {
           try {
             const saveData = e.target?.result as string;
             const result = this.gameEngine.loadGame(saveData);
-            if (result.success) {
-              this.messageDisplay.addMessage('Game loaded successfully!', 'system');
-              this.messageDisplay.addMessage('You can continue from where you left off.', 'system');
-            } else {
+            if (!result.success) {
               this.messageDisplay.addMessage(result.error || 'Failed to load save file. Make sure you have the correct story loaded.', 'error');
             }
           } catch (error) {
