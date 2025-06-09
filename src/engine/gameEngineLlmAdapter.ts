@@ -17,7 +17,8 @@ export class GamePromptBuilder {
     gameState: any,
     story: any,
     currentLocation: any,
-    memoryContext?: any
+    memoryContext?: any,
+    potentialChanges?: { transitions: any[], endings: any[] }
   ): string {
     return `You are an interactive fiction game interpreter processing natural language commands.
 
@@ -91,6 +92,8 @@ DISCOVERY STATUS: Based on recent interactions, analyze if player has already ex
 
 ${gameState.gameEnded ? this.getEndingContext(story, gameState) : ''}
 
+${potentialChanges ? this.getNarrativeChangesContext(potentialChanges) : ''}
+
 MARKUP: Use [character:Name] for characters, [item:item_id] for items (use the item's ID, not name), **bold** for emphasis, [!warning]/[!discovery]/[!danger] for alerts. Do NOT use [location:Name] markup - just use the location name directly.
 
 IMPORTANT: The player IS the player character. Do NOT treat the player character as a separate NPC they can talk to. When players try to "talk to" or interact with the player character, explain that they ARE that character.
@@ -140,7 +143,8 @@ RULES:
     gameState: any,
     story: any,
     currentLocation: any,
-    memoryContext?: any
+    memoryContext?: any,
+    potentialChanges?: { transitions: any[], endings: any[] }
   ): Record<string, string> {
     const sections: Record<string, string> = {};
 
@@ -207,6 +211,10 @@ Flow: ${gameState.currentFlow || 'None'} | Status: ${gameState.gameEnded ? 'COMP
 
     if (gameState.gameEnded) {
       sections['GAME COMPLETED'] = this.getEndingContext(story, gameState);
+    }
+
+    if (potentialChanges) {
+      sections['POTENTIAL NARRATIVE CHANGES'] = this.getNarrativeChangesContext(potentialChanges);
     }
 
     sections['MARKUP'] = 'Use [character:Name] for characters, [item:item_id] for items (use the item\'s ID, not name), **bold** for emphasis, [!warning]/[!discovery]/[!danger] for alerts. Do NOT use [location:Name] markup - just use the location name directly.';
@@ -450,5 +458,56 @@ The player has successfully concluded this story path.`;
         return display;
       }
     });
+  }
+
+  /**
+   * Generate context for potential narrative changes (transitions and endings)
+   */
+  private getNarrativeChangesContext(potentialChanges: { transitions: any[], endings: any[] }): string {
+    const sections: string[] = [];
+
+    // Handle flow transitions
+    if (potentialChanges.transitions.length > 0) {
+      sections.push('FLOW TRANSITION ALERTS:');
+      potentialChanges.transitions.forEach(change => {
+        const likelihood = change.isLikely ? 'very likely' : 'possible';
+        sections.push(`
+→ ${change.targetFlow.name} (${change.targetFlow.id}) - ${likelihood} to occur
+  TYPE: ${change.targetFlow.type}
+  CONTENT: ${change.content || 'No specific content'}`);
+      });
+    }
+
+    // Handle story endings
+    if (potentialChanges.endings.length > 0) {
+      sections.push('\nSTORY ENDING ALERTS:');
+      potentialChanges.endings.forEach(ending => {
+        const likelihood = ending.isLikely ? 'very likely' : 'possible';
+        sections.push(`
+→ ${ending.condition.id} - ${likelihood} to trigger
+  DESCRIPTION: ${ending.condition.description}
+  ENDING CONTENT: ${ending.content}`);
+      });
+    }
+
+    if (sections.length > 0) {
+      sections.push(`
+CRITICAL INSTRUCTIONS: If this player action triggers any of the above changes, naturally incorporate the associated content into your response. DO NOT simply output the content verbatim.
+
+For FLOW TRANSITIONS:
+- Acknowledge the player's action first
+- Describe the natural consequence/reaction 
+- Smoothly weave in the flow content
+- Make it feel like one coherent narrative
+
+For STORY ENDINGS:
+- Acknowledge the player's action that completes the story
+- Naturally incorporate the ending content as the culmination
+- Let the ending feel like a natural conclusion to your response
+
+GOAL: Create seamless narrative experiences where pre-written content enhances rather than replaces contextual responses.`);
+    }
+
+    return sections.join('\n');
   }
 }
