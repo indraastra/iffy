@@ -73,7 +73,7 @@ success_conditions:
 
   - id: "walls_stay_up"
     description: "Alex remains guarded and deflects attempts to connect"
-    requires: ["alex_defensive", "topic_avoided", "distance_maintained", "conversation_ending"]
+    requires: ["alex_defensive", "distance_maintained", "conversation_ending"]
 
 # First flow automatically becomes the starting point
 flows:
@@ -125,7 +125,6 @@ llm_guidelines: |
   - "acknowledged_distance" → when Alex admits they've been acting differently
   - "alex_conflicted" → when internal struggle becomes apparent
   - "partial_trust" → when Alex starts to open up a little
-  - "topic_avoided" → if Alex deflects or changes subject
   - "alex_defensive" → if Alex shuts down or gets defensive
   - "alex_vulnerable" → when Alex's emotional walls start coming down
   - "trust_established" → when Alex feels safe with the player
