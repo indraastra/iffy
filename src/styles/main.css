@@ -35,31 +35,48 @@ body {
   height: 100vh;
 }
 
-/* Header */
-.header {
+/* Header - now themed with game content */
+.themed-game-content .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background-color: var(--header-bg);
-  border-bottom: 2px solid var(--border-color);
+  background-color: var(--game-header-bg);
+  border-bottom: 2px solid var(--game-border-color);
 }
 
-.title {
+.themed-game-content .title {
   font-size: 2rem;
   font-weight: bold;
-  color: var(--text-color);
+  color: var(--game-text-color);
 }
 
-.controls {
+.themed-game-content .controls {
   display: flex;
   gap: 1rem;
 }
 
+.themed-game-content .btn {
+  padding: 0.5rem 1rem;
+  background-color: var(--game-button-bg);
+  color: var(--game-button-text-color);
+  border: 1px solid var(--game-border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.themed-game-content .btn:hover {
+  background-color: var(--game-button-hover);
+  color: var(--game-button-text-hover-color);
+}
+
+/* Fallback button styles for non-themed areas (modals, debug pane) */
 .btn {
   padding: 0.5rem 1rem;
   background-color: var(--button-bg);
-  color: var(--button-text-color, var(--text-color));
+  color: var(--text-color);
   border: 1px solid var(--border-color);
   border-radius: 4px;
   cursor: pointer;
@@ -69,7 +86,7 @@ body {
 
 .btn:hover {
   background-color: var(--button-hover);
-  color: var(--button-text-hover-color, var(--text-color));
+  color: var(--text-color);
 }
 
 /* Main game area */
