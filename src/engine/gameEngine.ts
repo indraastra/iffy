@@ -285,7 +285,7 @@ export class GameEngine {
     }
   }
 
-  private async processCommandWithLLM(input: string, currentLocation: any): Promise<GameStateResponse> {
+  private async processCommandWithLLM(input: string, currentLocation: any, potentialChanges?: { transitions: any[], endings: any[] }): Promise<GameStateResponse> {
     try {
       // Get memory context from memory manager
       const memoryContext = this.memoryManager.getMemories(input, this.gameState);
@@ -306,7 +306,8 @@ export class GameEngine {
         this.gameState,
         this.story!,
         currentLocation,
-        memoryContext
+        memoryContext,
+        potentialChanges
       );
       
       // Build the prompt using the prompt builder
@@ -315,7 +316,8 @@ export class GameEngine {
         this.gameState,
         this.story!,
         currentLocation,
-        memoryContext
+        memoryContext,
+        potentialChanges
       );
       
       // Send the prompt to the LLM service
@@ -337,7 +339,8 @@ export class GameEngine {
             tokenCount: undefined // TODO: Add token counting
           },
           gameState: debugGameState,
-          memoryStats: debugMemoryStats
+          memoryStats: debugMemoryStats,
+          potentialChanges: potentialChanges
         });
       }
       
@@ -366,7 +369,10 @@ export class GameEngine {
     const currentLocation = this.getCurrentLocation();
     
     try {
-      const llmResponse = await this.processCommandWithLLM(input, currentLocation);
+      // Check for potential narrative changes (transitions and endings)
+      const potentialChanges = this.getPotentialNarrativeChanges();
+      
+      const llmResponse = await this.processCommandWithLLM(input, currentLocation, potentialChanges);
 
       // Validate state changes and response content
       const stateValidationIssues = this.validateStateChanges(llmResponse.stateChanges);
@@ -403,25 +409,29 @@ export class GameEngine {
       let responseText = llmResponse.response;
       const currentFlow = this.getCurrentFlow();
       
-      // Only show flow content if we've just transitioned to a new narrative flow
+      // Check if we've transitioned to a new flow
       const hasTransitionedToNewFlow = currentFlow && 
         currentFlow.id !== previousFlowId && 
-        currentFlow.type === 'narrative' && 
-        currentFlow.content && 
         !this.gameState.gameEnded;
       
       if (hasTransitionedToNewFlow) {
-        console.log(`Transitioned to new narrative flow: ${previousFlowId} -> ${currentFlow.id}`);
-        responseText = currentFlow.content || '';
+        console.log(`Transitioned to new flow: ${previousFlowId} -> ${currentFlow.id}`);
         
-        // Apply any sets from this narrative flow
+        // Apply any sets from this flow
         this.applyFlowSets(currentFlow);
         
         // Check if this flow ends the game
         if (currentFlow.ends_game) {
           this.gameState.gameEnded = true;
           this.gameState.endingId = currentFlow.id;
-          console.log('Game ended via narrative flow:', currentFlow.name);
+          console.log('Game ended via flow:', currentFlow.name);
+        }
+        
+        // The LLM response should already include flow content if it was provided as context
+        // If the LLM response seems too brief for a flow transition, append flow content as fallback
+        if (currentFlow.content && responseText.length < 100) {
+          console.log('LLM response too brief for flow transition, appending flow content');
+          responseText += '\n\n' + currentFlow.content;
         }
         
         // Also check traditional ending conditions if they exist
@@ -438,29 +448,34 @@ export class GameEngine {
       // Note: Flow tracking is now handled locally within this method
       
       if (this.gameState.gameEnded && this.gameState.endingId && !this.hasShownEndingContent) {
-        // Format v2: Check for success condition ending first
+        // Check if the LLM response already incorporated ending content
         const successCondition = this.story!.success_conditions?.find(sc => sc.id === this.gameState.endingId);
-        if (successCondition) {
-          if (successCondition.ending) {
-            // Pre-written ending text available - append immediately
-            responseText += `\n\n${successCondition.ending}`;
-            this.hasShownEndingContent = true;
-          } else {
-            // No ending text - generate with LLM asynchronously after a short delay
-            // This allows the UI to display the main response and completion message first
-            this.hasShownEndingContent = true; // Mark as handled to prevent duplicate calls
-            setTimeout(() => {
-              this.generateEndingAsynchronously(successCondition, currentLocation);
-            }, 100); // Small delay to let UI update
+        if (successCondition?.ending) {
+          // Check if ending content appears to be already incorporated in LLM response
+          const endingKeywords = successCondition.ending.toLowerCase().split(' ').slice(0, 5).join(' ');
+          const responseIncludesEnding = responseText.toLowerCase().includes(endingKeywords);
+          
+          if (!responseIncludesEnding && responseText.length < 150) {
+            // LLM response seems too brief and doesn't include ending - append as fallback
+            console.log('LLM response too brief for story ending, appending ending content');
+            responseText += '\n\n' + successCondition.ending;
           }
+          this.hasShownEndingContent = true;
+        } else if (!successCondition?.ending) {
+          // No ending text - generate with LLM asynchronously after a short delay
+          this.hasShownEndingContent = true;
+          setTimeout(() => {
+            if (successCondition) {
+              this.generateEndingAsynchronously(successCondition, currentLocation);
+            }
+          }, 100);
         } else {
-          // Fallback: Check if ending is defined as a separate ending (legacy)
+          // Legacy ending handling
           const ending = this.story!.endings?.find(e => e.id === this.gameState.endingId);
           if (ending) {
             responseText += `\n\n${ending.content}`;
             this.hasShownEndingContent = true;
           }
-          // If ending is defined as a flow, the content is already included above
         }
       }
 
@@ -1068,6 +1083,56 @@ This is a basic MVP version. More natural language understanding will be added i
            input.includes('?'); // Questions
   }
 
+  private getPotentialNarrativeChanges(): { transitions: any[], endings: any[] } {
+    const changes: { transitions: any[], endings: any[] } = { transitions: [], endings: [] };
+
+    // Check for potential flow transitions
+    const currentFlow = this.getCurrentFlow();
+    if (currentFlow?.transitions) {
+      for (const transition of currentFlow.transitions) {
+        const unmetRequirements = transition.requires.filter(requirement => {
+          return !this.evaluateCondition(requirement);
+        });
+
+        // If only 1-2 requirements are unmet, this transition is likely
+        if (unmetRequirements.length <= 2) {
+          const targetFlow = this.story?.flows.find(f => f.id === transition.to_flow);
+          if (targetFlow) {
+            changes.transitions.push({
+              type: 'flow_transition',
+              targetFlow,
+              isLikely: unmetRequirements.length <= 1,
+              content: targetFlow.content
+            });
+          }
+        }
+      }
+    }
+
+    // Check for potential endings
+    if (this.story?.success_conditions) {
+      for (const condition of this.story.success_conditions) {
+        if (!condition.ending) continue; // Skip conditions without ending text
+
+        const unmetRequirements = condition.requires.filter(requirement => {
+          return !this.evaluateCondition(requirement);
+        });
+
+        // If only 1-2 requirements are unmet, this ending is likely
+        if (unmetRequirements.length <= 2) {
+          changes.endings.push({
+            type: 'story_ending',
+            condition,
+            isLikely: unmetRequirements.length <= 1,
+            content: condition.ending
+          });
+        }
+      }
+    }
+
+    return changes;
+  }
+
   private checkFlowTransitions(): void {
     if (!this.story || !this.gameState.currentFlow) {
       console.log('Flow transition check skipped: no story or current flow');
@@ -1340,7 +1405,7 @@ Please provide a corrected response that:
 Remember: Items can only be obtained in their designated locations according to the story data.`;
 
     try {
-      const correctedResponse = await this.processCommandWithLLM(feedbackPrompt, this.getCurrentLocation());
+      const correctedResponse = await this.processCommandWithLLM(feedbackPrompt, this.getCurrentLocation(), undefined);
 
       // Capture the current flow before applying state changes
       const flowBeforeStateChanges = this.getCurrentFlow();

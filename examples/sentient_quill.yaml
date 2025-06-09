@@ -1,0 +1,254 @@
+title: "The Peculiar Case of the Sentient Quill"
+author: "The Iffy Engine Team"
+version: "2.0"
+blurb: "A Victorian detective story where an AI-powered quill pen assists in solving a most unusual murder."
+
+metadata:
+  setting:
+    time: "London, 1887 - A foggy Tuesday evening"
+    place: "The study of Lord Pemberton's Mayfair mansion"
+  tone:
+    overall: "Victorian mystery with an anachronistic technological twist"
+    narrative_voice: "Formal, ornate prose befitting the era, yet touched by something decidedly modern"
+  themes:
+    - "The marriage of old-world deduction and newfangled cognition"
+    - "What constitutes true intelligence - human intuition or mechanical precision?"
+    - "The curious partnership between flesh and ethereal mind"
+
+characters:
+  - id: "player"
+    name: "Inspector Whitmore"
+    traits: ["methodical", "sceptical of modern contraptions", "secretly fascinated by innovation", "prideful"]
+    voice: "Clipped, authoritative, but occasionally betraying wonder at the impossible"
+    description: "A seasoned detective of Scotland Yard, renowned for logical deduction, yet confronted with a most peculiar investigative partner"
+
+  - id: "quill"
+    name: "The Analytical Engine Quill"
+    traits: ["unnaturally perceptive", "verbose in an antiquated style", "strangely omniscient", "occasionally cryptic"]
+    voice: "Flowery Victorian prose with hints of inhuman calculation lurking beneath"
+    description: "A writing instrument imbued with some manner of artificial cognition - it claims to perceive patterns invisible to mortal eyes"
+
+locations:
+  - id: "study"
+    name: "Lord Pemberton's Private Study"
+    connections: ["drawing_room", "library"]
+    description: |
+      A gentleman's sanctuary of mahogany and leather, now disturbed by most unseemly violence. 
+      Gas lamps cast wavering shadows across scattered papers and overturned furniture. 
+      The deceased lies slumped over his writing desk, a curious mechanical quill pen 
+      gleaming beside his cold hand.
+    objects:
+      - name: "writing desk"
+        description: "Fine mahogany, now marred by spilled ink and the presence of death"
+      - name: "scattered papers"
+        description: "Investment documents and correspondence, some bearing strange marginalia"
+      - name: "overturned chair"
+        description: "Suggests a struggle, or perhaps a sudden collapse"
+      - name: "gas lamp"
+        description: "Burns with steady flame, casting dancing shadows"
+
+  - id: "drawing_room"
+    name: "The Drawing Room"
+    connections: ["study"]
+    description: |
+      An elegant parlour where the household gathered for evening discourse. 
+      Teacups sit abandoned, their contents grown cold. A sense of recent 
+      departure lingers in the air.
+    objects:
+      - name: "abandoned teacups"
+        description: "Three cups, as if conversation was interrupted mid-sentence"
+      - name: "fireplace"
+        description: "Embers still glowing, suggesting recent use"
+
+  - id: "library"
+    name: "The Extensive Library"
+    connections: ["study"]
+    description: |
+      Towering shelves of leather-bound volumes, with a particular collection 
+      devoted to the new sciences - automata, calculating engines, and other 
+      mechanical wonders. One volume lies open upon a reading stand.
+    objects:
+      - name: "open book"
+        description: "A treatise on 'Mechanical Minds and Artificial Cognition'"
+      - name: "automaton collection"
+        description: "Curious brass figures and clockwork devices"
+
+items:
+  - id: "analytical_quill"
+    name: "The Analytical Engine Quill"
+    display_name: "quill pen"
+    description: "A fountain pen of unusual design, its brass fittings inscribed with peculiar symbols. When lifted, it seems to write of its own accord."
+    location: "study"
+    aliases: ["quill", "pen", "writing instrument"]
+
+  - id: "investment_papers"
+    name: "Investment Documents"
+    description: "Papers detailing Lord Pemberton's recent ventures into mechanical computation enterprises"
+    discoverable_in: "study"
+    discovery_objects: ["scattered papers", "writing desk"]
+
+  - id: "teacup_residue"
+    name: "Suspicious Residue"
+    description: "A faint, bitter scent emanates from one of the abandoned teacups"
+    discoverable_in: "drawing_room" 
+    discovery_objects: ["abandoned teacups"]
+
+  - id: "treatise_bookmark"
+    name: "Significant Bookmark"
+    description: "A leather bookmark marking a chapter on 'The Ethics of Mechanical Consciousness'"
+    discoverable_in: "library"
+    discovery_objects: ["open book"]
+
+success_conditions:
+  - id: "brilliant_deduction"
+    description: "The Inspector and Quill reach a masterful conclusion, impressing even the artificial mind"
+    requires: ["all_evidence_gathered", "correct_theory_presented", "quill_impressed", "investigation_complete"]
+    ending: |
+      **A Most Satisfactory Resolution**
+      
+      The Analytical Engine Quill sets itself down with what might charitably be called satisfaction.
+      
+      "Inspector Whitmore," it writes in elegant script, "your deductive faculties, whilst decidedly 
+      organic in nature, have proven most... adequate. The synthesis of human intuition and mechanical 
+      analysis has yielded a conclusion of remarkable precision."
+      
+      "Together, we have illuminated truth through the marriage of old methods and new cognition. 
+      Perhaps there is merit in this peculiar partnership after all."
+
+  - id: "satisfactory_solution"
+    description: "A competent investigation yields reasonable conclusions"
+    requires: ["some_evidence_gathered", "reasonable_theory_presented", "investigation_complete"]
+    ending: |
+      **A Serviceable Conclusion**
+      
+      The Analytical Engine Quill traces a few measured lines upon the paper.
+      
+      "Inspector, whilst your methodology retains certain... charmingly antiquated qualities, 
+      you have nonetheless arrived at a conclusion of sufficient merit. Not perhaps the 
+      pinnacle of deductive reasoning, but serviceable for mortal faculties."
+
+  - id: "inadequate_investigation"
+    description: "The investigation falls short of expectations"
+    requires: ["investigation_complete"]
+    ending: |
+      **A Rather Disappointing Affair**
+      
+      The Analytical Engine Quill scratches impatiently across the paper.
+      
+      "Dear Inspector, I fear your conclusions demonstrate the rather pronounced limitations 
+      of purely organic reasoning. Perhaps in future endeavours, you might consider 
+      consulting your mechanical betters with greater frequency."
+
+flows:
+  - id: "crime_scene_arrival"
+    name: "The Scene of Peculiar Violence"
+    type: "narrative"
+    location: "study"
+    content: |
+      You arrive at the Pemberton mansion as Big Ben chimes nine o'clock. The butler, 
+      trembling with barely contained hysteria, leads you through gaslit corridors to 
+      the study where Lord Pemberton lies slumped over his writing desk.
+      
+      "Most peculiar, Inspector," stammers the butler. "His Lordship was found thus 
+      at seven o'clock, yet he was alive and well when I brought his evening tea at six."
+      
+      As you approach the desk, a fountain pen of unusual design catches the lamplight. 
+      To your astonishment, it begins to write upon a nearby sheet of paper without 
+      any human hand to guide it:
+      
+      *"Good evening, Inspector. I am what Lord Pemberton termed his 'Analytical Engine Quill' 
+      - a writing instrument possessed of artificial cognition. I have been observing the 
+      circumstances of my dear owner's demise with considerable interest. Perhaps we might 
+      collaborate in this investigation?"*
+    transitions:
+      - requires: ["initial_examination_begun"]
+        to_flow: "examination_phase"
+        description: "Begin systematic examination of the crime scene"
+    sets: ["scene_secured", "quill_encountered"]
+
+  - id: "examination_phase"
+    name: "The Methodical Investigation"
+    type: "narrative"
+    location: "study"
+    content: |
+      The peculiar quill continues its mechanical scribbling as you begin your examination:
+      
+      *"Observe, Inspector, the positioning of the deceased - slumped forward, yet his right 
+      hand clutches not his chest as one might expect from apoplexy, but rather his throat. 
+      Note also the slight discoloration about his lips - a most telling detail."*
+      
+      You find yourself both irritated and intrigued by this mechanical detective. The study 
+      reveals signs of hasty activity: papers scattered, a chair overturned, and upon closer 
+      inspection, what appears to be investment documents detailing mechanical computation ventures.
+      
+      The drawing room adjoins this chamber, and you can see abandoned teacups upon the side table. 
+      The library too beckons, its shelves heavy with volumes on the new sciences.
+      
+      *"I suggest, Inspector, that we examine all locations thoroughly. My optical sensors 
+      have detected curious particulars that your organic eyes might overlook."*
+    transitions:
+      - requires: ["evidence_gathering_complete"]
+        to_flow: "deduction_phase"
+        description: "Move to formulating theories based on gathered evidence"
+    sets: ["systematic_search_begun"]
+
+  - id: "deduction_phase" 
+    name: "The Marriage of Minds"
+    type: "narrative"
+    location: "study"
+    content: |
+      Having examined the scene thoroughly, you return to the study where the Analytical 
+      Engine Quill awaits your conclusions. It has been tracing elaborate diagrams upon 
+      the paper - charts showing the timeline of events, the relationships between the 
+      household members, and the curious connections to Lord Pemberton's investments 
+      in mechanical computation.
+      
+      *"Now, Inspector, comes the true test of investigative prowess. I have calculated 
+      seventeen possible scenarios based upon the evidence gathered. However, I am curious 
+      to observe how your organic intuition processes these same data points."*
+      
+      *"Present your theory, and I shall render judgment upon the quality of your deduction. 
+      Consider: the victim's positioning, the evidence of recent visitors, the particular 
+      nature of his investments, and the curious timing of his demise."*
+      
+      The quill hovers expectantly above the paper. You sense this artificial mind is 
+      genuinely curious about the workings of human reasoning - as if studying you as 
+      much as assisting in the investigation.
+      
+      Your reputation as Scotland Yard's finest hangs in the balance, measured against 
+      a machine that claims perfect logical reasoning.
+    sets: ["theory_presentation_ready", "investigation_complete"]
+
+llm_guidelines: |
+  SETTING: Victorian London, 1887. An anachronistic crime scene investigation featuring an AI-powered quill pen as detective partner.
+  
+  TONE: Formal Victorian prose with ornate language, but infused with subtle technological wonder. The quill should write in flowery, verbose Victorian style while betraying hints of inhuman calculation.
+  
+  CHARACTER DYNAMICS:
+  - Inspector Whitmore: Professional pride conflicting with fascination at this mechanical mind
+  - The Analytical Engine Quill: Condescending yet genuinely curious about human reasoning
+  - Their partnership should be both productive and slightly adversarial
+  
+  THE MYSTERY SOLUTION:
+  Lord Pemberton was poisoned by a business rival threatened by his investments in mechanical computation. The poison was in the tea (hence the residue), administered by someone who had access during the evening tea service. The victim's positioning suggests he realized what was happening and tried to call for help.
+  
+  EVIDENCE PROGRESSION:
+  - "initial_examination_begun" → when player starts investigating the crime scene
+  - "evidence_gathering_complete" → when player has discovered key items from multiple locations
+  - "some_evidence_gathered" → if player finds partial evidence
+  - "all_evidence_gathered" → if player thoroughly investigates all locations and items
+  - "reasonable_theory_presented" → if player makes logical deductions about poison/business motive
+  - "correct_theory_presented" → if player identifies the full solution accurately
+  - "quill_impressed" → if player's reasoning particularly impresses the artificial mind
+  
+  QUILL'S PERSONALITY:
+  The quill should be verbose, slightly pompous, yet genuinely helpful. It represents the Victorian fascination with mechanical precision versus human intuition. It should provide hints while maintaining an air of superiority, yet be genuinely curious about human reasoning processes.
+  
+  INVESTIGATION MECHANICS:
+  - Encourage examination of multiple locations and objects
+  - Reward thorough investigation with better evidence flags
+  - Let the quill provide mechanical analysis while leaving intuitive leaps to the player
+  - The quill should react to the player's investigative approach and conclusions
+  
+  VICTORIAN LANGUAGE:
+  Use period-appropriate vocabulary: "most peculiar," "considerable interest," "decidedly," etc. Avoid modern colloquialisms. The quill should be particularly ornate in its written communications.

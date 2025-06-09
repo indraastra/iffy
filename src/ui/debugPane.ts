@@ -28,6 +28,10 @@ export interface DebugLlmCall {
   };
   gameState: DebugGameState;
   memoryStats: DebugMemoryStats;
+  potentialChanges?: {
+    transitions: any[];
+    endings: any[];
+  };
 }
 
 export interface DebugMemoryOperation {
@@ -496,6 +500,7 @@ export class DebugPane {
           <strong>Memory:</strong> 
           <span class="memory-summary">${data.memoryStats.recentInteractions} recent, ${data.memoryStats.significantMemories} significant${data.memoryStats.isProcessing ? ' (processing...)' : ''}</span>
         </div>
+        ${data.potentialChanges ? this.renderPotentialChanges(data.potentialChanges) : ''}
         <div class="debug-subsection">
           <strong>Prompt Sections:</strong>
           <div class="prompt-sections">
@@ -522,6 +527,55 @@ export class DebugPane {
         </div>
       </div>
     `;
+  }
+
+  private renderPotentialChanges(potentialChanges: { transitions: any[], endings: any[] }): string {
+    if (potentialChanges.transitions.length === 0 && potentialChanges.endings.length === 0) {
+      return '';
+    }
+
+    let content = `
+      <div class="debug-subsection">
+        <strong>🔮 Potential Changes:</strong>
+        <div class="potential-changes">
+    `;
+
+    // Display potential transitions
+    if (potentialChanges.transitions.length > 0) {
+      content += `
+        <div class="potential-transitions">
+          <span class="change-category">Flow Transitions:</span>
+          ${potentialChanges.transitions.map(transition => `
+            <div class="potential-change ${transition.isLikely ? 'likely' : 'possible'}">
+              <span class="change-likelihood">${transition.isLikely ? '🎯 Very Likely' : '🤔 Possible'}</span>
+              <span class="change-details">→ ${transition.targetFlow.name} (${transition.targetFlow.id})</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // Display potential endings
+    if (potentialChanges.endings.length > 0) {
+      content += `
+        <div class="potential-endings">
+          <span class="change-category">Story Endings:</span>
+          ${potentialChanges.endings.map(ending => `
+            <div class="potential-change ${ending.isLikely ? 'likely' : 'possible'}">
+              <span class="change-likelihood">${ending.isLikely ? '🎯 Very Likely' : '🤔 Possible'}</span>
+              <span class="change-details">→ ${ending.condition.id} (${ending.condition.description})</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    content += `
+        </div>
+      </div>
+    `;
+
+    return content;
   }
 
   private renderMemoryOperation(timestamp: string, data: DebugMemoryOperation): string {

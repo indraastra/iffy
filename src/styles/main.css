@@ -530,6 +530,59 @@ body {
   font-style: italic;
 }
 
+/* Potential Changes Styles */
+.potential-changes {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.potential-transitions, .potential-endings {
+  margin-bottom: 0.5rem;
+}
+
+.change-category {
+  color: #FF9800;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.potential-change {
+  padding: 0.25rem 0.5rem;
+  margin-bottom: 0.25rem;
+  border-radius: 3px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid;
+}
+
+.potential-change.likely {
+  border-left-color: #4CAF50;
+  background-color: rgba(76, 175, 80, 0.1);
+}
+
+.potential-change.possible {
+  border-left-color: #FFC107;
+  background-color: rgba(255, 193, 7, 0.1);
+}
+
+.change-likelihood {
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+
+.potential-change.likely .change-likelihood {
+  color: #4CAF50;
+}
+
+.potential-change.possible .change-likelihood {
+  color: #FFC107;
+}
+
+.change-details {
+  color: #E0E0E0;
+  font-family: 'Courier New', monospace;
+}
+
 /* Debug Rich Text Rendering */
 .rendered-response {
   background-color: rgba(255, 255, 255, 0.02);

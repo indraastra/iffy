@@ -10,6 +10,16 @@ Create and play interactive stories powered by AI. Write adventures, mysteries, 
 
 🌐 **[Play Iffy Stories](https://indraastra.github.io/iffy/)** (Click "Load" to try example stories)
 
+## ⚠️ Important Notice: Dialogue Flows
+
+**Current Limitation:** The dialogue flow system (`type: "dialogue"`) is currently broken and non-functional. While the story format supports dialogue flows, they do not properly trigger or execute in the current engine implementation.
+
+**Workaround:** Use `type: "narrative"` flows instead. The AI naturally handles character conversations and dialogue through narrative flows, often creating more compelling interactions than rigid dialogue trees would provide.
+
+**Status:** This is a **major TODO** item. See our [Dialogue System v2 Proposal](./docs/proposals/dialogue-v2.md) for the planned redesign that will address these issues and create a more elegant conversation system.
+
+**Impact:** Most story types work perfectly (mysteries, adventures, explorations), but branching conversation stories may need to rely on narrative flow structure for now.
+
 ## 🎯 What Makes Iffy Special
 
 ### 🤖 **AI-Powered Natural Language**
@@ -207,6 +217,14 @@ Want to contribute to Iffy or run it locally?
 - **[Development Guide](./docs/development-guide.md)** - Complete developer setup and workflow
 - **[Architecture Overview](./docs/architecture.md)** - System design and components
 - **[Contributing Guidelines](./docs/development-guide.md#contributing-guidelines)** - How to contribute code or stories
+
+## 💜 Support the Project
+
+If you enjoy Iffy and want to support its development:
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/indraastra)
+
+Your support helps keep the project growing and enables new features for the interactive fiction community!
 
 ## 🤝 Contributing & Community
 
