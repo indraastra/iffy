@@ -103,7 +103,7 @@ success_conditions:
     ending: |
       [!danger] OH NO! OH THE **HUBRIS**! OH THE *HUMANITY*!
       
-      Against all wisdom, you have trusted the [item:mystery condiment]! With hands shaking 
+      Against all wisdom, you have trusted the [mystery condiment](item:mystery_jar)! With hands shaking 
       like leaves in a HURRICANE OF REGRET, you take a bite and...
       
       **THE TASTE!** *THE UNGODLY TASTE!*
@@ -123,14 +123,14 @@ success_conditions:
     ending: |
       [!discovery] THIS IS IT! The moment of **TRUTH**! The *CLIMAX* of our epic tale!
       
-      With trembling hands, you bite into your masterpiece - [item:golden toast] crowned 
-      with [item:cheese of last hope]! Will love conquer all? Will processed dairy 
+      With trembling hands, you bite into your masterpiece - [golden toast](item:toasted_bread) crowned 
+      with [cheese of last hope](item:cheese)! Will love conquer all? Will processed dairy 
       overcome the forces of staleness?
       
       [!discovery] IT'S... it's actually pretty AMAZING! The toast is golden and crispy, 
-      the [item:cheese] has **TRIUMPHED** over adversity! Your hunger is *VANQUISHED*!
+      the [cheese](item:cheese) has **TRIUMPHED** over adversity! Your hunger is *VANQUISHED*!
       
-      As you savor this [item:sandwich of DESTINY], you realize that sometimes the 
+      As you savor this [sandwich of DESTINY](item:sandwich), you realize that sometimes the 
       greatest victories come from the perfect combination of transformation and hope!
       
       *Fade to black as triumphant soap opera music swells*
@@ -140,10 +140,10 @@ success_conditions:
     requires: ["sandwich has bread", "sandwich has cheese", "player has eaten sandwich"]
     ending: |
       [!discovery] The moment of truth arrives! You bite into your creation - 
-      [item:stale bread] embracing [item:cheese of last hope]!
+      [stale bread](item:bread) embracing [cheese of last hope](item:cheese)!
       
       [!warning] It's... it's actually pretty okay! Not great, but definitely edible! 
-      The [item:cheese] has overcome the staleness! Your hunger is satisfied!
+      The [cheese](item:cheese) has overcome the staleness! Your hunger is satisfied!
       
       Sometimes simple victories are the sweetest ones of all.
 
@@ -158,7 +158,7 @@ flows:
       **Dramatic music swells**
       
       IT'S **12:17 PM** ON A TUESDAY! The *SUN* shines with **CRUEL** indifference as our 
-      HEROINE, [character:Jennifer], stands at the crossroads of *DESTINY*! Her stomach 
+      HEROINE, [Jennifer](character:player), stands at the crossroads of *DESTINY*! Her stomach 
       **RUMBLES** with the fury of a thousand unfed souls!
       
       [!warning] "I need... a sandwich," she whispers, not knowing that these simple words will set in motion events of EARTH-SHATTERING importance!

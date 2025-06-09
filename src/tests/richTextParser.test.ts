@@ -62,14 +62,14 @@ describe('RichTextParser', () => {
 
     it('should render character markup correctly', () => {
       expectValidHTML(
-        'Hello [character:ARIA]!',
+        'Hello [ARIA](character:ARIA)!',
         ['<span class="rich-character">ARIA</span>']
       )
     })
 
     it('should render item markup correctly', () => {
       expectValidHTML(
-        'Found the [item:golden key].',
+        'Found the [golden key](item:golden_key).',
         ['<span class="rich-item">golden key</span>']
       )
     })
@@ -121,7 +121,7 @@ describe('RichTextParser', () => {
 
     it('should handle mixed component types', () => {
       expectValidHTML(
-        '[character:ARIA] found the **glowing** [item:orb].',
+        '[ARIA](character:ARIA) found the **glowing** [orb](item:orb).',
         [
           '<span class="rich-character">ARIA</span>',
           '<strong class="rich-bold">glowing</strong>',
@@ -132,7 +132,7 @@ describe('RichTextParser', () => {
 
     it('should handle adjacent components without spaces', () => {
       expectValidHTML(
-        '**Bold**[character:Name]*italic*',
+        '**Bold**[Name](character:Name)*italic*',
         [
           '<strong class="rich-bold">Bold</strong>',
           '<span class="rich-character">Name</span>',
@@ -153,9 +153,29 @@ describe('RichTextParser', () => {
       )
     })
 
+    it('should handle item markup inside bold text (issue #20)', () => {
+      expectValidHTML(
+        '**The [analytical quill](item:analytical_quill) scratches out an observation from your pocket:**',
+        [
+          '<strong class="rich-bold">',
+          '<span class="rich-item">analytical quill</span>'
+        ]
+      )
+    })
+
+    it('should handle character markup inside italic text', () => {
+      expectValidHTML(
+        '*[Jennifer](character:jennifer) picks up the key*',
+        [
+          '<em class="rich-italic">',
+          '<span class="rich-character">Jennifer</span>'
+        ]
+      )
+    })
+
     it('should handle character markup inside discovery alert', () => {
       expectValidHTML(
-        '[!discovery] [character:Jennifer] found something!',
+        '[!discovery] [Jennifer](character:Jennifer) found something!',
         [
           '<div class="rich-alert rich-alert-discovery">',
           '<span class="rich-character">Jennifer</span>'
@@ -165,7 +185,7 @@ describe('RichTextParser', () => {
 
     it('should handle multiple nested components in alert', () => {
       expectValidHTML(
-        '[!discovery] [character:Jennifer] found the **magical** [item:sword]!',
+        '[!discovery] [Jennifer](character:Jennifer) found the **magical** [sword](item:sword)!',
         [
           '<div class="rich-alert rich-alert-discovery">',
           '<span class="rich-character">Jennifer</span>',
@@ -177,7 +197,7 @@ describe('RichTextParser', () => {
 
     it('should handle complex nested scenario', () => {
       expectValidHTML(
-        '[!warning] But choose wisely, dear [character:Jennifer]... for not all that glitters is **gold**!',
+        '[!warning] But choose wisely, dear [Jennifer](character:Jennifer)... for not all that glitters is **gold**!',
         [
           '<div class="rich-alert rich-alert-warning">',
           '<span class="rich-character">Jennifer</span>',
@@ -198,7 +218,7 @@ describe('RichTextParser', () => {
 
     it('should handle special characters in components', () => {
       expectValidHTML(
-        '[character:Jean-Luc Picard] and [item:sword of +1 magic]',
+        '[Jean-Luc Picard](character:Jean-Luc_Picard) and [sword of +1 magic](item:sword_of_+1_magic)',
         [
           '<span class="rich-character">Jean-Luc Picard</span>',
           '<span class="rich-item">sword of +1 magic</span>'
@@ -247,7 +267,7 @@ describe('RichTextParser', () => {
       }
 
       const result = parser.renderContent(
-        'Jamie looks down at their [item:unfinished_coffee].',
+        'Jamie looks down at their [coffee](item:unfinished_coffee).',
         narrativeContext
       )
       const html = fragmentToHTML(result)
@@ -256,8 +276,8 @@ describe('RichTextParser', () => {
       expect(html).toContain('coffee')
       expect(html).not.toContain("Jamie's Coffee")
       
-      // Should still be clickable with original itemId
-      expect(html).toContain('data-clickable-text="unfinished_coffee"')
+      // Should be clickable with the display text
+      expect(html).toContain('data-clickable-text="coffee"')
       expect(html).toContain('class="rich-item clickable-element"')
     })
 
@@ -268,7 +288,7 @@ describe('RichTextParser', () => {
       }
 
       const result = parser.renderContent(
-        'You have [item:unfinished_coffee].',
+        'You have [Jamie\'s Coffee](item:unfinished_coffee).',
         inventoryContext
       )
       const html = fragmentToHTML(result)
@@ -277,8 +297,8 @@ describe('RichTextParser', () => {
       expect(html).toContain("Jamie's Coffee")
       expect(html).not.toContain('coffee">') // Avoid false positive
       
-      // Should still be clickable with original itemId
-      expect(html).toContain('data-clickable-text="unfinished_coffee"')
+      // Should be clickable with the display text
+      expect(html).toContain('data-clickable-text="Jamie\'s Coffee"')
     })
 
     it('should fallback to name when no display_name is provided', () => {
@@ -288,14 +308,14 @@ describe('RichTextParser', () => {
       }
 
       const result = parser.renderContent(
-        'You found [item:golden_key].',
+        'You found [golden key](item:golden_key).',
         narrativeContext
       )
       const html = fragmentToHTML(result)
 
       // Should display name since no display_name is available
       expect(html).toContain('Golden Key of Power')
-      expect(html).toContain('data-clickable-text="golden_key"')
+      expect(html).toContain('data-clickable-text="Golden Key of Power"')
     })
 
     it('should fallback to itemId when item not found', () => {
@@ -305,38 +325,38 @@ describe('RichTextParser', () => {
       }
 
       const result = parser.renderContent(
-        'Looking for [item:unknown_item].',
+        'Looking for [unknown item](item:unknown_item).',
         narrativeContext
       )
       const html = fragmentToHTML(result)
 
-      // Should display and use the raw itemId when item not found
-      expect(html).toContain('unknown_item')
-      expect(html).toContain('data-clickable-text="unknown_item"')
+      // Should display and use the display text when item not found
+      expect(html).toContain('unknown item')
+      expect(html).toContain('data-clickable-text="unknown item"')
     })
 
     it('should fallback to itemId when no context provided', () => {
       // No context provided - should use raw itemId
       const result = parser.renderContent(
-        'Jamie looks at their [item:unfinished_coffee].'
+        'Jamie looks at their [unfinished coffee](item:unfinished_coffee).'
       )
       const html = fragmentToHTML(result)
 
-      // Should display and use the raw itemId without context
-      expect(html).toContain('unfinished_coffee')
-      expect(html).toContain('data-clickable-text="unfinished_coffee"')
+      // Should display and use the display text without context
+      expect(html).toContain('unfinished coffee')
+      expect(html).toContain('data-clickable-text="unfinished coffee"')
     })
   })
 
   describe('Parser Internals', () => {
     it('should parse content and generate components', () => {
-      const result = parser.parseContent('This is **bold** text with [item:key].')
+      const result = parser.parseContent('This is **bold** text with [key](item:key).')
       
       expect(result.components).toHaveLength(2)
-      expect(result.components[0].type).toBe('Bold')
-      expect(result.components[0].content).toBe('bold')
-      expect(result.components[1].type).toBe('Item')
-      expect(result.components[1].content).toBe('key')
+      expect(result.components[0].type).toBe('Item')
+      expect(result.components[0].content).toBe('key')
+      expect(result.components[1].type).toBe('Bold')
+      expect(result.components[1].content).toBe('bold')
       expect(result.text).toContain('{{COMPONENT:')
     })
 
@@ -350,7 +370,7 @@ describe('RichTextParser', () => {
     })
 
     it('should handle renderToDOM with parsed content', () => {
-      const parsed = parser.parseContent('**bold** and [character:Name]')
+      const parsed = parser.parseContent('**bold** and [Name](character:Name)')
       const fragment = parser.renderToDOM(parsed)
       const html = fragmentToHTML(fragment)
       

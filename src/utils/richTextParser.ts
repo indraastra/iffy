@@ -18,6 +18,7 @@ export interface RenderContext {
 
 export class RichTextParser {
   private componentIdCounter = 0;
+  private parsedContent?: ParsedContent; // Store for nested rendering
 
   private generateComponentId(): string {
     return `component_${++this.componentIdCounter}`;
@@ -27,59 +28,70 @@ export class RichTextParser {
     let parsed = content;
     const components: FormattedComponent[] = [];
 
-    // Define markup patterns for Phase 1
-    // IMPORTANT: Process alerts FIRST before nested components get replaced
+    // Define markup patterns
+    // Process in order: inline elements first (items/chars), then formatting, then alerts
     const patterns = [
-      // Alert boxes: [!type] content (until newline or end)
+      // Character names with new syntax: [Name](character:id)
       {
-        regex: /\[!(\w+)\]\s*([^\n\r]*)\n?/g,
-        type: 'Alert',
-        extractContent: (match: RegExpMatchArray) => match[2],
-        extractProps: (match: RegExpMatchArray) => ({ alertType: match[1] }),
-        storeOriginal: true
+        regex: /\[([^\]]+)\]\(character:([^)]+)\)/g,
+        type: 'Character',
+        extractContent: (match: RegExpMatchArray) => match[1], // Display text
+        extractProps: (match: RegExpMatchArray) => ({ characterId: match[2] })
       },
 
-      // Bold text: **text**
+      // Item highlighting with new syntax: [display text](item:id)
+      {
+        regex: /\[([^\]]+)\]\(item:([^)]+)\)/g,
+        type: 'Item',
+        extractContent: (match: RegExpMatchArray) => {
+          const displayText = match[1];
+          const itemId = match[2];
+          
+          // If context is provided and we can look up the item, use appropriate name
+          if (context?.getItem) {
+            const item = context.getItem(itemId);
+            if (item) {
+              // Use display_name for narrative context if available
+              if (context.type === 'narrative' && item.display_name) {
+                return item.display_name;
+              }
+              // Otherwise use the item's full name
+              return item.name;
+            }
+          }
+          
+          // If no context or item not found, use the display text from markup
+          return displayText;
+        },
+        extractProps: (match: RegExpMatchArray) => ({ 
+          itemId: match[2],
+          markupText: match[1] // Store original markup text
+        })
+      },
+
+      // Bold text: **text**  
       {
         regex: /\*\*((?:[^*]|\*(?!\*))+)\*\*/g,
         type: 'Bold',
-        extractContent: (match: RegExpMatchArray) => match[1]
+        extractContent: (match: RegExpMatchArray) => match[1],
+        processNested: true
       },
       
       // Italic text: *text*
       {
         regex: /\*((?:[^*]|\*{2})+)\*/g,
         type: 'Italic', 
-        extractContent: (match: RegExpMatchArray) => match[1]
+        extractContent: (match: RegExpMatchArray) => match[1],
+        processNested: true
       },
 
-      // Character names: [character:Name]
+      // Alert boxes: [!type] content (until newline or end)
       {
-        regex: /\[character:([^\]]+)\]/g,
-        type: 'Character',
-        extractContent: (match: RegExpMatchArray) => match[1]
-      },
-
-      // Item highlighting: [item:ItemName]
-      {
-        regex: /\[item:([^\]]+)\]/g,
-        type: 'Item',
-        extractContent: (match: RegExpMatchArray) => {
-          const itemId = match[1];
-          if (context?.getItem) {
-            const item = context.getItem(itemId);
-            if (item) {
-              // Use display_name for narrative context, name for others
-              if (context.type === 'narrative' && item.display_name) {
-                return item.display_name;
-              }
-              return item.name;
-            }
-          }
-          // Fallback to the raw ID if no context or item not found
-          return itemId;
-        },
-        extractProps: (match: RegExpMatchArray) => ({ itemId: match[1] })
+        regex: /\[!(\w+)\]\s*([^\n\r]*)\n?/g,
+        type: 'Alert',
+        extractContent: (match: RegExpMatchArray) => match[2],
+        extractProps: (match: RegExpMatchArray) => ({ alertType: match[1] }),
+        processNested: true
       }
     ];
 
@@ -96,8 +108,8 @@ export class RichTextParser {
           props: pattern.extractProps ? pattern.extractProps(match) : {}
         };
 
-        // For alerts, store the original content before any component replacement
-        if ((pattern as any).storeOriginal) {
+        // For components that need nested processing, store original content
+        if ((pattern as any).processNested) {
           component.originalContent = pattern.extractContent(match);
         }
 
@@ -109,9 +121,13 @@ export class RichTextParser {
     return { text: parsed, components };
   }
 
-  public renderToDOM(parsedContent: ParsedContent, _context?: RenderContext): DocumentFragment {
+  public renderToDOM(parsedContent: ParsedContent, context?: RenderContext): DocumentFragment {
     const { text, components } = parsedContent;
     const fragment = document.createDocumentFragment();
+    
+    // Store parsedContent for nested rendering
+    const prevParsedContent = this.parsedContent;
+    this.parsedContent = parsedContent;
     
     // Split text by component placeholders
     const segments = text.split(/\{\{COMPONENT:([^}]+)\}\}/);
@@ -166,7 +182,7 @@ export class RichTextParser {
         
         
         if (component) {
-          fragment.appendChild(this.createDOMElement(component));
+          fragment.appendChild(this.createDOMElement(component, context));
         } else {
           // Fallback: if component not found, add the placeholder as text for debugging
           console.warn(`Rich text component not found: ${componentId}`, { availableComponents: components.map(c => c.id) });
@@ -175,29 +191,44 @@ export class RichTextParser {
       }
     }
 
+    // Restore previous parsedContent
+    this.parsedContent = prevParsedContent;
     return fragment;
   }
 
-  private createDOMElement(component: FormattedComponent): HTMLElement {
+  private createDOMElement(component: FormattedComponent, context?: RenderContext): HTMLElement {
     let element: HTMLElement;
     
     switch (component.type) {
       case 'Bold':
         element = document.createElement('strong');
         element.className = 'rich-bold';
-        element.textContent = component.content;
+        // The content has placeholders, so we need to render it with the same components
+        if (this.parsedContent) {
+          const boldFragment = this.renderToDOM({ text: component.content, components: this.parsedContent.components }, context);
+          element.appendChild(boldFragment);
+        } else {
+          element.textContent = component.content;
+        }
         break;
         
       case 'Italic':
         element = document.createElement('em');
         element.className = 'rich-italic';
-        element.textContent = component.content;
+        // The content has placeholders, so we need to render it with the same components
+        if (this.parsedContent) {
+          const italicFragment = this.renderToDOM({ text: component.content, components: this.parsedContent.components }, context);
+          element.appendChild(italicFragment);
+        } else {
+          element.textContent = component.content;
+        }
         break;
         
       case 'Character':
         element = document.createElement('span');
         element.className = 'rich-character clickable-element';
         element.textContent = component.content;
+        // Use the display text for clicking, not the ID
         element.setAttribute('data-clickable-text', component.content);
         element.setAttribute('title', `Click to append "${component.content}" to your command`);
         element.style.cursor = 'pointer';
@@ -207,10 +238,9 @@ export class RichTextParser {
         element = document.createElement('span');
         element.className = 'rich-item clickable-element';
         element.textContent = component.content;
-        // Use the original itemId for clickable text, but display the contextual name
-        const clickableText = component.props.itemId || component.content;
-        element.setAttribute('data-clickable-text', clickableText);
-        element.setAttribute('title', `Click to append "${clickableText}" to your command`);
+        // Use the display text for clicking, not the ID
+        element.setAttribute('data-clickable-text', component.content);
+        element.setAttribute('title', `Click to append "${component.content}" to your command`);
         element.style.cursor = 'pointer';
         break;
         
@@ -227,12 +257,13 @@ export class RichTextParser {
         const contentSpan = document.createElement('span');
         contentSpan.className = 'rich-alert-content';
         
-        // For alert content, we need to parse it as rich text but with a fresh parser
-        // to avoid component ID conflicts. Use originalContent if available.
-        const alertParser = new RichTextParser();
-        const contentToRender = component.originalContent || component.content;
-        const alertFragment = alertParser.renderContent(contentToRender);
-        contentSpan.appendChild(alertFragment);
+        // The content has placeholders, so we need to render it with the same components
+        if (this.parsedContent) {
+          const alertFragment = this.renderToDOM({ text: component.content, components: this.parsedContent.components }, context);
+          contentSpan.appendChild(alertFragment);
+        } else {
+          contentSpan.textContent = component.content;
+        }
         
         element.appendChild(iconSpan);
         element.appendChild(contentSpan);
