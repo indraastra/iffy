@@ -37,9 +37,9 @@ A **markup-based formatting system** that allows authors to add visual richness 
 content: |
   You enter the **ancient library**. The {smell|musty smell of old books} fills your nostrils.
   
-  [!important] On the desk, you spot a [item:glowing crystal orb] pulsing with mysterious energy.
+  [!important] On the desk, you spot a [glowing crystal orb](item:crystal_orb) pulsing with mysterious energy.
   
-  [character:Sarah] whispers [emotion:urgently], "We need to find the **Codex of Shadows** before [time:midnight]!"
+  [Sarah](character:sarah) whispers [emotion:urgently], "We need to find the **Codex of Shadows** before [time:midnight]!"
 
 # Renders as visually rich, styled output with:
 # - Bold emphasis on key locations/items

@@ -448,8 +448,8 @@ export class DebugPane {
     const patterns = [
       /\*\*[^*]+\*\*/,           // **bold**
       /\*[^*]+\*/,              // *italic*
-      /\[character:[^\]]+\]/,   // [character:Name]
-      /\[item:[^\]]+\]/,        // [item:Name]
+      /\[[^\]]+\]\(character:[^)]+\)/,   // [Name](character:id)
+      /\[[^\]]+\]\(item:[^)]+\)/,        // [text](item:id)
       /\[![a-zA-Z]+\]/          // [!warning], [!discovery], etc.
     ];
     

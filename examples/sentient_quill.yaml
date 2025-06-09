@@ -35,7 +35,7 @@ locations:
     description: |
       A gentleman's sanctuary of mahogany and leather, now disturbed by most unseemly violence. 
       Gas lamps cast wavering shadows across scattered papers and overturned furniture. 
-      The deceased lies slumped over his writing desk, a curious mechanical quill pen 
+      The deceased lies slumped over his writing desk, a curious [mechanical quill pen](item:analytical_quill) 
       gleaming beside his cold hand.
     objects:
       - name: "writing desk"
@@ -52,8 +52,8 @@ locations:
     connections: ["study"]
     description: |
       An elegant parlour where the household gathered for evening discourse. 
-      Teacups sit abandoned, their contents grown cold. A sense of recent 
-      departure lingers in the air.
+      **Teacups** sit abandoned, their contents grown cold. A sense of *recent 
+      departure* lingers in the air.
     objects:
       - name: "abandoned teacups"
         description: "Three cups, as if conversation was interrupted mid-sentence"
@@ -64,9 +64,9 @@ locations:
     name: "The Extensive Library"
     connections: ["study"]
     description: |
-      Towering shelves of leather-bound volumes, with a particular collection 
-      devoted to the new sciences - automata, calculating engines, and other 
-      mechanical wonders. One volume lies open upon a reading stand.
+      Towering shelves of **leather-bound volumes**, with a particular collection 
+      devoted to the *new sciences* - automata, calculating engines, and other 
+      **mechanical wonders**. One volume lies open upon a reading stand.
     objects:
       - name: "open book"
         description: "A treatise on 'Mechanical Minds and Artificial Cognition'"
@@ -106,14 +106,14 @@ success_conditions:
     ending: |
       **A Most Satisfactory Resolution**
       
-      The Analytical Engine Quill sets itself down with what might charitably be called satisfaction.
+      [The Analytical Engine Quill](item:analytical_quill) sets itself down with what might charitably be called satisfaction.
       
-      "Inspector Whitmore," it writes in elegant script, "your deductive faculties, whilst decidedly 
-      organic in nature, have proven most... adequate. The synthesis of human intuition and mechanical 
-      analysis has yielded a conclusion of remarkable precision."
+      "[Inspector Whitmore](character:player)," it writes in *elegant script*, "your **deductive faculties**, whilst decidedly 
+      organic in nature, have proven most... adequate. The synthesis of *human intuition* and **mechanical 
+      analysis** has yielded a conclusion of remarkable precision."
       
-      "Together, we have illuminated truth through the marriage of old methods and new cognition. 
-      Perhaps there is merit in this peculiar partnership after all."
+      [!discovery] "Together, we have illuminated **truth** through the marriage of *old methods* and **new cognition**. 
+      Perhaps there is merit in this *peculiar partnership* after all."
 
   - id: "satisfactory_solution"
     description: "A competent investigation yields reasonable conclusions"
@@ -121,11 +121,11 @@ success_conditions:
     ending: |
       **A Serviceable Conclusion**
       
-      The Analytical Engine Quill traces a few measured lines upon the paper.
+      [The Analytical Engine Quill](item:analytical_quill) traces a few measured lines upon the paper.
       
-      "Inspector, whilst your methodology retains certain... charmingly antiquated qualities, 
-      you have nonetheless arrived at a conclusion of sufficient merit. Not perhaps the 
-      pinnacle of deductive reasoning, but serviceable for mortal faculties."
+      "[Inspector](character:player), whilst your methodology retains certain... *charmingly antiquated* qualities, 
+      you have nonetheless arrived at a conclusion of **sufficient merit**. Not perhaps the 
+      pinnacle of deductive reasoning, but serviceable for *mortal faculties*."
 
   - id: "inadequate_investigation"
     description: "The investigation falls short of expectations"
@@ -133,11 +133,11 @@ success_conditions:
     ending: |
       **A Rather Disappointing Affair**
       
-      The Analytical Engine Quill scratches impatiently across the paper.
+      [The Analytical Engine Quill](item:analytical_quill) scratches impatiently across the paper.
       
-      "Dear Inspector, I fear your conclusions demonstrate the rather pronounced limitations 
-      of purely organic reasoning. Perhaps in future endeavours, you might consider 
-      consulting your mechanical betters with greater frequency."
+      [!warning] "Dear [Inspector](character:player), I fear your conclusions demonstrate the rather pronounced **limitations** 
+      of purely *organic reasoning*. Perhaps in future endeavours, you might consider 
+      consulting your **mechanical betters** with greater frequency."
 
 flows:
   - id: "crime_scene_arrival"
@@ -149,14 +149,14 @@ flows:
       trembling with barely contained hysteria, leads you through gaslit corridors to 
       the study where Lord Pemberton lies slumped over his writing desk.
       
-      "Most peculiar, Inspector," stammers the butler. "His Lordship was found thus 
+      "Most peculiar, [Inspector](character:player)," stammers the butler. "His Lordship was found thus 
       at seven o'clock, yet he was alive and well when I brought his evening tea at six."
       
-      As you approach the desk, a fountain pen of unusual design catches the lamplight. 
+      As you approach the desk, the [fountain pen](item:analytical_quill) of unusual design catches the lamplight. 
       To your astonishment, it begins to write upon a nearby sheet of paper without 
       any human hand to guide it:
       
-      *"Good evening, Inspector. I am what Lord Pemberton termed his 'Analytical Engine Quill' 
+      *"Good evening, [Inspector](character:player). I am what Lord Pemberton termed his 'Analytical Engine Quill' 
       - a writing instrument possessed of artificial cognition. I have been observing the 
       circumstances of my dear owner's demise with considerable interest. Perhaps we might 
       collaborate in this investigation?"*
@@ -171,21 +171,21 @@ flows:
     type: "narrative"
     location: "study"
     content: |
-      The peculiar quill continues its mechanical scribbling as you begin your examination:
+      The [peculiar quill](item:analytical_quill) continues its mechanical scribbling as you begin your examination:
       
-      *"Observe, Inspector, the positioning of the deceased - slumped forward, yet his right 
+      [!discovery] *"Observe, [Inspector](character:player), the positioning of the deceased - slumped forward, yet his right 
       hand clutches not his chest as one might expect from apoplexy, but rather his throat. 
-      Note also the slight discoloration about his lips - a most telling detail."*
+      Note also the **slight discoloration** about his lips - a most telling detail."*
       
-      You find yourself both irritated and intrigued by this mechanical detective. The study 
+      You find yourself both irritated and intrigued by this **mechanical detective**. The study 
       reveals signs of hasty activity: papers scattered, a chair overturned, and upon closer 
-      inspection, what appears to be investment documents detailing mechanical computation ventures.
+      inspection, what appears to be [investment documents](item:investment_papers) detailing mechanical computation ventures.
       
-      The drawing room adjoins this chamber, and you can see abandoned teacups upon the side table. 
-      The library too beckons, its shelves heavy with volumes on the new sciences.
+      The drawing room adjoins this chamber, and you can see *abandoned teacups* upon the side table. 
+      The library too beckons, its shelves heavy with volumes on the **new sciences**.
       
-      *"I suggest, Inspector, that we examine all locations thoroughly. My optical sensors 
-      have detected curious particulars that your organic eyes might overlook."*
+      [!warning] *"I suggest, [Inspector](character:player), that we examine all locations thoroughly. My optical sensors 
+      have detected curious particulars that your *organic eyes* might overlook."*
     transitions:
       - requires: ["evidence_gathering_complete"]
         to_flow: "deduction_phase"
@@ -197,26 +197,26 @@ flows:
     type: "narrative"
     location: "study"
     content: |
-      Having examined the scene thoroughly, you return to the study where the Analytical 
-      Engine Quill awaits your conclusions. It has been tracing elaborate diagrams upon 
+      Having examined the scene thoroughly, you return to the study where [The Analytical 
+      Engine Quill](item:analytical_quill) awaits your conclusions. It has been tracing **elaborate diagrams** upon 
       the paper - charts showing the timeline of events, the relationships between the 
-      household members, and the curious connections to Lord Pemberton's investments 
+      household members, and the curious connections to *Lord Pemberton's investments* 
       in mechanical computation.
       
-      *"Now, Inspector, comes the true test of investigative prowess. I have calculated 
-      seventeen possible scenarios based upon the evidence gathered. However, I am curious 
-      to observe how your organic intuition processes these same data points."*
+      [!important] *"Now, [Inspector](character:player), comes the **true test** of investigative prowess. I have calculated 
+      *seventeen possible scenarios* based upon the evidence gathered. However, I am curious 
+      to observe how your **organic intuition** processes these same data points."*
       
-      *"Present your theory, and I shall render judgment upon the quality of your deduction. 
+      *"Present your theory, and I shall render **judgment** upon the quality of your deduction. 
       Consider: the victim's positioning, the evidence of recent visitors, the particular 
-      nature of his investments, and the curious timing of his demise."*
+      nature of his investments, and the *curious timing* of his demise."*
       
-      The quill hovers expectantly above the paper. You sense this artificial mind is 
-      genuinely curious about the workings of human reasoning - as if studying you as 
+      The [quill](item:analytical_quill) hovers expectantly above the paper. You sense this **artificial mind** is 
+      genuinely curious about the workings of *human reasoning* - as if studying you as 
       much as assisting in the investigation.
       
-      Your reputation as Scotland Yard's finest hangs in the balance, measured against 
-      a machine that claims perfect logical reasoning.
+      [!warning] Your reputation as **Scotland Yard's finest** hangs in the balance, measured against 
+      a machine that claims *perfect logical reasoning*.
     sets: ["theory_presentation_ready"]
 
 llm_guidelines: |

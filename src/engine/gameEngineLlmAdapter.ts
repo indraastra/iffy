@@ -94,7 +94,14 @@ ${gameState.gameEnded ? this.getEndingContext(story, gameState) : ''}
 
 ${potentialChanges ? this.getNarrativeChangesContext(potentialChanges) : ''}
 
-MARKUP: Use [character:Name] for characters, [item:item_id] for items (use the item's ID, not name), **bold** for emphasis, [!warning]/[!discovery]/[!danger] for alerts. Do NOT use [location:Name] markup - just use the location name directly.
+MARKUP SYNTAX:
+- Characters: [Display Name](character:id) - e.g., [Inspector Whitmore](character:player), [Sarah](character:sarah)
+- Items: [Display Text](item:id) - e.g., [golden key](item:key), [mysterious tome](item:ancient_book)
+- Bold: **text** for emphasis - e.g., **important discovery**, **dramatic moment**
+- Italic: *text* for atmosphere - e.g., *whispered words*, *eerie silence*
+- Alerts: [!type] content - [!warning], [!discovery], [!danger] - e.g., [!discovery] You found something important!
+- Nested markup works: **The [golden key](item:key) glows brightly** or [!warning] Be careful with the **dangerous** [poison](item:toxin)!
+- Do NOT use [location:Name] markup - just use location names directly
 
 IMPORTANT: The player IS the player character. Do NOT treat the player character as a separate NPC they can talk to. When players try to "talk to" or interact with the player character, explain that they ARE that character.
 
@@ -217,7 +224,13 @@ Flow: ${gameState.currentFlow || 'None'} | Status: ${gameState.gameEnded ? 'COMP
       sections['POTENTIAL NARRATIVE CHANGES'] = this.getNarrativeChangesContext(potentialChanges);
     }
 
-    sections['MARKUP'] = 'Use [character:Name] for characters, [item:item_id] for items (use the item\'s ID, not name), **bold** for emphasis, [!warning]/[!discovery]/[!danger] for alerts. Do NOT use [location:Name] markup - just use the location name directly.';
+    sections['MARKUP'] = `SYNTAX:
+- Characters: [Display Name](character:id) - e.g., [Inspector](character:player), [Sarah](character:sarah)
+- Items: [Display Text](item:id) - e.g., [golden key](item:key), [ancient tome](item:book)
+- Bold: **text** for emphasis, Italic: *text* for atmosphere
+- Alerts: [!warning]/[!discovery]/[!danger] content
+- Nested markup works: **The [golden key](item:key) glows** or [!warning] **Dangerous** [poison](item:toxin)!
+- Do NOT use [location:Name] markup`;
     sections['PLAYER COMMAND'] = `"${command}"`;
     sections['CRITICAL'] = 'You must respond with valid JSON only. No text before or after the JSON object.';
 

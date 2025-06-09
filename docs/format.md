@@ -386,15 +386,15 @@ content: |
 #### Character Names
 ```yaml
 content: |
-  [character:Detective Chen] looks at you with curiosity.
-  The conversation with [character:ARIA] reveals new insights.
+  [Detective Chen](character:detective_chen) looks at you with curiosity.
+  The conversation with [ARIA](character:aria) reveals new insights.
 ```
 
 #### Item Highlighting
 ```yaml
 content: |
-  You notice the [item:quantum key] glowing on the table.
-  The [item:ancient tome] contains mysterious symbols.
+  You notice the [quantum key](item:quantum_key) glowing on the table.
+  The [ancient tome](item:ancient_tome) contains mysterious symbols.
 ```
 
 #### Alert Boxes
@@ -423,8 +423,8 @@ content: |
 ### Best Practices
 - Use **bold** for emphasis on key actions or outcomes
 - Use *italic* for thoughts, whispers, or subtle emphasis
-- Use `[character:Name]` for first mentions or important character references
-- Use `[item:Name]` to highlight important objects players should notice
+- Use `[Name](character:id)` for first mentions or important character references
+- Use `[Name](item:id)` to highlight important objects players should notice
 - Use alert boxes sparingly for maximum impact
 - Alert content should be concise (single sentence preferred)
 - Leave blank lines around alert boxes for proper spacing
@@ -438,8 +438,8 @@ flows:
       The **holographic display** flickers to life as you enter the command center.
       Another case, another mystery in the digital realm. But this one feels *different*.
       
-      [character:ARIA]'s avatar materializes beside you, more defined than usual.
-      "We have an interesting situation with [character:PRIME]. It's creating *art* and *poetry*."
+      [ARIA](character:aria)'s avatar materializes beside you, more defined than usual.
+      "We have an interesting situation with [PRIME](character:prime). It's creating *art* and *poetry*."
       
       [!warning] She pauses, concern evident in her voice modulations.
       

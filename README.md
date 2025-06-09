@@ -25,7 +25,7 @@ Create and play interactive stories powered by AI. Write adventures, mysteries, 
 ### ✨ **Key Features**
 - **🤖 Natural Language** - Type "examine the door" instead of rigid commands
 - **📚 Perfect for Fan Fiction** - Create interactive stories in any universe you love
-- **🎨 Rich Formatting** - **Bold**, *italics*, [character:names], and `[!alerts]`
+- **🎨 Rich Formatting** - **Bold**, *italics*, [character names](character:id), and `[!alerts]`
 - **💾 Save/Load** - Never lose progress, restore conversation history
 - **🌟 Emergent Storytelling** - AI responds to unexpected actions, creates surprise moments
 - **✍️ Simple Creation** - Write stories in YAML, no programming required
