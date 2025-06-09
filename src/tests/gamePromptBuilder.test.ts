@@ -89,12 +89,12 @@ describe('GamePromptBuilder', () => {
       expect(prompt).toContain('STATE:')
       expect(prompt).toContain('Location: Test Room')
       expect(prompt).toContain('Inventory: existing_item')
-      expect(prompt).toContain('LOCATIONS:')
+      expect(prompt).toContain('CURRENT LOCATION:')
       expect(prompt).toContain('NPC CHARACTERS: Test Character')
       expect(prompt).toContain('CURRENT FLOW CONTEXT:')
       expect(prompt).toContain('CONVERSATION MEMORY:')
       expect(prompt).toContain('DISCOVERY STATUS:')
-      expect(prompt).toContain('MARKUP:')
+      expect(prompt).toContain('MARKUP SYNTAX:')
       expect(prompt).toContain('PLAYER COMMAND: "examine the room"')
       expect(prompt).toContain('RULES:')
     })
@@ -120,7 +120,7 @@ describe('GamePromptBuilder', () => {
         mockLocation
       )
 
-      expect(prompt).toContain('Discoverable: Hidden Item (search: shelf/box)')
+      expect(prompt).toContain('Discoverable Items: Hidden Item (search: shelf/box)')
     })
 
     it('should handle empty inventory', () => {
