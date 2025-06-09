@@ -79,7 +79,7 @@ describe('RichTextParser', () => {
         '[!warning] This is dangerous!',
         [
           '<div class="rich-alert rich-alert-warning">',
-          '<span class="rich-alert-icon">⚠️</span>',
+          '<span class="rich-alert-icon alert-icon-warning"></span>',
           '<span class="rich-alert-content">This is dangerous!</span>'
         ]
       )
@@ -90,7 +90,7 @@ describe('RichTextParser', () => {
         '[!discovery] You found something!',
         [
           '<div class="rich-alert rich-alert-discovery">',
-          '<span class="rich-alert-icon">✨</span>',
+          '<span class="rich-alert-icon alert-icon-discovery"></span>',
           '<span class="rich-alert-content">You found something!</span>'
         ]
       )
@@ -101,7 +101,7 @@ describe('RichTextParser', () => {
         '[!danger] Look out!',
         [
           '<div class="rich-alert rich-alert-danger">',
-          '<span class="rich-alert-icon">🚨</span>',
+          '<span class="rich-alert-icon alert-icon-danger"></span>',
           '<span class="rich-alert-content">Look out!</span>'
         ]
       )

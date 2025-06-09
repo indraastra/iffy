@@ -759,7 +759,7 @@ This is a basic MVP version. More natural language understanding will be added i
     this.setBaseThemeColors(gameContainer, colors);
     
     // Always apply alert colors with proper contrast
-    this.setAlertColors(gameContainer, colors.background);
+    this.setAlertColors(gameContainer);
     
     // Apply item/character colors
     this.setContentColors(gameContainer, colors);
@@ -802,7 +802,7 @@ This is a basic MVP version. More natural language understanding will be added i
     gameContainer.style.setProperty('--game-modal-bg', modalBg);
   }
 
-  private setAlertColors(gameContainer: HTMLElement, backgroundColor: string): void {
+  private setAlertColors(gameContainer: HTMLElement): void {
     // Use default theme alert configuration
     const alerts = DEFAULT_THEME.alerts;
     
