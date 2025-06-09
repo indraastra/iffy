@@ -20,6 +20,16 @@ Create and play interactive stories powered by AI. Write adventures, mysteries, 
 
 **Impact:** Most story types work perfectly (mysteries, adventures, explorations), but branching conversation stories may need to rely on narrative flow structure for now.
 
+## 🎯 What Makes Iffy Special
+
+### ✨ **Key Features**
+- **🤖 Natural Language** - Type "examine the door" instead of rigid commands
+- **📚 Perfect for Fan Fiction** - Create interactive stories in any universe you love
+- **🎨 Rich Formatting** - **Bold**, *italics*, [character:names], and `[!alerts]`
+- **💾 Save/Load** - Never lose progress, restore conversation history
+- **🌟 Emergent Storytelling** - AI responds to unexpected actions, creates surprise moments
+- **✍️ Simple Creation** - Write stories in YAML, no programming required
+
 ## 🤔 Why Iffy Instead of ChatGPT/Claude/Gemini?
 
 **Fair question!** Modern AI chat products are powerful and stateful. Here's what Iffy offers that's different:
@@ -41,16 +51,6 @@ Create and play interactive stories powered by AI. Write adventures, mysteries, 
 - **Chat products:** Everything lives in chat bubbles, no specialized IF features
 
 **Bottom line:** Iffy is for **creating and distributing** interactive fiction. It's not about what's impossible elsewhere - it's about what's **friction-free and purpose-built** for IF authors and players.
-
-## 🎯 What Makes Iffy Special
-
-### ✨ **Key Features**
-- **🤖 Natural Language** - Type "examine the door" instead of rigid commands
-- **📚 Perfect for Fan Fiction** - Create interactive stories in any universe you love
-- **🎨 Rich Formatting** - **Bold**, *italics*, [character:names], and `[!alerts]`
-- **💾 Save/Load** - Never lose progress, restore conversation history
-- **🌟 Emergent Storytelling** - AI responds to unexpected actions, creates surprise moments
-- **✍️ Simple Creation** - Write stories in YAML, no programming required
 
 ## 🚀 Get Started
 
