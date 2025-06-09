@@ -747,28 +747,33 @@ This is a basic MVP version. More natural language understanding will be added i
   private applyTheme(story: Story): void {
     const colors = story.metadata.ui?.colors;
     if (colors) {
-      const root = document.documentElement;
+      // Apply theme only to the game content container, not the entire page
+      const gameContainer = document.getElementById('themed-game-content');
+      if (!gameContainer) {
+        console.warn('Game container not found, cannot apply theme');
+        return;
+      }
       
       // Apply base colors with contrast validation
-      if (colors.primary) root.style.setProperty('--primary-color', colors.primary);
-      if (colors.background) root.style.setProperty('--background-color', colors.background);
+      if (colors.primary) gameContainer.style.setProperty('--game-primary-color', colors.primary);
+      if (colors.background) gameContainer.style.setProperty('--game-background-color', colors.background);
       
       // Ensure text color has proper contrast against background
       let textColor = colors.text || '#ffffff';
       if (colors.background) {
         textColor = this.ensureTextContrast(textColor, colors.background);
       }
-      root.style.setProperty('--text-color', textColor);
+      gameContainer.style.setProperty('--game-text-color', textColor);
       
       // Set header and footer to use background color for better text readability
       if (colors.background) {
-        root.style.setProperty('--header-bg', colors.background);
-        root.style.setProperty('--footer-bg', colors.background);
+        gameContainer.style.setProperty('--game-header-bg', colors.background);
+        gameContainer.style.setProperty('--game-footer-bg', colors.background);
       }
       
       // Set input background to use background color for consistency
       if (colors.background) {
-        root.style.setProperty('--input-bg', colors.background);
+        gameContainer.style.setProperty('--game-input-bg', colors.background);
       }
       
       // Derive related colors for cohesive theming with proper contrast
@@ -776,48 +781,44 @@ This is a basic MVP version. More natural language understanding will be added i
         
         // Make button background slightly lighter than primary
         const buttonBg = this.adjustColorBrightness(colors.primary, 30);
-        root.style.setProperty('--button-bg', buttonBg);
+        gameContainer.style.setProperty('--game-button-bg', buttonBg);
         
         // Make button hover even lighter
         const buttonHover = this.adjustColorBrightness(colors.primary, 50);
-        root.style.setProperty('--button-hover', buttonHover);
+        gameContainer.style.setProperty('--game-button-hover', buttonHover);
         
         // Ensure button text has proper contrast against button backgrounds
         const buttonTextColor = this.ensureTextContrast(textColor, buttonBg);
         const buttonTextHoverColor = this.ensureTextContrast(textColor, buttonHover);
-        root.style.setProperty('--button-text-color', buttonTextColor);
-        root.style.setProperty('--button-text-hover-color', buttonTextHoverColor);
+        gameContainer.style.setProperty('--game-button-text-color', buttonTextColor);
+        gameContainer.style.setProperty('--game-button-text-hover-color', buttonTextHoverColor);
         
         // Make border color lighter than primary
         const borderColor = this.adjustColorBrightness(colors.primary, 40);
-        root.style.setProperty('--border-color', borderColor);
+        gameContainer.style.setProperty('--game-border-color', borderColor);
         
         // Make modal background semi-transparent version of background
         const modalBg = this.hexToRgba(colors.background, 0.95);
-        root.style.setProperty('--modal-bg', modalBg);
-        
-        // Ensure modal text contrast
-        const modalTextColor = this.ensureTextContrast(textColor, colors.background);
-        root.style.setProperty('--modal-text-color', modalTextColor);
+        gameContainer.style.setProperty('--game-modal-bg', modalBg);
       }
       
       // Ensure character and item colors have proper contrast
       if (colors.primary && colors.background) {
         const characterColor = this.ensureTextContrast(colors.primary, colors.background);
-        root.style.setProperty('--character-color', characterColor);
+        gameContainer.style.setProperty('--game-character-color', characterColor);
         
         // For items, we want a golden color but ensure it contrasts
         const itemColor = this.ensureTextContrast('#ffd700', colors.background);
-        root.style.setProperty('--item-color', itemColor);
+        gameContainer.style.setProperty('--game-item-color', itemColor);
         
         // Set item background colors based on item color
         const itemBg = this.hexToRgba(itemColor, 0.2);
         const itemBgHover = this.hexToRgba(itemColor, 0.3);
         const itemBorder = this.hexToRgba(itemColor, 0.3);
         
-        root.style.setProperty('--item-bg', itemBg);
-        root.style.setProperty('--item-bg-hover', itemBgHover);
-        root.style.setProperty('--item-border', itemBorder);
+        gameContainer.style.setProperty('--game-item-bg', itemBg);
+        gameContainer.style.setProperty('--game-item-bg-hover', itemBgHover);
+        gameContainer.style.setProperty('--game-item-border', itemBorder);
       }
       
       // Set theme-aware alert colors
@@ -825,27 +826,27 @@ This is a basic MVP version. More natural language understanding will be added i
         // Warning alert (amber/yellow)
         const warningColor = this.ensureTextContrast('#ffc107', colors.background);
         const warningBg = this.hexToRgba(warningColor, 0.15);
-        root.style.setProperty('--alert-warning-color', warningColor);
-        root.style.setProperty('--alert-warning-bg', warningBg);
-        root.style.setProperty('--alert-warning-border', warningColor);
+        gameContainer.style.setProperty('--alert-warning-color', warningColor);
+        gameContainer.style.setProperty('--alert-warning-bg', warningBg);
+        gameContainer.style.setProperty('--alert-warning-border', warningColor);
         
         // Discovery alert (green)
         const discoveryColor = this.ensureTextContrast('#28a745', colors.background);
         const discoveryBg = this.hexToRgba(discoveryColor, 0.15);
-        root.style.setProperty('--alert-discovery-color', discoveryColor);
-        root.style.setProperty('--alert-discovery-bg', discoveryBg);
-        root.style.setProperty('--alert-discovery-border', discoveryColor);
+        gameContainer.style.setProperty('--alert-discovery-color', discoveryColor);
+        gameContainer.style.setProperty('--alert-discovery-bg', discoveryBg);
+        gameContainer.style.setProperty('--alert-discovery-border', discoveryColor);
         
         // Danger alert (red)
         const dangerColor = this.ensureTextContrast('#dc3545', colors.background);
         const dangerBg = this.hexToRgba(dangerColor, 0.15);
         const dangerPulse = this.hexToRgba(dangerColor, 0.3);
         const dangerPulseFaint = this.hexToRgba(dangerColor, 0.1);
-        root.style.setProperty('--alert-danger-color', dangerColor);
-        root.style.setProperty('--alert-danger-bg', dangerBg);
-        root.style.setProperty('--alert-danger-border', dangerColor);
-        root.style.setProperty('--alert-danger-pulse', dangerPulse);
-        root.style.setProperty('--alert-danger-pulse-faint', dangerPulseFaint);
+        gameContainer.style.setProperty('--alert-danger-color', dangerColor);
+        gameContainer.style.setProperty('--alert-danger-bg', dangerBg);
+        gameContainer.style.setProperty('--alert-danger-border', dangerColor);
+        gameContainer.style.setProperty('--alert-danger-pulse', dangerPulse);
+        gameContainer.style.setProperty('--alert-danger-pulse-faint', dangerPulseFaint);
       }
     }
   }

@@ -80,15 +80,42 @@ body {
   overflow: hidden;
 }
 
+/* Themed game content container - isolates story theme from UI */
+.themed-game-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Default theme variables for game content */
+  --game-primary-color: var(--primary-color);
+  --game-background-color: var(--background-color);
+  --game-text-color: var(--text-color);
+  --game-header-bg: var(--header-bg);
+  --game-footer-bg: var(--footer-bg);
+  --game-input-bg: var(--input-bg);
+  --game-border-color: var(--border-color);
+  --game-button-bg: var(--button-bg);
+  --game-button-hover: var(--button-hover);
+  --game-button-text-color: var(--button-text-color, var(--text-color));
+  --game-button-text-hover-color: var(--button-text-hover-color, var(--text-color));
+  --game-modal-bg: var(--modal-bg);
+  --game-character-color: var(--character-color);
+  --game-item-color: var(--item-color);
+  --game-item-bg: var(--item-bg);
+  --game-item-bg-hover: var(--item-bg-hover);
+  --game-item-border: var(--item-border);
+}
+
 .story-output {
   flex: 1;
   padding: 2rem;
   overflow-y: auto;
-  background-color: var(--background-color);
+  background-color: var(--game-background-color);
+  color: var(--game-text-color);
   position: relative;
   /* Hide scrollbar unless needed, then make it minimal */
   scrollbar-width: thin;
-  scrollbar-color: var(--border-color) transparent;
+  scrollbar-color: var(--game-border-color) transparent;
 }
 
 .story-text {
@@ -105,8 +132,8 @@ body {
 /* Input area */
 .input-area {
   padding: 1rem 2rem;
-  background-color: var(--footer-bg);
-  border-top: 2px solid var(--border-color);
+  background-color: var(--game-footer-bg);
+  border-top: 2px solid var(--game-border-color);
 }
 
 .input-container {
@@ -118,15 +145,15 @@ body {
 .prompt {
   font-size: 1.2rem;
   font-weight: bold;
-  color: var(--text-color);
+  color: var(--game-text-color);
 }
 
 .command-input {
   flex: 1;
   padding: 0.75rem;
-  background-color: var(--input-bg);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
+  background-color: var(--game-input-bg);
+  color: var(--game-text-color);
+  border: 1px solid var(--game-border-color);
   border-radius: 4px;
   font-family: inherit;
   font-size: 1rem;
@@ -139,11 +166,11 @@ body {
   transition: height 0.1s ease;
   /* Hide scrollbar unless needed, then make it minimal */
   scrollbar-width: thin;
-  scrollbar-color: var(--border-color) transparent;
+  scrollbar-color: var(--game-border-color) transparent;
 }
 
 .command-input:focus {
-  border-color: var(--button-hover);
+  border-color: var(--game-button-hover);
   box-shadow: 0 0 0 2px rgba(74, 74, 126, 0.3);
 }
 
@@ -626,66 +653,66 @@ body {
   opacity: 0.9;
 }
 
-/* Rich Text Formatting */
-.rich-text {
+/* Rich Text Formatting - scoped to game content */
+.themed-game-content .rich-text {
   line-height: 1.6;
 }
 
-.rich-bold {
+.themed-game-content .rich-bold {
   font-weight: bold;
-  color: var(--text-color);
+  color: var(--game-text-color);
 }
 
-.rich-italic {
+.themed-game-content .rich-italic {
   font-style: italic;
-  color: var(--text-color);
+  color: var(--game-text-color);
 }
 
-.rich-character {
+.themed-game-content .rich-character {
   font-weight: bold;
-  color: var(--character-color, var(--primary-color));
-  border-bottom: 1px dotted var(--character-color, var(--primary-color));
+  color: var(--game-character-color, var(--game-primary-color));
+  border-bottom: 1px dotted var(--game-character-color, var(--game-primary-color));
   padding: 0 2px;
   transition: all 0.2s ease;
 }
 
-.rich-character.clickable-element {
+.themed-game-content .rich-character.clickable-element {
   cursor: pointer;
-  border-bottom: 1px solid var(--character-color, var(--primary-color));
+  border-bottom: 1px solid var(--game-character-color, var(--game-primary-color));
 }
 
-.rich-character.clickable-element:hover {
+.themed-game-content .rich-character.clickable-element:hover {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 3px;
   transform: translateY(-1px);
 }
 
-.rich-item {
-  background: linear-gradient(90deg, transparent, var(--item-bg, rgba(255, 215, 0, 0.2)), transparent);
+.themed-game-content .rich-item {
+  background: linear-gradient(90deg, transparent, var(--game-item-bg, rgba(255, 215, 0, 0.2)), transparent);
   padding: 2px 4px;
   border-radius: 3px;
   font-weight: 500;
-  color: var(--item-color, #b8860b);
-  border: 1px solid var(--item-border, rgba(255, 215, 0, 0.3));
+  color: var(--game-item-color, #b8860b);
+  border: 1px solid var(--game-item-border, rgba(255, 215, 0, 0.3));
   transition: all 0.2s ease;
 }
 
-.rich-item:hover {
-  background: var(--item-bg-hover, rgba(255, 215, 0, 0.3));
+.themed-game-content .rich-item:hover {
+  background: var(--game-item-bg-hover, rgba(255, 215, 0, 0.3));
   transform: translateY(-1px);
 }
 
-.rich-item.clickable-element {
+.themed-game-content .rich-item.clickable-element {
   cursor: pointer;
 }
 
-.rich-item.clickable-element:hover {
-  background: var(--item-bg-hover, rgba(255, 215, 0, 0.4));
+.themed-game-content .rich-item.clickable-element:hover {
+  background: var(--game-item-bg-hover, rgba(255, 215, 0, 0.4));
   transform: translateY(-2px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.rich-alert {
+.themed-game-content .rich-alert {
   margin: 1rem 0;
   padding: 0.75rem 1rem;
   border-radius: 6px;
@@ -696,28 +723,28 @@ body {
   font-weight: 500;
 }
 
-.rich-alert-icon {
+.themed-game-content .rich-alert-icon {
   font-size: 1.1em;
   line-height: 1;
 }
 
-.rich-alert-content {
+.themed-game-content .rich-alert-content {
   flex: 1;
 }
 
-.rich-alert-warning {
+.themed-game-content .rich-alert-warning {
   background: var(--alert-warning-bg, rgba(255, 193, 7, 0.15));
   border-left-color: var(--alert-warning-border, #ffc107);
   color: var(--alert-warning-color, #856404);
 }
 
-.rich-alert-discovery {
+.themed-game-content .rich-alert-discovery {
   background: var(--alert-discovery-bg, rgba(40, 167, 69, 0.15));
   border-left-color: var(--alert-discovery-border, #28a745);
   color: var(--alert-discovery-color, #155724);
 }
 
-.rich-alert-danger {
+.themed-game-content .rich-alert-danger {
   background: var(--alert-danger-bg, rgba(220, 53, 69, 0.15));
   border-left-color: var(--alert-danger-border, #dc3545);
   color: var(--alert-danger-color, #721c24);
