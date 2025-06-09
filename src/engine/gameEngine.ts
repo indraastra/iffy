@@ -1321,6 +1321,9 @@ This is a basic MVP version. More natural language understanding will be added i
   private validateStateChanges(stateChanges: any): string[] {
     const issues: string[] = [];
     
+    // Check if emergent content is enabled for this story
+    const emergentContentEnabled = this.story?.metadata?.emergent_content?.enabled === true;
+    
     // Validate inventory additions
     if (stateChanges.addToInventory) {
       stateChanges.addToInventory.forEach((itemId: string) => {
@@ -1334,9 +1337,11 @@ This is a basic MVP version. More natural language understanding will be added i
             } else {
               issues.push(`INVALID: Cannot obtain "${item.name}" (${itemId}) - item has no accessible location.`);
             }
-          } else {
+          } else if (!emergentContentEnabled) {
+            // Only block unknown items if emergent content is disabled
             issues.push(`INVALID: Cannot obtain unknown item ${itemId}.`);
           }
+          // If emergent content is enabled, allow unknown items to be added without validation issues
         }
       });
     }

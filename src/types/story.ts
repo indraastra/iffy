@@ -17,6 +17,22 @@ export interface StoryMetadata {
       text?: string;
     };
   };
+  emergent_content?: {
+    enabled?: boolean;
+    item_generation?: {
+      max_value?: number;
+      forbidden_categories?: string[];
+      style_guide?: string;
+    };
+    character_development?: {
+      allow_npc_memory?: boolean;
+      relationship_tracking?: boolean;
+    };
+    world_modification?: {
+      allow_environment_changes?: boolean;
+      allow_new_locations?: boolean;
+    };
+  };
 }
 
 export interface Character {
