@@ -20,6 +20,28 @@ Create and play interactive stories powered by AI. Write adventures, mysteries, 
 
 **Impact:** Most story types work perfectly (mysteries, adventures, explorations), but branching conversation stories may need to rely on narrative flow structure for now.
 
+## 🤔 Why Iffy Instead of ChatGPT/Claude/Gemini?
+
+**Fair question!** Modern AI chat products are powerful and stateful. Here's what Iffy offers that's different:
+
+### 📦 **Shareable, Reproducible Stories**
+- **Iffy:** Authors write once → thousands play the exact same story with consistent rules
+- **Chat products:** Each player needs the full story setup and results vary between sessions
+
+### 🎯 **Guaranteed Story Structure**
+- **Iffy:** The mystery jar is ALWAYS fish sauce, endings trigger predictably
+- **Chat products:** Even with instructions, outcomes and story elements can vary
+
+### 🎮 **Zero Fiction Maintenance**
+- **Iffy:** Players just type "examine the desk" - no prompt engineering needed
+- **Chat products:** Players must actively maintain the fiction and remember game rules
+
+### ✨ **Purpose-Built Features**
+- **Iffy:** Rich text rendering, save/load system, inventory display, validated state changes
+- **Chat products:** Everything lives in chat bubbles, no specialized IF features
+
+**Bottom line:** Iffy is for **creating and distributing** interactive fiction. It's not about what's impossible elsewhere - it's about what's **friction-free and purpose-built** for IF authors and players.
+
 ## 🎯 What Makes Iffy Special
 
 ### 🤖 **AI-Powered Natural Language**
