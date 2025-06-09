@@ -248,10 +248,9 @@ export class RichTextParser {
         element = document.createElement('div');
         element.className = `rich-alert rich-alert-${component.props.alertType}`;
         
-        // Create icon span
+        // Create icon span with CSS-based icon
         const iconSpan = document.createElement('span');
-        iconSpan.className = 'rich-alert-icon';
-        iconSpan.textContent = this.getAlertIcon(component.props.alertType);
+        iconSpan.className = `rich-alert-icon alert-icon-${component.props.alertType}`;
         
         // Create content span
         const contentSpan = document.createElement('span');
@@ -278,18 +277,6 @@ export class RichTextParser {
     return element;
   }
 
-  private getAlertIcon(alertType: string): string {
-    switch (alertType) {
-      case 'warning':
-        return '⚠️';
-      case 'discovery':
-        return '✨';
-      case 'danger':
-        return '🚨';
-      default:
-        return '📝';
-    }
-  }
 
   // Convenience method that parses and renders in one step
   public renderContent(content: string, context?: RenderContext): DocumentFragment {
