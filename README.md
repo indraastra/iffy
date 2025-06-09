@@ -44,183 +44,19 @@ Create and play interactive stories powered by AI. Write adventures, mysteries, 
 
 ## 🎯 What Makes Iffy Special
 
-### 🤖 **AI-Powered Natural Language**
-Instead of typing rigid commands like "go north," you can write naturally:
-- *"I want to examine that mysterious door more closely"*
-- *"Ask the detective what they think happened here"*  
-- *"Search around the room for anything useful"*
-- *"Tell Alex how I really feel about them"*
+### ✨ **Key Features**
+- **🤖 Natural Language** - Type "examine the door" instead of rigid commands
+- **📚 Perfect for Fan Fiction** - Create interactive stories in any universe you love
+- **🎨 Rich Formatting** - **Bold**, *italics*, [character:names], and `[!alerts]`
+- **💾 Save/Load** - Never lose progress, restore conversation history
+- **🌟 Emergent Storytelling** - AI responds to unexpected actions, creates surprise moments
+- **✍️ Simple Creation** - Write stories in YAML, no programming required
 
-The AI understands your intent and responds contextually to your story.
+## 🚀 Get Started
 
-### 📚 **Perfect for Fan Fiction & Creative Writing**
-- **Expand your favorite universes** - Write stories in any fictional world you love
-- **Interactive romances** - Create choice-driven relationship stories  
-- **Character exploration** - Let readers interact with beloved characters
-- **"What if" scenarios** - Explore alternate storylines and endings
-- **Collaborative storytelling** - Share interactive stories with your community
-
-### 🎨 **Beautiful, Immersive Stories**
-- **Rich text formatting** with **bold**, *italics*, [character:highlighting], and `[!alert]` boxes
-- **Dynamic themes** - Stories can define their own color schemes and atmosphere
-- **Save/load system** - Players never lose their progress
-- **Conversation memory** - The AI remembers previous interactions for rich, continuous narratives
-
-### 🌟 **Emergent Gameplay & Narrative**
-- **Adaptive storytelling** - The AI responds to unexpected player actions
-- **Dynamic character development** - Characters evolve based on player interactions
-- **Emergent plot threads** - New story elements can emerge from player creativity
-- **Open-ended exploration** - Players can discover content beyond what you explicitly wrote
-- **Surprise interactions** - The AI can create meaningful moments you never anticipated
-
-### ✍️ **Simple Story Creation**
-Write stories in easy-to-read YAML format:
-- **No programming required** - Just write your story content
-- **Automatic validation** - Catch errors before publishing
-- **Flexible structure** - Linear stories, branching narratives, or open exploration
-- **Success conditions** - Define multiple endings based on player choices
-
-## 🚀 Get Started in 3 Steps
-
-### 🎮 **Step 1: Play Stories**
-Visit the live app and try our example stories:
-1. **Click "Load"** to see the story gallery
-2. **Choose a story** that interests you:
-   - **The Interrogation** - Serious crime drama about desperate choices
-   - **Coffee Confessional** - Intimate conversation about unspoken feelings  
-   - **The Great Sandwich Crisis** - Hilarious soap opera about making lunch
-3. **Start playing** - Try typing naturally like "look around" or "ask about the case"
-
-### 🤖 **Step 2: Enable AI (Recommended)**
-For the full natural language experience:
-1. **Get a free API key** from [Anthropic Console](https://console.anthropic.com) (free tier available)
-2. **Click Settings** in the app and enter your key
-3. **Now try natural language** like:
-   - *"I want to examine that coffee cup more closely"*
-   - *"Tell me what you're really thinking"*
-   - *"Search the room for anything suspicious"*
-
-**Note:** The app works without an API key using basic commands like `look`, `inventory`, `go north`.
-
-### ✍️ **Step 3: Create Your Own Stories**
-Ready to write? Check out our [Story Creation Guide](./docs/format.md) or see the simple example below!
-
----
-
-## 🎭 Fan Fiction & Creative Communities
-
-**Iffy is perfect for fan fiction writers and creative communities!**
-
-### 📖 **Expand Your Favorite Worlds**
-- **Harry Potter:** Create interactive adventures at Hogwarts
-- **Marvel/DC:** Let readers become heroes in superhero stories  
-- **Anime/Manga:** Build choice-driven stories in beloved universes
-- **TV/Movies:** Explore "what if" scenarios with favorite characters
-- **Books:** Continue stories beyond the original endings
-
-### 💕 **Interactive Romance & Relationships**
-- **Character dating sims** - Romance your favorite characters
-- **Relationship building** - Develop meaningful connections through choices
-- **Multiple endings** - Different relationship outcomes based on player actions
-- **Emotional storytelling** - The AI creates nuanced, contextual responses
-
-### 🌍 **Community Storytelling**
-- **Share your creations** - Export stories as files to share with others
-- **Collaborative writing** - Work together on interactive narratives  
-- **Reader engagement** - Let your audience influence story direction
-- **Feedback loops** - See how players interact with your characters
-
-## 📖 Story Format
-
-Stories are written in YAML using our Format v2 specification. Here's a minimal example:
-
-```yaml
-title: "My Adventure"
-author: "Your Name"
-version: "2.0"
-
-metadata:
-  setting:
-    time: "Present day"
-    place: "A mysterious house"
-  tone:
-    overall: "Suspenseful"
-    narrative_voice: "Second person, present tense"
-  themes:
-    - "Mystery"
-    - "Discovery"
-
-characters:
-  - id: "player"
-    name: "Player"
-    traits: ["curious", "brave"]
-    description: "An intrepid explorer"
-
-locations:
-  - id: "entrance"
-    name: "Front Door"
-    connections: ["hallway"]
-    description: |
-      You stand before an **old wooden door**. The brass handle 
-      gleams in the moonlight.
-
-# Format v2: Success conditions define story outcomes
-success_conditions:
-  - id: "discovery_ending"
-    description: "Player discovers the secret"
-    requires: ["found_key", "opened_door"]
-    ending: |
-      Congratulations! You've uncovered the mystery and completed your adventure.
-
-flows:
-  - id: "start"
-    type: "narrative"
-    name: "Beginning"
-    content: |
-      Your adventure begins here! You notice a [item:golden key] 
-      glinting in the grass nearby.
-      
-      [!warning] Something feels different about this place.
-
-start:
-  text: |
-    **Welcome to your adventure!**
-    
-    The night air is *crisp* and full of *possibilities*.
-  location: "entrance"
-  first_flow: "start"
-
-# Format v2: LLM story guidelines for intelligent behavior
-llm_story_guidelines: |
-  This is a mystery adventure. Guide the player to explore and discover secrets.
-  Set knowledge flags when the player finds items or solves puzzles.
-  Maintain an atmosphere of suspense and discovery.
-```
-
-### Rich Text Formatting
-
-Make your stories visually compelling with simple markup:
-
-- `**bold text**` - Emphasize important moments and discoveries
-- `*italic text*` - Add atmosphere and subtle emphasis  
-- `[character:Name]` - Character names get special highlighting
-- `[item:Object]` - Important items shine with golden highlighting
-- `[!warning]`, `[!discovery]`, `[!danger]` - Eye-catching alert boxes for dramatic moments
-
-## 🎮 Example Stories
-
-Try our showcase stories to see what's possible:
-
-### 🕵️ **The Interrogation**
-A serious crime drama about desperation and impossible choices. Features multiple endings based on how deeply you investigate and how much empathy you show. Can you uncover the full truth behind a desperate crime?
-
-### 💕 **Coffee Confessional**  
-An intimate conversation between friends where unspoken feelings hang in the air. Navigate the delicate dynamics of friendship and potential romance. Will you create a safe space for vulnerability, or will walls stay up?
-
-### 🥪 **The Great Sandwich Crisis**
-Hilariously over-the-top soap opera drama about making lunch. Every action is treated with EPIC IMPORTANCE and DRAMATIC CONSEQUENCES. Perfect for seeing how formatting and tone can create comedy.
-
-**Load any story directly from the app's gallery!**
+1. **🎮 [Play Stories](https://indraastra.github.io/iffy/)** - Try example stories instantly (no setup required)
+2. **🤖 Enable AI** - Get a free [Anthropic API key](https://console.anthropic.com) for natural language commands  
+3. **✍️ Create Stories** - Use our [Story Creation Guide](./docs/format.md) to write your own adventures
 
 ## 📚 Resources & Documentation
 
@@ -278,6 +114,9 @@ The brilliant [Ink narrative scripting language](https://www.inklestudios.com/in
 
 Together, these inspirations led to Iffy's unique approach: **structured stories with emergent gameplay**, where authors define the world and AI brings it to life through natural conversation.
 
+### **Built with Claude**
+Iffy itself was developed in collaboration with Claude (Anthropic's AI assistant). This meta approach - using AI to build an AI-powered storytelling engine - allowed for rapid prototyping, thoughtful architecture decisions, and iterative improvements based on real-time testing. The development process showcased how AI can be a powerful programming partner, not just for playing stories but for creating the tools that enable them.
+
 ---
 
 ## 🛠️ Developer Setup
@@ -303,7 +142,9 @@ Open http://localhost:3000 and you're ready to go!
 
 ## 📄 License
 
-[Add license information]
+MIT License - see [LICENSE](./LICENSE) file for details.
+
+This project is open source and welcomes contributions from the community!
 
 ---
 
