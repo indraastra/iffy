@@ -29,44 +29,9 @@ Location: ${currentLocation?.name || 'Unknown'} | ${formatKeyValue('Exits', curr
 Inventory: ${this.getInventoryDisplay(gameState, story)}
 Flow: ${gameState.currentFlow || 'None'} | Status: ${gameState.gameEnded ? 'COMPLETED' : 'ACTIVE'}
 
-LOCATIONS:
-${formatSectionContent(story.locations, {
-  transform: (loc: any) => {
-    let info = `${loc.name} (${loc.id})`;
-    
-    const itemsHere = story.items?.filter((item: any) => item.location === loc.id) || [];
-    const discoverableHere = story.items?.filter((item: any) => item.discoverable_in === loc.id) || [];
-    
-    if (itemsHere.length > 0) {
-      info += ` | ${formatKeyValue('Items', itemsHere.map((item: any) => item.name))}`;
-    }
-    if (discoverableHere.length > 0) {
-      info += ` | ${formatKeyValue('Discoverable', discoverableHere.map((item: any) => 
-        `${item.name} (search: ${formatList(item.discovery_objects, { separator: '/', fallback: 'any' })})`
-      ))}`;
-    }
-    
-    return info;
-  }
-})}
+${this.getLocationContext(story, currentLocation, gameState)}
 
-ITEMS & TRANSFORMATIONS:
-${formatSectionContent(story.items, {
-  transform: (item: any) => {
-    let info = `${item.name} (${item.id})`;
-    if (item.can_become) {
-      info += ` → can become: ${item.can_become}`;
-    }
-    if (item.created_from) {
-      info += ` ← created from: ${item.created_from}`;
-    }
-    const aliases = formatAliases(item.aliases);
-    if (aliases) {
-      info += ` | ${aliases}`;
-    }
-    return info;
-  }
-})}
+${this.getInventoryAndTransformations(story, gameState)}
 
 SUCCESS CONDITIONS:
 ${formatSectionContent(story.success_conditions, {
@@ -161,42 +126,56 @@ RULES:
 Inventory: ${this.getInventoryDisplay(gameState, story)}
 Flow: ${gameState.currentFlow || 'None'} | Status: ${gameState.gameEnded ? 'COMPLETED' : 'ACTIVE'}`;
 
-    sections['LOCATIONS'] = formatSectionContent(story.locations, {
-      transform: (loc: any) => {
-        let info = `${loc.name} (${loc.id})`;
-        
-        const itemsHere = story.items?.filter((item: any) => item.location === loc.id) || [];
-        const discoverableHere = story.items?.filter((item: any) => item.discoverable_in === loc.id) || [];
-        
-        if (itemsHere.length > 0) {
-          info += ` | ${formatKeyValue('Items', itemsHere.map((item: any) => item.name))}`;
+    // Use the new consolidated location context
+    const locationContext = this.getLocationContext(story, currentLocation, gameState);
+    // Split the location context into sections since getSections expects individual keys
+    const locationLines = locationContext.split('\n');
+    let currentSection = '';
+    let currentKey = '';
+    
+    for (const line of locationLines) {
+      if (line.match(/^(CURRENT LOCATION|OTHER LOCATIONS):$/)) {
+        // Save previous section if exists
+        if (currentKey && currentSection) {
+          sections[currentKey] = currentSection.trim();
         }
-        if (discoverableHere.length > 0) {
-          info += ` | ${formatKeyValue('Discoverable', discoverableHere.map((item: any) => 
-            `${item.name} (search: ${formatList(item.discovery_objects, { separator: '/', fallback: 'any' })})`
-          ))}`;
-        }
-        
-        return info;
+        // Start new section
+        currentKey = line.replace(':', '');
+        currentSection = '';
+      } else {
+        currentSection += line + '\n';
       }
-    });
+    }
+    
+    // Save final section
+    if (currentKey && currentSection) {
+      sections[currentKey] = currentSection.trim();
+    }
 
-    sections['ITEMS & TRANSFORMATIONS'] = formatSectionContent(story.items, {
-      transform: (item: any) => {
-        let info = `${item.name} (${item.id})`;
-        if (item.can_become) {
-          info += ` → can become: ${item.can_become}`;
+    // Add inventory and transformations using the new scoped approach
+    const inventoryContext = this.getInventoryAndTransformations(story, gameState);
+    const inventoryLines = inventoryContext.split('\n');
+    let currentInventorySection = '';
+    let currentInventoryKey = '';
+    
+    for (const line of inventoryLines) {
+      if (line.match(/^(INVENTORY ITEMS|ITEM TRANSFORMATIONS):$/)) {
+        // Save previous section if exists
+        if (currentInventoryKey && currentInventorySection) {
+          sections[currentInventoryKey] = currentInventorySection.trim();
         }
-        if (item.created_from) {
-          info += ` ← created from: ${item.created_from}`;
-        }
-        const aliases = formatAliases(item.aliases);
-        if (aliases) {
-          info += ` | ${aliases}`;
-        }
-        return info;
+        // Start new section
+        currentInventoryKey = line.replace(':', '');
+        currentInventorySection = '';
+      } else {
+        currentInventorySection += line + '\n';
       }
-    });
+    }
+    
+    // Save final inventory section
+    if (currentInventoryKey && currentInventorySection) {
+      sections[currentInventoryKey] = currentInventorySection.trim();
+    }
 
     if (story.success_conditions) {
       sections['SUCCESS CONDITIONS'] = formatSectionContent(story.success_conditions, {
@@ -521,6 +500,197 @@ For STORY ENDINGS:
 GOAL: Create seamless narrative experiences where pre-written content enhances rather than replaces contextual responses.`);
     }
 
+    return sections.join('\n');
+  }
+
+  /**
+   * Get items relevant to current context (location + inventory scoped)
+   */
+  private getRelevantItems(story: any, currentLocation: any, gameState: any): any[] {
+    const inventoryIds = new Set(gameState.inventory || []);
+    
+    return story.items?.filter((item: any) => {
+      // Current location items
+      if (item.location === currentLocation?.id) return true;
+      
+      // Discoverable in current location  
+      if (item.discoverable_in === currentLocation?.id) return true;
+      
+      // In inventory
+      if (inventoryIds.has(item.id)) return true;
+      
+      // Transformation relationships with inventory items
+      if (item.can_become && inventoryIds.has(item.id)) return true;
+      if (item.created_from && inventoryIds.has(item.created_from)) return true;
+      
+      return false;
+    }) || [];
+  }
+
+  /**
+   * Generate detailed location context with expanded current location view
+   */
+  private getLocationContext(story: any, currentLocation: any, gameState: any): string {
+    if (!story.locations || story.locations.length === 0) {
+      return 'LOCATIONS: None defined';
+    }
+
+    const sections: string[] = [];
+    const otherLocations: any[] = [];
+    const relevantItems = this.getRelevantItems(story, currentLocation, gameState);
+
+    // Process current location with full details
+    if (currentLocation) {
+      sections.push('CURRENT LOCATION:');
+      sections.push(`${currentLocation.name} (${currentLocation.id}) | ${formatKeyValue('Exits', currentLocation.connections)}`);
+      
+      // Add full description if available
+      if (currentLocation.description) {
+        sections.push('');
+        sections.push(`Description: ${currentLocation.description}`);
+      }
+      
+      // Add detailed object descriptions using item lookups
+      if (currentLocation.objects && currentLocation.objects.length > 0) {
+        sections.push('');
+        sections.push('Objects:');
+        currentLocation.objects.forEach((objId: string) => {
+          // Look up object in relevant items
+          const item = relevantItems.find(item => item.id === objId);
+          if (item) {
+            let objectLine = `  • ${item.name}: ${item.description}`;
+            
+            // Add aliases if available
+            if (item.aliases && item.aliases.length > 0) {
+              objectLine += ` [aliases: ${item.aliases.join(', ')}]`;
+            }
+            
+            // Add transformation info if available
+            if (item.can_become) {
+              objectLine += ` [can become: ${item.can_become}]`;
+            }
+            
+            sections.push(objectLine);
+          } else {
+            // Emergent object - let LLM handle it
+            sections.push(`  • ${objId}: [No description - describe based on context and story needs]`);
+          }
+        });
+      }
+      
+      // Add discoverable items for this location
+      const discoverableHere = relevantItems.filter((item: any) => item.discoverable_in === currentLocation.id);
+      if (discoverableHere.length > 0) {
+        sections.push('');
+        const discoverableList = discoverableHere.map((item: any) => {
+          const searchObjects = formatList(item.discovery_objects, { separator: '/', fallback: 'any' });
+          return `${item.name} (search: ${searchObjects})`;
+        }).join(', ');
+        sections.push(`Discoverable Items: ${discoverableList}`);
+      }
+      
+      // Collect other locations for summary
+      story.locations.forEach((loc: any) => {
+        if (loc.id !== currentLocation.id) {
+          otherLocations.push(loc);
+        }
+      });
+    } else {
+      // If no current location, show all locations normally
+      otherLocations.push(...story.locations);
+    }
+
+    // Add other locations in compact format
+    if (otherLocations.length > 0) {
+      sections.push('');
+      sections.push('OTHER LOCATIONS:');
+      otherLocations.forEach((loc: any) => {
+        let info = `${loc.name} (${loc.id})`;
+        
+        // Add exits
+        if (loc.connections && loc.connections.length > 0) {
+          info += ` | ${formatKeyValue('Exits', loc.connections)}`;
+        }
+        
+        // Add items summary using scoped items
+        const itemsHere = relevantItems.filter((item: any) => item.location === loc.id);
+        if (itemsHere.length > 0) {
+          info += ` | ${formatKeyValue('Items', itemsHere.map((item: any) => item.name))}`;
+        }
+        
+        // Add discoverable items summary using scoped items
+        const discoverableHere = relevantItems.filter((item: any) => item.discoverable_in === loc.id);
+        if (discoverableHere.length > 0) {
+          const discoverableList = discoverableHere.map((item: any) => {
+            const searchObjects = formatList(item.discovery_objects, { separator: '/', fallback: 'any' });
+            return `${item.name} (search: ${searchObjects})`;
+          });
+          info += ` | ${formatKeyValue('Discoverable', discoverableList)}`;
+        }
+        
+        sections.push(info);
+      });
+    }
+
+    return sections.join('\n');
+  }
+
+  /**
+   * Generate inventory and transformation context using scoped items
+   */
+  private getInventoryAndTransformations(story: any, gameState: any): string {
+    const inventoryIds = new Set(gameState.inventory || []);
+    const sections: string[] = [];
+    
+    // Get all items that have transformation relationships or are in inventory
+    const relevantItems = story.items?.filter((item: any) => {
+      return inventoryIds.has(item.id) || 
+             item.can_become || 
+             item.created_from ||
+             (item.can_become && inventoryIds.has(item.id));
+    }) || [];
+    
+    // Show inventory items with full details
+    const inventoryItems = relevantItems.filter((item: any) => inventoryIds.has(item.id));
+    if (inventoryItems.length > 0) {
+      sections.push('INVENTORY ITEMS:');
+      inventoryItems.forEach((item: any) => {
+        let itemLine = `${item.name} (${item.id})`;
+        
+        if (item.description) {
+          itemLine += ` - ${item.description}`;
+        }
+        
+        if (item.aliases && item.aliases.length > 0) {
+          itemLine += ` | ${formatAliases(item.aliases)}`;
+        }
+        
+        if (item.can_become) {
+          itemLine += ` | can become: ${item.can_become}`;
+        }
+        
+        sections.push(itemLine);
+      });
+    }
+    
+    // Show transformation relationships
+    const transformableItems = relevantItems.filter((item: any) => 
+      item.can_become || item.created_from
+    );
+    
+    if (transformableItems.length > 0) {
+      sections.push('');
+      sections.push('ITEM TRANSFORMATIONS:');
+      transformableItems.forEach((item: any) => {
+        if (item.can_become) {
+          sections.push(`${item.name} → ${item.can_become}`);
+        }
+        if (item.created_from) {
+          sections.push(`${item.created_from} → ${item.name}`);
+        }
+      });
+    }
+    
     return sections.join('\n');
   }
 }
