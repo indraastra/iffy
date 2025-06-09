@@ -733,30 +733,30 @@ body {
 }
 
 .themed-game-content .rich-alert-warning {
-  background: var(--alert-warning-bg, rgba(255, 193, 7, 0.15));
-  border-left-color: var(--alert-warning-border, #ffc107);
-  color: var(--alert-warning-color, #856404);
+  background: var(--alert-warning-bg);
+  border-left-color: var(--alert-warning-border);
+  color: var(--alert-warning-color);
 }
 
 .themed-game-content .rich-alert-discovery {
-  background: var(--alert-discovery-bg, rgba(40, 167, 69, 0.15));
-  border-left-color: var(--alert-discovery-border, #28a745);
-  color: var(--alert-discovery-color, #155724);
+  background: var(--alert-discovery-bg);
+  border-left-color: var(--alert-discovery-border);
+  color: var(--alert-discovery-color);
 }
 
 .themed-game-content .rich-alert-danger {
-  background: var(--alert-danger-bg, rgba(220, 53, 69, 0.15));
-  border-left-color: var(--alert-danger-border, #dc3545);
-  color: var(--alert-danger-color, #721c24);
+  background: var(--alert-danger-bg);
+  border-left-color: var(--alert-danger-border);
+  color: var(--alert-danger-color);
   animation: danger-pulse 2s ease-in-out infinite;
 }
 
 @keyframes danger-pulse {
   0%, 100% { 
-    box-shadow: 0 0 0 var(--alert-danger-pulse, rgba(220, 53, 69, 0.3));
+    box-shadow: 0 0 0 var(--alert-danger-pulse);
   }
   50% { 
-    box-shadow: 0 0 0 4px var(--alert-danger-pulse-faint, rgba(220, 53, 69, 0.1));
+    box-shadow: 0 0 0 4px var(--alert-danger-pulse-faint);
   }
 }
 
