@@ -266,6 +266,18 @@ Love interactive fiction? Here's how you can help make Iffy even better:
 
 **Get involved:** Check our [Contributing Guide](./docs/development-guide.md#contributing-guidelines) or just start by trying the app and sharing your thoughts!
 
+## 🌟 Inspiration & Acknowledgments
+
+Iffy stands on the shoulders of giants in interactive fiction and AI storytelling:
+
+### **Inkle's Ink**
+The brilliant [Ink narrative scripting language](https://www.inklestudios.com/ink/) showed us how powerful a purpose-built language for interactive stories could be. While Iffy uses YAML for accessibility, Ink's approach to branching narratives and state management deeply influenced our design philosophy.
+
+### **AI Dungeon**
+[AI Dungeon](https://aidungeon.io/) pioneered AI-driven interactive storytelling, proving that language models could create compelling emergent narratives. Iffy builds on this foundation by adding structured authorship - giving writers control while preserving the magic of AI-powered natural language understanding.
+
+Together, these inspirations led to Iffy's unique approach: **structured stories with emergent gameplay**, where authors define the world and AI brings it to life through natural conversation.
+
 ---
 
 ## 🛠️ Developer Setup
