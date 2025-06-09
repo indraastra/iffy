@@ -726,6 +726,36 @@ body {
 .themed-game-content .rich-alert-icon {
   font-size: 1.1em;
   line-height: 1;
+  font-weight: bold;
+  min-width: 16px;
+  display: inline-block;
+}
+
+/* CSS-based alert icons using ::before pseudo-elements */
+.themed-game-content .alert-icon-warning::before {
+  content: "⚠";
+  color: var(--alert-warning-color);
+}
+
+.themed-game-content .alert-icon-discovery::before {
+  content: "★";
+  color: var(--alert-discovery-color);
+}
+
+.themed-game-content .alert-icon-danger::before {
+  content: "●";
+  color: var(--alert-danger-color);
+  animation: danger-pulse-icon 1s ease-in-out infinite;
+}
+
+.themed-game-content .alert-icon-important::before {
+  content: "!";
+  color: var(--alert-warning-color);
+}
+
+@keyframes danger-pulse-icon {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 
 .themed-game-content .rich-alert-content {

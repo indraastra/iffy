@@ -14,6 +14,11 @@ metadata:
     - "The marriage of old-world deduction and newfangled cognition"
     - "What constitutes true intelligence - human intuition or mechanical precision?"
     - "The curious partnership between flesh and ethereal mind"
+  ui:
+    colors:
+      primary: "#8B4513"     # Rich saddle brown - leather and mahogany
+      background: "#2F1B14"  # Dark chocolate brown - gaslit Victorian interior
+      text: "#F5DEB3"       # Warm wheat - parchment and candlelight
 
 characters:
   - id: "player"
