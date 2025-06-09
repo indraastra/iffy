@@ -1,0 +1,231 @@
+title: "Coffee Confessional v3"
+author: "Claude (Redesigned Format)"
+version: "3.0"
+blurb: "Help a friend open up about what's been troubling them."
+
+# Core story context - always included
+story_context: |
+  Friday evening, 6:30 PM, corner café near closing. You're meeting Alex who's been distant lately. 
+  Alex harbors romantic feelings for you but fears ruining the friendship. Intimate, realistic conversation.
+
+# Character dynamics
+characters:
+  player:
+    name: "You"
+    traits: ["caring", "observant", "patient", "hopeful"]
+    arc: "concerned friend → understanding confidant → recipient of confession"
+    relationships:
+      alex: "Close friend trying to understand why Alex has been distant"
+      barista: "Polite customer responding to service questions"
+    
+  alex:
+    name: "Alex"
+    traits: ["conflicted", "guarded", "thoughtful", "secretly vulnerable"]
+    personality: "Careful with words, warmth shows through despite keeping distance"
+    arc: "defensive → conflicted → vulnerable → open"
+    relationships:
+      player: "Best friend they've fallen for - torn between confession and preserving friendship"
+      barista: "Barely aware of their presence - too focused on internal struggle"
+    
+  barista:
+    name: "The Barista"
+    traits: ["professional", "perceptive", "discreet"]
+    relationships:
+      alex: "Notices their distress, offers gentle service"
+      player: "Looks to them when Alex doesn't respond"
+
+# Story moments (first moment is the starting point)
+moments:
+  quiet_moment:
+    text: |
+      You're sitting across from Alex in a quiet corner café. They've been acting distant lately, 
+      and tonight feels different - like there's something they want to say but can't.
+      
+      The barista approaches, wiping her hands on her apron. "I noticed your coffee's 
+      gone cold. Should I warm it up for you?"
+      
+      Alex doesn't respond, still stirring absently while staring out the rain-spotted window. 
+      The barista glances at you with a gentle, questioning look.
+    
+    goals:
+      - "Establish the intimate café atmosphere"
+      - "Show Alex's distracted, troubled state"
+      - "Begin building trust through patient responses"
+    
+    transitions:
+      - to: "opening_up"
+        when: "player shows patience and empathy"
+        sets_flags: ["conversation_started", "tone_established"]
+    
+    hints: |
+      PRONOUN FLEXIBILITY: Start with they/them for Alex. If player uses specific pronouns 
+      (he/him, she/her), adopt those consistently. Make it feel natural.
+      
+      OPENING DYNAMICS: Alex is lost in thought. Player's response to barista sets tone - 
+      patient/caring responses help, pushy ones don't.
+  
+  opening_up:
+    text: |
+      The café feels even quieter now, just the soft jazz and distant clink of dishes being 
+      washed. Rain traces patterns on the window that Alex watches like they hold answers.
+      
+      "I know I've been..." Alex starts, then stops, fingers wrapped around the cold mug. 
+      "Different. Distant. I know you've noticed."
+      
+      Their eyes finally meet yours for just a moment before looking away again.
+    
+    goals:
+      - "Alex acknowledges their distance"
+      - "Create opportunities for player to build trust"
+      - "Show Alex's internal struggle through body language"
+    
+    transitions:
+      - to: "the_confession"
+        when: "player continues being supportive and Alex feels safe"
+        sets_flags: ["trust_building", "alex_opening"]
+      - to: "deflection"
+        when: "player pushes too hard or Alex feels pressured"
+        sets_flags: ["alex_defensive", "walls_up"]
+    
+    completion_flags:
+      - when: "Alex admits to being distant"
+        sets_flag: "acknowledged_distance"
+      - when: "Alex shows internal struggle"
+        sets_flag: "alex_conflicted"
+      - when: "Alex starts opening up"
+        sets_flag: "partial_trust"
+  
+  the_confession:
+    text: |
+      Alex takes a shaky breath, and you realize whatever they're about to say has been 
+      weighing on them for a long time.
+      
+      "The thing is..." Their voice is barely above a whisper. "I've been pulling away because 
+      I'm terrified. Terrified of ruining everything between us."
+      
+      The words hang in the air between you, heavy with unspoken meaning.
+    
+    goals:
+      - "Alex reveals their romantic feelings"
+      - "Handle the confession with appropriate weight"
+      - "Allow player to respond to this revelation"
+    
+    completion_flags:
+      - when: "Alex confesses romantic feelings"
+        sets_flag: "admitted_feelings"
+      - when: "full truth is revealed"
+        sets_flag: "secret_revealed"
+      - when: "Alex feels safe and heard"
+        sets_flag: "trust_established"
+      - when: "Alex becomes vulnerable"
+        sets_flag: "alex_vulnerable"
+      - when: "conversation reaches natural end"
+        sets_flag: "conversation_ending"
+  
+  deflection:
+    text: |
+      Alex's shoulders tense, and they lean back slightly. "It's nothing. Really. Just work 
+      stuff. You know how it is."
+      
+      But you can see it in their eyes - that's not the truth. They're retreating, building 
+      walls again. The unfinished coffee sits between you like all the things left unsaid.
+    
+    goals:
+      - "Show Alex shutting down"
+      - "Give player chance to salvage or end conversation"
+    
+    transitions:
+      - to: "opening_up"
+        when: "player gently persists with empathy"
+        sets_flags: ["second_chance"]
+    
+    completion_flags:
+      - when: "Alex deflects the real issue"
+        sets_flag: "topic_avoided"
+      - when: "Alex shuts down emotionally"
+        sets_flag: "alex_defensive"
+      - when: "walls stay up"
+        sets_flag: "distance_maintained"
+      - when: "someone indicates leaving"
+        sets_flag: "conversation_ending"
+
+# World knowledge - structured for engine use
+world:
+  locations:
+    corner_cafe:
+      description: "Cozy café with mismatched furniture, coffee aroma, soft jazz. Nearly empty at closing time."
+      contains: ["unfinished_coffee", "phone"]
+      atmosphere: "intimate, rain on windows, warm lighting, quiet conversation"
+  
+  items:
+    unfinished_coffee:
+      description: "Nearly full cup gone cold while Alex stares out the window - physical manifestation of distraction"
+      found_in: "corner_cafe"
+      
+    phone:
+      description: "Face down on table, occasionally buzzing with unread messages Alex ignores"
+      found_in: "corner_cafe"
+
+# Ending variations based on emotional journey
+endings:
+  requires: ["conversation_ending"]
+  
+  variations:
+    full_confession:
+      requires: [
+        ["alex_vulnerable", "admitted_feelings", "secret_revealed", "trust_established"],
+        ["alex_vulnerable", "secret_revealed", "trust_established"]  # Can work without explicit admission
+      ]
+      text: |
+        The weight that's been between you for weeks finally lifts. Alex's eyes are bright with 
+        unshed tears, but there's relief there too.
+        
+        "I've been so scared," they admit. "Scared of losing you, scared of changing everything. 
+        But keeping this inside was killing me."
+        
+        You reach across the table, and Alex doesn't pull away. Whatever happens next, at least 
+        now it's honest. At least now it's real.
+        
+        Outside, the rain has stopped, and the streetlights glow like possibilities.
+    
+    partial_opening:
+      requires: ["alex_conflicted", "acknowledged_distance", "partial_trust"]
+      text: |
+        Alex manages a small, sad smile. "I'm sorry I've been so weird lately. I'm dealing with 
+        some stuff, and I didn't mean to shut you out."
+        
+        They stand, gathering their things. "Maybe we could take a walk? Clear heads?"
+        
+        You know there's more they're not saying, but at least it's a start. At least the door 
+        is open. Sometimes that's enough for now.
+    
+    walls_stay_up:
+      requires: [
+        ["alex_defensive", "topic_avoided", "distance_maintained"],
+        ["distance_maintained"]
+      ]
+      text: |
+        The conversation dies into uncomfortable silence. Alex checks their phone, a clear signal.
+        
+        "I should go," they say, already standing. "Early morning tomorrow."
+        
+        You watch them leave, the unfinished coffee still on the table. Whatever's troubling them, 
+        they're not ready to share it. Not yet. Maybe not ever.
+        
+        The barista starts turning off lights. Time to go.
+
+# Story metadata
+metadata:
+  tone: "Intimate, contemplative, with underlying romantic tension"
+  themes: ["Unspoken feelings", "The courage to be vulnerable", "Friendship at a crossroads"]
+  conversation_flow: "Patient empathy → building trust → emotional revelation"
+
+# Hints for dynamic behavior
+hints: |
+  REALISTIC DIALOGUE: Natural hesitations, incomplete sentences, meaningful silences. Show emotions 
+  through actions (stirring coffee, looking away, fidgeting).
+  
+  EMOTIONAL PROGRESSION: Alex opens up with patience/empathy, shuts down with pressure. The secret 
+  is romantic feelings for the player. Build intimacy gradually.
+  
+  ENVIRONMENTAL DETAILS: Use café atmosphere (rain, jazz, empty space) to reflect emotional tone.
