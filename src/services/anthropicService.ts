@@ -52,6 +52,17 @@ export class AnthropicService {
    * Generic request method for custom prompts with options
    */
   public async makeRequest(prompt: string, options?: { model?: string }): Promise<string> {
+    const result = await this.makeRequestWithUsage(prompt, options);
+    return result.content;
+  }
+
+  /**
+   * Make request and return full response with usage information
+   */
+  public async makeRequestWithUsage(prompt: string, options?: { model?: string }): Promise<{
+    content: string;
+    usage: { input_tokens: number; output_tokens: number; total_tokens: number };
+  }> {
     if (!this.client) {
       throw new Error('Anthropic API not configured. Please set your API key in settings.');
     }
@@ -89,7 +100,14 @@ export class AnthropicService {
             console.log(`✅ Request succeeded with fallback model: ${model}`);
           }
           
-          return responseText;
+          return {
+            content: responseText,
+            usage: {
+              input_tokens: response.usage.input_tokens,
+              output_tokens: response.usage.output_tokens,
+              total_tokens: response.usage.input_tokens + response.usage.output_tokens
+            }
+          };
         } else {
           throw new Error('No response content received from Claude');
         }
