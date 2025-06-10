@@ -55,7 +55,7 @@ moments:
     transitions:
       - to: "opening_up"
         when: "player shows patience and empathy"
-        sets_flags: ["conversation_started", "tone_established"]
+        sets_flags: ["tone_established"]
     
     hints: |
       PRONOUN FLEXIBILITY: Start with they/them for Alex. If player uses specific pronouns 
@@ -137,7 +137,7 @@ moments:
     transitions:
       - to: "opening_up"
         when: "player gently persists with empathy"
-        sets_flags: ["second_chance"]
+        sets_flags: []
     
     completion_flags:
       - when: "Alex deflects the real issue"
@@ -172,10 +172,7 @@ endings:
   
   variations:
     full_confession:
-      requires: [
-        ["alex_vulnerable", "admitted_feelings", "secret_revealed", "trust_established"],
-        ["alex_vulnerable", "secret_revealed", "trust_established"]  # Can work without explicit admission
-      ]
+      requires: ["alex_vulnerable", "secret_revealed", "trust_established"]  # Can work without explicit admission
       text: |
         The weight that's been between you for weeks finally lifts. Alex's eyes are bright with 
         unshed tears, but there's relief there too.
@@ -200,10 +197,7 @@ endings:
         is open. Sometimes that's enough for now.
     
     walls_stay_up:
-      requires: [
-        ["alex_defensive", "topic_avoided", "distance_maintained"],
-        ["distance_maintained"]
-      ]
+      requires: ["distance_maintained"]
       text: |
         The conversation dies into uncomfortable silence. Alex checks their phone, a clear signal.
         
