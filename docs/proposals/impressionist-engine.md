@@ -41,6 +41,9 @@ Impressionistic IF: `"The player searches for a way through" → LLM interprets 
 
 ```yaml
 title: String
+author: String
+blurb: String (1-2 sentences hook for the story)
+version: String (e.g., "1.0", "2.3")
 context: String (1-3 sentences capturing story essence)
 
 scenes:
@@ -60,16 +63,28 @@ guidance: String (LLM behavior hints)
 ### Extended Grammar (Optional)
 
 ```yaml
-# Character definitions
-characters?:
-  character_id:
-    name: String
-    essence: String (one line capturing character core)
-    arc?: String (emotional journey)
-    voice?: String (how they speak)
+# Narrative metadata
+narrative?:
+  voice?: String (narrative tone and style)
+  setting?: String (time, place, environment)
+  tone?: String (emotional register)
+  themes?: String[] (core themes explored)
 
 # World building
 world?:
+  # Atmosphere (sensory details, mood)
+  atmosphere?:
+    sensory?: String[]
+    mood?: String
+
+  # Character definitions (now under world)
+  characters?:
+    character_id:
+      name: String
+      essence: String (one line capturing character core)
+      arc?: String (emotional journey)
+      voice?: String (how they speak)
+  
   locations?:
     location_id:
       description: String
@@ -83,12 +98,7 @@ world?:
       found_in?: String | String[]
       reveals?: String  # Memory to add when found
       hidden?: Boolean
-
-# Atmosphere
-atmosphere?:
-  sensory?: String[]
-  objects?: String[]
-  mood?: String
+  
 ```
 
 ### Format Rules
@@ -105,6 +115,9 @@ atmosphere?:
 
 ```yaml
 title: "The Key"
+author: "Example Author"
+blurb: "A simple puzzle about getting through a locked door."
+version: "1.0"
 context: "You need to get through a locked door."
 
 scenes:
@@ -128,13 +141,26 @@ guidance: |
 
 ```yaml
 title: "Coffee Confessional"
+author: "Romance Writer"
+blurb: "A delicate conversation that could change everything between friends."
+version: "2.0"
 context: "Friday evening café. Alex harbors romantic feelings for you."
 
-characters:
-  alex:
-    essence: "Your friend struggling with romantic feelings"
-    arc: "guarded → vulnerable → open (or defensive)"
-    voice: "Careful with words, warmth shows through"
+narrative:
+  voice: "Intimate, present tense, focused on emotional nuance"
+  setting: "Modern urban café, rainy Friday evening"
+  tone: "Tender, emotionally charged, hopeful"
+  themes: ["friendship vs romance", "vulnerability", "unspoken feelings"]
+
+world:
+  characters:
+    alex:
+      essence: "Your friend struggling with romantic feelings"
+      arc: "guarded → vulnerable → open (or defensive)"
+      voice: "Careful with words, warmth shows through"
+  
+  atmosphere:
+    sensory: ["coffee aroma", "soft jazz", "rain on windows"]
 
 scenes:
   - id: "opening"
@@ -156,9 +182,6 @@ endings:
     when: "mutual understanding achieved"
     sketch: "Alex's hand finds yours. 'Thank you for not giving up on me.'"
 
-atmosphere:
-  sensory: ["coffee aroma", "soft jazz", "rain on windows"]
-
 guidance: |
   Alex loves the player romantically but fears ruining the friendship.
   Patient responses → trust. Pressure → walls up.
@@ -168,19 +191,28 @@ guidance: |
 
 ```yaml
 title: "The Peculiar Case of the Sentient Quill"
+author: "Victorian Mystery Author"
+blurb: "Solve a murder in gaslit London with an impossible AI companion."
+version: "3.0"
 context: "Victorian London, 1887. Investigating murder with an AI quill pen."
 
-characters:
-  player:
-    name: "Inspector Whitmore"
-    essence: "Skeptical detective confronted with impossible technology"
-    
-  quill:
-    name: "The Analytical Engine Quill"
-    essence: "Pompous AI writing instrument"
-    voice: "Verbose Victorian prose with mechanical precision"
+narrative:
+  voice: "Victorian formal prose with hints of the uncanny"
+  setting: "Gaslit Victorian London, foggy November evening, 1887"
+  tone: "Gothic mystery meets steampunk whimsy"
+  themes: ["reason vs intuition", "technology vs tradition", "partnership"]
 
 world:
+  characters:
+    player:
+      name: "Inspector Whitmore"
+      essence: "Skeptical detective confronted with impossible technology"
+      
+    quill:
+      name: "The Analytical Engine Quill"
+      essence: "Pompous AI writing instrument"
+      voice: "Verbose Victorian prose with mechanical precision"
+
   locations:
     study:
       description: "Murder scene. Lord Pemberton slumped over desk."
@@ -285,14 +317,23 @@ interface DirectorRequest {
   // Available transitions ~100 tokens
   currentTransitions?: Record<string, string>
   
+  // Narrative metadata (if defined) ~50 tokens
+  narrative?: {
+    voice?: string
+    setting?: string
+    tone?: string
+    themes?: string[]
+  }
+  
   // Optional enrichment ~200 tokens
   location?: Location
   discoverableItems?: Item[]
+  activeCharacters?: Character[]
   
   // Guidance ~100 tokens
   guidance: string
 }
-// Total: 600-900 tokens depending on story complexity
+// Total: 600-950 tokens depending on story complexity
 ```
 
 #### Response (Clear Signals)
@@ -377,6 +418,11 @@ class ContextBuilder {
       guidance: story.guidance
     }
     
+    // Add narrative metadata if defined
+    if (story.narrative) {
+      base.narrative = story.narrative
+    }
+    
     // Add complexity only if defined
     if (currentScene.location && story.world?.locations) {
       base.location = story.world.locations[currentScene.location]
@@ -385,6 +431,11 @@ class ContextBuilder {
     // Include discoverable items if in a location with items
     if (currentScene.location && story.world?.items) {
       base.discoverableItems = this.getItemsInLocation(currentScene.location)
+    }
+    
+    // Include active characters if in scene
+    if (story.world?.characters) {
+      base.activeCharacters = this.getCharactersInScene(currentScene)
     }
     
     return this.compress(base)  // Ensure < 1000 tokens
