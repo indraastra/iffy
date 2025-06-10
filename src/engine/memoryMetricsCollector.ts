@@ -26,10 +26,13 @@ export interface MemoryMetric {
 
 export interface MemorySessionStats {
   totalCalls: number;
+  successfulCalls: number;
   compactionCalls: number;
   extractionCalls: number;
   avgInputTokens: number;
   avgOutputTokens: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
   avgLatency: number;
   totalCost: number;
   avgCompressionRatio: number;
@@ -103,10 +106,13 @@ export class MemoryMetricsCollector {
     if (this.metrics.length === 0) {
       return {
         totalCalls: 0,
+        successfulCalls: 0,
         compactionCalls: 0,
         extractionCalls: 0,
         avgInputTokens: 0,
         avgOutputTokens: 0,
+        totalInputTokens: 0,
+        totalOutputTokens: 0,
         avgLatency: 0,
         totalCost: 0,
         avgCompressionRatio: 1,
@@ -116,11 +122,14 @@ export class MemoryMetricsCollector {
     }
 
     const totalCalls = this.metrics.length;
+    const successfulCalls = this.metrics.filter(m => m.success).length;
     const compactionMetrics = this.metrics.filter(m => m.operation === 'compaction');
     const extractionMetrics = this.metrics.filter(m => m.operation === 'extraction');
     
     const avgInputTokens = this.average(m => m.inputTokens);
     const avgOutputTokens = this.average(m => m.outputTokens);
+    const totalInputTokens = this.sum(m => m.inputTokens);
+    const totalOutputTokens = this.sum(m => m.outputTokens);
     const avgLatency = this.average(m => m.latencyMs);
     const totalCost = this.calculateTotalCost();
     
@@ -138,10 +147,13 @@ export class MemoryMetricsCollector {
 
     return {
       totalCalls,
+      successfulCalls,
       compactionCalls: compactionMetrics.length,
       extractionCalls: extractionMetrics.length,
       avgInputTokens,
       avgOutputTokens,
+      totalInputTokens,
+      totalOutputTokens,
       avgLatency,
       totalCost,
       avgCompressionRatio,
@@ -290,6 +302,10 @@ export class MemoryMetricsCollector {
     if (this.metrics.length === 0) return 0;
     const sum = this.metrics.reduce((acc, m) => acc + selector(m), 0);
     return sum / this.metrics.length;
+  }
+
+  private sum(selector: (metric: MemoryMetric) => number): number {
+    return this.metrics.reduce((acc, m) => acc + selector(m), 0);
   }
 
   private calculateRequestCost(metric: MemoryMetric): number {

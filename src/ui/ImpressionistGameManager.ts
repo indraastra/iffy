@@ -7,18 +7,21 @@
 import { ImpressionistEngine } from '@/engine/impressionistEngine';
 import { ImpressionistParser } from '@/engine/impressionistParser';
 import { AnthropicService } from '@/services/anthropicService';
+import { DebugPane } from '@/ui/debugPane';
 import { getBundledStoryTitles, getBundledStory } from '@/bundled-examples';
 
 export interface GameManagerConfig {
   storyOutput: HTMLElement;
   commandInput: HTMLTextAreaElement;
   anthropicService: AnthropicService;
+  debugPane?: DebugPane;
 }
 
 export class ImpressionistGameManager {
   private engine: ImpressionistEngine;
   private anthropicService: AnthropicService;
   private parser: ImpressionistParser;
+  private debugPane?: DebugPane;
   
   // UI Elements
   private storyOutput: HTMLElement;
@@ -28,12 +31,14 @@ export class ImpressionistGameManager {
     this.anthropicService = config.anthropicService;
     this.engine = new ImpressionistEngine(this.anthropicService);
     this.parser = new ImpressionistParser();
+    this.debugPane = config.debugPane;
     
     this.storyOutput = config.storyOutput;
     this.commandInput = config.commandInput;
     
     this.setupEngine();
     this.setupEventListeners();
+    this.setupMetricsUpdates();
   }
 
   /**
@@ -572,5 +577,30 @@ export class ImpressionistGameManager {
   private disableInput(): void {
     this.commandInput.disabled = true;
     this.commandInput.placeholder = "Processing...";
+  }
+
+  /**
+   * Set up metrics updates to debug pane
+   */
+  private setupMetricsUpdates(): void {
+    if (!this.debugPane) return;
+
+    // Set up periodic metrics updates
+    setInterval(() => {
+      // Update session stats from engine metrics
+      const sessionStats = this.engine.getMetrics()?.getSessionStats();
+      if (sessionStats) {
+        this.debugPane!.updateSessionStats(sessionStats);
+      }
+
+      // Update memory stats from memory manager
+      const memoryManager = this.engine.getMemoryManager();
+      if (memoryManager) {
+        const memoryMetrics = memoryManager.getMemoryMetrics();
+        const memoryStats = memoryMetrics.getSessionStats();
+        const memoryWarnings = memoryMetrics.getMemoryWarnings();
+        this.debugPane!.updateMemoryStats(memoryStats, memoryWarnings);
+      }
+    }, 2000); // Update every 2 seconds
   }
 }
