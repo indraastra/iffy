@@ -1,0 +1,161 @@
+title: "Transition Test Story"
+author: "Test"
+version: "2.0"
+blurb: "A simple story to test the new LLM-enhanced flow transitions."
+
+metadata:
+  setting:
+    time: "Present day"
+    place: "A test environment"
+  tone:
+    overall: "Clear and direct"
+    narrative_voice: "Straightforward testing tone"
+  themes:
+    - "Testing flow transitions"
+    - "LLM enhancement verification"
+
+characters:
+  - id: "player"
+    name: "Tester"
+    traits: ["curious", "methodical"]
+    voice: "Direct and to the point"
+    description: "Someone testing the new flow transition system"
+
+locations:
+  - id: "start_room"
+    name: "Starting Room"
+    connections: ["next_room"]
+    description: "A simple room with a door leading east. There's a button on the wall."
+    objects:
+      - name: "button"
+        description: "A red button labeled 'PRESS ME'"
+      - name: "door"
+        description: "A wooden door leading east"
+
+  - id: "next_room"
+    name: "Second Room"
+    connections: ["start_room"]
+    description: "Another simple room with a lever on the wall."
+    objects:
+      - name: "lever"
+        description: "A brass lever in the down position"
+
+items:
+  - id: "test_key"
+    name: "Test Key"
+    description: "A small brass key that appeared when you pressed the button"
+    discoverable_in: "start_room"
+    discovery_objects: ["button"]
+
+success_conditions:
+  - id: "test_complete"
+    description: "Successfully tested all flow transitions"
+    requires: ["button_pressed", "moved_rooms", "lever_pulled", "all_flows_visited"]
+    ending: |
+      **Test Complete!**
+      
+      You have successfully tested the new flow transition system:
+      - LLM responses were enhanced with flow content ✓
+      - Transitions felt smooth and contextual ✓
+      - No jarring content replacement occurred ✓
+      
+      The enhanced flow transition system is working correctly!
+
+flows:
+  - id: "initial_flow"
+    name: "Starting Phase"
+    type: "narrative"
+    location: "start_room"
+    content: |
+      **Welcome to the Flow Transition Test**
+      
+      You find yourself in a simple test room. This story will help verify that the new 
+      LLM-enhanced flow transitions work correctly.
+      
+      Instead of abruptly replacing your contextual responses with pre-written content, 
+      the system should now blend them together smoothly.
+      
+      Try pressing the button to trigger the first transition!
+    transitions:
+      - requires: ["button_pressed"]
+        to_flow: "button_flow"
+        description: "Transition when button is pressed"
+    sets: ["test_started"]
+
+  - id: "button_flow"
+    name: "Button Pressed Phase"
+    type: "narrative"
+    location: "start_room"
+    content: |
+      **Excellent! Button Press Detected**
+      
+      The button press has been registered and a key has appeared! This transition 
+      should have felt natural - the LLM should have acknowledged your button press 
+      action and then smoothly incorporated this narrative content.
+      
+      Now try moving to the next room to test location-based transitions.
+    transitions:
+      - requires: ["moved_to_next_room"]
+        to_flow: "movement_flow"
+        description: "Transition when player moves to next room"
+    sets: ["button_pressed", "first_transition_complete"]
+
+  - id: "movement_flow"
+    name: "Movement Test Phase"
+    type: "narrative"
+    location: "next_room"
+    content: |
+      **Movement Transition Successful**
+      
+      Perfect! You've moved to the second room and the transition system has 
+      adapted to your new location. The LLM should have described your movement 
+      action contextually before presenting this flow content.
+      
+      Try pulling the lever to complete the final transition test.
+    transitions:
+      - requires: ["lever_pulled"]
+        to_flow: "final_flow"
+        description: "Transition when lever is pulled"
+    sets: ["moved_rooms", "second_transition_complete"]
+
+  - id: "final_flow"
+    name: "Final Test Phase"
+    type: "narrative"
+    location: "next_room"
+    content: |
+      **All Transitions Complete!**
+      
+      Fantastic! You've successfully tested all the flow transitions. Each one 
+      should have felt smooth and contextual, with the LLM naturally incorporating 
+      the flow content rather than abruptly replacing your actions.
+      
+      The test is now complete - you should see the success condition trigger shortly.
+    sets: ["lever_pulled", "all_flows_visited", "test_complete"]
+
+llm_guidelines: |
+  TESTING STORY: This is a technical test of the new flow transition system.
+  
+  TRANSITION BEHAVIOR:
+  When flow transitions occur, you should receive the flow content as context and naturally 
+  incorporate it into your response. DO NOT just output the flow content verbatim.
+  
+  EXAMPLE GOOD TRANSITION:
+  Player presses button → 
+  "You press the red button firmly. Click! The button depresses with a satisfying sound, 
+  and immediately you notice something has changed. A small compartment opens in the wall, 
+  revealing a brass key that wasn't there before. 
+  
+  **Excellent! Button Press Detected** - The button press has been registered and a key 
+  has appeared! This transition should have felt natural..."
+  
+  EXAMPLE BAD TRANSITION (what we're trying to avoid):
+  Player presses button → 
+  "**Excellent! Button Press Detected** - The button press has been registered..."
+  (No acknowledgment of the actual button pressing action)
+  
+  FLAG SETTING:
+  - Set "button_pressed" when player presses the button
+  - Set "moved_to_next_room" when player moves east/to next room  
+  - Set "lever_pulled" when player pulls the lever
+  
+  GOAL: Make transitions feel like one coherent narrative response, not two separate pieces stuck together.
