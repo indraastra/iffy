@@ -48,7 +48,7 @@ moments:
     transitions:
       - to: "investigation"
         when: "player begins examining evidence"
-        sets_flags: ["investigation_begun", "quill_partnership_established"]
+        sets_flags: []
   
   investigation:
     text: |
@@ -66,7 +66,7 @@ moments:
     transitions:
       - to: "deduction"
         when: "player has examined all evidence" 
-        sets_flags: ["evidence_complete", "ready_for_deduction"]
+        sets_flags: []
     
     hints: |
       SUSPECTS: Generate at least 2 plausible suspects who attended the evening tea service. Consider:
@@ -152,10 +152,7 @@ endings:
         analysis yields remarkable precision. Perhaps there is merit in this peculiar partnership."
     
     decent:
-      requires: [
-        ["poison_method", "financial_motive"],  # Standard investigation path
-        ["all_evidence_examined"]               # OR thorough but wrong conclusion
-      ]
+      requires: [["poison_method", "financial_motive"]]  # Standard investigation path
       text: |
         The quill traces measured lines: "Inspector, whilst your methodology retains charmingly 
         antiquated qualities, you have arrived at sufficient merit. Not the pinnacle of deductive 

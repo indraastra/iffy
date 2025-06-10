@@ -41,7 +41,7 @@ moments:
     transitions:
       - to: "ingredient_hunt"
         when: "player begins searching for ingredients"
-        sets_flags: ["quest_begun", "drama_initiated"]
+        sets_flags: []
   
   ingredient_hunt:
     text: |
@@ -63,7 +63,7 @@ moments:
     transitions:
       - to: "sandwich_assembly"
         when: "player has found ingredients and is ready to make sandwich"
-        sets_flags: ["ingredients_gathered"]
+        sets_flags: []
     
     hints: |
       DRAMATIC DISCOVERY: When player finds items, treat each discovery like a soap opera 
