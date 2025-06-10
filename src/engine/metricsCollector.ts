@@ -8,16 +8,27 @@ import { ImpressionistMetrics } from '@/types/impressionistStory';
 
 export interface SessionStats {
   totalCalls: number;
+  successfulCalls: number;
+  failedCalls: number;
   avgInputTokens: number;
   avgOutputTokens: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
   avgLatency: number;
   totalCost: number;
   contextEfficiency: number; // % of requests under 900 tokens
+  sessionStartTime: Date;
+  lastCallTime: Date | null;
+  fastestResponse: number;
+  slowestResponse: number;
 }
 
 export class MetricsCollector {
   private metrics: ImpressionistMetrics[] = [];
   private debugPane?: any;
+  private sessionStartTime: Date = new Date();
+  private successfulCalls: number = 0;
+  private failedCalls: number = 0;
 
   // Pricing (Claude 3 rates as of early 2024)
   private readonly INPUT_COST_PER_1K = 0.015;   // $15 per million input tokens
@@ -32,7 +43,8 @@ export class MetricsCollector {
     latencyMs: number,
     contextSize: number,
     memoryCount: number,
-    sceneId: string
+    sceneId: string,
+    success: boolean = true
   ): void {
     const metric: ImpressionistMetrics = {
       requestId: this.generateRequestId(),
@@ -48,6 +60,13 @@ export class MetricsCollector {
 
     this.metrics.push(metric);
     this.logMetric(metric);
+    
+    // Track success/failure
+    if (success) {
+      this.successfulCalls++;
+    } else {
+      this.failedCalls++;
+    }
     
     // Keep only last 100 requests to avoid memory bloat
     if (this.metrics.length > 100) {
@@ -74,31 +93,55 @@ export class MetricsCollector {
     if (this.metrics.length === 0) {
       return {
         totalCalls: 0,
+        successfulCalls: this.successfulCalls,
+        failedCalls: this.failedCalls,
         avgInputTokens: 0,
         avgOutputTokens: 0,
+        totalInputTokens: 0,
+        totalOutputTokens: 0,
         avgLatency: 0,
         totalCost: 0,
-        contextEfficiency: 100
+        contextEfficiency: 100,
+        sessionStartTime: this.sessionStartTime,
+        lastCallTime: null,
+        fastestResponse: 0,
+        slowestResponse: 0
       };
     }
 
     const totalCalls = this.metrics.length;
     const avgInputTokens = this.average(m => m.inputTokens);
     const avgOutputTokens = this.average(m => m.outputTokens);
+    const totalInputTokens = this.sum(m => m.inputTokens);
+    const totalOutputTokens = this.sum(m => m.outputTokens);
     const avgLatency = this.average(m => m.latencyMs);
     const totalCost = this.calculateTotalCost();
     
     // Context efficiency: % of requests under 900 input tokens
     const efficientRequests = this.metrics.filter(m => m.inputTokens < 900).length;
     const contextEfficiency = (efficientRequests / totalCalls) * 100;
+    
+    // Performance stats
+    const latencies = this.metrics.map(m => m.latencyMs);
+    const fastestResponse = Math.min(...latencies);
+    const slowestResponse = Math.max(...latencies);
+    const lastCallTime = this.metrics.length > 0 ? this.metrics[this.metrics.length - 1].timestamp : null;
 
     return {
       totalCalls,
+      successfulCalls: this.successfulCalls,
+      failedCalls: this.failedCalls,
       avgInputTokens,
       avgOutputTokens,
+      totalInputTokens,
+      totalOutputTokens,
       avgLatency,
       totalCost,
-      contextEfficiency
+      contextEfficiency,
+      sessionStartTime: this.sessionStartTime,
+      lastCallTime,
+      fastestResponse,
+      slowestResponse
     };
   }
 
@@ -187,6 +230,10 @@ export class MetricsCollector {
     if (this.metrics.length === 0) return 0;
     const sum = this.metrics.reduce((acc, m) => acc + selector(m), 0);
     return sum / this.metrics.length;
+  }
+
+  private sum(selector: (metric: ImpressionistMetrics) => number): number {
+    return this.metrics.reduce((acc, m) => acc + selector(m), 0);
   }
 
   private calculateRequestCost(metric: ImpressionistMetrics): number {

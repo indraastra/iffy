@@ -23,7 +23,8 @@ class ImpressionistIffyApp {
     new ImpressionistGameManager({
       storyOutput,
       commandInput,
-      anthropicService: this.anthropicService
+      anthropicService: this.anthropicService,
+      debugPane: this.debugPane
     });
     
     this.initializeApp();

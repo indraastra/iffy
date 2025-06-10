@@ -670,6 +670,136 @@ body {
   opacity: 0.9;
 }
 
+/* Debug Pane Tabs */
+.debug-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.debug-tab {
+  padding: 0.75rem 1rem;
+  background: transparent;
+  color: var(--text-color);
+  border: none;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s, background-color 0.2s;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.debug-tab:hover {
+  opacity: 0.9;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.debug-tab.active {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+  border-bottom: 2px solid var(--accent-color, #64B5F6);
+}
+
+.debug-tab-content {
+  display: none;
+  padding: 1rem;
+  height: calc(100% - 50px);
+  overflow-y: auto;
+}
+
+.debug-tab-content.active {
+  display: block;
+}
+
+/* Debug Stats Tables */
+.stats-section {
+  margin: 1rem 0;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.stats-section h4 {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  color: var(--text-color);
+}
+
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.stats-table td {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stats-table td:first-child {
+  color: var(--text-color);
+  opacity: 0.8;
+  width: 60%;
+}
+
+.stats-table td:last-child {
+  color: var(--text-color);
+  font-family: 'Courier New', monospace;
+  text-align: right;
+  font-weight: bold;
+}
+
+.stats-table tr:last-child td {
+  border-bottom: none;
+}
+
+.stats-table tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Warnings section */
+.warnings-section {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: rgba(255, 165, 0, 0.1);
+  border: 1px solid rgba(255, 165, 0, 0.3);
+  border-radius: 6px;
+}
+
+.warnings-section h4 {
+  margin: 0 0 0.5rem 0;
+  color: #FFA726;
+  font-size: 0.9rem;
+}
+
+.warning-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.warning-list li {
+  padding: 0.25rem 0;
+  color: #FFB74D;
+  font-size: 0.85rem;
+}
+
+.no-data {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-color);
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.no-data p {
+  margin: 0;
+}
+
 /* Rich Text Formatting - scoped to game content */
 .themed-game-content .rich-text {
   line-height: 1.6;

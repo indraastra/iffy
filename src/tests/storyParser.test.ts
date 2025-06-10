@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { StoryParser } from '../engine/storyParser'
+import { ImpressionistParser } from '../engine/impressionistParser'
 import { readFileSync, readdirSync } from 'fs'
 import { resolve, join } from 'path'
 
@@ -420,25 +421,23 @@ flows:
           const filePath = join(examplesDir, file);
           const content = readFileSync(filePath, 'utf-8');
           
-          // This should not throw an error
+          // This should not throw an error - using ImpressionistParser for new format stories
           expect(() => {
-            const story = StoryParser.parseFromYaml(content);
+            const parser = new ImpressionistParser();
+            const story = parser.parseYaml(content);
             
-            // Basic structural validation
+            // Basic structural validation for impressionist format
             expect(story.title).toBeDefined();
             expect(story.author).toBeDefined();
             expect(story.version).toBeDefined();
-            expect(story.characters).toBeDefined();
-            expect(story.locations).toBeDefined();
-            expect(story.flows).toBeDefined();
+            expect(story.context).toBeDefined();
+            expect(story.scenes).toBeDefined();
+            expect(story.endings).toBeDefined();
+            expect(story.guidance).toBeDefined();
             
-            // First flow should exist and have location
-            expect(story.flows.length).toBeGreaterThan(0);
-            
-            // First flow should have a valid location if specified
-            if (story.flows[0].location) {
-              expect(story.locations.find(l => l.id === story.flows[0].location)).toBeDefined();
-            }
+            // Should have at least one scene and one ending
+            expect(story.scenes.length).toBeGreaterThan(0);
+            expect(story.endings.length).toBeGreaterThan(0);
             
           }).not.toThrow();
         });
@@ -451,8 +450,9 @@ flows:
           const filePath = join(examplesDir, file);
           const content = readFileSync(filePath, 'utf-8');
           
-          // Should be able to parse each story
-          const story = StoryParser.parseFromYaml(content);
+          // Should be able to parse each story using ImpressionistParser
+          const parser = new ImpressionistParser();
+          const story = parser.parseYaml(content);
           validStories.push({
             filename: file,
             title: story.title
