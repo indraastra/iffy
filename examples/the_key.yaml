@@ -1,0 +1,26 @@
+title: "The Key"
+author: "Impressionist Engine Team"
+blurb: "A simple puzzle about getting through a locked door."
+version: "1.0"
+context: "You need to get through a locked door."
+
+scenes:
+  - id: "locked_door"
+    sketch: "Heavy wooden door. Definitely locked."
+    leads_to:
+      found_solution: "when the player finds a way through"
+    
+  - id: "found_solution"
+    sketch: "The door swings open. Beyond lies darkness."
+
+endings:
+  - id: "success"
+    when: "player went through the door"
+    sketch: "You step into the unknown."
+
+guidance: |
+  Let the player be creative. They might find a key, pick the lock,
+  break a window, or convince someone to open it. Track their approach.
+  
+  Respond naturally to creative solutions. If they try something reasonable,
+  let it work - this is about emergence, not rigid puzzles.

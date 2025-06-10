@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 import { readFileSync, writeFileSync, readdirSync } from 'fs';
 import { resolve, join } from 'path';
-import { StoryParser, StoryParseError } from '../src/engine/storyParser';
+import { ImpressionistParser } from '../src/engine/impressionistParser';
 
 interface ExampleStory {
   filename: string;
@@ -12,7 +12,7 @@ interface ExampleStory {
 }
 
 /**
- * Build script to bundle example stories into the app for easy playtesting
+ * Build script to bundle impressionist example stories into the app for easy playtesting
  * Validates all stories and fails the build if any are invalid
  */
 function bundleExampleStories() {
@@ -39,22 +39,23 @@ function bundleExampleStories() {
       console.log(`📖 Processing ${file}...`);
       const content = readFileSync(filePath, 'utf-8');
       
-      // Validate the story using the same parser as the app
+      // Validate the story using the impressionist parser
       console.log(`🔍 Validating ${file}...`);
-      const story = StoryParser.parseFromYaml(content);
+      const parser = new ImpressionistParser();
+      const result = parser.parseFromYaml(content);
+      
+      if (!result.story) {
+        throw new Error(result.errors.join(', '));
+      }
+      
+      const story = result.story;
       
       // Extract metadata for display
       const title = story.title || file.replace(/\.(yaml|yml)$/, '');
       const author = story.author || 'Unknown';
       
-      // Use blurb if available, otherwise generate from title and metadata
-      let blurb = story.blurb;
-      if (!blurb) {
-        blurb = title;
-        if (story.metadata?.setting?.place) {
-          blurb += ` - ${story.metadata.setting.place}`;
-        }
-      }
+      // Use blurb if available, otherwise generate from title
+      const blurb = story.blurb || title;
       
       stories.push({
         filename: file,
@@ -70,12 +71,7 @@ function bundleExampleStories() {
       validationErrors++;
       console.error(`❌ ${file} failed validation:`);
       
-      if (error instanceof StoryParseError) {
-        console.error(`   Parse Error: ${error.message}`);
-        if (error.details) {
-          console.error(`   Details:`, error.details);
-        }
-      } else if (error instanceof Error) {
+      if (error instanceof Error) {
         console.error(`   Error: ${error.message}`);
       } else {
         console.error(`   Unknown error:`, error);

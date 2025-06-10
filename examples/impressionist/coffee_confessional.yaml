@@ -19,8 +19,8 @@ world:
       voice: "Careful with words, warmth shows through"
   
   atmosphere:
-    sensory: ["coffee aroma", "dark jazz", "rain on windows"]
-    mood: "intimate and contemplative, like a wong kar wai film"
+    sensory: ["coffee aroma", "soft jazz", "rain on windows"]
+    mood: "intimate and contemplative"
 
 scenes:
   - id: "opening"
@@ -80,4 +80,4 @@ guidance: |
   Focus on emotional subtlety. Small gestures matter more than grand declarations.
   The goal isn't necessarily romance - it's authentic connection.
   
-  Let silences breathe. Build atmosphere. Sometimes what isn't said matters most.
+  Let silences breathe. Sometimes what isn't said matters most.

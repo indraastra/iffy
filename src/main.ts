@@ -1,56 +1,29 @@
-import { GameEngine } from '@/engine/gameEngine';
-import { DebugPane } from '@/ui/debugPane';
-import { MessageDisplay } from '@/ui/MessageDisplay';
-import { LoadMenuManager } from '@/ui/LoadMenuManager';
-import { SettingsManager } from '@/ui/SettingsManager';
-import { CommandProcessor } from '@/ui/CommandProcessor';
-import { GameManager } from '@/ui/GameManager';
+/**
+ * Impressionist Iffy App - Pure impressionist architecture
+ */
 
-class IffyApp {
-  private gameEngine: GameEngine;
+import { ImpressionistGameManager } from '@/ui/ImpressionistGameManager';
+import { AnthropicService } from '@/services/anthropicService';
+import { DebugPane } from '@/ui/debugPane';
+
+class ImpressionistIffyApp {
+  private anthropicService: AnthropicService;
   private debugPane: DebugPane;
-  private messageDisplay: MessageDisplay;
-  private loadMenuManager: LoadMenuManager;
-  private settingsManager: SettingsManager;
-  private commandProcessor: CommandProcessor;
-  private gameManager: GameManager;
-  private commandInput: HTMLTextAreaElement;
   
   constructor() {
-    this.gameEngine = new GameEngine();
+    // Initialize core services
+    this.anthropicService = new AnthropicService();
     this.debugPane = new DebugPane();
     
     // Get DOM elements
     const storyOutput = document.getElementById('story-output')!;
-    this.commandInput = document.getElementById('command-input') as HTMLTextAreaElement;
+    const commandInput = document.getElementById('command-input') as HTMLTextAreaElement;
     
-    // Initialize UI managers
-    this.messageDisplay = new MessageDisplay(storyOutput);
-    this.messageDisplay.setItemLookup((itemId: string) => this.gameEngine.getItem(itemId));
-    this.commandProcessor = new CommandProcessor(this.gameEngine, this.messageDisplay, this.commandInput);
-    this.gameManager = new GameManager(this.gameEngine, this.messageDisplay);
-    this.loadMenuManager = new LoadMenuManager(this.gameEngine, this.messageDisplay, this.commandInput, this.gameManager);
-    this.settingsManager = new SettingsManager(this.gameEngine, this.messageDisplay);
-    
-    // Set up UI reset callback so GameEngine can reset UI state when needed
-    this.gameEngine.setUIResetCallback(() => {
-      this.commandProcessor.resetUIState();
-    });
-
-    // Set up UI restore callback so GameEngine can restore UI state when loading saves
-    this.gameEngine.setUIRestoreCallback((gameState: any, conversationHistory?: any[]) => {
-      this.commandProcessor.restoreUIState(gameState, conversationHistory);
-    });
-
-    // Set up loading state callback for ending generation
-    this.gameEngine.setLoadingStateCallback((message: string) => {
-      this.commandProcessor.showLoading(message);
-    });
-
-    // Set up ending callback for asynchronous ending generation
-    this.gameEngine.setEndingCallback((endingText: string) => {
-      this.commandProcessor.hideLoading('Generating conclusion...');
-      this.messageDisplay.addMessage(endingText.trim(), 'story');
+    // Initialize impressionist game manager
+    new ImpressionistGameManager({
+      storyOutput,
+      commandInput,
+      anthropicService: this.anthropicService
     });
     
     this.initializeApp();
@@ -60,25 +33,17 @@ class IffyApp {
    * Initialize the application
    */
   private initializeApp(): void {
-    this.setupEventListeners();
+    this.setupGlobalEventListeners();
     this.displayWelcomeMessage();
     this.createDebugToggle();
-    this.setupDebugLogging();
     this.setupAutoResizeTextarea();
-    
-    // Initialize save manager
-    this.gameManager.initialize();
+    this.setupSettings();
   }
 
   /**
    * Set up global event listeners
    */
-  private setupEventListeners(): void {
-    // Load button
-    document.getElementById('load-btn')!.addEventListener('click', () => {
-      this.loadMenuManager.showLoadOptions();
-    });
-
+  private setupGlobalEventListeners(): void {
     // Debug pane keyboard shortcut
     document.addEventListener('keydown', (e) => {
       if (e.ctrlKey && e.key === 'd') {
@@ -86,225 +51,329 @@ class IffyApp {
         this.debugPane.toggle();
       }
     });
+    
+    // Settings button
+    const settingsBtn = document.getElementById('settings-btn');
+    if (settingsBtn) {
+      settingsBtn.addEventListener('click', () => this.showSettings());
+    }
   }
 
   /**
    * Display the welcome message
    */
   private displayWelcomeMessage(): void {
-    this.messageDisplay.addMessage('Welcome to Iffy - LLM-powered Interactive Fiction Engine', 'title');
-    this.messageDisplay.addMessage('To get started, click the "Load" button to load a story file (.yaml)', 'system');
+    const storyOutput = document.getElementById('story-output')!;
     
-    if (!this.settingsManager.isApiKeyConfigured()) {
-      this.settingsManager.promptForApiKey();
-    } else {
-      this.messageDisplay.addMessage('✅ LLM integration active! Try natural language commands like "examine the room" or "pick up the key".', 'system');
+    const welcomeHtml = `
+      <div class="message message-title">🎭 Welcome to Impressionist Iffy</div>
+      <div class="message message-subtitle">*LLM-powered Interactive Fiction Engine*</div>
+      <div class="message message-system">
+        <strong>✨ Features:</strong><br>
+        • 🎨 <strong>Natural Language Interaction</strong> - Speak as you would naturally<br>
+        • 🧠 <strong>Smart Memory</strong> - AI remembers what matters<br>
+        • 📊 <strong>Performance Metrics</strong> - Track token usage and efficiency<br>
+        • 🌟 <strong>Impressionist Stories</strong> - Scenes as sketches, not scripts
+      </div>
+      <div class="message message-system">
+        🚀 <strong>Get Started:</strong> Click the "Load" button to choose a story, or press Ctrl+D to open debug tools.
+      </div>
+    `;
+    
+    storyOutput.innerHTML = welcomeHtml;
+    
+    // Check API configuration
+    if (!this.isApiKeyConfigured()) {
+      this.promptForApiKey();
     }
   }
 
   /**
-   * Create debug toggle button
+   * Create debug toggle functionality
    */
   private createDebugToggle(): void {
-    const toggleBtn = document.createElement('button');
-    toggleBtn.className = 'debug-toggle-btn';
-    toggleBtn.innerHTML = '🐛';
-    toggleBtn.title = 'Toggle Debug Pane (Ctrl+D) - Drag to move';
-    toggleBtn.addEventListener('click', () => {
-      if (!this.isDragging) {
-        this.debugPane.toggle();
-      }
-    });
-    
-    this.makeDraggable(toggleBtn);
-    
-    // Append to body for absolute positioning overlay
-    document.body.appendChild(toggleBtn);
-  }
-
-  private isDragging = false;
-
-  /**
-   * Make an element draggable within its parent container
-   */
-  private makeDraggable(element: HTMLElement): void {
-    let isDragging = false;
-    let hasMoved = false;
-    let startX = 0;
-    let startY = 0;
-    let elementX = 0;
-    let elementY = 0;
-    const dragThreshold = 5; // Minimum pixels to move before considering it a drag
-
-    const handleMouseDown = (e: MouseEvent) => {
-      isDragging = true;
-      hasMoved = false;
-      
-      const rect = element.getBoundingClientRect();
-      
-      startX = e.clientX;
-      startY = e.clientY;
-      elementX = rect.left;
-      elementY = rect.top;
-      
-      element.style.transition = 'none';
-      e.preventDefault();
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      
-      const deltaX = e.clientX - startX;
-      const deltaY = e.clientY - startY;
-      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-      
-      // Only start actual dragging if we've moved beyond the threshold
-      if (distance > dragThreshold) {
-        hasMoved = true;
-        this.isDragging = true;
-        
-        const newX = elementX + deltaX;
-        const newY = elementY + deltaY;
-        
-        // Get parent bounds for constraint
-        const parent = element.parentElement!;
-        const elementRect = element.getBoundingClientRect();
-        
-        const maxX = parent.clientWidth - elementRect.width;
-        const maxY = parent.clientHeight - elementRect.height;
-        
-        const constrainedX = Math.max(0, Math.min(newX, maxX));
-        const constrainedY = Math.max(0, Math.min(newY, maxY));
-        
-        element.style.left = constrainedX + 'px';
-        element.style.top = constrainedY + 'px';
-        element.style.right = 'auto';
-        element.style.bottom = 'auto';
-      }
-    };
-
-    const handleMouseUp = () => {
-      if (isDragging) {
-        element.style.transition = 'all 0.2s';
-        isDragging = false;
-        
-        // Only set the global isDragging flag if we actually moved
-        if (hasMoved) {
-          // Small delay to prevent click event from firing after drag
-          setTimeout(() => {
-            this.isDragging = false;
-          }, 100);
-        } else {
-          // Reset immediately for clicks
-          this.isDragging = false;
-        }
-      }
-    };
-
-    element.addEventListener('mousedown', handleMouseDown);
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    // Debug pane is already initialized
+    console.log('Impressionist Iffy Engine initialized');
   }
 
   /**
-   * Set up debug logging
-   */
-  private setupDebugLogging(): void {
-    // Connect debug pane to game engine
-    this.gameEngine.setDebugPane(this.debugPane);
-    
-    // Debug pane now uses structured logging via the game engine
-  }
-
-  /**
-   * Set up auto-resize functionality for the textarea
+   * Set up auto-resize for textarea
    */
   private setupAutoResizeTextarea(): void {
-    const textarea = this.commandInput;
+    const commandInput = document.getElementById('command-input') as HTMLTextAreaElement;
     
     const autoResize = () => {
-      // Reset height to recalculate
-      textarea.style.height = 'auto';
-      
-      // Calculate the new height based on scroll height
-      const newHeight = Math.min(textarea.scrollHeight, 160); // max-height: 10rem = 160px
-      
-      // Set the new height
-      textarea.style.height = newHeight + 'px';
+      commandInput.style.height = 'auto';
+      commandInput.style.height = Math.min(commandInput.scrollHeight, 150) + 'px';
     };
-
-    // Auto-resize on input
-    textarea.addEventListener('input', autoResize);
     
-    // Auto-resize on paste
-    textarea.addEventListener('paste', () => {
-      setTimeout(autoResize, 0);
-    });
-
-    // Note: Enter key handling is done by CommandProcessor
-
+    commandInput.addEventListener('input', autoResize);
+    commandInput.addEventListener('paste', () => setTimeout(autoResize, 0));
+    
     // Initial resize
     autoResize();
   }
+
+  /**
+   * Set up settings management
+   */
+  private setupSettings(): void {
+    // Load saved API key
+    const savedKey = localStorage.getItem('iffy_api_key');
+    if (savedKey) {
+      this.anthropicService.setApiKey(savedKey);
+    }
+  }
+
+  /**
+   * Show settings dialog
+   */
+  private showSettings(): void {
+    const dialog = this.createSettingsDialog();
+    document.body.appendChild(dialog);
+  }
+
+  /**
+   * Create settings dialog
+   */
+  private createSettingsDialog(): HTMLElement {
+    const dialog = document.createElement('div');
+    dialog.className = 'settings-dialog';
+    
+    const currentKey = localStorage.getItem('iffy_api_key') || '';
+    const maskedKey = currentKey ? currentKey.substring(0, 8) + '...' : 'Not set';
+    
+    dialog.innerHTML = `
+      <div class="dialog-overlay"></div>
+      <div class="dialog-content">
+        <h3>⚙️ Settings</h3>
+        
+        <div class="setting-group">
+          <label for="api-key">Anthropic API Key:</label>
+          <input type="password" id="api-key" placeholder="sk-ant-..." value="${currentKey}">
+          <div class="setting-note">Current: ${maskedKey}</div>
+        </div>
+        
+        <div class="setting-group">
+          <label>Debug Features:</label>
+          <button id="clear-storage">Clear All Saves</button>
+          <button id="export-logs">Export Debug Logs</button>
+        </div>
+        
+        <div class="dialog-buttons">
+          <button id="save-settings" class="primary">Save</button>
+          <button id="cancel-settings">Cancel</button>
+        </div>
+      </div>
+    `;
+    
+    this.styleSettingsDialog();
+    this.attachSettingsEvents(dialog);
+    
+    return dialog;
+  }
+
+  /**
+   * Style settings dialog
+   */
+  private styleSettingsDialog(): void {
+    if (document.getElementById('settings-dialog-styles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'settings-dialog-styles';
+    style.textContent = `
+      .settings-dialog {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1000;
+      }
+      
+      .dialog-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+      }
+      
+      .dialog-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--bg-color);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 2rem;
+        min-width: 400px;
+      }
+      
+      .setting-group {
+        margin: 1rem 0;
+      }
+      
+      .setting-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+      }
+      
+      .setting-group input {
+        width: 100%;
+        padding: 0.5rem;
+        background: var(--input-bg);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        font-family: inherit;
+      }
+      
+      .setting-note {
+        font-size: 0.9rem;
+        opacity: 0.7;
+        margin-top: 0.25rem;
+      }
+      
+      .dialog-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+      }
+      
+      .dialog-buttons button {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      
+      .dialog-buttons button.primary {
+        background: var(--accent-color);
+        color: white;
+        border-color: var(--accent-color);
+      }
+      
+      .dialog-buttons button:not(.primary) {
+        background: transparent;
+        color: var(--text-color);
+      }
+    `;
+    
+    document.head.appendChild(style);
+  }
+
+  /**
+   * Attach settings dialog events
+   */
+  private attachSettingsEvents(dialog: HTMLElement): void {
+    const overlay = dialog.querySelector('.dialog-overlay');
+    const cancelBtn = dialog.querySelector('#cancel-settings');
+    const saveBtn = dialog.querySelector('#save-settings');
+    const apiKeyInput = dialog.querySelector('#api-key') as HTMLInputElement;
+    const clearStorageBtn = dialog.querySelector('#clear-storage');
+    const exportLogsBtn = dialog.querySelector('#export-logs');
+    
+    // Close dialog
+    const closeDialog = () => document.body.removeChild(dialog);
+    
+    overlay?.addEventListener('click', closeDialog);
+    cancelBtn?.addEventListener('click', closeDialog);
+    
+    // Save settings
+    saveBtn?.addEventListener('click', () => {
+      const apiKey = apiKeyInput.value.trim();
+      
+      if (apiKey) {
+        localStorage.setItem('iffy_api_key', apiKey);
+        this.anthropicService.setApiKey(apiKey);
+        this.addSystemMessage('✅ API key saved successfully');
+      } else {
+        localStorage.removeItem('iffy_api_key');
+        this.addSystemMessage('🗑️ API key removed');
+      }
+      
+      closeDialog();
+    });
+    
+    // Clear storage
+    clearStorageBtn?.addEventListener('click', () => {
+      if (confirm('Clear all saved games and settings? This cannot be undone.')) {
+        localStorage.clear();
+        this.addSystemMessage('🗑️ All local data cleared');
+        closeDialog();
+      }
+    });
+    
+    // Export logs
+    exportLogsBtn?.addEventListener('click', () => {
+      const logs = 'Debug logs feature not yet implemented';
+      const blob = new Blob([logs], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `iffy-debug-logs-${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      this.addSystemMessage('📄 Debug logs exported');
+      closeDialog();
+    });
+  }
+
+  /**
+   * Check if API key is configured
+   */
+  private isApiKeyConfigured(): boolean {
+    return this.anthropicService.isConfigured();
+  }
+
+  /**
+   * Prompt for API key
+   */
+  private promptForApiKey(): void {
+    const storyOutput = document.getElementById('story-output')!;
+    
+    const apiPromptHtml = `
+      <div class="message message-warning">
+        <strong>🔑 API Key Required</strong><br>
+        To use LLM-powered features, you need an Anthropic API key.<br>
+        <button id="quick-settings" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: var(--accent-color); color: white; border: none; border-radius: 4px; cursor: pointer;">
+          Configure API Key
+        </button>
+      </div>
+    `;
+    
+    storyOutput.innerHTML += apiPromptHtml;
+    
+    document.getElementById('quick-settings')?.addEventListener('click', () => {
+      this.showSettings();
+    });
+  }
+
+  /**
+   * Add system message to output
+   */
+  private addSystemMessage(text: string): void {
+    const storyOutput = document.getElementById('story-output')!;
+    const div = document.createElement('div');
+    div.className = 'message message-system';
+    div.textContent = text;
+    storyOutput.appendChild(div);
+    storyOutput.scrollTop = storyOutput.scrollHeight;
+  }
 }
 
-// CSS for message types
-const additionalStyles = `
-.story-text.input {
-  color: #888;
-  font-style: italic;
-  margin-bottom: 0.5rem;
-}
-
-.story-text.error {
-  color: #ff6b6b;
-  font-weight: bold;
-}
-
-.story-text.system {
-  color: #4ecdc4;
-  font-style: italic;
-}
-
-.story-text.choices {
-  color: #ffe66d;
-  margin: 1rem 0;
-  padding: 1rem;
-  border-left: 3px solid #ffe66d;
-  background-color: rgba(255, 230, 109, 0.1);
-}
-
-.story-text.title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: var(--text-color);
-  margin-bottom: 1rem;
-  text-align: center;
-  border-bottom: 2px solid var(--border-color);
-  padding-bottom: 0.5rem;
-}
-
-/* Game completion styling */
-.command-input[placeholder*="complete"] {
-  border-color: #4CAF50;
-  background-color: rgba(76, 175, 80, 0.1);
-}
-
-.story-complete-indicator {
-  background-color: rgba(76, 175, 80, 0.2);
-  border-left: 4px solid #4CAF50;
-  padding: 1rem;
-  margin: 1rem 0;
-  border-radius: 4px;
-}
-`;
-
-// Add additional styles to head
-const styleSheet = document.createElement('style');
-styleSheet.textContent = additionalStyles;
-document.head.appendChild(styleSheet);
-
-// Initialize app when DOM is loaded
+// Initialize the app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  new IffyApp();
+  new ImpressionistIffyApp();
 });
