@@ -172,7 +172,7 @@ Do not trigger new scene transitions or endings. Focus on reflection and explora
     // Player Action
     prompt += `PLAYER ACTION: "${input}"
 
-Respond with JSON containing narrative and signals. Rate importance 1-10.
+Respond with ONLY a JSON object. No explanations or text after the JSON.
 
 Response format:
 {
@@ -188,7 +188,7 @@ Response format:
 Importance scale: 1-3 routine, 4-6 meaningful, 7-9 major moments, 10 story-defining.
 Paint scenes with rich detail while staying true to impressionistic sketches.
 
-Your JSON response:`;
+JSON only:`;
 
     return prompt;
   }
@@ -198,7 +198,41 @@ Your JSON response:`;
    */
   private parseJsonResponse(rawResponse: string, input: string, context: DirectorContext): DirectorResponse {
     try {
-      const parsed = JSON.parse(rawResponse);
+      // Extract JSON from response - LLM sometimes adds explanation after the JSON
+      let jsonString = rawResponse.trim();
+      
+      // Try to extract just the JSON if there's extra text
+      if (jsonString.includes('\n\n')) {
+        // Take everything before the first double newline
+        jsonString = jsonString.split('\n\n')[0].trim();
+      }
+      
+      // Find the last closing brace that matches the first opening brace
+      const firstBrace = jsonString.indexOf('{');
+      if (firstBrace === -1) {
+        throw new Error('No JSON object found in response');
+      }
+      
+      let braceCount = 0;
+      let lastMatchingBrace = -1;
+      
+      for (let i = firstBrace; i < jsonString.length; i++) {
+        if (jsonString[i] === '{') braceCount++;
+        else if (jsonString[i] === '}') {
+          braceCount--;
+          if (braceCount === 0) {
+            lastMatchingBrace = i;
+            break;
+          }
+        }
+      }
+      
+      if (lastMatchingBrace === -1) {
+        throw new Error('Unmatched braces in JSON response');
+      }
+      
+      jsonString = jsonString.substring(firstBrace, lastMatchingBrace + 1);
+      const parsed = JSON.parse(jsonString);
       
       // Validate response structure
       if (!parsed || typeof parsed !== 'object') {
@@ -248,6 +282,17 @@ Your JSON response:`;
     } catch (error) {
       console.error('Failed to parse LLM JSON response:', error);
       console.error('Raw response:', rawResponse);
+      
+      // Log additional context for JSON parsing errors
+      if (error instanceof SyntaxError) {
+        const preview = rawResponse.substring(0, 500);
+        console.error('Response preview:', preview + (rawResponse.length > 500 ? '...' : ''));
+        
+        // Check if LLM added explanation after JSON
+        if (rawResponse.includes('\n\nThe')) {
+          console.warn('LLM appears to have added explanation after JSON. Consider adjusting prompt.');
+        }
+      }
       
       return {
         narrative: "I'm having trouble understanding that right now. Please try rephrasing.",

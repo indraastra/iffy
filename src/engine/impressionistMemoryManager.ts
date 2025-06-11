@@ -192,6 +192,11 @@ export class ImpressionistMemoryManager {
       this.memoriesSinceLastCompaction = state.memoriesSinceLastCompaction;
     }
 
+    // Update debug pane with restored memories
+    if (this.debugPane) {
+      this.debugPane.updateMemoryContents(this.memories.map(m => ({ content: m.content, importance: m.importance })));
+    }
+
     if (state && state.lastCompactionTime) {
       this.lastCompactionTime = new Date(state.lastCompactionTime);
     }
