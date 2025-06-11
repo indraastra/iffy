@@ -95,6 +95,8 @@ export interface AtmosphereDefinition {
 export interface ImpressionistState {
   currentScene: string
   recentDialogue: string[]  // Rolling window of recent exchanges for debugging/saves
+  isEnded?: boolean
+  endingId?: string
 }
 
 // LLM Director context for minimal prompts
@@ -109,6 +111,9 @@ export interface DirectorContext {
   
   // Available transitions (~100 tokens)
   currentTransitions?: Record<string, string>
+  
+  // Available endings (~100 tokens)
+  availableEndings?: ImpressionistEnding[]
   
   // Narrative metadata (~50 tokens if defined)
   narrative?: NarrativeMetadata

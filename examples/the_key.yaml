@@ -6,7 +6,16 @@ context: "You need to get through a locked door."
 
 scenes:
   - id: "locked_door"
-    sketch: "Heavy wooden door. Definitely locked."
+    sketch: |
+      You stand before a heavy wooden door, its surface worn smooth by countless hands 
+      over countless years. The iron handle refuses to budge when you try it - definitely 
+      locked. The keyhole stares at you like a dark eye, taunting in its simplicity.
+      
+      This door is all that stands between you and whatever lies beyond. The hallway 
+      behind you stretches back into shadow, but you know there's no going back. Not now.
+      Not after coming this far.
+      
+      There must be a way through. There always is, if you're clever enough to find it.
     leads_to:
       found_solution: "when the player finds a way through"
     

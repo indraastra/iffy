@@ -42,6 +42,7 @@ export class ImpressionistEngine {
   // Callbacks for UI integration
   private uiResetCallback?: () => void;
   private uiRestoreCallback?: (gameState: any, conversationHistory?: any[]) => void;
+  private endingCallback?: (endingText: string) => void;
 
   constructor(anthropicService?: AnthropicService) {
     this.director = new LLMDirector(anthropicService);
@@ -108,6 +109,13 @@ export class ImpressionistEngine {
         text: 'No story is currently loaded.',
         gameState: this.gameState,
         error: 'No story loaded'
+      };
+    }
+
+    if (this.gameState.isEnded) {
+      return {
+        text: 'The story has ended. Start a new game to play again.',
+        gameState: this.gameState
       };
     }
 
@@ -193,6 +201,11 @@ export class ImpressionistEngine {
     // Available transitions (~100 tokens)
     if (currentScene.leads_to) {
       context.currentTransitions = currentScene.leads_to;
+    }
+
+    // Available endings (~100 tokens)
+    if (this.story!.endings && this.story!.endings.length > 0) {
+      context.availableEndings = this.story!.endings;
     }
 
     // Narrative metadata (~50 tokens if defined)
@@ -287,7 +300,13 @@ export class ImpressionistEngine {
     const ending = this.story.endings.find(e => e.id === endingId);
     if (ending) {
       console.log(`Story ending triggered: ${endingId}`);
-      // Mark game as ended - we'll implement this state later
+      this.gameState.isEnded = true;
+      this.gameState.endingId = endingId;
+      
+      // Call the ending callback if set
+      if (this.endingCallback) {
+        this.endingCallback(ending.sketch);
+      }
     } else {
       console.warn(`Ending trigger failed: ending ${endingId} not found`);
     }
@@ -415,8 +434,8 @@ export class ImpressionistEngine {
     this.uiRestoreCallback = callback;
   }
 
-  setEndingCallback(_callback: (endingText: string) => void): void {
-    // Not implemented in impressionist engine yet
+  setEndingCallback(callback: (endingText: string) => void): void {
+    this.endingCallback = callback;
   }
 
   setLoadingStateCallback(_callback: (message: string) => void): void {
@@ -436,6 +455,14 @@ export class ImpressionistEngine {
 
   getCurrentStoryTitle(): string | null {
     return this.story?.title || null;
+  }
+
+  getMetrics(): MetricsCollector {
+    return this.metrics;
+  }
+
+  getMemoryManager(): ImpressionistMemoryManager {
+    return this.memoryManager;
   }
 
   // Save/Load functionality
