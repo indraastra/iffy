@@ -9,7 +9,7 @@
   --border-color: #404060;
   --button-bg: #3a3a6e;
   --button-hover: #4a4a7e;
-  --modal-bg: rgba(15, 15, 35, 0.95);
+  --modal-bg: #0f0f23;
   --character-color: #64B5F6;
 }
 
@@ -191,76 +191,86 @@ body {
   box-shadow: 0 0 0 2px rgba(74, 74, 126, 0.3);
 }
 
-/* Modal styles */
-.modal {
+/* Settings Menu Styles - Following Load Menu Pattern */
+.impressionist-settings-menu {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: var(--modal-bg);
-  display: flex;
-  justify-content: center;
-  align-items: center;
   z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.modal.hidden {
-  display: none;
+.settings-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
 }
 
-.modal-content {
-  background-color: var(--primary-color);
+.settings-content {
+  position: relative;
+  background: var(--primary-color);
+  color: var(--text-color);
   border: 2px solid var(--border-color);
   border-radius: 8px;
-  width: 90%;
-  max-width: 500px;
-  max-height: 80vh;
+  padding: 2rem;
+  max-width: 600px;
+  max-height: 85vh;
   overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
+.settings-content h3 {
+  margin: 0 0 0.5rem;
+  color: var(--text-color);
+}
+
+.settings-description {
+  margin: 0 0 2rem;
+  opacity: 0.8;
+}
+
+.api-section,
+.debug-section {
+  margin-bottom: 2rem;
+}
+
+.api-section h4,
+.debug-section h4 {
+  margin: 0 0 1rem;
   border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
 }
 
-.modal-header h2 {
-  margin: 0;
-  color: var(--text-color);
+.api-status {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin: 1rem 0;
+  transition: all 0.2s;
 }
 
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: var(--text-color);
-  cursor: pointer;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.api-status.configured {
+  background-color: rgba(76, 175, 80, 0.2);
+  color: #81c784;
+  border: 1px solid rgba(76, 175, 80, 0.3);
 }
 
-.close-btn:hover {
-  background-color: var(--button-hover);
-  border-radius: 4px;
-}
-
-.modal-body {
-  padding: 1.5rem;
+.api-status.not-configured {
+  background-color: rgba(255, 193, 7, 0.2);
+  color: #ffd54f;
+  border: 1px solid rgba(255, 193, 7, 0.3);
 }
 
 .setting-group {
-  margin-bottom: 1.5rem;
-}
-
-.setting-group:last-child {
-  margin-bottom: 0;
+  margin: 1rem 0;
 }
 
 .setting-group label {
@@ -270,8 +280,7 @@ body {
   color: var(--text-color);
 }
 
-.setting-group input[type="password"],
-.setting-group input[type="file"] {
+.setting-group input[type="password"] {
   width: 100%;
   padding: 0.75rem;
   background-color: var(--input-bg);
@@ -282,15 +291,40 @@ body {
   font-size: 1rem;
 }
 
-.setting-group input[type="file"] {
-  padding: 0.5rem;
-}
-
 .setting-group small {
   display: block;
   margin-top: 0.5rem;
   color: #ccc;
   font-style: italic;
+}
+
+.debug-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.settings-content .close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 1.5rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.settings-content .close-btn:hover {
+  opacity: 1;
 }
 
 /* Responsive design */
@@ -559,7 +593,13 @@ body {
 .memory-importance {
   color: #9C27B0;
   font-weight: bold;
-  margin-right: 0.5rem;
+  margin-right: 0.75rem;
+  min-width: 2rem;
+  text-align: center;
+  background: rgba(156, 39, 176, 0.1);
+  border-radius: 3px;
+  padding: 0.1rem 0.3rem;
+  font-size: 0.8rem;
 }
 
 .memory-input {
@@ -1368,13 +1408,19 @@ body {
 
 /* For the debug pane and modal, always show but make them minimal */
 .debug-log::-webkit-scrollbar,
-.modal-content::-webkit-scrollbar {
+.modal-content::-webkit-scrollbar,
+.llm-dashboard::-webkit-scrollbar,
+.load-content::-webkit-scrollbar,
+.settings-content::-webkit-scrollbar {
   width: 6px;
 }
 
 /* Minimal scrollbar styling for debug and modal areas */
 .debug-log,
-.modal-content {
+.modal-content,
+.llm-dashboard,
+.load-content,
+.settings-content {
   scrollbar-width: thin;
   scrollbar-color: var(--border-color) transparent;
 }
@@ -1466,6 +1512,17 @@ body {
   font-style: italic;
 }
 
+.importance-score {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: #9C27B0;
+  font-weight: bold;
+  background: rgba(156, 39, 176, 0.1);
+  border-radius: 3px;
+  padding: 0.1rem 0.3rem;
+}
+
 .interaction-signals pre {
   margin: 0.5rem 0 0 0;
   padding: 0.5rem;
@@ -1483,4 +1540,275 @@ body {
   color: var(--text-color);
   opacity: 0.7;
   font-style: italic;
+}
+
+/* Memory Display Styles */
+.memory-count {
+  margin: 0 0 1rem 0;
+  padding: 0 1rem;
+  font-size: 0.85rem;
+  color: var(--text-color);
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.memory-list {
+  padding: 0 1rem;
+}
+
+.memory-item {
+  display: flex;
+  margin: 0.5rem 0;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  border-left: 3px solid #9C27B0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.memory-index {
+  flex-shrink: 0;
+  width: 2rem;
+  font-weight: bold;
+  color: #9C27B0;
+  margin-right: 0.75rem;
+}
+
+.memory-content {
+  flex: 1;
+  color: var(--text-color);
+  word-break: break-word;
+}
+
+/* Load Menu Button Styles */
+.example-story-btn {
+  background: var(--button-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 1rem;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background-color 0.2s, border-color 0.2s;
+  width: 100%;
+}
+
+.example-story-btn:hover {
+  background-color: var(--button-hover);
+  border-color: var(--button-hover);
+}
+
+.load-option-btn {
+  display: block;
+  width: 100%;
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background: var(--button-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.load-option-btn:hover {
+  background-color: var(--button-hover);
+  border-color: var(--button-hover);
+}
+
+.load-cancel-btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.load-cancel-btn:hover {
+  background-color: var(--button-bg);
+  border-color: var(--button-hover);
+}
+
+/* Example story button content styles */
+.example-story-btn .story-title {
+  font-weight: bold;
+  font-size: 1.1em;
+  margin-bottom: 0.25rem;
+}
+
+.example-story-btn .story-author {
+  font-size: 0.9em;
+  opacity: 0.8;
+  margin-bottom: 0.5rem;
+}
+
+.example-story-btn .story-blurb {
+  font-size: 0.85em;
+  opacity: 0.7;
+  line-height: 1.3;
+}
+
+/* Load Menu Styles */
+.impressionist-load-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.load-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.load-content {
+  position: relative;
+  background: var(--primary-color);
+  color: var(--text-color);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 2rem;
+  max-width: 700px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.load-content h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-color);
+}
+
+.load-description {
+  margin: 0 0 2rem 0;
+  opacity: 0.8;
+}
+
+.examples-section {
+  margin-bottom: 2rem;
+}
+
+.examples-section h4 {
+  margin: 0 0 1rem 0;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.examples-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.example-story {
+  background: var(--button-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.example-story:hover {
+  border-color: var(--border-color);
+  background: var(--button-hover);
+  transform: translateY(-2px);
+}
+
+.story-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 0.75rem;
+}
+
+.story-header h5 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-color);
+  font-weight: bold;
+}
+
+.story-author {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.story-description {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
+.file-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 1rem;
+  background: var(--button-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  background: var(--button-hover);
+  border-color: var(--border-color);
+}
+
+.action-btn.primary {
+  background: var(--button-hover);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
+.action-btn.primary:hover {
+  background: var(--button-hover);
+  opacity: 0.8;
+}
+
+.load-content .close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 1.5rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.load-content .close-btn:hover {
+  opacity: 1;
+}
 }

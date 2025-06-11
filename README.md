@@ -1,82 +1,130 @@
-# Iffy - Interactive Fiction for Everyone
+# Iffy Impressionist - AI-Powered Interactive Fiction
 
-Create and play interactive stories powered by AI. Write adventures, mysteries, romances, fan fiction, or any narrative you can imagine - then play them with natural language commands like "examine the mysterious door" or "ask the detective about the case."
+Create stories that come alive through natural conversation. Iffy combines the best of traditional interactive fiction with modern AI, letting players explore your worlds through natural language while keeping your story structure intact.
 
-**✨ Perfect for fan fiction writers, interactive storytellers, and anyone who loves choice-driven narratives!**
+**Perfect for writers who want to create interactive stories without losing creative control.**
 
-## 🎮 Try It Now
+## What Makes This Special?
 
-**No installation required!** Visit the live app and start playing stories immediately:
+### Two Story Formats, One Engine
+- **Traditional Format**: Structured flows and precise branching for classic IF experiences
+- **Impressionist Format**: Sketch-based storytelling that adapts naturally to player creativity
+- **Same Engine**: Both formats run on the same powerful AI-driven foundation
 
-🌐 **[Play Iffy Stories](https://indraastra.github.io/iffy/)** (Click "Load" to try example stories)
+### Natural Language Gaming
+Type "examine the mysterious door" or "ask the detective about the case" - no memorizing command lists or rigid syntax. The AI understands what you mean and responds authentically within your story's world.
 
-## ⚠️ Important Notice: Dialogue Flows
+### Creative Freedom with Structure
+Authors define the world, characters, and story beats. The AI handles the conversation, bringing your vision to life while respecting your narrative boundaries.
 
-**Current Limitation:** The dialogue flow system (`type: "dialogue"`) is currently broken and non-functional. While the story format supports dialogue flows, they do not properly trigger or execute in the current engine implementation.
+## Quick Start
 
-**Workaround:** Use `type: "narrative"` flows instead. The AI naturally handles character conversations and dialogue through narrative flows, often creating more compelling interactions than rigid dialogue trees would provide.
+### Play Stories Now
+Visit [https://indraastra.github.io/iffy-impressionist/](https://indraastra.github.io/iffy-impressionist/) to try example stories instantly. No installation required!
 
-**Status:** This is a **major TODO** item. See our [Dialogue System v2 Proposal](./docs/proposals/dialogue-v2.md) for the planned redesign that will address these issues and create a more elegant conversation system.
+### Create Your First Story
+1. **Get an API Key**: Sign up for a free [Anthropic API key](https://console.anthropic.com)
+2. **Choose Your Format**: 
+   - Start with **Impressionist** format for sketch-based storytelling
+   - Use **Traditional** format for detailed branching narratives
+3. **Write Your Story**: Use simple YAML to define characters, locations, and scenes
+4. **Test and Play**: Load your story and watch it come alive
 
-**Impact:** Most story types work perfectly (mysteries, adventures, explorations), but branching conversation stories may need to rely on narrative flow structure for now.
+## Story Formats Explained
 
-## 🎯 What Makes Iffy Special
+### Impressionist Format (Recommended for Beginners)
+Sketch out scenes and let the AI fill in the details naturally:
 
-### ✨ **Key Features**
-- **🤖 Natural Language** - Type "examine the door" instead of rigid commands
-- **📚 Perfect for Fan Fiction** - Create interactive stories in any universe you love
-- **🎨 Rich Formatting** - **Bold**, *italics*, [character names](character:id), and `[!alerts]`
-- **💾 Save/Load** - Never lose progress, restore conversation history
-- **🌟 Emergent Storytelling** - AI responds to unexpected actions, creates surprise moments
-- **✍️ Simple Creation** - Write stories in YAML, no programming required
+```yaml
+title: "The Detective's Office"
+context: "A noir mystery in 1940s Los Angeles"
 
-## 🤔 Why Iffy Instead of ChatGPT/Claude/Gemini?
+scenes:
+  - id: "office_investigation"
+    sketch: |
+      The private detective's office is dimly lit, papers scattered 
+      across the desk. A half-empty bottle of whiskey catches the 
+      streetlight. Something important is hidden here.
+    leads_to:
+      found_clue: "when the player discovers the hidden evidence"
+```
 
-**Fair question!** Modern AI chat products are powerful and stateful. Here's what Iffy offers that's different:
+Perfect for emergent storytelling where player creativity drives the narrative forward.
 
-### 📦 **Shareable, Reproducible Stories**
-- **Iffy:** Authors write once → thousands play the exact same story with consistent rules
-- **Chat products:** Each player needs the full story setup and results vary between sessions
+### Traditional Format (For Detailed Control)
+Define exact flows, character dialogue, and branching paths:
 
-### 🎯 **Guaranteed Story Structure**
-- **Iffy:** The mystery jar is ALWAYS fish sauce, endings trigger predictably
-- **Chat products:** Even with instructions, outcomes and story elements can vary
+```yaml
+title: "The Mansion Mystery"
+characters:
+  - id: "butler"
+    name: "James"
+    traits: ["formal", "secretive"]
 
-### 🎮 **Zero Fiction Maintenance**
-- **Iffy:** Players just type "examine the desk" - no prompt engineering needed
-- **Chat products:** Players must actively maintain the fiction and remember game rules
+flows:
+  - id: "meet_butler"
+    type: "dialogue"
+    participants: ["butler", "player"]
+    exchanges:
+      - speaker: "butler"
+        text: "Good evening. I'm afraid the master is not receiving visitors."
+```
 
-### ✨ **Purpose-Built Features**
-- **Iffy:** Rich text rendering, save/load system, inventory display, validated state changes
-- **Chat products:** Everything lives in chat bubbles, no specialized IF features
+Ideal for authors who want precise control over dialogue and story branching.
 
-**Bottom line:** Iffy is for **creating and distributing** interactive fiction. It's not about what's impossible elsewhere - it's about what's **friction-free and purpose-built** for IF authors and players.
+## What You Can Build
 
-## 🚀 Get Started
+### Interactive Fiction Classics
+- **Mystery Stories**: Let players investigate clues, interview suspects, solve cases
+- **Fantasy Adventures**: Explore magical worlds, collect items, battle creatures  
+- **Horror Experiences**: Build tension through atmospheric exploration
+- **Romance Narratives**: Character-driven stories with meaningful choices
 
-1. **🎮 [Play Stories](https://indraastra.github.io/iffy/)** - Try example stories instantly (no setup required)
-2. **🤖 Enable AI** - Get a free [Anthropic API key](https://console.anthropic.com) for natural language commands  
-3. **✍️ Create Stories** - Use our [Story Creation Guide](./docs/format.md) to write your own adventures
+### Modern Interactive Experiences
+- **Fan Fiction**: Bring beloved characters and worlds to interactive life
+- **Educational Stories**: Teaching through engaging narrative experiences
+- **Experimental Fiction**: Push the boundaries of what storytelling can be
+- **Personal Narratives**: Interactive memoirs, therapy tools, creative exercises
 
-## 📚 Resources & Documentation
+## Why Iffy Instead of ChatGPT?
 
-### 📖 **For Story Writers**
-- **[Story Creation Guide](./docs/format.md)** - Complete YAML format reference and examples
-- **[Story Engine Documentation](./docs/story-engine.md)** - How the AI system works with your stories
-- **[Rich Text Formatting Guide](./docs/format.md#rich-text)** - Make your stories visually stunning
+Great question! While AI assistants are powerful, Iffy offers something different:
 
-### 🎯 **Community & Inspiration**  
-- **[Example Stories](./examples/)** - Study our showcase stories for inspiration
-- **[Fan Fiction Ideas](./docs/fanfiction-guide.md)** - Tips for adapting existing worlds
-- **Share your stories** - Export and share your creations with others
+**Shareable Stories**: Write once, share with thousands. Your story maintains consistency across all players.
 
-### 💻 **For Developers**
-Want to contribute to Iffy or run it locally?
-- **[Development Guide](./docs/development-guide.md)** - Complete developer setup and workflow
-- **[Architecture Overview](./docs/architecture.md)** - System design and components
-- **[Contributing Guidelines](./docs/development-guide.md#contributing-guidelines)** - How to contribute code or stories
+**No Prompt Engineering**: Players just play - they don't need to maintain the fiction or remember complex rules.
 
-## 💜 Support the Project
+**Purpose-Built Features**: Save/load systems, rich text formatting, inventory tracking, and specialized IF interfaces.
+
+**Guaranteed Outcomes**: That locked door opens when players find the key, every time. Story beats happen when they should.
+
+**Community and Sharing**: Export stories, share creations, and build on others' work.
+
+## Get Started Today
+
+Ready to create your first interactive story?
+
+1. **[Try the Examples](https://indraastra.github.io/iffy-impressionist/)** - Experience both story formats
+2. **Read the [Story Format Guide](docs/STORY_FORMAT.md)** - Learn to write engaging interactive fiction
+3. **Check the [Architecture Overview](docs/ARCHITECTURE.md)** - Understand how the engine works
+4. **Join the Community** - Share your stories and get feedback
+
+## For Developers
+
+Want to contribute or run Iffy locally?
+
+```bash
+git clone https://github.com/indraastra/iffy-impressionist.git
+cd iffy-impressionist
+npm install
+npm run dev
+```
+
+Open http://localhost:3000 and start creating!
+
+**Full setup guide**: See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for development details.
+
+## Support the Project
 
 If you enjoy Iffy and want to support its development:
 
@@ -84,72 +132,16 @@ If you enjoy Iffy and want to support its development:
 
 Your support helps keep the project growing and enables new features for the interactive fiction community!
 
-## 🤝 Contributing & Community
+## License
 
-Love interactive fiction? Here's how you can help make Iffy even better:
+MIT License - see [LICENSE](LICENSE) file for details.
 
-### 📖 **Story Creators Welcome!**
-- **Write showcase stories** - Demonstrate creative uses of the engine
-- **Share fan fiction** - Create interactive versions of your favorite stories
-- **Test and feedback** - Try the engine and tell us what works (and what doesn't)
-- **Documentation help** - Improve guides for new writers
-
-### 💻 **Developers & Designers**
-- **UI/UX improvements** - Make the experience even more beautiful
-- **AI enhancements** - Improve how the system understands natural language
-- **Bug reports & fixes** - Help us squash issues and improve reliability
-- **Feature ideas** - Propose new capabilities via GitHub issues
-
-**Get involved:** Check our [Contributing Guide](./docs/development-guide.md#contributing-guidelines) or just start by trying the app and sharing your thoughts!
-
-## 🌟 Inspiration & Acknowledgments
-
-Iffy stands on the shoulders of giants in interactive fiction and AI storytelling:
-
-### **Inkle's Ink**
-The brilliant [Ink narrative scripting language](https://www.inklestudios.com/ink/) showed us how powerful a purpose-built language for interactive stories could be. While Iffy uses YAML for accessibility, Ink's approach to branching narratives and state management deeply influenced our design philosophy.
-
-### **AI Dungeon**
-[AI Dungeon](https://aidungeon.io/) pioneered AI-driven interactive storytelling, proving that language models could create compelling emergent narratives. Iffy builds on this foundation by adding structured authorship - giving writers control while preserving the magic of AI-powered natural language understanding.
-
-Together, these inspirations led to Iffy's unique approach: **structured stories with emergent gameplay**, where authors define the world and AI brings it to life through natural conversation.
-
-### **Built with Claude**
-Iffy itself was developed in collaboration with Claude (Anthropic's AI assistant). This meta approach - using AI to build an AI-powered storytelling engine - allowed for rapid prototyping, thoughtful architecture decisions, and iterative improvements based on real-time testing. The development process showcased how AI can be a powerful programming partner, not just for playing stories but for creating the tools that enable them.
+This project is open source and welcomes contributions from writers, developers, and storytellers of all kinds.
 
 ---
 
-## 🛠️ Developer Setup
+**Ready to bring your stories to life?**
 
-Want to run Iffy locally or contribute code? 
+🌐 **[Start Creating Now](https://indraastra.github.io/iffy-impressionist/)**
 
-### Prerequisites
-- Node.js 18+ 
-- npm or yarn
-
-### Quick Setup
-```bash
-git clone https://github.com/indraastra/iffy.git
-cd iffy
-npm install
-npm run dev
-```
-Open http://localhost:3000 and you're ready to go!
-
-**Full developer documentation:** [Development Guide](./docs/development-guide.md)
-
----
-
-## 📄 License
-
-MIT License - see [LICENSE](./LICENSE) file for details.
-
-This project is open source and welcomes contributions from the community!
-
----
-
-**Ready to create or play interactive fiction?** 
-
-🌐 **[Start Playing Now](https://indraastra.github.io/iffy/)** - No installation required!
-
-Create stories that respond to natural language, build fan fiction that readers can interact with, and explore the future of narrative gaming. The only limit is your imagination! 🎮✨
+The only limit is your imagination.

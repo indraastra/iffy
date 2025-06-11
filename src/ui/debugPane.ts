@@ -4,20 +4,21 @@ import { MemorySessionStats } from '@/engine/memoryMetricsCollector';
 interface LlmInteraction {
   timestamp: Date;
   prompt: { text: string; tokenCount: number };
-  response: { narrative: string; signals?: any; tokenCount: number };
+  response: { narrative: string; signals?: any; tokenCount: number; importance?: number };
   context: { scene: string; memories: number; transitions: number };
 }
 
 export class DebugPane {
   private container: HTMLElement;
   private isVisible: boolean = false;
-  private currentTab: string = 'metrics';
+  private currentTab: string = 'api';
   private sessionStats: SessionStats | null = null;
   private memoryStats: MemorySessionStats | null = null;
   private warnings: string[] = [];
   private memoryWarnings: string[] = [];
   private llmInteractions: LlmInteraction[] = [];
   private maxInteractions: number = 20; // Keep last 20 interactions
+  private currentMemories: { content: string; importance: number }[] = [];
 
   constructor() {
     this.container = this.createDebugPane();
@@ -35,21 +36,21 @@ export class DebugPane {
         </div>
       </div>
       <div class="debug-tabs">
-        <button class="debug-tab active" data-tab="metrics">📊 Metrics</button>
+        <button class="debug-tab active" data-tab="api">📊 API Usage</button>
         <button class="debug-tab" data-tab="memory">🧠 Memory</button>
-        <button class="debug-tab" data-tab="llm">🤖 LLM</button>
+        <button class="debug-tab" data-tab="llm">🤖 LLM Logs</button>
       </div>
       <div class="debug-content">
-        <div class="debug-tab-content active" data-tab="metrics">
-          <div class="metrics-dashboard">
-            <div class="metrics-warnings"></div>
-            <div class="metrics-stats"></div>
+        <div class="debug-tab-content active" data-tab="api">
+          <div class="api-dashboard">
+            <div class="api-warnings"></div>
+            <div class="api-stats"></div>
           </div>
         </div>
         <div class="debug-tab-content" data-tab="memory">
           <div class="memory-dashboard">
             <div class="memory-warnings"></div>
-            <div class="memory-stats"></div>
+            <div class="memory-contents"></div>
           </div>
         </div>
         <div class="debug-tab-content" data-tab="llm">
@@ -84,8 +85,8 @@ export class DebugPane {
     this.container.classList.remove('hidden');
     this.isVisible = true;
     // Refresh current tab content
-    if (this.currentTab === 'metrics') {
-      this.updateMetricsDisplay();
+    if (this.currentTab === 'api') {
+      this.updateApiDisplay();
     } else if (this.currentTab === 'memory') {
       this.updateMemoryDisplay();
     } else if (this.currentTab === 'llm') {
@@ -125,8 +126,8 @@ export class DebugPane {
     });
     
     // Refresh content for the active tab
-    if (tabName === 'metrics') {
-      this.updateMetricsDisplay();
+    if (tabName === 'api') {
+      this.updateApiDisplay();
     } else if (tabName === 'memory') {
       this.updateMemoryDisplay();
     } else if (tabName === 'llm') {
@@ -135,14 +136,14 @@ export class DebugPane {
   }
 
   /**
-   * Update the metrics tab with current session statistics
+   * Update the API usage tab with combined metrics from story and memory calls
    */
-  private updateMetricsDisplay(): void {
-    const metricsContainer = this.container.querySelector('.metrics-dashboard') as HTMLElement;
-    if (!metricsContainer) return;
+  private updateApiDisplay(): void {
+    const apiContainer = this.container.querySelector('.api-dashboard') as HTMLElement;
+    if (!apiContainer) return;
 
-    const warningsContainer = metricsContainer.querySelector('.metrics-warnings') as HTMLElement;
-    const statsContainer = metricsContainer.querySelector('.metrics-stats') as HTMLElement;
+    const warningsContainer = apiContainer.querySelector('.api-warnings') as HTMLElement;
+    const statsContainer = apiContainer.querySelector('.api-stats') as HTMLElement;
 
     // Display warnings
     if (this.warnings.length > 0) {
@@ -158,27 +159,27 @@ export class DebugPane {
       warningsContainer.innerHTML = '';
     }
 
-    // Display session stats if available
-    if (this.sessionStats) {
-      statsContainer.innerHTML = this.renderSessionStatsTable(this.sessionStats);
+    // Display combined API usage stats
+    if (this.sessionStats || this.memoryStats) {
+      statsContainer.innerHTML = this.renderCombinedApiStats();
     } else {
       statsContainer.innerHTML = `
         <div class="no-data">
-          <p>No metrics data available yet. Start playing to see session statistics.</p>
+          <p>No API usage data available yet. Start playing to see session statistics.</p>
         </div>
       `;
     }
   }
 
   /**
-   * Update the memory tab with current memory statistics
+   * Update the memory tab with current memory contents and warnings
    */
   private updateMemoryDisplay(): void {
     const memoryContainer = this.container.querySelector('.memory-dashboard') as HTMLElement;
     if (!memoryContainer) return;
 
     const warningsContainer = memoryContainer.querySelector('.memory-warnings') as HTMLElement;
-    const statsContainer = memoryContainer.querySelector('.memory-stats') as HTMLElement;
+    const contentsContainer = memoryContainer.querySelector('.memory-contents') as HTMLElement;
 
     // Display memory warnings
     if (this.memoryWarnings.length > 0) {
@@ -194,109 +195,87 @@ export class DebugPane {
       warningsContainer.innerHTML = '';
     }
 
-    // Display memory stats if available
-    if (this.memoryStats) {
-      statsContainer.innerHTML = this.renderMemoryStatsTable(this.memoryStats);
+    // Display memory contents if available
+    if (this.currentMemories && this.currentMemories.length > 0) {
+      contentsContainer.innerHTML = this.renderMemoryContents();
     } else {
-      statsContainer.innerHTML = `
+      contentsContainer.innerHTML = `
         <div class="no-data">
-          <p>No memory metrics available yet. Memory operations will appear here once they begin.</p>
+          <p>No memories stored yet. Memory contents will appear here once interactions begin.</p>
         </div>
       `;
     }
   }
 
+
   /**
-   * Render session statistics as a table
+   * Render combined API usage statistics from both story and memory calls
    */
-  private renderSessionStatsTable(stats: SessionStats): string {
+  private renderCombinedApiStats(): string {
+    const storyStats = this.sessionStats;
+    const memStats = this.memoryStats;
+
+    const totalCalls = (storyStats?.totalCalls || 0) + (memStats?.totalCalls || 0);
+    const totalInputTokens = (storyStats?.totalInputTokens || 0) + (memStats?.totalInputTokens || 0);
+    const totalOutputTokens = (storyStats?.totalOutputTokens || 0) + (memStats?.totalOutputTokens || 0);
+    const totalCost = (storyStats?.totalCost || 0) + (memStats?.totalCost || 0);
+
     return `
       <div class="stats-section">
-        <h4>📊 Session Statistics</h4>
+        <h4>📊 Combined API Usage</h4>
         <table class="stats-table">
-          <tr><td>Total LLM Calls</td><td>${stats.totalCalls}</td></tr>
-          <tr><td>Successful Calls</td><td>${stats.successfulCalls}</td></tr>
-          <tr><td>Failed Calls</td><td>${stats.failedCalls}</td></tr>
-          <tr><td>Success Rate</td><td>${(stats.successfulCalls / Math.max(1, stats.totalCalls) * 100).toFixed(1)}%</td></tr>
+          <tr><td>Total API Calls</td><td>${totalCalls}</td></tr>
+          <tr><td>Story Calls</td><td>${storyStats?.totalCalls || 0}</td></tr>
+          <tr><td>Memory Calls</td><td>${memStats?.totalCalls || 0}</td></tr>
+          <tr><td>Total Input Tokens</td><td>${totalInputTokens.toLocaleString()}</td></tr>
+          <tr><td>Total Output Tokens</td><td>${totalOutputTokens.toLocaleString()}</td></tr>
+          <tr><td>Total Session Cost</td><td>$${totalCost.toFixed(4)}</td></tr>
         </table>
       </div>
       
+      ${storyStats ? `
       <div class="stats-section">
-        <h4>🎮 Usage Statistics</h4>
+        <h4>🎮 Story API Stats</h4>
         <table class="stats-table">
-          <tr><td>Average Input Tokens</td><td>${Math.round(stats.avgInputTokens)}</td></tr>
-          <tr><td>Average Output Tokens</td><td>${Math.round(stats.avgOutputTokens)}</td></tr>
-          <tr><td>Total Input Tokens</td><td>${stats.totalInputTokens.toLocaleString()}</td></tr>
-          <tr><td>Total Output Tokens</td><td>${stats.totalOutputTokens.toLocaleString()}</td></tr>
-          <tr><td>Average Latency</td><td>${Math.round(stats.avgLatency)}ms</td></tr>
+          <tr><td>Success Rate</td><td>${(storyStats.successfulCalls / Math.max(1, storyStats.totalCalls) * 100).toFixed(1)}%</td></tr>
+          <tr><td>Average Latency</td><td>${Math.round(storyStats.avgLatency)}ms</td></tr>
+          <tr><td>Avg Input Tokens</td><td>${Math.round(storyStats.avgInputTokens)}</td></tr>
+          <tr><td>Avg Output Tokens</td><td>${Math.round(storyStats.avgOutputTokens)}</td></tr>
         </table>
       </div>
+      ` : ''}
       
+      ${memStats ? `
       <div class="stats-section">
-        <h4>💰 Cost Analysis</h4>
+        <h4>🧠 Memory API Stats</h4>
         <table class="stats-table">
-          <tr><td>Total Session Cost</td><td>$${stats.totalCost.toFixed(4)}</td></tr>
-          <tr><td>Average Cost per Call</td><td>$${(stats.totalCost / Math.max(1, stats.totalCalls)).toFixed(4)}</td></tr>
-          <tr><td>Input Cost</td><td>$${(stats.totalInputTokens / 1000 * 0.015).toFixed(4)}</td></tr>
-          <tr><td>Output Cost</td><td>$${(stats.totalOutputTokens / 1000 * 0.075).toFixed(4)}</td></tr>
+          <tr><td>Success Rate</td><td>${(memStats.successfulCalls / Math.max(1, memStats.totalCalls) * 100).toFixed(1)}%</td></tr>
+          <tr><td>Average Latency</td><td>${Math.round(memStats.avgLatency)}ms</td></tr>
+          <tr><td>Compaction Calls</td><td>${memStats.compactionCalls}</td></tr>
+          <tr><td>Avg Compression</td><td>${(memStats.avgCompressionRatio * 100).toFixed(1)}%</td></tr>
         </table>
       </div>
-      
-      <div class="stats-section">
-        <h4>⏱️ Performance</h4>
-        <table class="stats-table">
-          <tr><td>Session Start</td><td>${stats.sessionStartTime.toLocaleTimeString()}</td></tr>
-          <tr><td>Last Call</td><td>${stats.lastCallTime ? stats.lastCallTime.toLocaleTimeString() : 'None'}</td></tr>
-          <tr><td>Fastest Response</td><td>${stats.fastestResponse}ms</td></tr>
-          <tr><td>Slowest Response</td><td>${stats.slowestResponse}ms</td></tr>
-        </table>
-      </div>
+      ` : ''}
     `;
   }
 
   /**
-   * Render memory statistics as a table
+   * Render current memory contents
    */
-  private renderMemoryStatsTable(stats: MemorySessionStats): string {
+  private renderMemoryContents(): string {
     return `
       <div class="stats-section">
-        <h4>🧠 Memory Operations</h4>
-        <table class="stats-table">
-          <tr><td>Total Operations</td><td>${stats.totalCalls}</td></tr>
-          <tr><td>Compaction Operations</td><td>${stats.compactionCalls}</td></tr>
-          <tr><td>Extraction Operations</td><td>${stats.extractionCalls}</td></tr>
-          <tr><td>Success Rate</td><td>${(stats.successfulCalls / Math.max(1, stats.totalCalls) * 100).toFixed(1)}%</td></tr>
-        </table>
-      </div>
-      
-      <div class="stats-section">
-        <h4>🗜️ Compression Analysis</h4>
-        <table class="stats-table">
-          <tr><td>Average Compression</td><td>${(stats.avgCompressionRatio * 100).toFixed(1)}%</td></tr>
-          <tr><td>Total Memories Compacted</td><td>${stats.totalMemoriesCompacted}</td></tr>
-          <tr><td>Last Compaction</td><td>${stats.lastCompactionTime ? stats.lastCompactionTime.toLocaleTimeString() : 'None'}</td></tr>
-        </table>
-      </div>
-      
-      <div class="stats-section">
-        <h4>📈 Token Usage</h4>
-        <table class="stats-table">
-          <tr><td>Average Input Tokens</td><td>${Math.round(stats.avgInputTokens)}</td></tr>
-          <tr><td>Average Output Tokens</td><td>${Math.round(stats.avgOutputTokens)}</td></tr>
-          <tr><td>Total Input Tokens</td><td>${stats.totalInputTokens.toLocaleString()}</td></tr>
-          <tr><td>Total Output Tokens</td><td>${stats.totalOutputTokens.toLocaleString()}</td></tr>
-          <tr><td>Average Latency</td><td>${Math.round(stats.avgLatency)}ms</td></tr>
-        </table>
-      </div>
-      
-      <div class="stats-section">
-        <h4>💰 Memory System Costs</h4>
-        <table class="stats-table">
-          <tr><td>Total Cost</td><td>$${stats.totalCost.toFixed(4)}</td></tr>
-          <tr><td>Average per Operation</td><td>$${(stats.totalCost / Math.max(1, stats.totalCalls)).toFixed(4)}</td></tr>
-          <tr><td>Input Cost (Haiku)</td><td>$${(stats.totalInputTokens / 1000 * 0.0025).toFixed(4)}</td></tr>
-          <tr><td>Output Cost (Haiku)</td><td>$${(stats.totalOutputTokens / 1000 * 0.0125).toFixed(4)}</td></tr>
-        </table>
+        <h4>🧠 Current Memory Contents</h4>
+        <p class="memory-count">Showing ${this.currentMemories.length} memories</p>
+        <div class="memory-list">
+          ${this.currentMemories.map((memory, index) => `
+            <div class="memory-item">
+              <span class="memory-index">#${index + 1}</span>
+              <span class="memory-importance">${memory.importance}/10</span>
+              <span class="memory-content">${this.escapeHtml(memory.content)}</span>
+            </div>
+          `).join('')}
+        </div>
       </div>
     `;
   }
@@ -322,9 +301,9 @@ export class DebugPane {
       this.warnings.push(`⚠️ Average response time above 5 seconds (${Math.round(stats.avgLatency)}ms)`);
     }
     
-    // Update display if metrics tab is active
-    if (this.currentTab === 'metrics') {
-      this.updateMetricsDisplay();
+    // Update display if API tab is active
+    if (this.currentTab === 'api') {
+      this.updateApiDisplay();
     }
   }
 
@@ -379,6 +358,7 @@ export class DebugPane {
           <div class="interaction-response">
             <strong>LLM Response:</strong> ${this.escapeHtml(interaction.response.narrative)}
             <span class="token-count">(~${interaction.response.tokenCount} tokens)</span>
+            ${interaction.response.importance ? `<span class="importance-score">Importance: ${interaction.response.importance}/10</span>` : ''}
           </div>
           
           ${interaction.response.signals ? `
@@ -398,6 +378,18 @@ export class DebugPane {
         ${interactionsHtml}
       </div>
     `;
+  }
+
+  /**
+   * Update current memory contents
+   */
+  public updateMemoryContents(memories: { content: string; importance: number }[]): void {
+    this.currentMemories = [...memories];
+    
+    // Update display if memory tab is active
+    if (this.currentTab === 'memory' && this.isVisible) {
+      this.updateMemoryDisplay();
+    }
   }
 
   /**

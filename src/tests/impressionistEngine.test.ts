@@ -2,7 +2,7 @@
  * Tests for the Impressions Engine
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ImpressionistEngine } from '@/engine/impressionistEngine';
 import { ImpressionistStory } from '@/types/impressionistStory';
 
@@ -190,6 +190,54 @@ describe('ImpressionistEngine', () => {
 
     it('should return null title when no story loaded', () => {
       expect(engine.getCurrentStoryTitle()).toBeNull();
+    });
+
+    it('should track structured interactions', async () => {
+      engine.loadStory(mockStory);
+      
+      const response = await engine.processAction({ input: 'test action' });
+      expect(response.error).toBeUndefined();
+      
+      const interactions = engine.getStructuredInteractions();
+      expect(interactions).toHaveLength(1);
+      expect(interactions[0].playerInput).toBe('test action');
+      expect(interactions[0].sceneId).toBe('start');
+      expect(interactions[0].timestamp).toBeInstanceOf(Date);
+      expect(interactions[0].importance).toBeGreaterThan(0);
+    });
+
+    it('should include interactions in save data', async () => {
+      engine.loadStory(mockStory);
+      await engine.processAction({ input: 'test action' });
+      
+      const saveData = engine.saveGame();
+      const parsed = JSON.parse(saveData);
+      
+      expect(parsed.structuredInteractions).toHaveLength(1);
+      expect(parsed.structuredInteractions[0].playerInput).toBe('test action');
+    });
+
+    it('should use LLM-provided importance when available', async () => {
+      // Mock LLM response with importance
+      const mockService = {
+        isConfigured: vi.fn().mockReturnValue(true),
+        makeRequestWithUsage: vi.fn().mockResolvedValue({
+          content: JSON.stringify({
+            narrative: 'Test response',
+            importance: 7
+          }),
+          usage: { input_tokens: 100, output_tokens: 50 }
+        })
+      };
+      
+      const engineWithMock = new ImpressionistEngine(mockService as any);
+      engineWithMock.loadStory(mockStory);
+      
+      await engineWithMock.processAction({ input: 'important action' });
+      
+      const interactions = engineWithMock.getStructuredInteractions();
+      expect(interactions).toHaveLength(1);
+      expect(interactions[0].importance).toBe(7); // Should use LLM-provided importance
     });
   });
 });

@@ -10,7 +10,8 @@ import {
   ImpressionistState, 
   ImpressionistResult,
   DirectorContext,
-  DirectorResponse
+  DirectorResponse,
+  ImpressionistInteraction
 } from '@/types/impressionistStory';
 import { AnthropicService } from '@/services/anthropicService';
 import { LLMDirector } from './llmDirector';
@@ -38,6 +39,7 @@ export class ImpressionistEngine {
   private director: LLMDirector;
   private metrics: MetricsCollector;
   private memoryManager: ImpressionistMemoryManager;
+  private structuredInteractions: ImpressionistInteraction[] = [];
   
   // Callbacks for UI integration
   private uiResetCallback?: () => void;
@@ -152,8 +154,13 @@ export class ImpressionistEngine {
       // Apply any signals from the response
       this.applyDirectorSignals(response);
       
-      // Track this interaction in memory
-      this.trackInteraction(action.input, response.narrative);
+      // Track this interaction in memory with metadata
+      this.trackInteraction(action.input, response.narrative, {
+        usage: (response as any).usage,
+        latencyMs: (response as any).latencyMs,
+        signals: response.signals,
+        llmImportance: response.importance
+      });
       
       // Check for ending conditions
       this.checkEndingConditions();
@@ -200,7 +207,16 @@ export class ImpressionistEngine {
 
     // Available transitions (~100 tokens)
     if (currentScene.leads_to) {
-      context.currentTransitions = currentScene.leads_to;
+      context.currentTransitions = {};
+      for (const [sceneId, condition] of Object.entries(currentScene.leads_to)) {
+        const targetScene = this.story!.scenes.find(s => s.id === sceneId);
+        if (targetScene) {
+          context.currentTransitions[sceneId] = {
+            condition: condition as string,
+            sketch: targetScene.sketch
+          };
+        }
+      }
     }
 
     // Available endings (~100 tokens)
@@ -255,20 +271,8 @@ export class ImpressionistEngine {
       this.triggerEnding(response.signals.ending);
     }
 
-    // Memory management
-    if (response.signals.remember) {
-      response.signals.remember.forEach(impression => {
-        // Add to impressionist memory manager with high importance (LLM explicitly wants to remember this)
-        this.memoryManager.addMemory(impression, 8);
-      });
-    }
-
-    if (response.signals.forget) {
-      response.signals.forget.forEach(_impression => {
-        // Note: We don't remove from impressionist memory manager - it will be compacted naturally
-        // The "forget" signal is more of a hint that this information is no longer relevant
-      });
-    }
+    // Memory management is handled automatically by the memory manager
+    // All interactions are captured and the compactor will consolidate them intelligently
 
     // Item discovery
     if (response.signals.discover) {
@@ -337,9 +341,9 @@ export class ImpressionistEngine {
   }
 
   /**
-   * Track interaction in memory and recent dialogue
+   * Track interaction in memory, recent dialogue, and structured format
    */
-  private trackInteraction(playerInput: string, llmResponse: string) {
+  private trackInteraction(playerInput: string, llmResponse: string, metadata?: any) {
     // Add to recent dialogue (rolling window) - keep larger limit for debugging/saves
     this.gameState.recentDialogue.push(
       `Player: ${playerInput}`,
@@ -351,16 +355,39 @@ export class ImpressionistEngine {
       this.gameState.recentDialogue = this.gameState.recentDialogue.slice(-this.DIALOGUE_HISTORY_LIMIT);
     }
 
+    // Create structured interaction using LLM-provided importance or fallback
+    const llmImportance = metadata?.llmImportance;
+    const importance = llmImportance || this.determineMemoryImportance(playerInput, llmResponse);
+    const structuredInteraction: ImpressionistInteraction = {
+      playerInput,
+      llmResponse,
+      timestamp: new Date(),
+      sceneId: this.gameState.currentScene,
+      importance,
+      metadata: metadata ? {
+        inputTokens: metadata.usage?.input_tokens,
+        outputTokens: metadata.usage?.output_tokens,
+        latencyMs: metadata.latencyMs,
+        signals: metadata.signals
+      } : undefined
+    };
+
+    // Add to structured interactions (with limit)
+    this.structuredInteractions.push(structuredInteraction);
+    if (this.structuredInteractions.length > this.DIALOGUE_HISTORY_LIMIT / 2) {
+      this.structuredInteractions = this.structuredInteractions.slice(-this.DIALOGUE_HISTORY_LIMIT / 2);
+    }
+
     // Add to impressionist memory manager - separate from dialogue tracking
     const interactionMemory = `Player: ${playerInput}\nResponse: ${llmResponse}`;
-    const importance = this.determineMemoryImportance(playerInput, llmResponse);
     this.memoryManager.addMemory(interactionMemory, importance);
 
-    console.log(`💭 Tracked interaction: "${playerInput}" -> "${llmResponse.substring(0, 50)}..."`);
+    const importanceSource = llmImportance ? 'LLM' : 'heuristic';
+    console.log(`💭 Tracked interaction (importance: ${importance}/${importanceSource}): "${playerInput}" -> "${llmResponse.substring(0, 50)}..."`);
   }
 
   /**
-   * Determine memory importance for impressionist memory manager
+   * Determine memory importance for impressionist memory manager (fallback when LLM doesn't provide importance)
    */
   private determineMemoryImportance(playerInput: string, llmResponse: string): number {
     const combinedText = (playerInput + ' ' + llmResponse).toLowerCase();
@@ -409,6 +436,7 @@ export class ImpressionistEngine {
   private resetForNewGame() {
     this.gameState = this.createInitialState();
     this.memoryManager.reset();
+    this.structuredInteractions = [];
     
     if (this.uiResetCallback) {
       this.uiResetCallback();
@@ -465,11 +493,22 @@ export class ImpressionistEngine {
     return this.memoryManager;
   }
 
+  /**
+   * Get structured interaction history
+   */
+  getStructuredInteractions(): ImpressionistInteraction[] {
+    return [...this.structuredInteractions];
+  }
+
   // Save/Load functionality
   saveGame(): string {
     return JSON.stringify({
       gameState: this.gameState,
       memoryManagerState: this.memoryManager.exportState(),
+      structuredInteractions: this.structuredInteractions.map(interaction => ({
+        ...interaction,
+        timestamp: interaction.timestamp.toISOString()
+      })),
       storyTitle: this.story?.title
     });
   }
@@ -505,6 +544,14 @@ export class ImpressionistEngine {
       // Restore memory manager state if available
       if (data.memoryManagerState) {
         this.memoryManager.importState(data.memoryManagerState);
+      }
+
+      // Restore structured interactions if available
+      if (data.structuredInteractions) {
+        this.structuredInteractions = data.structuredInteractions.map((interaction: any) => ({
+          ...interaction,
+          timestamp: new Date(interaction.timestamp)
+        }));
       }
 
       // Restore UI state

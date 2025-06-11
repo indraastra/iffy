@@ -110,7 +110,7 @@ export interface DirectorContext {
   activeMemory: string[]
   
   // Available transitions (~100 tokens)
-  currentTransitions?: Record<string, string>
+  currentTransitions?: Record<string, { condition: string; sketch: string }>
   
   // Available endings (~100 tokens)
   availableEndings?: ImpressionistEnding[]
@@ -131,13 +131,12 @@ export interface DirectorContext {
 export interface DirectorResponse {
   narrative: string  // The actual response text
   signals?: DirectorSignals  // Optional engine commands
+  importance?: number  // 1-10 scale for interaction importance (optional, LLM-assigned)
 }
 
 export interface DirectorSignals {
   scene?: string        // SCENE:next_scene_id
   ending?: string       // ENDING:ending_id
-  remember?: string[]   // REMEMBER:impression
-  forget?: string[]     // FORGET:impression
   discover?: string     // DISCOVER:item_id
   error?: string        // Error message for debugging
 }
@@ -153,6 +152,21 @@ export interface ImpressionistMetrics {
   contextSize: number  // Bytes of context sent
   memoryCount: number  // Number of active memories
   sceneId: string
+}
+
+// Interaction tracking for conversation history and memory
+export interface ImpressionistInteraction {
+  playerInput: string
+  llmResponse: string
+  timestamp: Date
+  sceneId: string
+  importance?: number // 1-10 scale for memory relevance
+  metadata?: {
+    inputTokens?: number
+    outputTokens?: number
+    latencyMs?: number
+    signals?: DirectorSignals
+  }
 }
 
 // Result type for operations

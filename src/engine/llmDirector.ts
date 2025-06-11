@@ -20,7 +20,10 @@ export class LLMDirector {
    */
   async processInput(input: string, context: DirectorContext): Promise<DirectorResponse> {
     if (!this.anthropicService.isConfigured()) {
-      return this.handleFallbackResponse(input, context);
+      return {
+        narrative: "🔑 Anthropic API key required. Please configure your API key in Settings to play.",
+        signals: { error: "API key not configured" }
+      };
     }
 
     try {
@@ -81,8 +84,13 @@ ${this.formatActiveMemory(context.activeMemory)}
     if (context.currentTransitions) {
       prompt += `POSSIBLE SCENE TRANSITIONS:
 ${Object.entries(context.currentTransitions)
-  .map(([sceneId, condition]) => `- To "${sceneId}" when: ${condition}`)
+  .map(([sceneId, info]) => `- To "${sceneId}" when: ${info.condition}`)
   .join('\n')}
+
+SCENE SKETCHES:
+${Object.entries(context.currentTransitions)
+  .map(([sceneId, info]) => `[${sceneId}]: ${info.sketch}`)
+  .join('\n\n')}
 
 `;
     }
@@ -93,6 +101,11 @@ ${Object.entries(context.currentTransitions)
 ${context.availableEndings
   .map(ending => `- "${ending.id}" when: ${Array.isArray(ending.when) ? ending.when.join(' OR ') : ending.when}`)
   .join('\n')}
+
+ENDING SKETCHES:
+${context.availableEndings
+  .map(ending => `[${ending.id}]: ${ending.sketch}`)
+  .join('\n\n')}
 
 `;
     }
@@ -128,6 +141,15 @@ ${context.discoverableItems
     prompt += `GUIDANCE:
 ${context.guidance}
 
+When transitioning to a new scene or ending:
+1. Begin incorporating the sketch naturally into your narrative
+2. Expand and paint the sketch with rich detail
+3. Make transitions seamless - blend them into the ongoing narrative
+4. Only signal the transition after you've started using the sketch
+5. IMPORTANT: Never signal both "scene" and "ending" in the same response
+6. Scene transitions move the story forward; endings conclude it
+7. Be precise about which condition was actually met
+
 PLAYER ACTION: "${input}"
 
 Respond with a JSON object containing your narrative response and any signals. Paint the scene with detail while staying true to the impressionistic sketch.
@@ -135,22 +157,24 @@ Respond with a JSON object containing your narrative response and any signals. P
 Response format:
 {
   "narrative": "Your descriptive response to the player's action",
+  "importance": 5,               // Rate 1-10: How significant is this interaction to the story?
   "signals": {
     "scene": "scene_id",           // Optional: transition to new scene
     "ending": "ending_id",         // Optional: trigger story ending
-    "remember": ["impression1"],   // Optional: add to memory
-    "forget": ["impression2"],     // Optional: remove from memory
     "discover": "item_id"          // Optional: discover an item
   }
 }
 
-Example response:
-{
-  "narrative": "You approach the heavy door and examine the lock. The metal is old but sturdy, and you notice scratches around the keyhole suggesting frequent use.",
-  "signals": {
-    "remember": ["door has been used recently"]
-  }
-}
+Importance guidelines:
+1-3: Routine actions (looking around, simple movement)
+4-6: Meaningful interactions (conversations, discoveries, problem-solving)
+7-9: Major story moments (revelations, key decisions, emotional climaxes)
+10: Story-defining moments (endings, major plot twists)
+
+Example responses:
+- Normal action: {"narrative": "You examine the lock closely...", "importance": 4}
+- Scene transition: {"narrative": "The door swings open revealing...", "importance": 7, "signals": {"scene": "next_room"}}
+- Story ending: {"narrative": "You step into the light and...", "importance": 10, "signals": {"ending": "victory"}}
 
 Your JSON response:`;
 
@@ -172,23 +196,17 @@ Your JSON response:`;
       const narrative = parsed.narrative || "I'm not sure how to respond to that right now.";
       const signals: DirectorSignals = {};
       
+      // Extract importance score if present (1-10 scale)
+      let importance: number | undefined;
+      if (typeof parsed.importance === 'number') {
+        importance = Math.max(1, Math.min(10, Math.round(parsed.importance)));
+      }
+      
       // Extract signals if present
       if (parsed.signals && typeof parsed.signals === 'object') {
         if (parsed.signals.scene) signals.scene = String(parsed.signals.scene);
         if (parsed.signals.ending) signals.ending = String(parsed.signals.ending);
         if (parsed.signals.discover) signals.discover = String(parsed.signals.discover);
-        
-        if (Array.isArray(parsed.signals.remember)) {
-          signals.remember = parsed.signals.remember.map(String);
-        } else if (parsed.signals.remember) {
-          signals.remember = [String(parsed.signals.remember)];
-        }
-        
-        if (Array.isArray(parsed.signals.forget)) {
-          signals.forget = parsed.signals.forget.map(String);
-        } else if (parsed.signals.forget) {
-          signals.forget = [String(parsed.signals.forget)];
-        }
       }
       
       // Log to debug pane if available
@@ -198,7 +216,8 @@ Your JSON response:`;
           response: { 
             narrative, 
             signals,
-            tokenCount: this.estimateTokens({ text: rawResponse })
+            tokenCount: this.estimateTokens({ text: rawResponse }),
+            importance
           },
           context: {
             scene: context.currentSketch,
@@ -210,107 +229,20 @@ Your JSON response:`;
       
       return {
         narrative,
-        signals: Object.keys(signals).length > 0 ? signals : undefined
+        signals: Object.keys(signals).length > 0 ? signals : undefined,
+        importance
       };
       
     } catch (error) {
       console.error('Failed to parse LLM JSON response:', error);
       console.error('Raw response:', rawResponse);
       
-      // Fallback to text parsing for backwards compatibility
-      return this.parseTextResponse(rawResponse, input, context);
-    }
-  }
-  
-  /**
-   * Fallback text-based parsing for backwards compatibility
-   */
-  private parseTextResponse(rawResponse: string, input: string, context: DirectorContext): DirectorResponse {
-    const lines = rawResponse.split('\n');
-    const narrativeLines: string[] = [];
-    const signals: DirectorSignals = {};
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      
-      if (trimmed.startsWith('SCENE:')) {
-        signals.scene = trimmed.substring(6).trim();
-      } else if (trimmed.startsWith('ENDING:')) {
-        signals.ending = trimmed.substring(7).trim();
-      } else if (trimmed.startsWith('REMEMBER:')) {
-        if (!signals.remember) signals.remember = [];
-        signals.remember.push(trimmed.substring(9).trim());
-      } else if (trimmed.startsWith('FORGET:')) {
-        if (!signals.forget) signals.forget = [];
-        signals.forget.push(trimmed.substring(7).trim());
-      } else if (trimmed.startsWith('DISCOVER:')) {
-        signals.discover = trimmed.substring(9).trim();
-      } else if (trimmed && !trimmed.startsWith('SCENE:') && !trimmed.startsWith('ENDING:') && 
-                 !trimmed.startsWith('REMEMBER:') && !trimmed.startsWith('FORGET:') && 
-                 !trimmed.startsWith('DISCOVER:')) {
-        narrativeLines.push(line);
-      }
-    }
-
-    const narrative = narrativeLines.join('\n').trim();
-
-    // Log to debug pane if available
-    if (this.debugPane) {
-      this.debugPane.logLlmCall({
-        prompt: { text: `Player: ${input}`, tokenCount: this.estimateTokens(context) },
-        response: { 
-          narrative, 
-          signals,
-          tokenCount: this.estimateTokens({ text: rawResponse })
-        },
-        context: {
-          scene: context.currentSketch,
-          memories: context.activeMemory?.length || 0,
-          transitions: Object.keys(context.currentTransitions || {}).length
-        }
-      });
-    }
-
-    return {
-      narrative: narrative || "I'm not sure how to respond to that right now.",
-      signals: Object.keys(signals).length > 0 ? signals : undefined
-    };
-  }
-
-  /**
-   * Fallback response when LLM is not available
-   */
-  private handleFallbackResponse(input: string, context: DirectorContext): DirectorResponse {
-    // Simple keyword-based responses for basic functionality
-    const inputLower = input.toLowerCase();
-    
-    if (inputLower.includes('look') || inputLower.includes('examine')) {
       return {
-        narrative: `You are in: ${context.currentSketch}\n\n🔑 This response is basic. Set up your Anthropic API key for natural language understanding.`
+        narrative: "I'm having trouble understanding that right now. Please try rephrasing.",
+        signals: { error: error instanceof Error ? error.message : 'Unknown error' },
+        importance: 4 // Default importance for parse errors
       };
     }
-    
-    if (inputLower.includes('help')) {
-      return {
-        narrative: `Available basic commands: look, examine, help\n\n🔑 For full natural language support, configure your Anthropic API key in Settings.`
-      };
-    }
-
-    // Check for simple scene transitions
-    if (context.currentTransitions) {
-      for (const [sceneId, condition] of Object.entries(context.currentTransitions)) {
-        if (inputLower.includes(condition.toLowerCase().split(' ')[0])) {
-          return {
-            narrative: `You ${condition}`,
-            signals: { scene: sceneId }
-          };
-        }
-      }
-    }
-
-    return {
-      narrative: `You try to ${input}, but nothing happens.\n\n🔑 Set up your Anthropic API key for intelligent responses.`
-    };
   }
 
   /**

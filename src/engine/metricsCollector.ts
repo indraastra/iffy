@@ -75,7 +75,7 @@ export class MetricsCollector {
 
     // Update debug pane if available
     if (this.debugPane) {
-      this.debugPane.updateMetrics(this.getSessionStats());
+      this.debugPane.updateSessionStats(this.getSessionStats());
     }
   }
 
@@ -249,7 +249,7 @@ export class MetricsCollector {
 
 // Debug pane integration
 export interface MetricsDebugDisplay {
-  updateMetrics(stats: SessionStats): void;
+  updateSessionStats(stats: SessionStats): void;
   showWarnings(warnings: string[]): void;
   logMetric(metric: ImpressionistMetrics): void;
 }

@@ -8,7 +8,7 @@ import { ImpressionistEngine } from '@/engine/impressionistEngine';
 import { ImpressionistParser } from '@/engine/impressionistParser';
 import { AnthropicService } from '@/services/anthropicService';
 import { DebugPane } from '@/ui/debugPane';
-import { getBundledStoryTitles, getBundledStory } from '@/bundled-examples';
+import { getBundledStoryTitles, getBundledStory } from '@/examples';
 
 export interface GameManagerConfig {
   storyOutput: HTMLElement;
@@ -72,7 +72,6 @@ export class ImpressionistGameManager {
       this.addMessage(this.engine.getInitialText(), 'story');
       
       this.enableInput();
-      this.addMessage('💭 *Speak naturally - the AI will understand your intent.*', 'help');
       
       return true;
       
@@ -143,9 +142,10 @@ export class ImpressionistGameManager {
       const blob = new Blob([saveData], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${this.engine.getCurrentStoryTitle() || 'impressionist-story'}-save.json`;
+      a.download = `${this.engine.getCurrentStoryTitle() || 'impressionist-story'}-save-${timestamp}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -206,6 +206,11 @@ export class ImpressionistGameManager {
         });
       }
     });
+
+    // Set up debug pane if available
+    if (this.debugPane) {
+      this.engine.setDebugPane(this.debugPane);
+    }
   }
 
   /**
@@ -220,6 +225,7 @@ export class ImpressionistGameManager {
         if (input) {
           await this.processInput(input);
           this.commandInput.value = '';
+          this.commandInput.style.height = 'auto';
         }
       }
     });
@@ -274,178 +280,9 @@ export class ImpressionistGameManager {
       </div>
     `;
     
-    this.styleLoadMenu();
     this.attachLoadMenuEvents(menu);
     
     return menu;
-  }
-
-  /**
-   * Style the load menu
-   */
-  private styleLoadMenu(): void {
-    if (document.getElementById('impressionist-menu-styles')) return;
-    
-    const style = document.createElement('style');
-    style.id = 'impressionist-menu-styles';
-    style.textContent = `
-      .impressionist-load-menu {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 1000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      
-      .load-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.8);
-        backdrop-filter: blur(4px);
-      }
-      
-      .load-content {
-        position: relative;
-        background: var(--bg-color);
-        color: var(--text-color);
-        border: 2px solid var(--accent-color);
-        border-radius: 12px;
-        padding: 2rem;
-        max-width: 700px;
-        max-height: 85vh;
-        overflow-y: auto;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      }
-      
-      .load-content h3 {
-        margin: 0 0 0.5rem 0;
-        color: var(--accent-color);
-      }
-      
-      .load-description {
-        margin: 0 0 2rem 0;
-        opacity: 0.8;
-      }
-      
-      .examples-section {
-        margin-bottom: 2rem;
-      }
-      
-      .examples-section h4 {
-        margin: 0 0 1rem 0;
-        border-bottom: 1px solid var(--border-color);
-        padding-bottom: 0.5rem;
-      }
-      
-      .examples-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 1rem;
-      }
-      
-      .example-story {
-        background: var(--button-bg);
-        color: var(--text-color);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 1.5rem;
-        cursor: pointer;
-        text-align: left;
-        transition: all 0.2s ease;
-      }
-      
-      .example-story:hover {
-        border-color: var(--accent-color);
-        background: var(--button-hover-bg);
-        transform: translateY(-2px);
-      }
-      
-      .story-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: start;
-        margin-bottom: 0.75rem;
-      }
-      
-      .story-header h5 {
-        margin: 0;
-        font-size: 1.1rem;
-        color: var(--accent-color);
-      }
-      
-      .story-author {
-        font-size: 0.9rem;
-        opacity: 0.7;
-        font-style: italic;
-      }
-      
-      .story-description {
-        margin: 0;
-        font-size: 0.95rem;
-        line-height: 1.4;
-        opacity: 0.9;
-      }
-      
-      .file-actions {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 1rem;
-      }
-      
-      .action-btn {
-        flex: 1;
-        padding: 1rem;
-        background: var(--button-bg);
-        color: var(--text-color);
-        border: 1px solid var(--border-color);
-        border-radius: 6px;
-        cursor: pointer;
-        font-family: inherit;
-        font-size: 1rem;
-        transition: all 0.2s ease;
-      }
-      
-      .action-btn:hover {
-        background: var(--button-hover-bg);
-        border-color: var(--accent-color);
-      }
-      
-      .action-btn.primary {
-        background: var(--accent-color);
-        color: white;
-        border-color: var(--accent-color);
-      }
-      
-      .action-btn.primary:hover {
-        background: color-mix(in srgb, var(--accent-color) 80%, white);
-      }
-      
-      .close-btn {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        background: none;
-        border: none;
-        color: var(--text-color);
-        font-size: 1.5rem;
-        cursor: pointer;
-        opacity: 0.7;
-        transition: opacity 0.2s ease;
-      }
-      
-      .close-btn:hover {
-        opacity: 1;
-      }
-    `;
-    
-    document.head.appendChild(style);
   }
 
   /**

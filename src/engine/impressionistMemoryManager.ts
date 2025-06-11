@@ -65,14 +65,9 @@ export class ImpressionistMemoryManager {
     this.memories.push(memory);
     this.memoriesSinceLastCompaction++;
 
-    // Log to debug pane
+    // Update debug pane with current memory contents
     if (this.debugPane) {
-      this.debugPane.logMemoryOperation({
-        operation: 'add_memory',
-        content: content.substring(0, 100),
-        importance,
-        totalMemories: this.memories.length
-      });
+      this.debugPane.updateMemoryContents(this.memories.map(m => ({ content: m.content, importance: m.importance })));
     }
 
     console.log(`🧠 Added memory (importance: ${importance}). Total: ${this.memories.length}`);
@@ -230,6 +225,10 @@ export class ImpressionistMemoryManager {
     this.compactMemoriesAsync()
       .then(() => {
         console.log('✅ Memory compaction completed');
+        // Update debug pane with new memory contents after compaction
+        if (this.debugPane) {
+          this.debugPane.updateMemoryContents(this.memories.map(m => ({ content: m.content, importance: m.importance })));
+        }
       })
       .catch(error => {
         console.error('❌ Memory compaction failed:', error);
@@ -275,11 +274,7 @@ export class ImpressionistMemoryManager {
         );
         
         if (this.debugPane) {
-          this.debugPane.logMemoryOperation({
-            operation: 'compaction',
-            resultCount: this.memories.length,
-            timestamp: new Date()
-          });
+          this.debugPane.updateMemoryContents(this.memories.map(m => ({ content: m.content, importance: m.importance })));
         }
       } else {
         // Track failed compaction (no memories returned)
@@ -322,26 +317,27 @@ export class ImpressionistMemoryManager {
     
     return `You are compacting memories for an interactive fiction game. You have ${this.memories.length} memories and should reduce them to around ${targetCount} memories.
 
-CURRENT MEMORIES:
+CURRENT MEMORIES (chronological order):
 ${this.memories.map((mem, i) => `${i + 1}. [Importance: ${mem.importance}] ${mem.content}`).join('\n')}
 
-TASK:
-1. Combine related memories into comprehensive, single memories
-2. Keep the most important individual memories
-3. Maintain narrative coherence and key details
-4. Prioritize higher importance scores and recent memories
+SMART COMPACTION GUIDELINES:
+1. **Temporal Updates**: Later memories override earlier ones (e.g., "key on shelf" → "picked up key" = "player has key")
+2. **State Changes**: Merge action sequences into current states (e.g., "door locked" → "found key" → "unlocked door" = "door is unlocked")
+3. **Consolidate Related**: Combine memories about the same objects, characters, or locations
+4. **Preserve Important**: Keep high-importance memories (7+) and recent significant events
+5. **Current Context**: Focus on what's currently true/relevant vs historical actions
 
 RESPOND WITH JSON ONLY:
 {
   "compactedMemories": [
     {
-      "content": "Combined or preserved memory text",
+      "content": "Consolidated memory reflecting current state/knowledge",
       "importance": 8
     }
   ]
 }
 
-Aim for around ${targetCount} memories total. Focus on preserving the most significant narrative elements.`;
+Aim for around ${targetCount} memories. Prioritize current game state over historical actions.`;
   }
 
   /**
