@@ -33,13 +33,15 @@ describe('Memory System Compatibility', () => {
         }
       ],
       
-      endings: [
-        {
-          id: 'complete',
-          when: 'story is finished',
-          sketch: 'The story concludes.'
-        }
-      ],
+      endings: {
+        variations: [
+          {
+            id: 'complete',
+            when: 'story is finished',
+            sketch: 'The story concludes.'
+          }
+        ]
+      },
       
       guidance: 'Test memory functionality.'
     };

@@ -39,7 +39,6 @@ export class ImpressionistEngine {
   private director: LLMDirector;
   private metrics: MetricsCollector;
   private memoryManager: ImpressionistMemoryManager;
-  private structuredInteractions: ImpressionistInteraction[] = [];
   
   // Callbacks for UI integration
   private uiResetCallback?: () => void;
@@ -115,10 +114,31 @@ export class ImpressionistEngine {
     }
 
     if (this.gameState.isEnded) {
-      return {
-        text: 'The story has ended. Start a new game to play again.',
-        gameState: this.gameState
-      };
+      // Allow post-ending exploration - pass to LLM with special context
+      const context = this.buildDirectorContext(action.input, this.getCurrentScene());
+      context.storyComplete = true; // Signal that story has ended
+      
+      try {
+        const response = await this.director.processInput(action.input, context);
+        
+        // Track this post-ending interaction
+        this.trackInteraction(action.input, response.narrative, {
+          postEnding: true,
+          llmImportance: response.importance
+        });
+        
+        return {
+          text: response.narrative,
+          gameState: { ...this.gameState },
+          error: response.signals?.error
+        };
+      } catch (error) {
+        return {
+          text: 'The story has ended, but you can still reflect on your choices or ask questions about what happened.',
+          gameState: this.gameState,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
     }
 
     try {
@@ -161,9 +181,6 @@ export class ImpressionistEngine {
         signals: response.signals,
         llmImportance: response.importance
       });
-      
-      // Check for ending conditions
-      this.checkEndingConditions();
 
       return {
         text: response.narrative,
@@ -198,7 +215,7 @@ export class ImpressionistEngine {
       currentSketch: currentScene.sketch,
       
       // Recent activity (~300 tokens) 
-      recentDialogue: this.gameState.recentDialogue,
+      recentInteractions: this.gameState.interactions,
       activeMemory: this.getRelevantMemories(input),
       
       // Guidance (~100 tokens)
@@ -220,7 +237,7 @@ export class ImpressionistEngine {
     }
 
     // Available endings (~100 tokens)
-    if (this.story!.endings && this.story!.endings.length > 0) {
+    if (this.story!.endings && this.story!.endings.variations.length > 0) {
       context.availableEndings = this.story!.endings;
     }
 
@@ -301,7 +318,7 @@ export class ImpressionistEngine {
   private triggerEnding(endingId: string) {
     if (!this.story) return;
 
-    const ending = this.story.endings.find(e => e.id === endingId);
+    const ending = this.story.endings.variations.find(e => e.id === endingId);
     if (ending) {
       console.log(`Story ending triggered: ${endingId}`);
       this.gameState.isEnded = true;
@@ -341,24 +358,14 @@ export class ImpressionistEngine {
   }
 
   /**
-   * Track interaction in memory, recent dialogue, and structured format
+   * Track interaction in memory and game state
    */
   private trackInteraction(playerInput: string, llmResponse: string, metadata?: any) {
-    // Add to recent dialogue (rolling window) - keep larger limit for debugging/saves
-    this.gameState.recentDialogue.push(
-      `Player: ${playerInput}`,
-      `Response: ${llmResponse}`
-    );
-
-    // Keep dialogue history within configured limit for debugging and save states
-    if (this.gameState.recentDialogue.length > this.DIALOGUE_HISTORY_LIMIT) {
-      this.gameState.recentDialogue = this.gameState.recentDialogue.slice(-this.DIALOGUE_HISTORY_LIMIT);
-    }
-
     // Create structured interaction using LLM-provided importance or fallback
     const llmImportance = metadata?.llmImportance;
     const importance = llmImportance || this.determineMemoryImportance(playerInput, llmResponse);
-    const structuredInteraction: ImpressionistInteraction = {
+    
+    const interaction: ImpressionistInteraction = {
       playerInput,
       llmResponse,
       timestamp: new Date(),
@@ -372,13 +379,13 @@ export class ImpressionistEngine {
       } : undefined
     };
 
-    // Add to structured interactions (with limit)
-    this.structuredInteractions.push(structuredInteraction);
-    if (this.structuredInteractions.length > this.DIALOGUE_HISTORY_LIMIT / 2) {
-      this.structuredInteractions = this.structuredInteractions.slice(-this.DIALOGUE_HISTORY_LIMIT / 2);
+    // Add to game state interactions with limit
+    this.gameState.interactions.push(interaction);
+    if (this.gameState.interactions.length > this.DIALOGUE_HISTORY_LIMIT / 2) {
+      this.gameState.interactions = this.gameState.interactions.slice(-this.DIALOGUE_HISTORY_LIMIT / 2);
     }
 
-    // Add to impressionist memory manager - separate from dialogue tracking
+    // Add to memory manager for long-term storage
     const interactionMemory = `Player: ${playerInput}\nResponse: ${llmResponse}`;
     this.memoryManager.addMemory(interactionMemory, importance);
 
@@ -387,47 +394,11 @@ export class ImpressionistEngine {
   }
 
   /**
-   * Determine memory importance for impressionist memory manager (fallback when LLM doesn't provide importance)
+   * Determine memory importance (fallback when LLM doesn't provide importance)
    */
-  private determineMemoryImportance(playerInput: string, llmResponse: string): number {
-    const combinedText = (playerInput + ' ' + llmResponse).toLowerCase();
-    
-    // High importance indicators (8-10)
-    const highImportanceKeywords = [
-      'discover', 'reveal', 'secret', 'important', 'remember', 'promise', 
-      'love', 'hate', 'trust', 'betray', 'kill', 'die', 'death', 'ending'
-    ];
-    if (highImportanceKeywords.some(keyword => combinedText.includes(keyword))) {
-      return 9;
-    }
-    
-    // Medium importance indicators (5-7)
-    const mediumImportanceKeywords = [
-      'character', 'conversation', 'tell', 'ask', 'explain', 'story', 
-      'take', 'give', 'use', 'open', 'examine', 'search'
-    ];
-    if (mediumImportanceKeywords.some(keyword => combinedText.includes(keyword)) || 
-        llmResponse.length > 200) {
-      return 6;
-    }
-    
-    // Default importance
-    return 4;
-  }
-
-  /**
-   * Check ending conditions using natural language evaluation
-   */
-  private checkEndingConditions() {
-    if (!this.story) return;
-
-    // For now, this is a placeholder - we'll implement proper natural language
-    // condition evaluation when we create the LLMDirector
-    for (const _ending of this.story.endings) {
-      // Simple keyword matching for now
-      // const _conditions = Array.isArray(ending.when) ? ending.when : [ending.when];
-      // TODO: Use LLM to evaluate natural language conditions
-    }
+  private determineMemoryImportance(_playerInput: string, llmResponse: string): number {
+    // Simple fallback: longer responses tend to be more important
+    return llmResponse.length > 200 ? 6 : 4;
   }
 
   /**
@@ -436,7 +407,6 @@ export class ImpressionistEngine {
   private resetForNewGame() {
     this.gameState = this.createInitialState();
     this.memoryManager.reset();
-    this.structuredInteractions = [];
     
     if (this.uiResetCallback) {
       this.uiResetCallback();
@@ -449,7 +419,7 @@ export class ImpressionistEngine {
   private createInitialState(): ImpressionistState {
     return {
       currentScene: '',
-      recentDialogue: []
+      interactions: []
     };
   }
 
@@ -497,19 +467,22 @@ export class ImpressionistEngine {
    * Get structured interaction history
    */
   getStructuredInteractions(): ImpressionistInteraction[] {
-    return [...this.structuredInteractions];
+    return [...this.gameState.interactions];
   }
 
   // Save/Load functionality
   saveGame(): string {
     return JSON.stringify({
-      gameState: this.gameState,
+      gameState: {
+        ...this.gameState,
+        interactions: this.gameState.interactions.map(interaction => ({
+          ...interaction,
+          timestamp: interaction.timestamp.toISOString()
+        }))
+      },
       memoryManagerState: this.memoryManager.exportState(),
-      structuredInteractions: this.structuredInteractions.map(interaction => ({
-        ...interaction,
-        timestamp: interaction.timestamp.toISOString()
-      })),
-      storyTitle: this.story?.title
+      storyTitle: this.story?.title,
+      saveTimestamp: new Date().toISOString()
     });
   }
 
@@ -538,25 +511,28 @@ export class ImpressionistEngine {
         };
       }
 
-      // Restore state
-      this.gameState = data.gameState;
+      // Restore state with interaction timestamp conversion
+      this.gameState = {
+        ...data.gameState,
+        interactions: data.gameState.interactions?.map((interaction: any) => ({
+          ...interaction,
+          timestamp: new Date(interaction.timestamp)
+        })) || []
+      };
 
       // Restore memory manager state if available
       if (data.memoryManagerState) {
         this.memoryManager.importState(data.memoryManagerState);
       }
 
-      // Restore structured interactions if available
-      if (data.structuredInteractions) {
-        this.structuredInteractions = data.structuredInteractions.map((interaction: any) => ({
-          ...interaction,
-          timestamp: new Date(interaction.timestamp)
-        }));
-      }
-
       // Restore UI state
       if (this.uiRestoreCallback) {
-        this.uiRestoreCallback(this.gameState, this.gameState.recentDialogue);
+        // Convert interactions back to legacy dialogue format for UI compatibility
+        const recentDialogue = this.gameState.interactions.flatMap(interaction => [
+          `Player: ${interaction.playerInput}`,
+          `Response: ${interaction.llmResponse}`
+        ]);
+        this.uiRestoreCallback(this.gameState, recentDialogue);
       }
 
       return {

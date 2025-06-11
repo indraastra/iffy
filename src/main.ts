@@ -239,7 +239,7 @@ class ImpressionistIffyApp {
     
     // Export logs
     exportLogsBtn?.addEventListener('click', () => {
-      const logs = this.debugPane.exportLogs();
+      const logs = 'Debug logs feature not yet implemented';
       const blob = new Blob([logs], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       

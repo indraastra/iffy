@@ -16,7 +16,7 @@ export interface ImpressionistStory {
   // Story essence (required)
   context: string  // 1-3 sentences capturing story essence
   scenes: ImpressionistScene[]
-  endings: ImpressionistEnding[]
+  endings: ImpressionistEndingCollection
   guidance: string  // LLM behavior hints
   
   // Optional enrichments
@@ -29,6 +29,12 @@ export interface ImpressionistScene {
   id: string
   sketch: string  // Impressionistic outline for LLM to interpret
   leads_to?: Record<string, string>  // scene_id: "when this happens"
+}
+
+// Ending collection with optional global conditions
+export interface ImpressionistEndingCollection {
+  when?: string | string[]  // Global conditions that must be met for ANY ending
+  variations: ImpressionistEnding[]
 }
 
 // Natural language ending conditions
@@ -94,7 +100,7 @@ export interface AtmosphereDefinition {
 // Engine state - much simpler than traditional IF
 export interface ImpressionistState {
   currentScene: string
-  recentDialogue: string[]  // Rolling window of recent exchanges for debugging/saves
+  interactions: ImpressionistInteraction[]  // Rolling window of recent interactions
   isEnded?: boolean
   endingId?: string
 }
@@ -106,14 +112,14 @@ export interface DirectorContext {
   currentSketch: string
   
   // Recent activity (~300 tokens)
-  recentDialogue: string[]
+  recentInteractions: ImpressionistInteraction[]
   activeMemory: string[]
   
   // Available transitions (~100 tokens)
   currentTransitions?: Record<string, { condition: string; sketch: string }>
   
   // Available endings (~100 tokens)
-  availableEndings?: ImpressionistEnding[]
+  availableEndings?: ImpressionistEndingCollection
   
   // Narrative metadata (~50 tokens if defined)
   narrative?: NarrativeMetadata
@@ -125,6 +131,9 @@ export interface DirectorContext {
   
   // Guidance (~100 tokens)
   guidance: string
+  
+  // Story state signals
+  storyComplete?: boolean  // True when story has ended but exploration continues
 }
 
 // LLM response with clear signals

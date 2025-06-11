@@ -10,6 +10,7 @@ import {
   ParseResult, 
   ImpressionistScene,
   ImpressionistEnding,
+  ImpressionistEndingCollection,
   NarrativeMetadata,
   WorldDefinition,
   ImpressionistCharacter,
@@ -174,12 +175,41 @@ export class ImpressionistParser {
     });
   }
 
-  private parseEndings(data: any, errors: string[], _warnings: string[]): ImpressionistEnding[] {
-    if (!Array.isArray(data)) {
-      errors.push('endings must be an array');
-      return [];
+  private parseEndings(data: any, errors: string[], _warnings: string[]): ImpressionistEndingCollection {
+    // Handle legacy array format (direct array of endings)
+    if (Array.isArray(data)) {
+      return {
+        variations: this.parseEndingArray(data, errors)
+      };
     }
 
+    // Handle new structured format with optional global conditions
+    if (!data || typeof data !== 'object') {
+      errors.push('endings must be an array or object with "variations" array');
+      return { variations: [] };
+    }
+
+    const result: ImpressionistEndingCollection = {
+      variations: []
+    };
+
+    // Parse global when conditions if present
+    if (data.when) {
+      result.when = data.when;
+    }
+
+    // Parse variations array (support both 'variations' and legacy 'stories')
+    const variationsData = data.variations || data.stories;
+    if (Array.isArray(variationsData)) {
+      result.variations = this.parseEndingArray(variationsData, errors);
+    } else {
+      errors.push('endings.variations must be an array');
+    }
+
+    return result;
+  }
+
+  private parseEndingArray(data: any[], errors: string[]): ImpressionistEnding[] {
     return data.map((ending, index) => {
       if (!ending || typeof ending !== 'object') {
         errors.push(`Ending ${index} must be an object`);
@@ -416,15 +446,15 @@ export class ImpressionistParser {
     });
   }
 
-  private validateEndings(endings: ImpressionistEnding[], errors: string[], warnings: string[]) {
-    if (endings.length === 0) {
+  private validateEndings(endings: ImpressionistEndingCollection, errors: string[], warnings: string[]) {
+    if (!endings || !endings.variations || endings.variations.length === 0) {
       warnings.push('No endings defined - story may not conclude properly');
       return;
     }
 
     const endingIds = new Set<string>();
     
-    endings.forEach(ending => {
+    endings.variations.forEach(ending => {
       if (endingIds.has(ending.id)) {
         errors.push(`Duplicate ending ID: ${ending.id}`);
       }
@@ -466,14 +496,16 @@ export class ImpressionistParser {
 
   private validateNaturalLanguage(story: ImpressionistStory, warnings: string[]) {
     // Check that conditions are natural language, not code-like
-    story.endings.forEach(ending => {
-      const conditions = Array.isArray(ending.when) ? ending.when : [ending.when];
-      conditions.forEach(condition => {
-        if (this.looksLikeCode(condition)) {
-          warnings.push(`Ending ${ending.id} condition looks like code, use natural language: "${condition}"`);
-        }
+    if (story.endings && story.endings.variations) {
+      story.endings.variations.forEach(ending => {
+        const conditions = Array.isArray(ending.when) ? ending.when : [ending.when];
+        conditions.forEach(condition => {
+          if (this.looksLikeCode(condition)) {
+            warnings.push(`Ending ${ending.id} condition looks like code, use natural language: "${condition}"`);
+          }
+        });
       });
-    });
+    }
 
     // Check scene transitions
     story.scenes.forEach(scene => {
@@ -519,7 +551,7 @@ export class ImpressionistParser {
     let lines = 10; // Base metadata
     
     lines += story.scenes.length * 4; // Average scene size
-    lines += story.endings.length * 3; // Average ending size
+    lines += story.endings.variations.length * 3; // Average ending size
     lines += story.guidance.split('\n').length;
     
     if (story.narrative) lines += 8;

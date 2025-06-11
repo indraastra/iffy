@@ -50,131 +50,143 @@ export class LLMDirector {
   }
 
   /**
-   * Build minimal context prompt for LLM
+   * Build consolidated high-to-low level prompt for LLM
    */
   private buildPrompt(input: string, context: DirectorContext): string {
     let prompt = `You are the director of an impressionistic interactive fiction story. Paint scenes from minimal sketches and respond naturally to player actions.
 
-STORY CONTEXT:
+STORY: "${context.storyContext.split('\n')[0] || 'Interactive Fiction'}"
 ${context.storyContext}
 
-CURRENT SCENE:
-${context.currentSketch}
-
-RECENT CONVERSATION:
-${this.formatRecentDialogue(context.recentDialogue)}
-
-RELEVANT MEMORIES:
-${this.formatActiveMemory(context.activeMemory)}
-
 `;
 
-    // Add narrative metadata if available
+    // Narrative Style
     if (context.narrative) {
+      const parts = [];
+      if (context.narrative.voice) parts.push(`Voice: ${context.narrative.voice}`);
+      if (context.narrative.tone) parts.push(`Tone: ${context.narrative.tone}`);
+      
       prompt += `NARRATIVE STYLE:
+${parts.join(' | ')}
 `;
-      if (context.narrative.voice) prompt += `Voice: ${context.narrative.voice}\n`;
-      if (context.narrative.tone) prompt += `Tone: ${context.narrative.tone}\n`;
-      if (context.narrative.setting) prompt += `Setting: ${context.narrative.setting}\n`;
-      if (context.narrative.themes) prompt += `Themes: ${context.narrative.themes.join(', ')}\n`;
+      if (context.narrative.themes) {
+        prompt += `Themes: ${context.narrative.themes.join(', ')}\n`;
+      }
       prompt += '\n';
     }
 
-    // Add available transitions
-    if (context.currentTransitions) {
-      prompt += `POSSIBLE SCENE TRANSITIONS:
-${Object.entries(context.currentTransitions)
-  .map(([sceneId, info]) => `- To "${sceneId}" when: ${info.condition}`)
-  .join('\n')}
-
-SCENE SKETCHES:
-${Object.entries(context.currentTransitions)
-  .map(([sceneId, info]) => `[${sceneId}]: ${info.sketch}`)
-  .join('\n\n')}
-
-`;
-    }
-
-    // Add available endings
-    if (context.availableEndings && context.availableEndings.length > 0) {
-      prompt += `POSSIBLE ENDINGS:
-${context.availableEndings
-  .map(ending => `- "${ending.id}" when: ${Array.isArray(ending.when) ? ending.when.join(' OR ') : ending.when}`)
-  .join('\n')}
-
-ENDING SKETCHES:
-${context.availableEndings
-  .map(ending => `[${ending.id}]: ${ending.sketch}`)
-  .join('\n\n')}
-
-`;
-    }
-
-    // Add world context if available
-    if (context.location) {
-      prompt += `CURRENT LOCATION:
-${context.location.description}
-${context.location.contains ? `Contains: ${context.location.contains.join(', ')}` : ''}
-
-`;
-    }
-
-    if (context.activeCharacters && context.activeCharacters.length > 0) {
-      prompt += `CHARACTERS PRESENT:
-${context.activeCharacters
-  .map(char => `- ${char.name}: ${char.essence}${char.voice ? ` (speaks: ${char.voice})` : ''}`)
-  .join('\n')}
-
-`;
-    }
-
-    if (context.discoverableItems && context.discoverableItems.length > 0) {
-      prompt += `DISCOVERABLE ITEMS:
-${context.discoverableItems
-  .map(item => `- ${item.name}: ${item.description}${item.hidden ? ' (hidden)' : ''}`)
-  .join('\n')}
-
-`;
-    }
-
-    // Add guidance
-    prompt += `GUIDANCE:
+    // Story Progression Guidance
+    prompt += `STORY PROGRESSION GUIDANCE:
 ${context.guidance}
 
-When transitioning to a new scene or ending:
-1. Begin incorporating the sketch naturally into your narrative
-2. Expand and paint the sketch with rich detail
-3. Make transitions seamless - blend them into the ongoing narrative
-4. Only signal the transition after you've started using the sketch
-5. IMPORTANT: Never signal both "scene" and "ending" in the same response
-6. Scene transitions move the story forward; endings conclude it
-7. Be precise about which condition was actually met
+`;
 
-PLAYER ACTION: "${input}"
+    // World Context
+    const worldParts = [];
+    if (context.activeCharacters && context.activeCharacters.length > 0) {
+      worldParts.push(`Characters: ${context.activeCharacters.map(c => `${c.name} - ${c.essence}`).join(' | ')}`);
+    }
+    if (context.location) {
+      worldParts.push(`Location: ${context.location.description}`);
+    }
+    if (context.discoverableItems && context.discoverableItems.length > 0) {
+      worldParts.push(`Available Items: ${context.discoverableItems.map(i => i.name).join(', ')}`);
+    }
+    
+    if (worldParts.length > 0) {
+      prompt += `WORLD CONTEXT:
+${worldParts.join('\n')}
 
-Respond with a JSON object containing your narrative response and any signals. Paint the scene with detail while staying true to the impressionistic sketch.
+`;
+    }
+
+    // Endings
+    if (context.availableEndings && context.availableEndings.variations.length > 0) {
+      prompt += `ENDINGS:
+`;
+      
+      if (context.availableEndings.when) {
+        const globalConditions = Array.isArray(context.availableEndings.when) 
+          ? context.availableEndings.when.join(' AND ') 
+          : context.availableEndings.when;
+        prompt += `Global Requirements: ${globalConditions}\n`;
+      }
+      
+      prompt += `Variations:
+${context.availableEndings.variations
+  .map(ending => `• ${ending.id}: ${Array.isArray(ending.when) ? ending.when.join(' OR ') : ending.when} → ${ending.sketch}`)
+  .join('\n')}
+
+`;
+    }
+
+    // Current Scene
+    prompt += `CURRENT SCENE: "${context.currentSketch.split('\n')[0] || 'current scene'}"
+${context.currentSketch}
+
+`;
+
+    // Scene Transitions
+    if (context.currentTransitions && Object.keys(context.currentTransitions).length > 0) {
+      prompt += `SCENE TRANSITIONS:
+${Object.entries(context.currentTransitions)
+  .map(([sceneId, data]) => `• ${data.condition} → ${sceneId}\n  ${data.sketch}`)
+  .join('\n')}
+
+`;
+    }
+
+    // Recent Interactions
+    if (context.recentInteractions && context.recentInteractions.length > 0) {
+      const recentDialogue = context.recentInteractions
+        .slice(-10) // Last 10 interactions
+        .flatMap(interaction => [
+          `Player: ${interaction.playerInput}`,
+          `Response: ${interaction.llmResponse}`
+        ]);
+      
+      prompt += `RECENT CONVERSATION:
+${recentDialogue.join('\n')}
+
+`;
+    }
+
+    // Recent Memory
+    if (context.activeMemory && context.activeMemory.length > 0) {
+      prompt += `RECENT MEMORY:
+${context.activeMemory.join('\n')}
+
+`;
+    }
+
+    // Story State Context
+    if (context.storyComplete) {
+      prompt += `STORY STATUS: COMPLETE
+The story has officially ended, but the player continues to explore, reflect, or ask questions.
+Provide thoughtful responses about the story's events, characters, themes, or alternate possibilities.
+Do not trigger new scene transitions or endings. Focus on reflection and exploration.
+
+`;
+    }
+
+    // Player Action
+    prompt += `PLAYER ACTION: "${input}"
+
+Respond with JSON containing narrative and signals. Rate importance 1-10.
 
 Response format:
 {
-  "narrative": "Your descriptive response to the player's action",
-  "importance": 5,               // Rate 1-10: How significant is this interaction to the story?
+  "narrative": "Your descriptive response",
+  "importance": 5,
   "signals": {
-    "scene": "scene_id",           // Optional: transition to new scene
-    "ending": "ending_id",         // Optional: trigger story ending
-    "discover": "item_id"          // Optional: discover an item
+    "scene": "scene_id",     // Optional: transition to new scene
+    "ending": "ending_id",   // Optional: trigger story ending  
+    "discover": "item_id"    // Optional: discover an item
   }
 }
 
-Importance guidelines:
-1-3: Routine actions (looking around, simple movement)
-4-6: Meaningful interactions (conversations, discoveries, problem-solving)
-7-9: Major story moments (revelations, key decisions, emotional climaxes)
-10: Story-defining moments (endings, major plot twists)
-
-Example responses:
-- Normal action: {"narrative": "You examine the lock closely...", "importance": 4}
-- Scene transition: {"narrative": "The door swings open revealing...", "importance": 7, "signals": {"scene": "next_room"}}
-- Story ending: {"narrative": "You step into the light and...", "importance": 10, "signals": {"ending": "victory"}}
+Importance scale: 1-3 routine, 4-6 meaningful, 7-9 major moments, 10 story-defining.
+Paint scenes with rich detail while staying true to impressionistic sketches.
 
 Your JSON response:`;
 
@@ -245,29 +257,6 @@ Your JSON response:`;
     }
   }
 
-  /**
-   * Format recent dialogue for prompt
-   */
-  private formatRecentDialogue(dialogue: string[]): string {
-    if (!dialogue || dialogue.length === 0) {
-      return 'No recent conversation.';
-    }
-    
-    // Take last 6 exchanges (12 lines)
-    const recent = dialogue.slice(-12);
-    return recent.join('\n');
-  }
-
-  /**
-   * Format active memory for prompt
-   */
-  private formatActiveMemory(memory: string[]): string {
-    if (!memory || memory.length === 0) {
-      return 'No relevant memories.';
-    }
-    
-    return memory.map(impression => `- ${impression}`).join('\n');
-  }
 
   /**
    * Estimate token count for context optimization
