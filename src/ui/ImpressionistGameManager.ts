@@ -198,10 +198,14 @@ export class ImpressionistGameManager {
     });
     
     this.engine.setUIRestoreCallback((_gameState: any, conversationHistory?: any[]) => {
+      this.clearOutput();
       if (conversationHistory) {
         conversationHistory.forEach(line => {
-          const type = line.startsWith('Player:') ? 'player' : 'story';
-          this.addMessage(line.replace(/^(Player: |Response: )/, ''), type);
+          if (line.startsWith('Player:')) {
+            this.addMessage(line.replace(/^Player: /, ''), 'player');
+          } else if (line.startsWith('Response:')) {
+            this.addMessage(line.replace(/^Response: /, ''), 'story');
+          }
         });
       }
     });
