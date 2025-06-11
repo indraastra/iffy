@@ -24,7 +24,7 @@ scenes:
 
 endings:
   - id: "success"
-    when: "player went through the door"
+    when: "player exits through the unlocked door"
     sketch: "You step into the unknown."
 
 guidance: |

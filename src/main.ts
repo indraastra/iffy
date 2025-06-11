@@ -127,165 +127,90 @@ class ImpressionistIffyApp {
   }
 
   /**
-   * Show settings dialog
+   * Show settings menu
    */
   private showSettings(): void {
-    const dialog = this.createSettingsDialog();
-    document.body.appendChild(dialog);
+    const menu = this.createSettingsMenu();
+    document.body.appendChild(menu);
   }
 
   /**
-   * Create settings dialog
+   * Create settings menu following load menu pattern
    */
-  private createSettingsDialog(): HTMLElement {
-    const dialog = document.createElement('div');
-    dialog.className = 'settings-dialog';
-    
+  private createSettingsMenu(): HTMLElement {
     const currentKey = localStorage.getItem('iffy_api_key') || '';
-    const maskedKey = currentKey ? currentKey.substring(0, 8) + '...' : 'Not set';
+    const maskedKey = currentKey ? currentKey.substring(0, 8) + '...' : 'Not configured';
+    const isConfigured = currentKey ? 'configured' : 'not-configured';
     
-    dialog.innerHTML = `
-      <div class="dialog-overlay"></div>
-      <div class="dialog-content">
+    const menu = document.createElement('div');
+    menu.className = 'impressionist-settings-menu';
+    
+    menu.innerHTML = `
+      <div class="settings-overlay"></div>
+      <div class="settings-content">
         <h3>⚙️ Settings</h3>
+        <p class="settings-description">Configure your Anthropic API key and app preferences</p>
         
-        <div class="setting-group">
-          <label for="api-key">Anthropic API Key:</label>
-          <input type="password" id="api-key" placeholder="sk-ant-..." value="${currentKey}">
-          <div class="setting-note">Current: ${maskedKey}</div>
+        <div class="api-section">
+          <h4>🔑 API Configuration</h4>
+          <div class="api-status ${isConfigured}">
+            ${isConfigured === 'configured' ? '✅' : '❌'} Status: ${maskedKey}
+          </div>
+          
+          <div class="setting-group">
+            <label for="settings-api-key">Anthropic API Key:</label>
+            <input 
+              type="password" 
+              id="settings-api-key" 
+              placeholder="sk-ant-..." 
+              value="${currentKey}"
+              autocomplete="new-password"
+              data-lpignore="true"
+            />
+            <small>Your API key is stored locally and never sent to our servers.</small>
+          </div>
         </div>
         
-        <div class="setting-group">
-          <label>Debug Features:</label>
-          <button id="clear-storage">Clear All Saves</button>
-          <button id="export-logs">Export Debug Logs</button>
+        <div class="debug-section">
+          <h4>🛠️ Debug Tools</h4>
+          <div class="debug-actions">
+            <button class="action-btn" id="clear-storage">🗑️ Clear All Data</button>
+            <button class="action-btn" id="export-logs">📄 Export Debug Logs</button>
+          </div>
         </div>
         
-        <div class="dialog-buttons">
-          <button id="save-settings" class="primary">Save</button>
-          <button id="cancel-settings">Cancel</button>
+        <div class="settings-actions">
+          <button class="action-btn primary" id="save-settings">💾 Save Settings</button>
+          <button class="action-btn" id="cancel-settings">Cancel</button>
         </div>
+        
+        <button class="close-btn">✕</button>
       </div>
     `;
     
-    this.styleSettingsDialog();
-    this.attachSettingsEvents(dialog);
+    this.attachSettingsMenuEvents(menu);
     
-    return dialog;
+    return menu;
   }
 
   /**
-   * Style settings dialog
+   * Attach settings menu events
    */
-  private styleSettingsDialog(): void {
-    if (document.getElementById('settings-dialog-styles')) return;
+  private attachSettingsMenuEvents(menu: HTMLElement): void {
+    const overlay = menu.querySelector('.settings-overlay');
+    const closeBtn = menu.querySelector('.close-btn');
+    const cancelBtn = menu.querySelector('#cancel-settings');
+    const saveBtn = menu.querySelector('#save-settings');
+    const apiKeyInput = menu.querySelector('#settings-api-key') as HTMLInputElement;
+    const clearStorageBtn = menu.querySelector('#clear-storage');
+    const exportLogsBtn = menu.querySelector('#export-logs');
     
-    const style = document.createElement('style');
-    style.id = 'settings-dialog-styles';
-    style.textContent = `
-      .settings-dialog {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 1000;
-      }
-      
-      .dialog-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-      }
-      
-      .dialog-content {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: var(--bg-color);
-        color: var(--text-color);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 2rem;
-        min-width: 400px;
-      }
-      
-      .setting-group {
-        margin: 1rem 0;
-      }
-      
-      .setting-group label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: bold;
-      }
-      
-      .setting-group input {
-        width: 100%;
-        padding: 0.5rem;
-        background: var(--input-bg);
-        color: var(--text-color);
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        font-family: inherit;
-      }
-      
-      .setting-note {
-        font-size: 0.9rem;
-        opacity: 0.7;
-        margin-top: 0.25rem;
-      }
-      
-      .dialog-buttons {
-        display: flex;
-        gap: 1rem;
-        justify-content: flex-end;
-        margin-top: 2rem;
-      }
-      
-      .dialog-buttons button {
-        padding: 0.5rem 1rem;
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        cursor: pointer;
-        font-family: inherit;
-      }
-      
-      .dialog-buttons button.primary {
-        background: var(--accent-color);
-        color: white;
-        border-color: var(--accent-color);
-      }
-      
-      .dialog-buttons button:not(.primary) {
-        background: transparent;
-        color: var(--text-color);
-      }
-    `;
+    // Close menu
+    const closeMenu = () => document.body.removeChild(menu);
     
-    document.head.appendChild(style);
-  }
-
-  /**
-   * Attach settings dialog events
-   */
-  private attachSettingsEvents(dialog: HTMLElement): void {
-    const overlay = dialog.querySelector('.dialog-overlay');
-    const cancelBtn = dialog.querySelector('#cancel-settings');
-    const saveBtn = dialog.querySelector('#save-settings');
-    const apiKeyInput = dialog.querySelector('#api-key') as HTMLInputElement;
-    const clearStorageBtn = dialog.querySelector('#clear-storage');
-    const exportLogsBtn = dialog.querySelector('#export-logs');
-    
-    // Close dialog
-    const closeDialog = () => document.body.removeChild(dialog);
-    
-    overlay?.addEventListener('click', closeDialog);
-    cancelBtn?.addEventListener('click', closeDialog);
+    overlay?.addEventListener('click', closeMenu);
+    closeBtn?.addEventListener('click', closeMenu);
+    cancelBtn?.addEventListener('click', closeMenu);
     
     // Save settings
     saveBtn?.addEventListener('click', () => {
@@ -300,7 +225,7 @@ class ImpressionistIffyApp {
         this.addSystemMessage('🗑️ API key removed');
       }
       
-      closeDialog();
+      closeMenu();
     });
     
     // Clear storage
@@ -308,13 +233,13 @@ class ImpressionistIffyApp {
       if (confirm('Clear all saved games and settings? This cannot be undone.')) {
         localStorage.clear();
         this.addSystemMessage('🗑️ All local data cleared');
-        closeDialog();
+        closeMenu();
       }
     });
     
     // Export logs
     exportLogsBtn?.addEventListener('click', () => {
-      const logs = 'Debug logs feature not yet implemented';
+      const logs = this.debugPane.exportLogs();
       const blob = new Blob([logs], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       
@@ -327,7 +252,7 @@ class ImpressionistIffyApp {
       URL.revokeObjectURL(url);
       
       this.addSystemMessage('📄 Debug logs exported');
-      closeDialog();
+      closeMenu();
     });
   }
 

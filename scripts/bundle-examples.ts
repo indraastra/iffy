@@ -17,7 +17,7 @@ interface ExampleStory {
  */
 function bundleExampleStories() {
   const examplesDir = resolve(__dirname, '../examples');
-  const outputPath = resolve(__dirname, '../src/bundled-examples.ts');
+  const outputPath = resolve(__dirname, '../src/examples.ts');
   
   console.log('🔍 Discovering and validating example stories...');
   

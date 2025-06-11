@@ -88,7 +88,7 @@ export class MemoryMetricsCollector {
 
     // Update debug pane if available
     if (this.debugPane) {
-      this.debugPane.updateMemoryMetrics(this.getSessionStats());
+      this.debugPane.updateMemoryStats(this.getSessionStats(), []);
     }
   }
 
