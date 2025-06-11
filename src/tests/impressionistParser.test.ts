@@ -41,7 +41,7 @@ guidance: "Test guidance."
       expect(result.story?.title).toBe('Test Story');
       expect(result.story?.author).toBe('Test Author');
       expect(result.story?.scenes).toHaveLength(1);
-      expect(result.story?.endings).toHaveLength(1);
+      expect(result.story?.endings.variations).toHaveLength(1);
     });
 
     it('should parse rich story format with all optional sections', () => {
@@ -184,13 +184,15 @@ invalid: yaml: content: [
             }
           }
         ],
-        endings: [
-          {
-            id: 'end',
-            when: 'story ends',
-            sketch: 'The end'
-          }
-        ],
+        endings: {
+          variations: [
+            {
+              id: 'end',
+              when: 'story ends',
+              sketch: 'The end'
+            }
+          ]
+        },
         guidance: 'Test guidance'
       };
 
@@ -207,7 +209,7 @@ invalid: yaml: content: [
         version: '1.0',
         context: 'Test context',
         scenes: [{ id: 'start', sketch: 'Beginning' }],
-        endings: [{ id: 'end', when: 'story ends', sketch: 'The end' }],
+        endings: { variations: [{ id: 'end', when: 'story ends', sketch: 'The end' }] },
         guidance: 'Test guidance',
         world: {
           characters: Object.fromEntries(
@@ -236,7 +238,7 @@ invalid: yaml: content: [
         expect(result.story).toBeDefined();
         expect(result.story?.title).toBe('The Key');
         expect(result.story?.scenes).toHaveLength(2);
-        expect(result.story?.endings).toHaveLength(1);
+        expect(result.story?.endings.variations).toHaveLength(1);
       } catch (error) {
         // File may not exist in test environment, skip this test
         console.warn('Could not load the_key.yaml for testing');

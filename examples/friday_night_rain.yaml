@@ -67,30 +67,37 @@ scenes:
     sketch: "Silence heavy as storm clouds. Eye contact becomes impossible."
 
 endings:
-  - id: "connection"
-    when: "player and Alex share their truth with each other"
-    sketch: "Alex's hand finds yours. 'Thank you for not giving up on me.'"
-    
-  - id: "missed_chance"
-    when: ["player lets Alex leave without resolution", "conversation spirals into hurt"]
-    sketch: |
-      You watch Alex disappear into the rain. The barista starts
-      stacking chairs. Another chance lost to fear.
+  when:
+    - "conversation has concluded"
+    - "the evening has come to an end"
+  
+  variations:
+    - id: "connection"
+      when: "player and Alex share their truth with each other"
+      sketch: "Alex's hand finds yours. 'Thank you for not giving up on me.'"
       
-  - id: "friendship_preserved"
-    when: "player acknowledges the moment but chooses friendship"
-    sketch: |
-      Alex smiles - genuine but careful. "We're good, right?"
-      Some things are worth more than the risk.
+    - id: "missed_chance"
+      when: ["player lets Alex leave without resolution", "conversation spirals into hurt"]
+      sketch: |
+        You watch Alex disappear into the rain. The barista starts
+        stacking chairs. Another chance lost to fear.
+        
+    - id: "friendship_preserved"
+      when: "player acknowledges the moment but chooses friendship"
+      sketch: |
+        Alex smiles - genuine but careful. "We're good, right?"
+        Some things are worth more than the risk.
 
 guidance: |
   Alex has been in love with the player for months and tonight plans to confess.
   The player should discover this gradually through Alex's behavior and dialogue.
   
+  Use they/them for Alex until player establishes otherwise (e.g., "He's fine" → use he/him thereafter).
+
   Track Alex's emotional state:
   - Nervous energy when player shows interest
   - Relief when player creates safe space
   - Retreat if player seems dismissive
   - Joy if feelings are reciprocated
   
-  Small gestures matter. Silences speak volumes. Let the rain mirror the emotional weather.
+  Small gestures matter. Silences speak volumes. Let the rain and music mirror the emotional weather.

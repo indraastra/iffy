@@ -174,9 +174,8 @@ export class ImpressionistGameManager {
         const result = this.engine.loadGame(saveData);
         
         if (result.success) {
+          // The engine will call the UI restore callback to repopulate the conversation
           this.addMessage('📂 Game loaded successfully', 'system');
-          this.clearOutput();
-          this.addMessage(this.engine.getInitialText(), 'story');
           this.enableInput();
         } else {
           this.addMessage(`❌ Failed to load save: ${result.error}`, 'error');
@@ -205,6 +204,11 @@ export class ImpressionistGameManager {
           this.addMessage(line.replace(/^(Player: |Response: )/, ''), type);
         });
       }
+    });
+
+    this.engine.setEndingCallback((endingText: string) => {
+      this.addMessage(`🎉 ${endingText}`, 'story');
+      this.commandInput.placeholder = "Story complete! Ask questions, reflect, or explore...";
     });
 
     // Set up debug pane if available

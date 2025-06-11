@@ -32,13 +32,15 @@ describe('ImpressionistEngine', () => {
           sketch: 'You are in the middle of the story.'
         }
       ],
-      endings: [
-        {
-          id: 'victory',
-          when: 'player succeeds',
-          sketch: 'You have won!'
-        }
-      ],
+      endings: {
+        variations: [
+          {
+            id: 'victory',
+            when: 'player succeeds',
+            sketch: 'You have won!'
+          }
+        ]
+      },
       guidance: 'Be helpful and creative.'
     };
   });
@@ -96,12 +98,12 @@ describe('ImpressionistEngine', () => {
       expect(response.gameState.currentScene).toBe('start');
     });
 
-    it('should update recent dialogue', async () => {
+    it('should update recent interactions', async () => {
       await engine.processAction({ input: 'test command' });
       const gameState = engine.getGameState();
       
-      expect(gameState.recentDialogue.length).toBeGreaterThan(0);
-      expect(gameState.recentDialogue.some(line => line.includes('test command'))).toBe(true);
+      expect(gameState.interactions.length).toBeGreaterThan(0);
+      expect(gameState.interactions.some(interaction => interaction.playerInput.includes('test command'))).toBe(true);
     });
 
     it('should maintain scene state', async () => {
@@ -135,7 +137,7 @@ describe('ImpressionistEngine', () => {
       
       const restoredState = newEngine.getGameState();
       expect(restoredState.currentScene).toBe(originalState.currentScene);
-      expect(restoredState.recentDialogue).toEqual(originalState.recentDialogue);
+      expect(restoredState.interactions).toEqual(originalState.interactions);
     });
 
     it('should reject saves from different stories', () => {
@@ -148,6 +150,150 @@ describe('ImpressionistEngine', () => {
       expect(loadResult.success).toBe(false);
       expect(loadResult.error).toContain('current story');
     });
+
+    it('should save and restore all interactions with metadata', async () => {
+      // Mock Anthropic service
+      const mockAnthropicService = {
+        isConfigured: () => true,
+        makeRequestWithUsage: vi.fn()
+          .mockResolvedValueOnce({
+            content: JSON.stringify({ narrative: 'First response', importance: 7 }),
+            usage: { input_tokens: 100, output_tokens: 50 }
+          })
+          .mockResolvedValueOnce({
+            content: JSON.stringify({ narrative: 'Second response', importance: 5 }),
+            usage: { input_tokens: 120, output_tokens: 60 }
+          })
+      };
+
+      const testEngine = new (ImpressionistEngine as any)(mockAnthropicService);
+      testEngine.loadStory(mockStory);
+      
+      // Create multiple interactions
+      await testEngine.processAction({ input: 'first action' });
+      await testEngine.processAction({ input: 'second action' });
+      
+      // Save game
+      const saveData = testEngine.saveGame();
+      const parsedSave = JSON.parse(saveData);
+      
+      // Verify saved interactions
+      expect(parsedSave.gameState.interactions).toHaveLength(2);
+      expect(parsedSave.gameState.interactions[0].playerInput).toBe('first action');
+      expect(parsedSave.gameState.interactions[0].importance).toBe(7);
+      expect(parsedSave.gameState.interactions[1].playerInput).toBe('second action');
+      expect(parsedSave.gameState.interactions[1].importance).toBe(5);
+      
+      // Load into new engine
+      const newEngine = new (ImpressionistEngine as any)(mockAnthropicService);
+      newEngine.loadStory(mockStory);
+      const loadResult = newEngine.loadGame(saveData);
+      
+      expect(loadResult.success).toBe(true);
+      const restoredInteractions = newEngine.getStructuredInteractions();
+      expect(restoredInteractions).toHaveLength(2);
+      expect(restoredInteractions[0].timestamp).toBeInstanceOf(Date);
+    });
+
+    it('should save and restore memory manager state', async () => {
+      // Get memory manager and add some memories
+      const memoryManager = engine.getMemoryManager();
+      memoryManager.addMemory('Important event happened', 8);
+      memoryManager.addMemory('Less important detail', 3);
+      
+      // Save game
+      const saveData = engine.saveGame();
+      const parsedSave = JSON.parse(saveData);
+      
+      // Verify memory state is included
+      expect(parsedSave.memoryManagerState).toBeDefined();
+      
+      // Create new engine and load
+      const newEngine = new ImpressionistEngine();
+      newEngine.loadStory(mockStory);
+      newEngine.loadGame(saveData);
+      
+      // Verify memories are restored
+      const newMemoryManager = newEngine.getMemoryManager();
+      const restoredMemories = newMemoryManager.getMemories(10);
+      expect(restoredMemories.memories.length).toBeGreaterThan(0);
+    });
+
+    it('should restore UI state through callback', async () => {
+      // Setup UI restore callback
+      let restoredGameState: any = null;
+      let restoredDialogue: any[] = [];
+      
+      // Create interactions
+      await engine.processAction({ input: 'test action one' });
+      await engine.processAction({ input: 'test action two' });
+      
+      // Save game
+      const saveData = engine.saveGame();
+      
+      // Create new engine with UI callback
+      const newEngine = new ImpressionistEngine();
+      newEngine.setUIRestoreCallback((gameState, conversationHistory) => {
+        restoredGameState = gameState;
+        restoredDialogue = conversationHistory || [];
+      });
+      
+      newEngine.loadStory(mockStory);
+      newEngine.loadGame(saveData);
+      
+      // Verify UI callback was called with correct data
+      expect(restoredGameState).toBeDefined();
+      expect(restoredGameState.currentScene).toBe('start');
+      expect(restoredDialogue).toHaveLength(4); // 2 interactions = 4 dialogue lines
+      expect(restoredDialogue[0]).toContain('test action one');
+      expect(restoredDialogue[2]).toContain('test action two');
+    });
+
+    it('should include save timestamp', () => {
+      const beforeSave = new Date();
+      const saveData = engine.saveGame();
+      const afterSave = new Date();
+      
+      const parsedSave = JSON.parse(saveData);
+      expect(parsedSave.saveTimestamp).toBeDefined();
+      
+      const saveTime = new Date(parsedSave.saveTimestamp);
+      expect(saveTime.getTime()).toBeGreaterThanOrEqual(beforeSave.getTime());
+      expect(saveTime.getTime()).toBeLessThanOrEqual(afterSave.getTime());
+    });
+
+    it('should save all required fields in correct format', async () => {
+      // Add some test data
+      const memoryManager = engine.getMemoryManager();
+      memoryManager.addMemory('Test memory', 5);
+      
+      await engine.processAction({ input: 'test action' });
+      
+      // Save and parse
+      const saveData = engine.saveGame();
+      const parsedSave = JSON.parse(saveData);
+      
+      // Verify structure
+      expect(parsedSave).toHaveProperty('gameState');
+      expect(parsedSave).toHaveProperty('memoryManagerState');
+      expect(parsedSave).toHaveProperty('storyTitle');
+      expect(parsedSave).toHaveProperty('saveTimestamp');
+      
+      // Verify gameState structure
+      expect(parsedSave.gameState).toHaveProperty('currentScene');
+      expect(parsedSave.gameState).toHaveProperty('interactions');
+      expect(Array.isArray(parsedSave.gameState.interactions)).toBe(true);
+      
+      // Verify interaction structure
+      if (parsedSave.gameState.interactions.length > 0) {
+        const interaction = parsedSave.gameState.interactions[0];
+        expect(interaction).toHaveProperty('playerInput');
+        expect(interaction).toHaveProperty('llmResponse');
+        expect(interaction).toHaveProperty('timestamp');
+        expect(interaction).toHaveProperty('sceneId');
+        expect(interaction).toHaveProperty('importance');
+      }
+    });
   });
 
   describe('memory management', () => {
@@ -158,7 +304,7 @@ describe('ImpressionistEngine', () => {
     it('should initialize with empty dialogue', () => {
       const gameState = engine.getGameState();
       
-      expect(gameState.recentDialogue).toEqual([]);
+      expect(gameState.interactions).toEqual([]);
     });
 
     it('should track dialogue in recent history', async () => {
@@ -166,9 +312,9 @@ describe('ImpressionistEngine', () => {
       await engine.processAction({ input: 'second action' });
       
       const gameState = engine.getGameState();
-      expect(gameState.recentDialogue.length).toBeGreaterThan(0);
-      expect(gameState.recentDialogue.some(line => line.includes('first action'))).toBe(true);
-      expect(gameState.recentDialogue.some(line => line.includes('second action'))).toBe(true);
+      expect(gameState.interactions.length).toBeGreaterThan(0);
+      expect(gameState.interactions.some(interaction => interaction.playerInput.includes('first action'))).toBe(true);
+      expect(gameState.interactions.some(interaction => interaction.playerInput.includes('second action'))).toBe(true);
     });
   });
 
@@ -193,12 +339,25 @@ describe('ImpressionistEngine', () => {
     });
 
     it('should track structured interactions', async () => {
-      engine.loadStory(mockStory);
+      // Mock Anthropic service for this test
+      const mockAnthropicService = {
+        isConfigured: () => true,
+        makeRequestWithUsage: vi.fn().mockResolvedValue({
+          content: JSON.stringify({
+            narrative: 'Test response',
+            importance: 5
+          }),
+          usage: { input_tokens: 100, output_tokens: 50 }
+        })
+      };
+
+      const engineWithMock = new (ImpressionistEngine as any)(mockAnthropicService);
+      engineWithMock.loadStory(mockStory);
       
-      const response = await engine.processAction({ input: 'test action' });
+      const response = await engineWithMock.processAction({ input: 'test action' });
       expect(response.error).toBeUndefined();
       
-      const interactions = engine.getStructuredInteractions();
+      const interactions = engineWithMock.getStructuredInteractions();
       expect(interactions).toHaveLength(1);
       expect(interactions[0].playerInput).toBe('test action');
       expect(interactions[0].sceneId).toBe('start');
@@ -213,8 +372,8 @@ describe('ImpressionistEngine', () => {
       const saveData = engine.saveGame();
       const parsed = JSON.parse(saveData);
       
-      expect(parsed.structuredInteractions).toHaveLength(1);
-      expect(parsed.structuredInteractions[0].playerInput).toBe('test action');
+      expect(parsed.gameState.interactions).toHaveLength(1);
+      expect(parsed.gameState.interactions[0].playerInput).toBe('test action');
     });
 
     it('should use LLM-provided importance when available', async () => {
