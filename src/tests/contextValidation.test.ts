@@ -12,7 +12,7 @@ import { AnthropicService } from '@/services/anthropicService';
 import { BUNDLED_STORIES } from '@/bundled-examples';
 
 // Target context limits (in estimated tokens)
-const TARGET_CONTEXT_LIMIT = 1000; // tokens
+const TARGET_CONTEXT_LIMIT = 1300; // tokens (increased to account for richer openings)
 const ROUGH_CHARS_PER_TOKEN = 4; // Conservative estimate
 
 // Mock service that captures prompts for analysis
@@ -102,7 +102,7 @@ describe('Context Size Validation', () => {
     });
 
     it('should have reasonable context size for medium story on first action', async () => {
-      const storyContent = BUNDLED_STORIES.find(s => s.filename === 'coffee_confessional.yaml')?.content;
+      const storyContent = BUNDLED_STORIES.find(s => s.filename === 'friday_night_rain.yaml')?.content;
       expect(storyContent).toBeDefined();
       
       const parseResult = parser.parseFromYaml(storyContent!);
@@ -138,7 +138,7 @@ describe('Context Size Validation', () => {
 
   describe('Context Growth Over Time', () => {
     it('should maintain reasonable context size as conversation grows', async () => {
-      const storyContent = BUNDLED_STORIES.find(s => s.filename === 'coffee_confessional.yaml')?.content;
+      const storyContent = BUNDLED_STORIES.find(s => s.filename === 'friday_night_rain.yaml')?.content;
       const parseResult = parser.parseFromYaml(storyContent!);
       engine.loadStory(parseResult.story!);
       
@@ -212,7 +212,7 @@ describe('Context Size Validation', () => {
 
   describe('Context Structure Analysis', () => {
     it('should have balanced context sections', async () => {
-      const storyContent = BUNDLED_STORIES.find(s => s.filename === 'coffee_confessional.yaml')?.content;
+      const storyContent = BUNDLED_STORIES.find(s => s.filename === 'friday_night_rain.yaml')?.content;
       const parseResult = parser.parseFromYaml(storyContent!);
       engine.loadStory(parseResult.story!);
       
@@ -286,7 +286,7 @@ describe('Context Size Validation', () => {
     });
 
     it('should maintain efficiency with rapid successive actions', async () => {
-      const storyContent = BUNDLED_STORIES.find(s => s.filename === 'coffee_confessional.yaml')?.content;
+      const storyContent = BUNDLED_STORIES.find(s => s.filename === 'friday_night_rain.yaml')?.content;
       const parseResult = parser.parseFromYaml(storyContent!);
       engine.loadStory(parseResult.story!);
       
@@ -331,7 +331,7 @@ describe('Context Size Validation', () => {
     it('should scale context appropriately with story complexity', async () => {
       const stories = [
         { name: 'minimal', filename: 'the_key.yaml' },
-        { name: 'medium', filename: 'coffee_confessional.yaml' },
+        { name: 'medium', filename: 'friday_night_rain.yaml' },
         { name: 'rich', filename: 'sentient_quill.yaml' }
       ];
       

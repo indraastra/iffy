@@ -87,6 +87,16 @@ ${Object.entries(context.currentTransitions)
 `;
     }
 
+    // Add available endings
+    if (context.availableEndings && context.availableEndings.length > 0) {
+      prompt += `POSSIBLE ENDINGS:
+${context.availableEndings
+  .map(ending => `- "${ending.id}" when: ${Array.isArray(ending.when) ? ending.when.join(' OR ') : ending.when}`)
+  .join('\n')}
+
+`;
+    }
+
     // Add world context if available
     if (context.location) {
       prompt += `CURRENT LOCATION:

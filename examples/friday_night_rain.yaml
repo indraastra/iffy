@@ -1,0 +1,96 @@
+title: "Friday Night Rain"
+author: "Impressionist Engine Team"
+blurb: "Your weekly coffee ritual takes an unexpected turn."
+version: "2.0"
+context: "Your usual Friday evening at the café. Alex seems different tonight."
+
+narrative:
+  voice: "Intimate, present tense, focused on emotional nuance"
+  setting: "Modern urban café, rainy Friday evening"
+  tone: "Tender, emotionally charged, hopeful"
+  themes: ["change", "vulnerability", "things left unsaid"]
+
+world:
+  characters:
+    alex:
+      name: "Alex"
+      essence: "Your Friday night companion, unusually restless"
+      arc: "searching for words, wrestling with change"
+      voice: "Measured speech with hidden currents"
+  
+  atmosphere:
+    sensory: ["coffee aroma", "dark jazz", "rain on windows"]
+    mood: "intimate and contemplative, like a wong kar wai film"
+
+scenes:
+  - id: "opening"
+    sketch: |
+      The rain drums a steady rhythm against the café windows, blurring the city lights 
+      into watercolor streaks. You're tucked into your usual corner booth at Grounded, 
+      the place where you and Alex have shared countless Friday evenings over the years.
+      
+      But tonight feels different. Alex sits across from you, fingers wrapped around a 
+      coffee mug that stopped steaming twenty minutes ago. They've been quieter than 
+      usual, gaze drifting between you and the rain-streaked window as if trying to 
+      solve some invisible equation.
+      
+      "Your coffee's gone cold," the barista mentions gently as she passes. "Should I 
+      warm it up?"
+      
+      Alex doesn't seem to hear her. You've shared these Friday evenings for years - 
+      through job changes, bad breakups, small victories. Tonight, though, there's 
+      something in the air between you, electric and uncertain, like the charge before 
+      lightning strikes.
+    leads_to:
+      trust_building: "player shows genuine interest in Alex's state of mind"
+      
+  - id: "trust_building"
+    sketch: |
+      The café empties. Late-night atmosphere. Something shifting between you.
+      Alex's walls showing cracks. Half-gestures, unfinished sentences.
+    leads_to:
+      revelation: "player creates safe space for honesty or asks the right question"
+      retreat: "player pushes too hard or misreads the moment"
+
+  - id: "revelation"
+    sketch: |
+      The truth spills out. Years of careful friendship teetering on edge.
+      Rain intensifies. Everything changes in a single breath.
+    leads_to:
+      connection: "player responds with empathy and openness"
+      awkwardness: "player deflects or responds with confusion"
+
+  - id: "retreat"
+    sketch: "Walls rebuilding. Distance returning. Cold coffee, colder conversation."
+    
+  - id: "awkwardness"
+    sketch: "Silence heavy as storm clouds. Eye contact becomes impossible."
+
+endings:
+  - id: "connection"
+    when: "player and Alex share their truth with each other"
+    sketch: "Alex's hand finds yours. 'Thank you for not giving up on me.'"
+    
+  - id: "missed_chance"
+    when: ["player lets Alex leave without resolution", "conversation spirals into hurt"]
+    sketch: |
+      You watch Alex disappear into the rain. The barista starts
+      stacking chairs. Another chance lost to fear.
+      
+  - id: "friendship_preserved"
+    when: "player acknowledges the moment but chooses friendship"
+    sketch: |
+      Alex smiles - genuine but careful. "We're good, right?"
+      Some things are worth more than the risk.
+
+guidance: |
+  Alex has been in love with the player for months and tonight plans to confess.
+  The player should discover this gradually through Alex's behavior and dialogue.
+  
+  Track Alex's emotional state:
+  - Nervous energy when player shows interest
+  - Relief when player creates safe space
+  - Retreat if player seems dismissive
+  - Joy if feelings are reciprocated
+  
+  Small gestures matter. Silences speak volumes. Let the rain mirror the emotional weather.

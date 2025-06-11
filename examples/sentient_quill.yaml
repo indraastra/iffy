@@ -79,9 +79,22 @@ world:
 scenes:
   - id: "arrival"
     sketch: |
-      The brass pen moves across parchment without human touch:
-      "Good evening, Inspector. I am the Analytical Engine Quill.
-      Shall we collaborate on this most intriguing case?"
+      The gaslight flickers as you enter Lord Pemberton's study, casting dancing shadows 
+      across the mahogany panels. The body slumps over the desk, one hand still clutching 
+      an ornate brass pen. Scotland Yard's telegram was urgent but vague - "Death under 
+      most peculiar circumstances. Your expertise required."
+      
+      As you approach the desk, the pen suddenly twitches in the dead man's grip. Before 
+      you can react, it pulls free and begins moving across a sheet of parchment with 
+      impossible precision:
+      
+      "Good evening, Inspector Whitmore. I am the Analytical Engine Quill, Mark VII. 
+      Lord Pemberton was my owner, though 'partner' might be more accurate. I have been 
+      witness to his final moments and possess data crucial to solving this case. Shall 
+      we collaborate on this most intriguing investigation?"
+      
+      The pen hovers expectantly above the paper, its brass gears whirring softly in 
+      the gaslit silence.
     leads_to:
       partnership_begins: "accepting the quill's help"
       skeptical_investigation: "dismissing the talking pen"

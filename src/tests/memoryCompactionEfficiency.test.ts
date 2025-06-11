@@ -99,8 +99,8 @@ describe('Memory Compaction Efficiency', () => {
   });
 
   describe('Real Story Memory Management', () => {
-    it('should efficiently manage memory during Coffee Confessional gameplay', async () => {
-      const storyContent = BUNDLED_STORIES.find(s => s.filename === 'coffee_confessional.yaml')?.content;
+    it('should efficiently manage memory during Friday Night Rain gameplay', async () => {
+      const storyContent = BUNDLED_STORIES.find(s => s.filename === 'friday_night_rain.yaml')?.content;
       expect(storyContent).toBeDefined();
       
       const parseResult = parser.parseFromYaml(storyContent!);
@@ -206,7 +206,7 @@ describe('Memory Compaction Efficiency', () => {
 
   describe('Memory Compaction Effectiveness', () => {
     it('should preserve important memories while compacting less important ones', async () => {
-      const storyContent = BUNDLED_STORIES.find(s => s.filename === 'coffee_confessional.yaml')?.content;
+      const storyContent = BUNDLED_STORIES.find(s => s.filename === 'friday_night_rain.yaml')?.content;
       const parseResult = parser.parseFromYaml(storyContent!);
       engine.loadStory(parseResult.story!);
       
@@ -286,7 +286,7 @@ describe('Memory Compaction Efficiency', () => {
 
   describe('Performance Under Load', () => {
     it('should maintain performance with high memory turnover', async () => {
-      const storyContent = BUNDLED_STORIES.find(s => s.filename === 'coffee_confessional.yaml')?.content;
+      const storyContent = BUNDLED_STORIES.find(s => s.filename === 'friday_night_rain.yaml')?.content;
       const parseResult = parser.parseFromYaml(storyContent!);
       engine.loadStory(parseResult.story!);
       
@@ -354,7 +354,7 @@ describe('Memory Compaction Efficiency', () => {
 
   describe('Memory Quality Assessment', () => {
     it('should preserve narrative-relevant memories over generic ones', async () => {
-      const storyContent = BUNDLED_STORIES.find(s => s.filename === 'coffee_confessional.yaml')?.content;
+      const storyContent = BUNDLED_STORIES.find(s => s.filename === 'friday_night_rain.yaml')?.content;
       const parseResult = parser.parseFromYaml(storyContent!);
       engine.loadStory(parseResult.story!);
       

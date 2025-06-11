@@ -1,6 +1,13 @@
 import { SessionStats } from '@/engine/metricsCollector';
 import { MemorySessionStats } from '@/engine/memoryMetricsCollector';
 
+interface LlmInteraction {
+  timestamp: Date;
+  prompt: { text: string; tokenCount: number };
+  response: { narrative: string; signals?: any; tokenCount: number };
+  context: { scene: string; memories: number; transitions: number };
+}
+
 export class DebugPane {
   private container: HTMLElement;
   private isVisible: boolean = false;
@@ -9,6 +16,8 @@ export class DebugPane {
   private memoryStats: MemorySessionStats | null = null;
   private warnings: string[] = [];
   private memoryWarnings: string[] = [];
+  private llmInteractions: LlmInteraction[] = [];
+  private maxInteractions: number = 20; // Keep last 20 interactions
 
   constructor() {
     this.container = this.createDebugPane();
@@ -28,6 +37,7 @@ export class DebugPane {
       <div class="debug-tabs">
         <button class="debug-tab active" data-tab="metrics">📊 Metrics</button>
         <button class="debug-tab" data-tab="memory">🧠 Memory</button>
+        <button class="debug-tab" data-tab="llm">🤖 LLM</button>
       </div>
       <div class="debug-content">
         <div class="debug-tab-content active" data-tab="metrics">
@@ -40,6 +50,11 @@ export class DebugPane {
           <div class="memory-dashboard">
             <div class="memory-warnings"></div>
             <div class="memory-stats"></div>
+          </div>
+        </div>
+        <div class="debug-tab-content" data-tab="llm">
+          <div class="llm-dashboard">
+            <div class="llm-interactions"></div>
           </div>
         </div>
       </div>
@@ -73,6 +88,8 @@ export class DebugPane {
       this.updateMetricsDisplay();
     } else if (this.currentTab === 'memory') {
       this.updateMemoryDisplay();
+    } else if (this.currentTab === 'llm') {
+      this.updateLlmDisplay();
     }
   }
 
@@ -112,6 +129,8 @@ export class DebugPane {
       this.updateMetricsDisplay();
     } else if (tabName === 'memory') {
       this.updateMemoryDisplay();
+    } else if (tabName === 'llm') {
+      this.updateLlmDisplay();
     }
   }
 
@@ -319,6 +338,86 @@ export class DebugPane {
     // Update display if memory tab is active
     if (this.currentTab === 'memory') {
       this.updateMemoryDisplay();
+    }
+  }
+
+  /**
+   * Update the LLM tab with interaction history
+   */
+  private updateLlmDisplay(): void {
+    const llmContainer = this.container.querySelector('.llm-dashboard') as HTMLElement;
+    if (!llmContainer) return;
+
+    const interactionsContainer = llmContainer.querySelector('.llm-interactions') as HTMLElement;
+
+    if (this.llmInteractions.length === 0) {
+      interactionsContainer.innerHTML = `
+        <div class="no-data">
+          <p>No LLM interactions yet. Player actions and LLM responses will appear here.</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Render interactions in reverse chronological order
+    const interactionsHtml = this.llmInteractions
+      .slice()
+      .reverse()
+      .map((interaction, index) => `
+        <div class="llm-interaction ${index === 0 ? 'latest' : ''}">
+          <div class="interaction-header">
+            <span class="interaction-time">${interaction.timestamp.toLocaleTimeString()}</span>
+            <span class="interaction-scene">📍 ${this.escapeHtml(interaction.context.scene)}</span>
+            <span class="interaction-context">🧠 ${interaction.context.memories} memories | 🔀 ${interaction.context.transitions} transitions</span>
+          </div>
+          
+          <div class="interaction-prompt">
+            <strong>Player Input:</strong> ${this.escapeHtml(interaction.prompt.text)}
+            <span class="token-count">(~${interaction.prompt.tokenCount} tokens)</span>
+          </div>
+          
+          <div class="interaction-response">
+            <strong>LLM Response:</strong> ${this.escapeHtml(interaction.response.narrative)}
+            <span class="token-count">(~${interaction.response.tokenCount} tokens)</span>
+          </div>
+          
+          ${interaction.response.signals ? `
+            <div class="interaction-signals">
+              <strong>Signals:</strong>
+              <pre>${JSON.stringify(interaction.response.signals, null, 2)}</pre>
+            </div>
+          ` : ''}
+        </div>
+      `)
+      .join('');
+
+    interactionsContainer.innerHTML = `
+      <div class="stats-section">
+        <h4>🤖 LLM Interaction History</h4>
+        <p class="interaction-count">Showing last ${this.llmInteractions.length} interactions</p>
+        ${interactionsHtml}
+      </div>
+    `;
+  }
+
+  /**
+   * Log an LLM interaction
+   */
+  public logLlmCall(interaction: Omit<LlmInteraction, 'timestamp'>): void {
+    // Add timestamp and store interaction
+    this.llmInteractions.push({
+      ...interaction,
+      timestamp: new Date()
+    });
+
+    // Keep only the last N interactions
+    if (this.llmInteractions.length > this.maxInteractions) {
+      this.llmInteractions = this.llmInteractions.slice(-this.maxInteractions);
+    }
+
+    // Update display if LLM tab is active
+    if (this.currentTab === 'llm' && this.isVisible) {
+      this.updateLlmDisplay();
     }
   }
 
