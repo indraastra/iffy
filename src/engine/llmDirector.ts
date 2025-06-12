@@ -36,6 +36,9 @@ export class LLMDirector {
       const response = await this.anthropicService.makeRequestWithUsage(prompt);
       const latencyMs = performance.now() - startTime;
       
+      // Log raw LLM response to console
+      console.log('🤖 Raw LLM Response:', response.content);
+      
       const result = this.parseJsonResponse(response.content, input, context);
       
       // Add usage information to the result for metrics tracking
@@ -180,26 +183,26 @@ Do not trigger new scene transitions or endings. Focus on reflection and explora
     // Player Action
     prompt += `PLAYER ACTION: "${input}"
 
+INTERACTION PRINCIPLES:
+- If player takes an action, describe only the outcome of that action; let them decide what to do next
+- Only trigger endings when player explicitly attempts to complete the story
+- Let the player drive the pacing and sequence of events
+
 Respond with ONLY a JSON object. No explanations or text after the JSON.
 
-Response format:
+REQUIRED JSON FORMAT:
 {
   "narrative": "Your descriptive response",
-  "importance": 5,
+  "importance": 1-10,
   "signals": {
-    "transition": "scene:scene_id OR ending:ending_id",  // Optional: single transition
-    "discover": "item_id"    // Optional: discover an item
+    "transition": "ending:ACTUAL_ENDING_ID" OR "scene:ACTUAL_SCENE"
   }
 }
 
-Importance scale: 1-3 routine, 4-6 meaningful, 7-9 major moments, 10 story-defining.
-Paint scenes with rich detail while staying true to impressionistic sketches.
-
-TRANSITION FORMAT:
-- For scene changes: "scene:scene_id" (e.g., "scene:forest_clearing")
-- For story endings: "ending:ending_id" (e.g., "ending:victory")
-- If ending, fully flesh out the conclusion in your narrative
-- If unknown ending_id, describe the natural conclusion - the engine will handle it as an impromptu ending
+- For story endings: "transition": "ending:ACTUAL_ENDING_ID"
+- For scene changes: "transition": "scene:ACTUAL_SCENE_ID"
+- ONLY use ending/scene IDs that actually exist in the current story
+- Importance scale: 1-3 routine, 4-6 meaningful, 7-9 major moments, 10 story-defining.
 
 JSON only:`;
 

@@ -17,14 +17,14 @@ scenes:
       
       There must be a way through. There always is, if you're clever enough to find it.
     leads_to:
-      found_solution: "when the player finds a way through"
+      opened_door: "when the player opens the door one way or another"
     
-  - id: "found_solution"
-    sketch: "The door swings open. Beyond lies darkness."
+  - id: "opened_door"
+    sketch: "Beyond lies darkness."
 
 endings:
   - id: "success"
-    when: "player exits through the unlocked door"
+    when: "player exits through the open door"
     sketch: "You step into the unknown."
 
 guidance: |
