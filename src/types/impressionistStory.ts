@@ -134,6 +134,7 @@ export interface DirectorContext {
   
   // Story state signals
   storyComplete?: boolean  // True when story has ended but exploration continues
+  endingId?: string       // ID of the ending that was triggered
 }
 
 // LLM response with clear signals

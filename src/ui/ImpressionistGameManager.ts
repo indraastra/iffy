@@ -88,7 +88,7 @@ export class ImpressionistGameManager {
     if (!input.trim()) return;
     
     this.disableInput();
-    this.addMessage(`> ${input}`, 'player');
+    this.addMessage(input, 'player');
     this.showTypingIndicator();
     
     try {
@@ -212,7 +212,16 @@ export class ImpressionistGameManager {
 
     this.engine.setEndingCallback((endingText: string) => {
       this.addMessage(`🎉 ${endingText}`, 'story');
+      this.addMessage('---', 'separator');
+      this.addMessage('🌟 **Story Complete** - You can now ask questions, reflect on your experience, or explore what happened.', 'system');
       this.commandInput.placeholder = "Story complete! Ask questions, reflect, or explore...";
+      
+      // Add visual styling to indicate story completion
+      const gameContent = document.getElementById('themed-game-content');
+      if (gameContent) {
+        gameContent.style.borderTop = '3px solid #4CAF50';
+        gameContent.style.background = 'linear-gradient(to bottom, rgba(76, 175, 80, 0.05), var(--game-background-color))';
+      }
     });
 
     // Set up debug pane if available
@@ -262,6 +271,11 @@ export class ImpressionistGameManager {
         <h3>🎭 Load Impressionist Story</h3>
         <p class="load-description">Choose from example stories or load your own .yaml file</p>
         
+        <div class="file-actions">
+          <button class="action-btn primary" id="load-file">📄 Load Story File (.yaml)</button>
+          <button class="action-btn" id="load-save">💾 Load Save Game (.json)</button>
+        </div>
+        
         ${exampleStories.length > 0 ? `
           <div class="examples-section">
             <h4>📚 Example Stories</h4>
@@ -278,11 +292,6 @@ export class ImpressionistGameManager {
             </div>
           </div>
         ` : ''}
-        
-        <div class="file-actions">
-          <button class="action-btn primary" id="load-file">📄 Load Story File (.yaml)</button>
-          <button class="action-btn" id="load-save">💾 Load Save Game (.json)</button>
-        </div>
         
         <button class="close-btn">✕</button>
       </div>
@@ -378,23 +387,23 @@ export class ImpressionistGameManager {
   }
 
   /**
-   * Show typing indicator
+   * Show thinking indicator with breathing dots
    */
   private showTypingIndicator(): void {
     const indicator = document.createElement('div');
-    indicator.className = 'typing-indicator';
-    indicator.innerHTML = '<span></span><span></span><span></span>';
-    indicator.id = 'typing-indicator';
+    indicator.className = 'thinking-dots';
+    indicator.innerHTML = '<span>•</span><span>•</span><span>•</span>';
+    indicator.id = 'thinking-indicator';
     
     this.storyOutput.appendChild(indicator);
     this.storyOutput.scrollTop = this.storyOutput.scrollHeight;
   }
 
   /**
-   * Hide typing indicator
+   * Hide thinking indicator
    */
   private hideTypingIndicator(): void {
-    const indicator = document.getElementById('typing-indicator');
+    const indicator = document.getElementById('thinking-indicator');
     if (indicator) {
       indicator.remove();
     }
