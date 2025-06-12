@@ -326,11 +326,31 @@ CURRENT MEMORIES (chronological order):
 ${this.memories.map((mem, i) => `${i + 1}. [Importance: ${mem.importance}] ${mem.content}`).join('\n')}
 
 SMART COMPACTION GUIDELINES:
-1. **Temporal Updates**: Later memories override earlier ones (e.g., "key on shelf" → "picked up key" = "player has key")
-2. **State Changes**: Merge action sequences into current states (e.g., "door locked" → "found key" → "unlocked door" = "door is unlocked")
+1. **Temporal Updates**: Later memories override earlier ones
+2. **State Changes**: Merge action sequences into current states
 3. **Consolidate Related**: Combine memories about the same objects, characters, or locations
 4. **Preserve Important**: Keep high-importance memories (7+) and recent significant events
 5. **Current Context**: Focus on what's currently true/relevant vs historical actions
+
+LENGTH GUIDELINES:
+- Target under 20 words per memory when possible
+- Use present tense for current states ("Player has key" not "Player picked up key")
+- Focus on facts, not narrative details
+- Break long memories into multiple smaller ones if needed
+
+EXAMPLES:
+
+❌ VERBOSE (ineffective):
+"Player carefully examined the ornate wooden door, discovered it was locked, searched the room, found a brass key behind the painting, and used it to unlock the door"
+
+✅ CONCISE (effective):
+Multiple memories: "Player has brass key", "Door is unlocked", "Key was hidden behind painting"
+
+❌ HISTORICAL (past actions):
+"Player talked to Alex about feelings, Alex seemed nervous, then Alex revealed romantic interest and player responded positively"
+
+✅ CURRENT STATE (present facts):
+Multiple memories: "Alex has romantic feelings for player", "Player knows Alex's feelings", "Conversation was positive"
 
 RESPOND WITH JSON ONLY:
 {
