@@ -6,20 +6,20 @@
 
 import { ImpressionistEngine } from '@/engine/impressionistEngine';
 import { ImpressionistParser } from '@/engine/impressionistParser';
-import { AnthropicService } from '@/services/anthropicService';
+import { MultiModelService } from '@/services/multiModelService';
 import { DebugPane } from '@/ui/debugPane';
 import { getBundledStoryTitles, getBundledStory } from '@/examples';
 
 export interface GameManagerConfig {
   storyOutput: HTMLElement;
   commandInput: HTMLTextAreaElement;
-  anthropicService: AnthropicService;
+  multiModelService: MultiModelService;
   debugPane?: DebugPane;
 }
 
 export class ImpressionistGameManager {
   private engine: ImpressionistEngine;
-  private anthropicService: AnthropicService;
+  private multiModelService: MultiModelService;
   private parser: ImpressionistParser;
   private debugPane?: DebugPane;
   
@@ -28,8 +28,8 @@ export class ImpressionistGameManager {
   private commandInput: HTMLTextAreaElement;
   
   constructor(config: GameManagerConfig) {
-    this.anthropicService = config.anthropicService;
-    this.engine = new ImpressionistEngine(this.anthropicService);
+    this.multiModelService = config.multiModelService;
+    this.engine = new ImpressionistEngine(this.multiModelService);
     this.parser = new ImpressionistParser();
     this.debugPane = config.debugPane;
     

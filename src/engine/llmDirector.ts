@@ -5,27 +5,27 @@
  */
 
 import { DirectorContext, DirectorResponse, DirectorSignals } from '@/types/impressionistStory';
-import { AnthropicService } from '@/services/anthropicService';
+import { MultiModelService } from '@/services/multiModelService';
 
 export class LLMDirector {
-  private anthropicService: AnthropicService;
+  private multiModelService: MultiModelService;
   private debugPane?: any;
   
   // Configuration constants
   private static readonly POST_ENDING_INTERACTION_LIMIT = 5;
   private static readonly REGULAR_INTERACTION_LIMIT = 10;
 
-  constructor(anthropicService?: AnthropicService) {
-    this.anthropicService = anthropicService || new AnthropicService();
+  constructor(multiModelService?: MultiModelService) {
+    this.multiModelService = multiModelService || new MultiModelService();
   }
 
   /**
    * Process player input with impressionistic approach
    */
   async processInput(input: string, context: DirectorContext): Promise<DirectorResponse> {
-    if (!this.anthropicService.isConfigured()) {
+    if (!this.multiModelService.isConfigured()) {
       return {
-        narrative: "🔑 Anthropic API key required. Please configure your API key in Settings to play.",
+        narrative: "🔑 API key required. Please configure your LLM provider in Settings to play.",
         signals: { error: "API key not configured" }
       };
     }
@@ -37,7 +37,7 @@ export class LLMDirector {
       // Log raw prompt to console
       console.log('📤 Raw LLM Prompt:', prompt);
       
-      const response = await this.anthropicService.makeRequestWithUsage(prompt);
+      const response = await this.multiModelService.makeRequestWithUsage(prompt);
       const latencyMs = performance.now() - startTime;
       
       // Log raw LLM response to console

@@ -29,7 +29,11 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
+    "@langchain/anthropic": "^0.3.22",
+    "@langchain/google-genai": "^0.2.11",
+    "@langchain/openai": "^0.5.13",
     "js-yaml": "^4.1.0",
+    "langchain": "^0.3.28",
     "zod": "^3.25.56"
   }
 }

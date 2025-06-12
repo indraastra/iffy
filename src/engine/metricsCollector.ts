@@ -29,10 +29,7 @@ export class MetricsCollector {
   private sessionStartTime: Date = new Date();
   private successfulCalls: number = 0;
   private failedCalls: number = 0;
-
-  // Pricing (Claude 3 rates as of early 2024)
-  private readonly INPUT_COST_PER_1K = 0.015;   // $15 per million input tokens
-  private readonly OUTPUT_COST_PER_1K = 0.075;  // $75 per million output tokens
+  private multiModelService?: any; // Optional reference for accurate pricing
 
   /**
    * Track a new API request
@@ -210,6 +207,13 @@ export class MetricsCollector {
     this.debugPane = debugPane;
   }
 
+  /**
+   * Set MultiModelService for accurate pricing
+   */
+  setMultiModelService(multiModelService: any): void {
+    this.multiModelService = multiModelService;
+  }
+
   // Private helper methods
 
   private logMetric(metric: ImpressionistMetrics): void {
@@ -237,9 +241,12 @@ export class MetricsCollector {
   }
 
   private calculateRequestCost(metric: ImpressionistMetrics): number {
-    const inputCost = (metric.inputTokens / 1000) * this.INPUT_COST_PER_1K;
-    const outputCost = (metric.outputTokens / 1000) * this.OUTPUT_COST_PER_1K;
-    return inputCost + outputCost;
+    if (!this.multiModelService?.calculateCost) {
+      console.warn('No MultiModelService available for cost calculation');
+      return 0;
+    }
+    
+    return this.multiModelService.calculateCost(metric.inputTokens, metric.outputTokens);
   }
 
   private calculateTotalCost(): number {
