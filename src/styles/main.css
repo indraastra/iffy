@@ -408,31 +408,10 @@ body {
   }
 }
 
-/* Loading and status indicators */
+/* Loading states */
 .loading {
   opacity: 0.6;
   pointer-events: none;
-}
-
-.status-indicator {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-right: 0.5rem;
-}
-
-.status-indicator.connected {
-  background-color: #4CAF50;
-}
-
-.status-indicator.disconnected {
-  background-color: #F44336;
-}
-
-.status-indicator.loading {
-  background-color: #FF9800;
-  animation: pulse 1s infinite;
 }
 
 /* Processing indicator for LLM requests */
@@ -441,34 +420,30 @@ body {
   cursor: not-allowed;
 }
 
-.processing-indicator {
-  color: #4ecdc4;
-  font-style: italic;
-  animation: processing-dots 1.5s infinite;
-}
-
-/* Breathing dots animation for thinking indicator */
+/* Thinking indicator for story processing */
 .thinking-dots {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.3rem;
   padding: 1rem;
-  color: #4ecdc4;
-  font-size: 1.5rem;
+  color: var(--text-color);
+  font-size: 1rem;
+  opacity: 0.6;
+  font-family: inherit;
 }
 
 .thinking-dots span {
   display: inline-block;
-  animation: breathe 1.4s ease-in-out infinite;
+  animation: thinking-pulse 1.2s ease-in-out infinite;
 }
 
 .thinking-dots span:nth-child(2) {
-  animation-delay: 0.2s;
+  animation-delay: 0.15s;
 }
 
 .thinking-dots span:nth-child(3) {
-  animation-delay: 0.4s;
+  animation-delay: 0.3s;
 }
 
 @keyframes pulse {
@@ -477,22 +452,12 @@ body {
   100% { opacity: 1; }
 }
 
-@keyframes processing-dots {
-  0% { content: 'Processing'; }
-  25% { content: 'Processing.'; }
-  50% { content: 'Processing..'; }
-  75% { content: 'Processing...'; }
-  100% { content: 'Processing'; }
-}
-
-@keyframes breathe {
+@keyframes thinking-pulse {
   0%, 100% {
-    opacity: 0.4;
-    transform: scale(0.8);
+    opacity: 0.3;
   }
   50% {
     opacity: 1;
-    transform: scale(1.2);
   }
 }
 
@@ -1887,5 +1852,4 @@ body {
 
 .load-content .close-btn:hover {
   opacity: 1;
-}
 }

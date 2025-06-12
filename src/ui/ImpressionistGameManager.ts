@@ -104,11 +104,33 @@ export class ImpressionistGameManager {
         this.addMessage(response.text, 'story');
       }
       
+      // Handle ending after the narrative is displayed
+      if (response.endingTriggered) {
+        this.handleStoryEnding();
+      }
+      
     } catch (error) {
       this.hideTypingIndicator();
       this.addMessage(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
     } finally {
       this.enableInput();
+    }
+  }
+
+  /**
+   * Handle story ending display
+   */
+  private handleStoryEnding(): void {
+    // Show ending messages in correct order after LLM narrative
+    this.addMessage('---', 'separator');
+    this.addMessage('🌟 **Story Complete** - You can now ask questions, reflect on your experience, or explore what happened.', 'system');
+    this.commandInput.placeholder = "Story complete! Ask questions, reflect, or explore...";
+    
+    // Add visual styling to indicate story completion
+    const gameContent = document.getElementById('themed-game-content');
+    if (gameContent) {
+      gameContent.style.borderTop = '3px solid #4CAF50';
+      gameContent.style.background = 'linear-gradient(to bottom, rgba(76, 175, 80, 0.05), var(--game-background-color))';
     }
   }
 
@@ -210,19 +232,7 @@ export class ImpressionistGameManager {
       }
     });
 
-    this.engine.setEndingCallback((endingText: string) => {
-      this.addMessage(`🎉 ${endingText}`, 'story');
-      this.addMessage('---', 'separator');
-      this.addMessage('🌟 **Story Complete** - You can now ask questions, reflect on your experience, or explore what happened.', 'system');
-      this.commandInput.placeholder = "Story complete! Ask questions, reflect, or explore...";
-      
-      // Add visual styling to indicate story completion
-      const gameContent = document.getElementById('themed-game-content');
-      if (gameContent) {
-        gameContent.style.borderTop = '3px solid #4CAF50';
-        gameContent.style.background = 'linear-gradient(to bottom, rgba(76, 175, 80, 0.05), var(--game-background-color))';
-      }
-    });
+    // Ending callback removed - we now handle endings in processInput after the narrative is displayed
 
     // Set up debug pane if available
     if (this.debugPane) {
@@ -240,9 +250,9 @@ export class ImpressionistGameManager {
         e.preventDefault();
         const input = this.commandInput.value.trim();
         if (input) {
-          await this.processInput(input);
           this.commandInput.value = '';
           this.commandInput.style.height = 'auto';
+          await this.processInput(input);
         }
       }
     });

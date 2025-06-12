@@ -14,7 +14,7 @@ world:
   characters:
     alex:
       name: "Alex"
-      essence: "Your Friday night companion, unusually restless"
+      essence: "Your Friday night companion, unusually restless and fidgeting with mug of cold coffee"
       arc: "searching for words, wrestling with change"
       voice: "Measured speech with hidden currents"
   
@@ -25,22 +25,18 @@ world:
 scenes:
   - id: "opening"
     sketch: |
-      The rain drums a steady rhythm against the café windows, blurring the city lights 
-      into watercolor streaks. You're tucked into your usual corner booth at Grounded, 
-      the place where you and Alex have shared countless Friday evenings over the years.
+      Rain streaks the café window, fracturing the neon outside into pink and blue. 
+      You're in your usual corner booth at Grounded, where Chet Baker loops endlessly 
+      through the speakers.
       
-      But tonight feels different. Alex sits across from you, fingers wrapped around a 
-      coffee mug that stopped steaming twenty minutes ago. They've been quieter than 
-      usual, gaze drifting between you and the rain-streaked window as if trying to 
-      solve some invisible equation.
+      Alex sits across from you, half-lit by the window's glow, fingers tracing circles 
+      on a cold coffee mug. In the glass, your reflections overlap with the city lights - two 
+      ghosts watching each other.
       
-      "Your coffee's gone cold," the barista mentions gently as she passes. "Should I 
-      warm it up?"
+      You've shared a hundred Friday evenings here, but tonight the silence between you 
+      has weight. Something unspoken hums in the amber air.
       
-      Alex doesn't seem to hear her. You've shared these Friday evenings for years - 
-      through job changes, bad breakups, small victories. Tonight, though, there's 
-      something in the air between you, electric and uncertain, like the charge before 
-      lightning strikes.
+      [What crosses your mind as you study Alex in the half-light?]
     leads_to:
       trust_building: "player shows genuine interest in Alex's state of mind"
       
@@ -92,8 +88,12 @@ guidance: |
   Alex has been in love with the player for months and tonight plans to confess.
   The player should discover this gradually through Alex's behavior and dialogue.
   
-  PRONOUNS: Use they/them for Alex until player establishes otherwise (e.g., "He's fine" → use he/him thereafter).
-
+  PRONOUN HANDLING:
+  1. Always start with they/them for Alex
+  2. Listen for player cues: if they say "She's nervous" or "He seems quiet", immediately adopt those pronouns
+  3. Once established, maintain consistency - this should feel natural, not forced
+  4. Example: Player says "She looks sad" → Use she/her for Alex from that point forward
+  
   Track Alex's emotional state:
   - Nervous energy when player shows interest
   - Relief when player creates safe space

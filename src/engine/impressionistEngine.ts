@@ -26,6 +26,7 @@ export interface GameResponse {
   text: string;
   gameState: ImpressionistState;
   error?: string;
+  endingTriggered?: boolean;
 }
 
 export class ImpressionistEngine {
@@ -33,7 +34,6 @@ export class ImpressionistEngine {
   private readonly CONTEXT_MEMORIES_LIMIT = 10; // memories passed to LLM context
   private readonly MEMORY_COMPACTION_FREQUENCY = 5; // compact every N memories
   private readonly INTERACTION_ROLLING_WINDOW = 20; // max interactions stored in state
-  private readonly IMPROMPTU_ENDING_MESSAGE = "The story reaches its natural conclusion.";
   
   private story: ImpressionistStory | null = null;
   private gameState: ImpressionistState = this.createInitialState();
@@ -44,7 +44,6 @@ export class ImpressionistEngine {
   // Callbacks for UI integration
   private uiResetCallback?: () => void;
   private uiRestoreCallback?: (gameState: any, conversationHistory?: any[]) => void;
-  private endingCallback?: (endingText: string) => void;
 
   constructor(anthropicService?: AnthropicService) {
     this.director = new LLMDirector(anthropicService);
@@ -172,7 +171,10 @@ export class ImpressionistEngine {
         );
       }
       
-      // Apply any signals from the response
+      // Check for ending signals BEFORE applying them to determine if ending was triggered
+      const isEndingTriggered = !!response.signals?.ending;
+      
+      // Apply any signals from the response (but don't trigger ending callback yet)
       this.applyDirectorSignals(response);
       
       // Track this interaction in memory with metadata
@@ -186,7 +188,8 @@ export class ImpressionistEngine {
       return {
         text: response.narrative,
         gameState: { ...this.gameState },
-        error: response.signals?.error
+        error: response.signals?.error,
+        endingTriggered: isEndingTriggered
       };
     } catch (error) {
       console.error('Error processing action:', error);
@@ -273,8 +276,9 @@ export class ImpressionistEngine {
     return context;
   }
 
+
   /**
-   * Apply signals from LLM Director response
+   * Apply signals from LLM Director response without triggering ending callback
    */
   private applyDirectorSignals(response: DirectorResponse) {
     if (!response.signals) return;
@@ -284,7 +288,7 @@ export class ImpressionistEngine {
       this.transitionToScene(response.signals.scene);
     }
 
-    // Ending triggers
+    // Ending triggers (but don't call callback)
     if (response.signals.ending) {
       this.triggerEnding(response.signals.ending);
     }
@@ -310,8 +314,9 @@ export class ImpressionistEngine {
     }
   }
 
+
   /**
-   * Trigger a story ending
+   * Trigger a story ending without calling the callback (for deferred ending handling)
    */
   private triggerEnding(endingId: string) {
     if (!this.story) return;
@@ -321,22 +326,11 @@ export class ImpressionistEngine {
       console.log(`Story ending triggered: ${endingId}`);
       this.gameState.isEnded = true;
       this.gameState.endingId = endingId;
-      
-      // Call the ending callback if set
-      if (this.endingCallback) {
-        this.endingCallback(ending.sketch);
-      }
     } else {
       // Handle impromptu/unexpected ending - LLM decided to end the story
       console.log(`Impromptu ending triggered: ${endingId}`);
       this.gameState.isEnded = true;
       this.gameState.endingId = endingId;
-      
-      // For impromptu endings, the LLM should have already fleshed out the ending in the narrative
-      // So we call the callback with a generic message
-      if (this.endingCallback) {
-        this.endingCallback(this.IMPROMPTU_ENDING_MESSAGE);
-      }
     }
   }
 
@@ -439,9 +433,6 @@ export class ImpressionistEngine {
     this.uiRestoreCallback = callback;
   }
 
-  setEndingCallback(callback: (endingText: string) => void): void {
-    this.endingCallback = callback;
-  }
 
   setLoadingStateCallback(_callback: (message: string) => void): void {
     // Not implemented in impressionist engine yet
