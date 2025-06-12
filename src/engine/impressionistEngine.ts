@@ -453,6 +453,10 @@ export class ImpressionistEngine {
     return this.story?.title || null;
   }
 
+  getCurrentStory(): ImpressionistStory | null {
+    return this.story;
+  }
+
   getMetrics(): MetricsCollector {
     return this.metrics;
   }
