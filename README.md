@@ -1,21 +1,23 @@
-# Iffy Impressionist - AI-Powered Interactive Fiction
+# Iffy - Impressionistic Fiction Engine
 
-Create stories that come alive through natural conversation. Iffy combines the best of traditional interactive fiction with modern AI, letting players explore your worlds through natural language while keeping your story structure intact.
+Create stories that come alive through natural conversation. Iffy lets you sketch story worlds that adapt and respond to player creativity while maintaining your narrative vision.
 
-**Perfect for writers who want to create interactive stories without losing creative control.**
+**Perfect for creators**: Writers, game designers, and storytellers who want to create interactive fiction where players can type anything—not just choose from options—without learning any programming.
+
+**Perfect for players**: Story-driven game lovers who want the freedom to interact naturally—typing whatever comes to mind for truly emergent storytelling instead of clicking predetermined choices.
 
 ## What Makes This Special?
 
-### Two Story Formats, One Engine
-- **Traditional Format**: Structured flows and precise branching for classic IF experiences
-- **Impressionist Format**: Sketch-based storytelling that adapts naturally to player creativity
-- **Same Engine**: Both formats run on the same powerful AI-driven foundation
+### Impressionist Storytelling
+- **Sketch-Based Design**: Write minimal story outlines, let AI paint the details
+- **Natural Language**: Players converse naturally - no command memorization
+- **Emergent Narrative**: Stories adapt to player creativity while staying true to your vision
 
-### Natural Language Gaming
-Type "examine the mysterious door" or "ask the detective about the case" - no memorizing command lists or rigid syntax. The AI understands what you mean and responds authentically within your story's world.
+### No Programming Required
+Writers focus on storytelling, not code. Define your world with simple YAML sketches—the AI handles all the complex natural language processing and dynamic responses.
 
-### Creative Freedom with Structure
-Authors define the world, characters, and story beats. The AI handles the conversation, bringing your vision to life while respecting your narrative boundaries.
+### True Player Freedom
+No multiple choice menus or rigid commands. Players type naturally and the AI responds intelligently while staying true to your story's world and characters.
 
 ## Quick Start
 
@@ -24,53 +26,35 @@ Visit [https://indraastra.github.io/iffy-impressionist/](https://indraastra.gith
 
 ### Create Your First Story
 1. **Get an API Key**: Sign up for a free [Anthropic API key](https://console.anthropic.com)
-2. **Choose Your Format**: 
-   - Start with **Impressionist** format for sketch-based storytelling
-   - Use **Traditional** format for detailed branching narratives
-3. **Write Your Story**: Use simple YAML to define characters, locations, and scenes
-4. **Test and Play**: Load your story and watch it come alive
+2. **Write Your Story**: Use simple YAML to sketch characters, scenes, and story beats—no programming knowledge needed
+3. **Test and Play**: Load your story and watch players explore it through completely natural conversation
 
-## Story Formats Explained
+## The Impressionist Format
 
-### Impressionist Format (Recommended for Beginners)
-Sketch out scenes and let the AI fill in the details naturally:
+Sketch out your story world and let the AI paint the details. Perfect for writers who want emergence without losing narrative control:
 
 ```yaml
-title: "The Detective's Office"
-context: "A noir mystery in 1940s Los Angeles"
+title: "The Locked Door"
+context: "You need to get through a locked door."
 
 scenes:
-  - id: "office_investigation"
+  - id: "locked_door"
     sketch: |
-      The private detective's office is dimly lit, papers scattered 
-      across the desk. A half-empty bottle of whiskey catches the 
-      streetlight. Something important is hidden here.
+      You stand before a heavy wooden door, its surface worn smooth 
+      by countless hands. The iron handle refuses to budge - definitely 
+      locked. The keyhole stares at you like a dark eye, taunting in 
+      its simplicity. There must be a way through.
     leads_to:
-      found_clue: "when the player discovers the hidden evidence"
+      found_solution: "when the player finds a way through"
+
+endings:
+  variations:
+    - id: "success"
+      when: "player exits through the unlocked door"
+      sketch: "You step into the unknown."
 ```
 
-Perfect for emergent storytelling where player creativity drives the narrative forward.
-
-### Traditional Format (For Detailed Control)
-Define exact flows, character dialogue, and branching paths:
-
-```yaml
-title: "The Mansion Mystery"
-characters:
-  - id: "butler"
-    name: "James"
-    traits: ["formal", "secretive"]
-
-flows:
-  - id: "meet_butler"
-    type: "dialogue"
-    participants: ["butler", "player"]
-    exchanges:
-      - speaker: "butler"
-        text: "Good evening. I'm afraid the master is not receiving visitors."
-```
-
-Ideal for authors who want precise control over dialogue and story branching.
+Players can type anything they want—"examine the keyhole," "break down the door," "look for another way around"—and the AI responds intelligently while maintaining your story's atmosphere and direction.
 
 ## What You Can Build
 
