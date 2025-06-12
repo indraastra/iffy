@@ -87,17 +87,3 @@ endings:
       sketch: |
         ALARM! The door opens but sirens wail. You escaped, but left the system 
         in a dangerous state. Security will not be pleased.
-
-guidance: |
-  This is a test story for the engine's condition checking. The player must:
-  1. Press all three buttons in any order
-  2. Then attempt to open the door
-  
-  Test cases:
-  - Press red only, try door → should get "dangerous_exit"
-  - Press blue only, try door → should get "incomplete_exit"  
-  - Press green only, try door → should get "incomplete_exit"
-  - Press red+blue, try door → should get "incomplete_exit"
-  - Press all three, try door → should get "perfect_exit"
-  
-  The LLM should NOT trigger any ending until the player explicitly tries to open the door.
