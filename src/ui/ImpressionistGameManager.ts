@@ -196,11 +196,19 @@ export class ImpressionistGameManager {
         const result = this.engine.loadGame(saveData);
         
         if (result.success) {
-          // The engine will call the UI restore callback to repopulate the conversation
-          this.addMessage('📂 Game loaded successfully', 'system');
+          // The engine has already called the UI restore callback to repopulate the conversation
           this.enableInput();
+          // Add success message after conversation is restored
+          this.addMessage('📂 Game loaded successfully', 'system');
         } else {
-          this.addMessage(`❌ Failed to load save: ${result.error}`, 'error');
+          // If loading failed, it might be because no story is loaded
+          // Try to guide the user to load a story first
+          if (result.error?.includes('No story loaded')) {
+            this.addMessage(`❌ Please load a story first, then load your saved game`, 'error');
+            this.addMessage(`💡 Use the Load button to select a story, then try loading your save again`, 'system');
+          } else {
+            this.addMessage(`❌ Failed to load save: ${result.error}`, 'error');
+          }
         }
         
       } catch (error) {
@@ -387,13 +395,23 @@ export class ImpressionistGameManager {
   }
 
   /**
-   * Format story text with basic markdown support
+   * Format story text with basic markdown support and intelligent whitespace handling
    */
   private formatStoryText(text: string): string {
     return text
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/\n/g, '<br>');
+      // Convert paragraph breaks (double newlines) to <p> tags
+      .replace(/\n\s*\n/g, '</p><p>')
+      // Remove single line breaks to allow text to flow naturally
+      .replace(/\n/g, ' ')
+      // Wrap in paragraph tags and clean up
+      .replace(/^/, '<p>')
+      .replace(/$/, '</p>')
+      // Clean up empty paragraphs
+      .replace(/<p>\s*<\/p>/g, '')
+      // Clean up multiple spaces
+      .replace(/\s+/g, ' ');
   }
 
   /**
