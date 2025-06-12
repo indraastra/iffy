@@ -37,40 +37,16 @@ scenes:
       has weight. Something unspoken hums in the amber air.
       
       [What crosses your mind as you study Alex in the half-light?]
-    leads_to:
-      trust_building: "player shows genuine interest in Alex's state of mind"
-      
-  - id: "trust_building"
-    sketch: |
-      The café empties. Late-night atmosphere. Something shifting between you.
-      Alex's walls showing cracks. Half-gestures, unfinished sentences.
-    leads_to:
-      revelation: "player creates safe space for honesty or asks the right question"
-      retreat: "player pushes too hard or misreads the moment"
-
-  - id: "revelation"
-    sketch: |
-      The truth spills out. Years of careful friendship teetering on edge.
-      Rain intensifies. Everything changes in a single breath.
-    leads_to:
-      connection: "player responds with empathy and openness"
-      awkwardness: "player deflects or responds with confusion"
-
-  - id: "retreat"
-    sketch: "Walls rebuilding. Distance returning. Cold coffee, colder conversation."
-    
-  - id: "awkwardness"
-    sketch: "Silence heavy as storm clouds. Eye contact becomes impossible."
 
 endings:
   when:
     - "conversation has concluded"
-    - "the evening has come to an end"
+    - "the player and/or Alex leaves the cafe"
   
   variations:
     - id: "connection"
-      when: "player and Alex share their truth with each other"
-      sketch: "Alex's hand finds yours. 'Thank you for not giving up on me.'"
+      when: "player and Alex leave the café together"
+      sketch: "Alex's hand finds yours as you leave the café. 'Thank you for not giving up on me.'"
       
     - id: "missed_chance"
       when: ["player lets Alex leave without resolution", "conversation spirals into hurt"]

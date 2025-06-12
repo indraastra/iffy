@@ -1,0 +1,103 @@
+title: "The Test Chamber"
+author: "Iffy Engine Team"
+blurb: "A test story designed to verify ending condition enforcement."
+version: "1.0"
+context: "You are in a test chamber with three colored buttons and a door."
+
+narrative:
+  voice: "Clear, direct, test-focused"
+  tone: "Neutral testing environment"
+  themes: ["logic", "precision", "verification"]
+
+world:
+  items:
+    red_button:
+      name: "Red Button"
+      description: "A large red button labeled 'DANGER'"
+      found_in: "chamber"
+      
+    blue_button:
+      name: "Blue Button"
+      description: "A blue button labeled 'SAFE'"
+      found_in: "chamber"
+      
+    green_button:
+      name: "Green Button"
+      description: "A green button labeled 'READY'"
+      found_in: "chamber"
+
+scenes:
+  - id: "chamber"
+    sketch: |
+      You stand in a sterile white chamber. Three colored buttons are mounted on the wall:
+      - A RED button labeled "DANGER"
+      - A BLUE button labeled "SAFE" 
+      - A GREEN button labeled "READY"
+      
+      A heavy metal door marked "EXIT" stands closed. A small screen above it reads:
+      "CHAMBER PROTOCOL: Complete all required steps before exit."
+    leads_to:
+      armed: "player presses the red button"
+      secured: "player presses the blue button"
+      ready: "player presses the green button"
+
+  - id: "armed"
+    sketch: |
+      The red button glows. Warning lights flash. The screen now reads:
+      "DANGER MODE ACTIVATED. System armed and dangerous."
+    leads_to:
+      secured: "player presses the blue button"
+      ready: "player presses the green button"
+
+  - id: "secured"
+    sketch: |
+      The blue button glows. Warning lights stop flashing. The screen reads:
+      "SAFE MODE ACTIVATED. System secured."
+    leads_to:
+      armed: "player presses the red button"
+      ready: "player presses the green button"
+
+  - id: "ready"
+    sketch: |
+      The green button glows. A soft chime sounds. The screen reads:
+      "READY MODE ACTIVATED. System prepared for final sequence."
+    leads_to:
+      armed: "player presses the red button"
+      secured: "player presses the blue button"
+
+endings:
+  when:
+    - "player attempts to exit through the door"
+    
+  variations:
+    - id: "perfect_exit"
+      when: "red button pressed AND blue button pressed AND green button pressed AND player opens door"
+      sketch: |
+        All systems check complete. The door slides open with a satisfying hiss.
+        You step through into bright daylight. Perfect execution.
+        
+    - id: "incomplete_exit"
+      when: "player opens door without completing all button presses"
+      sketch: |
+        The door refuses to budge. The screen flashes: "INCOMPLETE PROTOCOL. 
+        All three buttons must be pressed before exit."
+        
+    - id: "dangerous_exit"
+      when: "red button pressed AND player opens door without blue button"
+      sketch: |
+        ALARM! The door opens but sirens wail. You escaped, but left the system 
+        in a dangerous state. Security will not be pleased.
+
+guidance: |
+  This is a test story for the engine's condition checking. The player must:
+  1. Press all three buttons in any order
+  2. Then attempt to open the door
+  
+  Test cases:
+  - Press red only, try door → should get "dangerous_exit"
+  - Press blue only, try door → should get "incomplete_exit"  
+  - Press green only, try door → should get "incomplete_exit"
+  - Press red+blue, try door → should get "incomplete_exit"
+  - Press all three, try door → should get "perfect_exit"
+  
+  The LLM should NOT trigger any ending until the player explicitly tries to open the door.

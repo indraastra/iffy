@@ -33,6 +33,10 @@ export class LLMDirector {
     try {
       const startTime = performance.now();
       const prompt = this.buildPrompt(input, context);
+      
+      // Log raw prompt to console
+      console.log('📤 Raw LLM Prompt:', prompt);
+      
       const response = await this.anthropicService.makeRequestWithUsage(prompt);
       const latencyMs = performance.now() - startTime;
       
@@ -113,26 +117,43 @@ ${worldParts.join('\n')}
 
     // Endings
     if (context.availableEndings && context.availableEndings.variations.length > 0) {
-      prompt += `ENDINGS:
-`;
-      
       if (context.availableEndings.when) {
         const globalConditions = Array.isArray(context.availableEndings.when) 
           ? context.availableEndings.when.join(' AND ') 
           : context.availableEndings.when;
-        prompt += `Global Requirements: ${globalConditions}\n`;
+        prompt += `ENDING REQUIREMENTS (must be met for ANY ending): ${globalConditions}\n\n`;
       }
       
-      prompt += `Variations:
-${context.availableEndings.variations
-  .map(ending => `• ${ending.id}: ${Array.isArray(ending.when) ? ending.when.join(' OR ') : ending.when} → ${ending.sketch}`)
-  .join('\n')}
-
-`;
+      prompt += `ENDING TRANSITIONS:\n`;
+      prompt += context.availableEndings.variations
+        .map(ending => {
+          let conditionText;
+          if (Array.isArray(ending.when)) {
+            // Handle nested arrays for AND/OR logic
+            if (ending.when.some(condition => Array.isArray(condition))) {
+              // Contains nested arrays - these are AND groups
+              conditionText = ending.when
+                .map(condition => Array.isArray(condition) ? `(${condition.join(' AND ')})` : condition)
+                .join(' OR ');
+            } else {
+              // Simple array - OR conditions
+              conditionText = ending.when.join(' OR ');
+            }
+          } else {
+            conditionText = ending.when;
+          }
+          return `• ${ending.id}:\n  REQUIRES: ${conditionText}\n  ENDING SKETCH: ${ending.sketch}`;
+        })
+        .join('\n\n');
+      prompt += '\n\nCRITICAL: Only trigger an ending if BOTH the global requirements AND the specific ending conditions are met.\n';
+      prompt += 'BEFORE triggering any ending, verify:\n';
+      prompt += '1. Global requirements: Have ALL global ending requirements been satisfied?\n';
+      prompt += '2. Specific requirements: Have ALL conditions for this specific ending been satisfied?\n';
+      prompt += '3. If ANY requirement is missing, DO NOT trigger the ending - continue the scene instead.\n\n';
     }
 
     // Current Scene
-    prompt += `CURRENT SCENE: "${context.currentSketch.split('\n')[0] || 'current scene'}"
+    prompt += `CURRENT SCENE SKETCH:
 ${context.currentSketch}
 
 `;
@@ -141,8 +162,8 @@ ${context.currentSketch}
     if (context.currentTransitions && Object.keys(context.currentTransitions).length > 0) {
       prompt += `SCENE TRANSITIONS:
 ${Object.entries(context.currentTransitions)
-  .map(([sceneId, data]) => `• ${data.condition} → ${sceneId}\n  ${data.sketch}`)
-  .join('\n')}
+  .map(([sceneId, data]) => `• ${sceneId}:\n  REQUIRES: ${data.condition}\n  SKETCH: ${data.sketch}`)
+  .join('\n\n')}
 
 `;
     }
@@ -183,10 +204,18 @@ Do not trigger new scene transitions or endings. Focus on reflection and explora
     // Player Action
     prompt += `PLAYER ACTION: "${input}"
 
+HOW TO USE THE SKETCHES AND TRANSITIONS:
+- Current scene sketch: Use this as your foundation, expanding it with rich sensory details
+- Scene transitions: Only trigger when REQUIRES condition is naturally met by player actions
+- Ending transitions: Only trigger when REQUIRES condition is naturally met AND global ending requirements are satisfied
+- All sketches: Incorporate directly into your narrative when their conditions are met
+- Think of sketches as impressionist paintings - add color, texture, and emotion to the basic outline
+
 INTERACTION PRINCIPLES:
 - If player takes an action, describe only the outcome of that action; let them decide what to do next
-- Only trigger endings when player explicitly attempts to complete the story
 - Let the player drive the pacing and sequence of events
+- Build naturally from the current scene sketch, adding atmosphere and detail
+- Only trigger transitions when the player's actions genuinely satisfy the conditions
 
 Respond with ONLY a JSON object. No explanations or text after the JSON.
 
@@ -194,6 +223,7 @@ REQUIRED JSON FORMAT:
 {
   "narrative": "Your descriptive response",
   "importance": 1-10,
+  "reasoning": "Explain your decision-making process, especially for transitions and endings",
   "signals": {
     "transition": "ending:ACTUAL_ENDING_ID" OR "scene:ACTUAL_SCENE"
   }
@@ -203,6 +233,7 @@ REQUIRED JSON FORMAT:
 - For scene changes: "transition": "scene:ACTUAL_SCENE_ID"
 - ONLY use ending/scene IDs that actually exist in the current story
 - Importance scale: 1-3 routine, 4-6 meaningful, 7-9 major moments, 10 story-defining.
+- Reasoning: Always explain why you chose this response, especially if triggering transitions
 
 JSON only:`;
 
@@ -313,7 +344,11 @@ JSON only:`;
       }
       
       const narrative = parsed.narrative || "I'm not sure how to respond to that right now.";
+      const reasoning = parsed.reasoning || "No reasoning provided";
       const signals: DirectorSignals = {};
+      
+      // Log reasoning for debugging
+      console.log('🧠 LLM Reasoning:', reasoning);
       
       // Extract importance score if present (1-10 scale)
       let importance: number | undefined;
@@ -343,6 +378,7 @@ JSON only:`;
           response: { 
             narrative, 
             signals,
+            reasoning,
             tokenCount: this.estimateTokens({ text: rawResponse }),
             importance
           },
