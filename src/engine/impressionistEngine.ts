@@ -129,7 +129,8 @@ export class ImpressionistEngine {
         // Track this post-ending interaction
         this.trackInteraction(action.input, response.narrative, {
           postEnding: true,
-          llmImportance: response.importance
+          llmImportance: response.importance,
+          memories: response.memories
         });
         
         return {
@@ -187,7 +188,8 @@ export class ImpressionistEngine {
         usage: (response as any).usage,
         latencyMs: (response as any).latencyMs,
         signals: response.signals,
-        llmImportance: response.importance
+        llmImportance: response.importance,
+        memories: response.memories
       });
 
       return {
@@ -205,6 +207,7 @@ export class ImpressionistEngine {
       };
     }
   }
+
 
   /**
    * Get current scene from story
@@ -391,9 +394,18 @@ export class ImpressionistEngine {
       this.gameState.interactions = this.gameState.interactions.slice(-this.INTERACTION_ROLLING_WINDOW);
     }
 
-    // Add to memory manager for long-term storage
-    const interactionMemory = `Player: ${playerInput}\nResponse: ${llmResponse}`;
-    this.memoryManager.addMemory(interactionMemory, importance);
+    // Add specific memories to memory manager if LLM provided them
+    if (metadata?.memories && Array.isArray(metadata.memories)) {
+      metadata.memories.forEach((memory: string) => {
+        this.memoryManager.addMemory(memory, importance);
+      });
+      console.log(`💭 Stored ${metadata.memories.length} specific memories from LLM (importance: ${importance})`);
+    } else {
+      // Fallback: store full interaction as before when no specific memories provided
+      const interactionMemory = `Player: ${playerInput}\nResponse: ${llmResponse}`;
+      this.memoryManager.addMemory(interactionMemory, importance);
+      console.log(`💭 Stored full interaction as memory (importance: ${importance})`);
+    }
 
     const importanceSource = llmImportance ? 'LLM' : 'heuristic';
     console.log(`💭 Tracked interaction (importance: ${importance}/${importanceSource}): "${playerInput}" -> "${llmResponse.substring(0, 50)}..."`);

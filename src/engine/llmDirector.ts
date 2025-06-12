@@ -60,6 +60,7 @@ export class LLMDirector {
     }
   }
 
+
   /**
    * Build consolidated high-to-low level prompt for LLM
    */
@@ -177,7 +178,7 @@ ${Object.entries(context.currentTransitions)
           `Response: ${interaction.llmResponse}`
         ]);
       
-      prompt += `RECENT CONVERSATION:
+      prompt += `RECENT CONVERSATION (oldest to newest):
 ${recentDialogue.join('\n')}
 
 `;
@@ -185,7 +186,7 @@ ${recentDialogue.join('\n')}
 
     // Recent Memory
     if (context.activeMemory && context.activeMemory.length > 0) {
-      prompt += `RECENT MEMORY:
+      prompt += `RECENT MEMORY (oldest to newest):
 ${context.activeMemory.join('\n')}
 
 `;
@@ -224,6 +225,7 @@ REQUIRED JSON FORMAT:
   "narrative": "Your descriptive response",
   "importance": 1-10,
   "reasoning": "Explain your decision-making process, especially for transitions and endings",
+  "memories": ["new memory 1", "new memory 2"],
   "signals": {
     "transition": "ending:ACTUAL_ENDING_ID" OR "scene:ACTUAL_SCENE"
   }
@@ -233,6 +235,7 @@ REQUIRED JSON FORMAT:
 - For scene changes: "transition": "scene:ACTUAL_SCENE_ID"
 - ONLY use ending/scene IDs that actually exist in the current story
 - Importance scale: 1-3 routine, 4-6 meaningful, 7-9 major moments, 10 story-defining.
+- Memories: Extract 0-3 NEW, factual memories from this interaction (what the player did, what was discovered, important story developments from exchange)
 - Reasoning: Always explain why you chose this response, especially if triggering transitions
 
 JSON only:`;
@@ -371,6 +374,19 @@ JSON only:`;
         if (parsed.signals.discover) signals.discover = String(parsed.signals.discover);
       }
       
+      // Extract memories if present
+      let memories: string[] | undefined;
+      if (parsed.memories && Array.isArray(parsed.memories)) {
+        memories = parsed.memories
+          .filter((memory: any) => typeof memory === 'string' && memory.trim().length > 0)
+          .map((memory: any) => String(memory).trim())
+          .slice(0, 3); // Limit to max 3 memories as suggested in prompt
+        
+        if (memories && memories.length === 0) {
+          memories = undefined;
+        }
+      }
+      
       // Log to debug pane if available
       if (this.debugPane) {
         this.debugPane.logLlmCall({
@@ -393,7 +409,8 @@ JSON only:`;
       return {
         narrative,
         signals: Object.keys(signals).length > 0 ? signals : undefined,
-        importance
+        importance,
+        memories
       };
       
     } catch (error) {

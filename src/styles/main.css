@@ -238,7 +238,7 @@ body {
   max-height: 10rem;
   line-height: 1.4;
   overflow-y: hidden;
-  transition: height 0.1s ease;
+  field-sizing: content;
 }
 
 .command-input:focus {

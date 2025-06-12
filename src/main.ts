@@ -43,7 +43,6 @@ class ImpressionistIffyApp {
     this.setupGlobalEventListeners();
     this.displayWelcomeMessage();
     this.createDebugToggle();
-    this.setupAutoResizeTextarea();
     this.setupSettings();
   }
 
@@ -103,23 +102,6 @@ class ImpressionistIffyApp {
     console.log('Impressionist Iffy Engine initialized');
   }
 
-  /**
-   * Set up auto-resize for textarea
-   */
-  private setupAutoResizeTextarea(): void {
-    const commandInput = document.getElementById('command-input') as HTMLTextAreaElement;
-    
-    const autoResize = () => {
-      commandInput.style.height = 'auto';
-      commandInput.style.height = Math.min(commandInput.scrollHeight, 150) + 'px';
-    };
-    
-    commandInput.addEventListener('input', autoResize);
-    commandInput.addEventListener('paste', () => setTimeout(autoResize, 0));
-    
-    // Initial resize
-    autoResize();
-  }
 
   /**
    * Set up settings management

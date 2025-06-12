@@ -152,8 +152,8 @@ describe('ImpressionistEngine', () => {
     });
 
     it('should save and restore all interactions with metadata', async () => {
-      // Mock Anthropic service
-      const mockAnthropicService = {
+      // Mock MultiModel service
+      const mockMultiModelService = {
         isConfigured: () => true,
         makeRequestWithUsage: vi.fn()
           .mockResolvedValueOnce({
@@ -166,7 +166,7 @@ describe('ImpressionistEngine', () => {
           })
       };
 
-      const testEngine = new (ImpressionistEngine as any)(mockAnthropicService);
+      const testEngine = new (ImpressionistEngine as any)(mockMultiModelService);
       testEngine.loadStory(mockStory);
       
       // Create multiple interactions
@@ -185,7 +185,7 @@ describe('ImpressionistEngine', () => {
       expect(parsedSave.gameState.interactions[1].importance).toBe(5);
       
       // Load into new engine
-      const newEngine = new (ImpressionistEngine as any)(mockAnthropicService);
+      const newEngine = new (ImpressionistEngine as any)(mockMultiModelService);
       newEngine.loadStory(mockStory);
       const loadResult = newEngine.loadGame(saveData);
       
@@ -339,8 +339,8 @@ describe('ImpressionistEngine', () => {
     });
 
     it('should track structured interactions', async () => {
-      // Mock Anthropic service for this test
-      const mockAnthropicService = {
+      // Mock MultiModel service for this test
+      const mockMultiModelService = {
         isConfigured: () => true,
         makeRequestWithUsage: vi.fn().mockResolvedValue({
           content: JSON.stringify({
@@ -351,7 +351,7 @@ describe('ImpressionistEngine', () => {
         })
       };
 
-      const engineWithMock = new (ImpressionistEngine as any)(mockAnthropicService);
+      const engineWithMock = new (ImpressionistEngine as any)(mockMultiModelService);
       engineWithMock.loadStory(mockStory);
       
       const response = await engineWithMock.processAction({ input: 'test action' });

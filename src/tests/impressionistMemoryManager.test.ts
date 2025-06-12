@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ImpressionistMemoryManager } from '@/engine/impressionistMemoryManager';
 
 // Mock Anthropic service
-const mockAnthropicService = {
+const mockMultiModelService = {
   isConfigured: vi.fn().mockReturnValue(false),
   makeRequest: vi.fn().mockResolvedValue(JSON.stringify({
     compactedMemories: [
@@ -20,7 +20,7 @@ describe('ImpressionistMemoryManager', () => {
   let memoryManager: ImpressionistMemoryManager;
 
   beforeEach(() => {
-    memoryManager = new ImpressionistMemoryManager(mockAnthropicService as any);
+    memoryManager = new ImpressionistMemoryManager(mockMultiModelService as any);
     vi.clearAllMocks();
   });
 
@@ -107,14 +107,14 @@ describe('ImpressionistMemoryManager', () => {
 
   describe('compaction', () => {
     it('should not trigger compaction when LLM is not configured', () => {
-      mockAnthropicService.isConfigured.mockReturnValue(false);
+      mockMultiModelService.isConfigured.mockReturnValue(false);
       
       // Add enough memories to trigger compaction
       for (let i = 0; i < 10; i++) {
         memoryManager.addMemory(`Memory ${i}`);
       }
       
-      expect(mockAnthropicService.makeRequest).not.toHaveBeenCalled();
+      expect(mockMultiModelService.makeRequest).not.toHaveBeenCalled();
     });
 
     it('should set compaction interval', () => {

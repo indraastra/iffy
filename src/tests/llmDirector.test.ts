@@ -4,16 +4,16 @@ import { DirectorContext } from '@/types/impressionistStory';
 
 describe('LLMDirector', () => {
   let director: LLMDirector;
-  let mockAnthropicService: any;
+  let mockMultiModelService: any;
   let mockContext: DirectorContext;
 
   beforeEach(() => {
-    mockAnthropicService = {
+    mockMultiModelService = {
       isConfigured: () => true,
       makeRequestWithUsage: vi.fn()
     };
     
-    director = new LLMDirector(mockAnthropicService);
+    director = new LLMDirector(mockMultiModelService);
     
     mockContext = {
       storyContext: 'Test story context',
@@ -33,7 +33,7 @@ describe('LLMDirector', () => {
         signals: { transition: 'scene:next_scene' }
       });
       
-      mockAnthropicService.makeRequestWithUsage.mockResolvedValue({
+      mockMultiModelService.makeRequestWithUsage.mockResolvedValue({
         content: cleanJson,
         usage: { input_tokens: 100, output_tokens: 50 }
       });
@@ -43,6 +43,45 @@ describe('LLMDirector', () => {
       expect(response.narrative).toBe('Test response');
       expect(response.importance).toBe(5);
       expect(response.signals?.scene).toBe('next_scene');
+    });
+
+    it('should parse memories from JSON response', async () => {
+      const jsonWithMemories = JSON.stringify({
+        narrative: 'You find a key and unlock the door.',
+        importance: 7,
+        reasoning: 'Player discovered key and progressed',
+        memories: ['Player found brass key', 'Door was unlocked', 'Room is now accessible']
+      });
+      
+      mockMultiModelService.makeRequestWithUsage.mockResolvedValue({
+        content: jsonWithMemories,
+        usage: { input_tokens: 100, output_tokens: 50 }
+      });
+      
+      const response = await director.processInput('take key', mockContext);
+      
+      expect(response.narrative).toBe('You find a key and unlock the door.');
+      expect(response.importance).toBe(7);
+      expect(response.memories).toEqual(['Player found brass key', 'Door was unlocked', 'Room is now accessible']);
+    });
+
+    it('should handle empty or invalid memories array', async () => {
+      const jsonWithEmptyMemories = JSON.stringify({
+        narrative: 'Nothing significant happens.',
+        importance: 2,
+        reasoning: 'Routine action',
+        memories: []
+      });
+      
+      mockMultiModelService.makeRequestWithUsage.mockResolvedValue({
+        content: jsonWithEmptyMemories,
+        usage: { input_tokens: 100, output_tokens: 50 }
+      });
+      
+      const response = await director.processInput('look around', mockContext);
+      
+      expect(response.narrative).toBe('Nothing significant happens.');
+      expect(response.memories).toBeUndefined(); // Empty arrays should become undefined
     });
 
     it('should extract JSON when LLM adds explanation after', async () => {
@@ -57,7 +96,7 @@ describe('LLMDirector', () => {
 
 The high importance (7) reflects this being a major puzzle-solving moment.`;
       
-      mockAnthropicService.makeRequestWithUsage.mockResolvedValue({
+      mockMultiModelService.makeRequestWithUsage.mockResolvedValue({
         content: jsonWithExplanation,
         usage: { input_tokens: 100, output_tokens: 50 }
       });
@@ -80,7 +119,7 @@ The high importance (7) reflects this being a major puzzle-solving moment.`;
         }
       });
       
-      mockAnthropicService.makeRequestWithUsage.mockResolvedValue({
+      mockMultiModelService.makeRequestWithUsage.mockResolvedValue({
         content: nestedJson + '\n\nThis demonstrates nested signals.',
         usage: { input_tokens: 100, output_tokens: 50 }
       });
@@ -93,7 +132,7 @@ The high importance (7) reflects this being a major puzzle-solving moment.`;
     });
 
     it('should handle malformed JSON gracefully', async () => {
-      mockAnthropicService.makeRequestWithUsage.mockResolvedValue({
+      mockMultiModelService.makeRequestWithUsage.mockResolvedValue({
         content: 'This is not JSON at all',
         usage: { input_tokens: 100, output_tokens: 50 }
       });
@@ -109,7 +148,7 @@ The high importance (7) reflects this being a major puzzle-solving moment.`;
   "narrative": "Test response",
   "importance": 5`;
       
-      mockAnthropicService.makeRequestWithUsage.mockResolvedValue({
+      mockMultiModelService.makeRequestWithUsage.mockResolvedValue({
         content: incompleteJson,
         usage: { input_tokens: 100, output_tokens: 50 }
       });
