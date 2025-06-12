@@ -10,6 +10,10 @@ import { AnthropicService } from '@/services/anthropicService';
 export class LLMDirector {
   private anthropicService: AnthropicService;
   private debugPane?: any;
+  
+  // Configuration constants
+  private static readonly POST_ENDING_INTERACTION_LIMIT = 5;
+  private static readonly REGULAR_INTERACTION_LIMIT = 10;
 
   constructor(anthropicService?: AnthropicService) {
     this.anthropicService = anthropicService || new AnthropicService();
@@ -53,6 +57,10 @@ export class LLMDirector {
    * Build consolidated high-to-low level prompt for LLM
    */
   private buildPrompt(input: string, context: DirectorContext): string {
+    // Use simplified prompt for post-ending interactions
+    if (context.storyComplete) {
+      return this.buildPostEndingPrompt(input, context);
+    }
     let prompt = `You are the director of an impressionistic interactive fiction story. Paint scenes from minimal sketches and respond naturally to player actions.
 
 STORY: "${context.storyContext.split('\n')[0] || 'Interactive Fiction'}"
@@ -139,7 +147,7 @@ ${Object.entries(context.currentTransitions)
     // Recent Interactions
     if (context.recentInteractions && context.recentInteractions.length > 0) {
       const recentDialogue = context.recentInteractions
-        .slice(-10) // Last 10 interactions
+        .slice(-LLMDirector.REGULAR_INTERACTION_LIMIT)
         .flatMap(interaction => [
           `Player: ${interaction.playerInput}`,
           `Response: ${interaction.llmResponse}`
@@ -179,14 +187,76 @@ Response format:
   "narrative": "Your descriptive response",
   "importance": 5,
   "signals": {
-    "scene": "scene_id",     // Optional: transition to new scene
-    "ending": "ending_id",   // Optional: trigger story ending  
+    "transition": "scene:scene_id OR ending:ending_id",  // Optional: single transition
     "discover": "item_id"    // Optional: discover an item
   }
 }
 
 Importance scale: 1-3 routine, 4-6 meaningful, 7-9 major moments, 10 story-defining.
 Paint scenes with rich detail while staying true to impressionistic sketches.
+
+TRANSITION FORMAT:
+- For scene changes: "scene:scene_id" (e.g., "scene:forest_clearing")
+- For story endings: "ending:ending_id" (e.g., "ending:victory")
+- If ending, fully flesh out the conclusion in your narrative
+- If unknown ending_id, describe the natural conclusion - the engine will handle it as an impromptu ending
+
+JSON only:`;
+
+    return prompt;
+  }
+
+  /**
+   * Build simplified prompt for post-ending interactions (reflection, questions, exploration)
+   */
+  private buildPostEndingPrompt(input: string, context: DirectorContext): string {
+    let prompt = `You are helping a player reflect on a completed interactive fiction story. The story has ended and the player is now asking questions, reflecting, or exploring what happened.
+
+STORY: "${context.storyContext.split('\n')[0] || 'Interactive Fiction'}"
+${context.storyContext}
+
+`;
+
+    // Include ending information if available
+    if (context.endingId && context.availableEndings) {
+      const ending = context.availableEndings.variations.find(e => e.id === context.endingId);
+      if (ending) {
+        prompt += `STORY ENDING: "${context.endingId}"
+${ending.sketch}
+
+`;
+      }
+    }
+
+    // Include recent interactions for context
+    if (context.recentInteractions && context.recentInteractions.length > 0) {
+      const recentDialogue = context.recentInteractions
+        .slice(-LLMDirector.POST_ENDING_INTERACTION_LIMIT)
+        .map(interaction => `${interaction.playerInput} → ${interaction.llmResponse}`)
+        .join('\n');
+        
+      prompt += `RECENT CONVERSATION:
+${recentDialogue}
+
+`;
+    }
+
+    prompt += `PLAYER QUESTION/REFLECTION: "${input}"
+
+Respond thoughtfully to help the player understand, reflect on, or explore the story they just experienced. You can:
+- Answer questions about what happened
+- Provide insights into character motivations
+- Discuss themes and meanings
+- Explore "what if" scenarios
+- Clarify plot points
+
+Since the story is complete, do NOT use any transition signals. Focus on meaningful dialogue.
+
+Response format:
+{
+  "narrative": "Your thoughtful response",
+  "importance": 5
+}
 
 JSON only:`;
 
@@ -250,8 +320,16 @@ JSON only:`;
       
       // Extract signals if present
       if (parsed.signals && typeof parsed.signals === 'object') {
-        if (parsed.signals.scene) signals.scene = String(parsed.signals.scene);
-        if (parsed.signals.ending) signals.ending = String(parsed.signals.ending);
+        // Handle transition format
+        if (parsed.signals.transition) {
+          const transition = String(parsed.signals.transition);
+          if (transition.startsWith('scene:')) {
+            signals.scene = transition.substring(6); // Remove "scene:" prefix
+          } else if (transition.startsWith('ending:')) {
+            signals.ending = transition.substring(7); // Remove "ending:" prefix
+          }
+        }
+        
         if (parsed.signals.discover) signals.discover = String(parsed.signals.discover);
       }
       

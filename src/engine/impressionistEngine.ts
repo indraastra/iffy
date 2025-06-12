@@ -30,9 +30,10 @@ export interface GameResponse {
 
 export class ImpressionistEngine {
   // Configuration constants
-  private readonly DIALOGUE_HISTORY_LIMIT = 60; // lines (30 exchanges)
   private readonly CONTEXT_MEMORIES_LIMIT = 10; // memories passed to LLM context
   private readonly MEMORY_COMPACTION_FREQUENCY = 5; // compact every N memories
+  private readonly INTERACTION_ROLLING_WINDOW = 20; // max interactions stored in state
+  private readonly IMPROMPTU_ENDING_MESSAGE = "The story reaches its natural conclusion.";
   
   private story: ImpressionistStory | null = null;
   private gameState: ImpressionistState = this.createInitialState();
@@ -288,9 +289,6 @@ export class ImpressionistEngine {
       this.triggerEnding(response.signals.ending);
     }
 
-    // Memory management is handled automatically by the memory manager
-    // All interactions are captured and the compactor will consolidate them intelligently
-
     // Item discovery
     if (response.signals.discover) {
       this.handleItemDiscovery(response.signals.discover);
@@ -329,7 +327,16 @@ export class ImpressionistEngine {
         this.endingCallback(ending.sketch);
       }
     } else {
-      console.warn(`Ending trigger failed: ending ${endingId} not found`);
+      // Handle impromptu/unexpected ending - LLM decided to end the story
+      console.log(`Impromptu ending triggered: ${endingId}`);
+      this.gameState.isEnded = true;
+      this.gameState.endingId = endingId;
+      
+      // For impromptu endings, the LLM should have already fleshed out the ending in the narrative
+      // So we call the callback with a generic message
+      if (this.endingCallback) {
+        this.endingCallback(this.IMPROMPTU_ENDING_MESSAGE);
+      }
     }
   }
 
@@ -379,10 +386,10 @@ export class ImpressionistEngine {
       } : undefined
     };
 
-    // Add to game state interactions with limit
+    // Add to game state interactions with rolling window limit
     this.gameState.interactions.push(interaction);
-    if (this.gameState.interactions.length > this.DIALOGUE_HISTORY_LIMIT / 2) {
-      this.gameState.interactions = this.gameState.interactions.slice(-this.DIALOGUE_HISTORY_LIMIT / 2);
+    if (this.gameState.interactions.length > this.INTERACTION_ROLLING_WINDOW) {
+      this.gameState.interactions = this.gameState.interactions.slice(-this.INTERACTION_ROLLING_WINDOW);
     }
 
     // Add to memory manager for long-term storage
