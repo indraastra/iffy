@@ -29,7 +29,8 @@ describe('LLMDirector', () => {
       const cleanJson = JSON.stringify({
         narrative: 'Test response',
         importance: 5,
-        signals: { scene: 'next_scene' }
+        reasoning: 'Test reasoning',
+        signals: { transition: 'scene:next_scene' }
       });
       
       mockAnthropicService.makeRequestWithUsage.mockResolvedValue({
@@ -48,6 +49,7 @@ describe('LLMDirector', () => {
       const jsonWithExplanation = `{
   "narrative": "You carefully extract the brass key from its newspaper cocoon.",
   "importance": 7,
+  "reasoning": "This is a key moment in the puzzle",
   "signals": {
     "discover": "brass_key"
   }
@@ -71,9 +73,10 @@ The high importance (7) reflects this being a major puzzle-solving moment.`;
       const nestedJson = JSON.stringify({
         narrative: 'Complex response',
         importance: 8,
+        reasoning: 'Time for the finale!',
         signals: {
-          scene: 'finale',
-          ending: 'victory'
+          transition: 'scene:finale',
+          discover: 'secret'
         }
       });
       
@@ -86,7 +89,7 @@ The high importance (7) reflects this being a major puzzle-solving moment.`;
       
       expect(response.narrative).toBe('Complex response');
       expect(response.signals?.scene).toBe('finale');
-      expect(response.signals?.ending).toBe('victory');
+      expect(response.signals?.discover).toBe('secret');
     });
 
     it('should handle malformed JSON gracefully', async () => {

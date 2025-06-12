@@ -1,20 +1,8 @@
-# Complete Story Format Reference
+# Iffy Story Format Reference
 
-Iffy supports two distinct story formats, each designed for different authoring styles. Both formats create the same immersive, AI-powered interactive experiences, but offer different levels of control and complexity.
+Iffy uses an **Impressionist format** that lets you sketch atmospheric scenes and trust the AI to bring them to life naturally. Perfect for emergent storytelling where player creativity drives the narrative.
 
-## Quick Format Comparison
-
-| Aspect | **Impressionist Format** | **Traditional Format** |
-|--------|-------------------------|------------------------|
-| **Best for** | Emergent storytelling, quick prototypes | Detailed control, complex branching |
-| **Writing style** | Atmospheric sketches | Structured flows and dialogue |
-| **Player freedom** | High - AI interprets creatively | Moderate - guided through defined paths |
-| **Setup time** | Quick - minimal structure needed | Longer - detailed world building |
-| **AI behavior** | Interpretive and creative | Following specific rules |
-
-## Format 1: Impressionist (Recommended for Beginners)
-
-The Impressionist format lets you sketch scenes and characters, then trust the AI to bring them to life naturally. Perfect for emergent storytelling where player creativity drives the narrative.
+## Story Structure
 
 ### Basic Structure
 
@@ -28,13 +16,17 @@ context: "Brief story setup for the AI"
 scenes:
   - id: "scene_name"
     sketch: "Atmospheric description of the scene"
-    leads_to:
+    leads_to:                                    # Optional - for multi-scene stories
       next_scene: "when something specific happens"
 
 endings:
-  - id: "ending_name"
-    when: "natural language condition"
-    sketch: "How the story concludes"
+  when:                                          # Global requirements for ANY ending
+    - "conversation has concluded"
+    - "player attempts to leave"
+  variations:
+    - id: "ending_name"
+      when: "specific conditions for this ending"
+      sketch: "How the story concludes"
 
 guidance: |
   Instructions for how the AI should behave and interpret player actions.
@@ -84,27 +76,32 @@ scenes:
 - **leads_to**: Optional scene transitions with natural language triggers
 
 #### Endings
-Define how your story can conclude:
+Define how your story can conclude with global requirements and specific ending conditions:
 
 ```yaml
 endings:
-  - id: "temporal_understanding"
-    when: "player grasps the garden's true nature"
-    sketch: |
-      You understand now - the garden exists in all times at once. 
-      As you step through the gate, you carry this secret forever.
-      
-  - id: "lost_in_time"
-    when: ["player becomes confused", "stays too long"]
-    sketch: |
-      The garden keeps you, adding your voice to the fountain's whispers.
-      Another soul learning that some mysteries consume those who seek them.
+  when:                                    # Global requirements for ANY ending
+    - "conversation has concluded"
+    - "player attempts to leave the garden"
+  variations:
+    - id: "temporal_understanding"
+      when: "player grasps the garden's true nature AND leaves peacefully"
+      sketch: |
+        You understand now - the garden exists in all times at once. 
+        As you step through the gate, you carry this secret forever.
+        
+    - id: "lost_in_time"
+      when: "player becomes confused OR stays too long"
+      sketch: |
+        The garden keeps you, adding your voice to the fountain's whispers.
+        Another soul learning that some mysteries consume those who seek them.
 ```
 
 **Ending Guidelines**:
-- **when**: Natural language condition(s) that trigger this ending
+- **when** (global): Requirements that must be met for ANY ending to trigger
+- **when** (per ending): Specific conditions for this particular ending
 - **sketch**: The conclusion narrative
-- Multiple conditions can be listed as an array
+- The AI enforces BOTH global and specific conditions before triggering endings
 
 #### AI Guidance
 The `guidance` section tells the AI how to interpret your story:
@@ -119,7 +116,7 @@ guidance: |
   Be mysterious but not frustrating. Give enough clues for curious players.
 ```
 
-### Advanced Impressionist Features
+### Advanced Features
 
 #### Rich World Building
 Add optional detail when your story needs it:
@@ -171,7 +168,7 @@ scenes:
       time_escape: "if they try to leave quickly"
 ```
 
-### Impressionist Best Practices
+### Best Practices
 
 **Do:**
 - Write evocative, atmospheric scene descriptions
@@ -186,7 +183,7 @@ scenes:
 - Assume players will do exactly what you expect
 - Forget to provide AI guidance for complex themes
 
-### Example: Complete Impressionist Story
+### Example: Complete Story
 
 ```yaml
 title: "The Last Library"
@@ -245,199 +242,50 @@ guidance: |
   discover SAGE's history gradually through conversation and exploration.
 ```
 
-## Format 2: Traditional (For Detailed Control)
+## Single-Scene vs Multi-Scene Stories
 
-Traditional format provides precise control over story flow, character dialogue, and player choices. Use this when you want to craft specific narrative paths and detailed character interactions.
+### Single-Scene Stories
+Perfect for focused, intimate experiences:
 
-### Core Traditional Elements
-
-#### Story Structure
 ```yaml
-title: "Story Name"
-author: "Your Name"
-version: "1.0"
-blurb: "Brief description"
+scenes:
+  - id: "cafe_evening"
+    sketch: |
+      The coffee shop is closing, rain streaks the windows, and Alex
+      seems nervous about something important they want to tell you.
 
-metadata:
-  setting:
-    time: "When the story takes place"
-    place: "Where it happens"
-  tone:
-    overall: "Story mood"
-    narrative_voice: "POV description"
-
-characters:
-  - id: "character_id"
-    name: "Character Name"
-    traits: ["trait1", "trait2"]
-    voice: "How they speak"
-    description: "Background and personality"
-
-locations:
-  - id: "location_id" 
-    name: "Location Name"
-    description: |
-      Detailed location description with atmospheric details.
-    connections: ["other_location_id"]
-    objects:
-      - name: "Object Name"
-        description: "What players see"
-
-items:
-  - id: "item_id"
-    name: "Item Name"
-    description: "What it looks like and does"
-    location: "where_it_starts"  # or discoverable_in for hidden items
-
-flows:
-  - id: "flow_id"
-    type: "narrative"  # or "dialogue"
-    name: "Flow Name"
-    content: |
-      The narrative content that plays.
-    requirements: ["previous_flow", "has_item:key"]
-    sets: ["flag_name"]
-    next:
-      - type: "narrative"
-        trigger: "examine door"
-        flow_id: "door_examination"
-
-start:
-  text: "Opening story text"
-  location: "starting_location"
+endings:
+  when:
+    - "conversation has concluded"
+    - "someone leaves the cafe"
+  variations:
+    - id: "connection"
+      when: "mutual feelings are shared AND they leave together"
+      sketch: "You walk into the rain together, finally understanding."
 ```
 
-#### Flow Types
+### Multi-Scene Stories
+For exploration and progression:
 
-**Narrative Flows** - Story beats and interactions:
 ```yaml
-flows:
-  - id: "mysterious_door"
-    type: "narrative"
-    name: "The Locked Door"
-    content: |
-      You stand before an ancient wooden door, its iron handle cold
-      to the touch. Strange symbols are carved into the weathered oak,
-      and you hear faint whispers from beyond.
-    requirements: ["entered_hallway"]
-    sets: ["saw_door"]
-    next:
-      - type: "dialogue"
-        trigger: "use key"
-        flow_id: "door_unlocked"
-      - type: "narrative"
-        trigger: "examine symbols"
-        flow_id: "symbol_study"
+scenes:
+  - id: "library_entrance"
+    sketch: "Towering shelves stretch upward filled with ancient books..."
+    leads_to:
+      restricted_section: "when player shows proper credentials"
+      reading_room: "if they ask about specific research"
+      
+  - id: "restricted_section" 
+    sketch: "Behind locked glass, forbidden tomes whisper secrets..."
 ```
-
-**Dialogue Flows** - Character conversations:
-```yaml
-flows:
-  - id: "guard_conversation"
-    type: "dialogue"
-    name: "Speaking with the Guard"
-    participants: ["guard", "player"]
-    location: "castle_gate"
-    exchanges:
-      - speaker: "guard"
-        text: "Halt! What business do you have here?"
-        emotion: "suspicious"
-      - speaker: "player"
-        choices:
-          - text: "I'm here to see the king"
-            next: "formal_request"
-            sets: ["tried_formal_approach"]
-          - text: "Just passing through"
-            next: "casual_dismissal"
-      - speaker: "guard"
-        text: "The king sees no one without proper credentials."
-        next: "credentials_check"
-```
-
-#### Advanced Traditional Features
-
-**Complex Requirements**:
-```yaml
-requirements:
-  - "has_item:royal_seal"
-  - "completed:guard_trust"
-  - - "learned_secret_passage"  # OR condition
-    - "has_item:master_key"     # with this one
-```
-
-**Rich Text Formatting**:
-```yaml
-content: |
-  The **ancient tome** lies open on the pedestal, its pages filled with
-  *forbidden knowledge*. [The Librarian](character:librarian) watches you
-  carefully as you approach the [Crystal of Souls](item:soul_crystal).
-  
-  [!warning] The crystal pulses with dangerous energy.
-```
-
-**Success Conditions**:
-```yaml
-success_conditions:
-  - id: "save_the_kingdom"
-    description: "Defeat the dragon and rescue the princess"
-    requires: ["defeated_dragon", "rescued_princess"]
-    ending: "heroic_victory"
-```
-
-### Traditional Best Practices
-
-**Do:**
-- Plan your story structure before writing
-- Use descriptive IDs that make sense
-- Test that all flows are reachable
-- Provide multiple solutions to problems
-- Use rich text formatting for important elements
-
-**Don't:**
-- Create unreachable flows or items
-- Make requirements too complex
-- Forget to set flags that other flows need
-- Use overly generic IDs like "flow_1"
-
-## Choosing Your Format
-
-### Use Impressionist When:
-- You want to focus on creative writing over technical setup
-- Player creativity and emergence are central to your vision
-- You're prototyping story concepts quickly
-- You prefer atmospheric storytelling over precise branching
-- You want the AI to help interpret unexpected player actions
-
-### Use Traditional When:
-- You need precise control over story branching
-- You're creating complex puzzle-based stories
-- Character dialogue trees are important
-- You want predictable, repeatable player experiences
-- You're adapting existing choice-based interactive fiction
-
-## Converting Between Formats
-
-### Impressionist to Traditional
-1. Convert scenes to narrative flows
-2. Add specific character definitions  
-3. Define locations and items explicitly
-4. Convert natural language conditions to requirements
-5. Structure scene transitions as flow connections
-
-### Traditional to Impressionist
-1. Combine related flows into atmospheric scenes
-2. Convert character definitions to essence descriptions
-3. Merge location/item details into scene sketches
-4. Transform requirements into natural language conditions
-5. Simplify complex branching into impressionistic leads_to
 
 ## Testing Your Stories
 
 ### Validation Checklist
-- [ ] All required fields present (title, author, scenes/flows, endings)
-- [ ] All referenced IDs exist (no broken links)
+- [ ] All required fields present (title, author, scenes, endings)
+- [ ] All referenced scene IDs exist (no broken links)
 - [ ] At least one path from start to each ending
-- [ ] Requirements are achievable
+- [ ] Global ending requirements are achievable
 - [ ] IDs use only lowercase letters, numbers, and underscores
 
 ### Playtesting Tips
@@ -450,7 +298,6 @@ success_conditions:
 ## Common Patterns
 
 ### Mystery Stories
-**Impressionist approach:**
 ```yaml
 scenes:
   - id: "crime_scene"
@@ -462,20 +309,7 @@ scenes:
       witness_interview: "if they seek out other characters"
 ```
 
-**Traditional approach:**
-```yaml
-flows:
-  - id: "examine_teacup"
-    type: "narrative"
-    content: |
-      The delicate porcelain shows cracks from the fall. Inside,
-      a thin residue carries the unmistakable scent of cyanide.
-    requirements: ["at_location:study"]
-    sets: ["found_poison_evidence"]
-```
-
 ### Character Development
-**Impressionist approach:**
 ```yaml
 world:
   characters:
@@ -485,20 +319,9 @@ world:
       arc: "guarded → trusting → vulnerable revelation"
 ```
 
-**Traditional approach:**
-```yaml
-characters:
-  - id: "mentor"
-    name: "Master Chen"
-    traits: ["wise", "patient", "haunted_by_past"]
-    relationships:
-      student: "protective but distant"
-    voice: "Speaks in metaphors, rarely direct"
-```
-
 ## Rich Text Reference
 
-Both formats support rich text formatting for enhanced presentation:
+Iffy supports rich text formatting for enhanced presentation:
 
 ### Text Formatting
 - `**bold text**` - Strong emphasis
@@ -545,12 +368,14 @@ content: |
 4. **Test your API key** - Make sure it's working correctly
 
 ### Need Examples?
-Check the bundled example stories in both formats:
-- **Impressionist**: "The Key", "Coffee Confessional", "Sentient Quill"  
-- **Traditional**: Stories in the `/examples/traditional/` folder
+Check the bundled example stories:
+- **"Friday Night Rain"**: Single-scene intimate conversation with multiple endings
+- **"The Sentient Quill"**: Multi-scene Victorian mystery with complex investigation
+- **"The Key"**: Simple puzzle story demonstrating basic structure
+- **"The Test Chamber"**: Technical testing story with precise condition enforcement
 
 The best way to learn is by studying these examples and modifying them to understand how changes affect the player experience.
 
 ---
 
-**Ready to create your first interactive story?** Start with the Impressionist format for quick prototyping, then move to Traditional format when you need more control. Both create engaging, AI-powered experiences that respond naturally to player creativity.
+**Ready to create your first interactive story?** Start with a single scene and simple endings, then expand to multi-scene stories as you become more comfortable with the format. Iffy creates engaging, AI-powered experiences that respond naturally to player creativity.

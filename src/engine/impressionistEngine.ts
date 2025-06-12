@@ -490,14 +490,14 @@ export class ImpressionistEngine {
 
   loadGame(saveData: string): ImpressionistResult<ImpressionistState> {
     try {
-      const data = JSON.parse(saveData);
-      
       if (!this.story) {
         return {
           success: false,
           error: 'No story loaded. Load a story before attempting to load a saved game.'
         };
       }
+      
+      const data = JSON.parse(saveData);
       
       if (data.storyTitle !== this.story.title) {
         return {
