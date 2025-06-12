@@ -59,17 +59,8 @@ export class ImpressionistGameManager {
         return false;
       }
       
-      // Display story header
-      this.addMessage(`🎭 **${story.title}**`, 'title');
-      if (story.author) {
-        this.addMessage(`*by ${story.author}*`, 'subtitle');
-      }
-      if (story.blurb) {
-        this.addMessage(story.blurb, 'blurb');
-      }
-      
-      this.addMessage('---', 'separator');
-      this.addMessage(this.engine.getInitialText(), 'story');
+      // Display story header and initial content
+      this.renderGameIntroduction();
       
       this.enableInput();
       
@@ -115,6 +106,26 @@ export class ImpressionistGameManager {
     } finally {
       this.enableInput();
     }
+  }
+
+  /**
+   * Render game introduction (title, author, blurb, initial text)
+   */
+  private renderGameIntroduction(): void {
+    const story = this.engine.getCurrentStory();
+    if (!story) return;
+
+    // Display story header
+    this.addMessage(`🎭 **${story.title}**`, 'title');
+    if (story.author) {
+      this.addMessage(`*by ${story.author}*`, 'subtitle');
+    }
+    if (story.blurb) {
+      this.addMessage(story.blurb, 'blurb');
+    }
+    
+    this.addMessage('---', 'separator');
+    this.addMessage(this.engine.getInitialText(), 'story');
   }
 
   /**
@@ -229,6 +240,10 @@ export class ImpressionistGameManager {
     
     this.engine.setUIRestoreCallback((_gameState: any, conversationHistory?: any[]) => {
       this.clearOutput();
+      
+      // Re-render the game introduction using current story info
+      this.renderGameIntroduction();
+      
       if (conversationHistory) {
         conversationHistory.forEach(line => {
           if (line.startsWith('Player:')) {
