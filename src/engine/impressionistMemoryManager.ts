@@ -88,13 +88,13 @@ export class ImpressionistMemoryManager {
   }
 
   /**
-   * Get memories for context building
+   * Get memories for context building (returns in chronological order: oldest to newest)
    */
   getMemories(limit?: number): MemoryContext {
     const maxMemories = limit || this.MAX_RETURNED_MEMORIES;
     
-    // Sort by importance and recency
-    const sortedMemories = [...this.memories]
+    // Sort by importance and recency to select the most relevant memories
+    const relevantMemories = [...this.memories]
       .sort((a, b) => {
         const importanceScore = (b.importance - a.importance) * 2;
         const recencyScore = (b.timestamp.getTime() - a.timestamp.getTime()) / (1000 * 60 * 60 * 24); // Days
@@ -102,18 +102,22 @@ export class ImpressionistMemoryManager {
       })
       .slice(0, maxMemories);
 
+    // Then sort the selected memories chronologically (oldest to newest) for prompt consistency
+    const chronologicalMemories = relevantMemories
+      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
     return {
-      memories: sortedMemories.map(m => m.content),
+      memories: chronologicalMemories.map(m => m.content),
       totalCount: this.memories.length,
       lastCompactionTime: this.lastCompactionTime
     };
   }
 
   /**
-   * Get all memories for debugging
+   * Get all memories for debugging (oldest to newest, matching prompt order)
    */
   getAllMemories(): MemoryEntry[] {
-    return [...this.memories].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    return [...this.memories].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
   }
 
   /**

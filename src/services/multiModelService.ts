@@ -19,6 +19,12 @@ export interface LangChainMetrics {
   timestamp: Date;
 }
 
+export interface StreamingCallbacks {
+  onToken?: (token: string) => void;
+  onComplete?: (fullContent: string) => void;
+  onError?: (error: Error) => void;
+}
+
 class LangChainMetricsCallback extends BaseCallbackHandler {
   name = 'LangChainMetricsCallback';
   private startTime = 0;
@@ -72,6 +78,36 @@ class LangChainMetricsCallback extends BaseCallbackHandler {
       errorType: error.message,
       timestamp: new Date()
     });
+  }
+}
+
+class StreamingCallback extends BaseCallbackHandler {
+  name = 'StreamingCallback';
+  private fullContent = '';
+  private callbacks: StreamingCallbacks;
+
+  constructor(callbacks: StreamingCallbacks) {
+    super();
+    this.callbacks = callbacks;
+  }
+
+  async handleLLMNewToken(token: string) {
+    this.fullContent += token;
+    if (this.callbacks.onToken) {
+      this.callbacks.onToken(token);
+    }
+  }
+
+  async handleLLMEnd() {
+    if (this.callbacks.onComplete) {
+      this.callbacks.onComplete(this.fullContent);
+    }
+  }
+
+  async handleLLMError(error: Error) {
+    if (this.callbacks.onError) {
+      this.callbacks.onError(error);
+    }
   }
 }
 
@@ -202,6 +238,51 @@ export class MultiModelService {
 
   public async makeRequestWithUsage(prompt: string): Promise<LLMResponse> {
     return this.makeRequestWithModel(prompt, this.currentModel);
+  }
+
+  public async makeStreamingRequest(prompt: string, streamingCallbacks: StreamingCallbacks): Promise<LLMResponse> {
+    if (!this.currentModel || !this.currentConfig) {
+      throw new Error('No model configured. Please set up your API key in Settings.');
+    }
+
+    const abortController = new AbortController();
+    this.activeRequests.add(abortController);
+
+    try {
+      const callbacks = [];
+      
+      // Add streaming callback
+      const streamingCallback = new StreamingCallback(streamingCallbacks);
+      callbacks.push(streamingCallback);
+      
+      // Add metrics callback if configured
+      if (this.metricsCallback) {
+        callbacks.push(this.metricsCallback);
+      }
+
+      const response = await this.currentModel.invoke(
+        [new HumanMessage(prompt)],
+        { 
+          signal: abortController.signal,
+          callbacks
+        }
+      );
+
+      return this.parseResponse(response);
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        throw new Error('Request was cancelled');
+      }
+      
+      // Also notify streaming error callback
+      if (streamingCallbacks.onError) {
+        streamingCallbacks.onError(this.normalizeError(error));
+      }
+      
+      throw this.normalizeError(error);
+    } finally {
+      this.activeRequests.delete(abortController);
+    }
   }
 
   public async makeMemoryRequestWithUsage(prompt: string): Promise<LLMResponse> {
