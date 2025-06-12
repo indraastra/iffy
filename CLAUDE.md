@@ -1,2 +1,3 @@
 - Let's keep all examples in the prompt game-agnostic
 - Always run tests in one-time mode, not in watch mode
+- Don't try to support legacy code with refactorings

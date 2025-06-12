@@ -43,10 +43,8 @@ export interface MemorySessionStats {
 export class MemoryMetricsCollector {
   private metrics: MemoryMetric[] = [];
   private debugPane?: any;
+  private multiModelService?: any; // Optional reference for accurate pricing
 
-  // Memory model pricing (cheaper than main models)
-  private readonly HAIKU_INPUT_COST_PER_1K = 0.0025;   // $2.50 per million input tokens
-  private readonly HAIKU_OUTPUT_COST_PER_1K = 0.0125;  // $12.50 per million output tokens
 
   /**
    * Track a memory operation request
@@ -278,6 +276,13 @@ export class MemoryMetricsCollector {
     this.debugPane = debugPane;
   }
 
+  /**
+   * Set MultiModelService for accurate pricing
+   */
+  setMultiModelService(multiModelService: any): void {
+    this.multiModelService = multiModelService;
+  }
+
   // Private helper methods
 
   private logMemoryMetric(metric: MemoryMetric): void {
@@ -309,10 +314,12 @@ export class MemoryMetricsCollector {
   }
 
   private calculateRequestCost(metric: MemoryMetric): number {
-    // Use Haiku pricing as default (most memory operations use this model)
-    const inputCost = (metric.inputTokens / 1000) * this.HAIKU_INPUT_COST_PER_1K;
-    const outputCost = (metric.outputTokens / 1000) * this.HAIKU_OUTPUT_COST_PER_1K;
-    return inputCost + outputCost;
+    if (!this.multiModelService?.calculateMemoryCost) {
+      console.warn('No MultiModelService available for memory cost calculation');
+      return 0;
+    }
+    
+    return this.multiModelService.calculateMemoryCost(metric.inputTokens, metric.outputTokens);
   }
 
   private calculateTotalCost(): number {

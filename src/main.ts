@@ -3,17 +3,23 @@
  */
 
 import { ImpressionistGameManager } from '@/ui/ImpressionistGameManager';
-import { AnthropicService } from '@/services/anthropicService';
+import { MultiModelService } from '@/services/multiModelService';
 import { DebugPane } from '@/ui/debugPane';
+import { POPULAR_MODELS, LLMProvider, LLMConfig, getCheapestModel } from '@/services/llm/types';
 
 class ImpressionistIffyApp {
-  private anthropicService: AnthropicService;
+  private multiModelService: MultiModelService;
   private debugPane: DebugPane;
   
   constructor() {
     // Initialize core services
-    this.anthropicService = new AnthropicService();
+    this.multiModelService = new MultiModelService();
     this.debugPane = new DebugPane();
+    
+    // Set up LangChain metrics integration
+    this.multiModelService.setMetricsHandler((metrics) => {
+      this.debugPane.addLangChainMetric(metrics);
+    });
     
     // Get DOM elements
     const storyOutput = document.getElementById('story-output')!;
@@ -23,7 +29,7 @@ class ImpressionistIffyApp {
     new ImpressionistGameManager({
       storyOutput,
       commandInput,
-      anthropicService: this.anthropicService,
+      multiModelService: this.multiModelService,
       debugPane: this.debugPane
     });
     
@@ -119,10 +125,10 @@ class ImpressionistIffyApp {
    * Set up settings management
    */
   private setupSettings(): void {
-    // Load saved API key
+    // Clean up legacy storage
     const savedKey = localStorage.getItem('iffy_api_key');
     if (savedKey) {
-      this.anthropicService.setApiKey(savedKey);
+      localStorage.removeItem('iffy_api_key');
     }
   }
 
@@ -138,9 +144,14 @@ class ImpressionistIffyApp {
    * Create settings menu following load menu pattern
    */
   private createSettingsMenu(): HTMLElement {
-    const currentKey = localStorage.getItem('iffy_api_key') || '';
+    const currentConfig = this.multiModelService.getConfig();
+    const isConfigured = this.multiModelService.isConfigured() ? 'configured' : 'not-configured';
+    
+    const currentKey = currentConfig?.apiKey || '';
     const maskedKey = currentKey ? currentKey.substring(0, 8) + '...' : 'Not configured';
-    const isConfigured = currentKey ? 'configured' : 'not-configured';
+    const currentProvider = currentConfig?.provider || 'anthropic';
+    const currentModel = currentConfig?.model || MultiModelService.getDefaultModel(currentProvider);
+    const currentMemoryModel = currentConfig?.memoryModel || getCheapestModel(currentProvider);
     
     const menu = document.createElement('div');
     menu.className = 'impressionist-settings-menu';
@@ -149,35 +160,54 @@ class ImpressionistIffyApp {
       <div class="settings-overlay"></div>
       <div class="settings-content">
         <h3>⚙️ Settings</h3>
-        <p class="settings-description">Configure your Anthropic API key and app preferences</p>
+        <p class="settings-description">Configure your AI model and API preferences</p>
         
         <div class="api-section">
-          <h4>🔑 API Configuration</h4>
+          <h4>🤖 AI Model Configuration</h4>
           <div class="api-status ${isConfigured}">
-            ${isConfigured === 'configured' ? '✅' : '❌'} Status: ${maskedKey}
+            ${isConfigured === 'configured' ? '✅' : '❌'} Status: ${MultiModelService.getProviderDisplayName(currentProvider)} - ${maskedKey}
           </div>
           
           <div class="setting-group">
-            <label for="settings-api-key">Anthropic API Key:</label>
+            <label for="llm-provider">Provider:</label>
+            <select id="llm-provider" class="setting-input">
+              <option value="anthropic" ${currentProvider === 'anthropic' ? 'selected' : ''}>Anthropic (Claude)</option>
+              <option value="openai" ${currentProvider === 'openai' ? 'selected' : ''}>OpenAI (GPT)</option>
+              <option value="google" ${currentProvider === 'google' ? 'selected' : ''}>Google (Gemini)</option>
+            </select>
+          </div>
+          
+          <div class="setting-group">
+            <label for="llm-model">Main Model:</label>
+            <select id="llm-model" class="setting-input">
+              ${this.renderModelOptions(currentProvider, currentModel)}
+            </select>
+            <small>Used for story generation and main interactions</small>
+          </div>
+          
+          <div class="setting-group">
+            <label for="memory-model">Memory Model:</label>
+            <select id="memory-model" class="setting-input">
+              ${this.renderModelOptions(currentProvider, currentMemoryModel)}
+            </select>
+            <small>Used for memory operations (defaults to cheapest model for cost efficiency)</small>
+          </div>
+          
+          <div class="setting-group">
+            <label for="settings-api-key">API Key:</label>
             <input 
               type="password" 
               id="settings-api-key" 
-              placeholder="sk-ant-..." 
+              placeholder="Enter your API key"
               value="${currentKey}"
-              autocomplete="new-password"
-              data-lpignore="true"
+              autocomplete="off"
             />
-            <small>Your API key is stored locally and never sent to our servers.</small>
+            <small class="help-text">
+              Get your API key from: ${this.getApiKeyHelpLink(currentProvider)}
+            </small>
           </div>
         </div>
         
-        <div class="debug-section">
-          <h4>🛠️ Debug Tools</h4>
-          <div class="debug-actions">
-            <button class="action-btn" id="clear-storage">🗑️ Clear All Data</button>
-            <button class="action-btn" id="export-logs">📄 Export Debug Logs</button>
-          </div>
-        </div>
         
         <div class="settings-actions">
           <button class="action-btn primary" id="save-settings">💾 Save Settings</button>
@@ -194,6 +224,31 @@ class ImpressionistIffyApp {
   }
 
   /**
+   * Render model options for the selected provider
+   */
+  private renderModelOptions(provider: LLMProvider, currentModel: string): string {
+    const models = POPULAR_MODELS.filter(m => m.provider === provider);
+    
+    return models.map(model => `
+      <option value="${model.model}" ${currentModel === model.model ? 'selected' : ''}>
+        ${model.displayName} - ${model.description}
+      </option>
+    `).join('');
+  }
+
+  /**
+   * Get API key help link for the provider
+   */
+  private getApiKeyHelpLink(provider: LLMProvider): string {
+    const links = {
+      anthropic: '<a href="https://console.anthropic.com/api-keys" target="_blank">Anthropic Console</a>',
+      openai: '<a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a>',
+      google: '<a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a>'
+    };
+    return links[provider] || 'your provider\'s dashboard';
+  }
+
+  /**
    * Attach settings menu events
    */
   private attachSettingsMenuEvents(menu: HTMLElement): void {
@@ -201,9 +256,10 @@ class ImpressionistIffyApp {
     const closeBtn = menu.querySelector('.close-btn');
     const cancelBtn = menu.querySelector('#cancel-settings');
     const saveBtn = menu.querySelector('#save-settings');
+    const providerSelect = menu.querySelector('#llm-provider') as HTMLSelectElement;
+    const modelSelect = menu.querySelector('#llm-model') as HTMLSelectElement;
+    const memoryModelSelect = menu.querySelector('#memory-model') as HTMLSelectElement;
     const apiKeyInput = menu.querySelector('#settings-api-key') as HTMLInputElement;
-    const clearStorageBtn = menu.querySelector('#clear-storage');
-    const exportLogsBtn = menu.querySelector('#export-logs');
     
     // Close menu
     const closeMenu = () => document.body.removeChild(menu);
@@ -212,46 +268,48 @@ class ImpressionistIffyApp {
     closeBtn?.addEventListener('click', closeMenu);
     cancelBtn?.addEventListener('click', closeMenu);
     
+    // Update model options when provider changes
+    providerSelect?.addEventListener('change', () => {
+      const provider = providerSelect.value as LLMProvider;
+      const defaultModel = MultiModelService.getDefaultModel(provider);
+      const defaultMemoryModel = getCheapestModel(provider);
+      
+      modelSelect.innerHTML = this.renderModelOptions(provider, defaultModel);
+      memoryModelSelect.innerHTML = this.renderModelOptions(provider, defaultMemoryModel);
+      
+      // Update help text
+      const helpText = menu.querySelector('.help-text');
+      if (helpText) {
+        helpText.innerHTML = `Get your API key from: ${this.getApiKeyHelpLink(provider)}`;
+      }
+    });
+    
     // Save settings
     saveBtn?.addEventListener('click', () => {
+      const provider = providerSelect.value as LLMProvider;
+      const model = modelSelect.value;
+      const memoryModel = memoryModelSelect.value;
       const apiKey = apiKeyInput.value.trim();
       
       if (apiKey) {
-        localStorage.setItem('iffy_api_key', apiKey);
-        this.anthropicService.setApiKey(apiKey);
-        this.addSystemMessage('✅ API key saved successfully');
+        const config: LLMConfig = {
+          provider,
+          model,
+          memoryModel,
+          apiKey
+        };
+        
+        try {
+          this.multiModelService.setConfig(config);
+          this.addSystemMessage(`✅ ${MultiModelService.getProviderDisplayName(provider)} configuration saved successfully`);
+        } catch (error) {
+          this.addSystemMessage(`❌ Error: ${error instanceof Error ? error.message : 'Invalid configuration'}`);
+          return;
+        }
       } else {
-        localStorage.removeItem('iffy_api_key');
         this.addSystemMessage('🗑️ API key removed');
       }
       
-      closeMenu();
-    });
-    
-    // Clear storage
-    clearStorageBtn?.addEventListener('click', () => {
-      if (confirm('Clear all saved games and settings? This cannot be undone.')) {
-        localStorage.clear();
-        this.addSystemMessage('🗑️ All local data cleared');
-        closeMenu();
-      }
-    });
-    
-    // Export logs
-    exportLogsBtn?.addEventListener('click', () => {
-      const logs = 'Debug logs feature not yet implemented';
-      const blob = new Blob([logs], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `iffy-debug-logs-${new Date().toISOString().split('T')[0]}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      this.addSystemMessage('📄 Debug logs exported');
       closeMenu();
     });
   }
@@ -260,7 +318,7 @@ class ImpressionistIffyApp {
    * Check if API key is configured
    */
   private isApiKeyConfigured(): boolean {
-    return this.anthropicService.isConfigured();
+    return this.multiModelService.isConfigured();
   }
 
   /**

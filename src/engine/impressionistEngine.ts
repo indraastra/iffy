@@ -13,7 +13,7 @@ import {
   DirectorResponse,
   ImpressionistInteraction
 } from '@/types/impressionistStory';
-import { AnthropicService } from '@/services/anthropicService';
+import { MultiModelService } from '@/services/multiModelService';
 import { LLMDirector } from './llmDirector';
 import { MetricsCollector } from './metricsCollector';
 import { ImpressionistMemoryManager } from './impressionistMemoryManager';
@@ -45,10 +45,15 @@ export class ImpressionistEngine {
   private uiResetCallback?: () => void;
   private uiRestoreCallback?: (gameState: any, conversationHistory?: any[]) => void;
 
-  constructor(anthropicService?: AnthropicService) {
-    this.director = new LLMDirector(anthropicService);
+  constructor(multiModelService?: MultiModelService) {
+    this.director = new LLMDirector(multiModelService);
     this.metrics = new MetricsCollector();
-    this.memoryManager = new ImpressionistMemoryManager(anthropicService);
+    this.memoryManager = new ImpressionistMemoryManager(multiModelService);
+    
+    // Wire up MultiModelService to metrics collector for accurate pricing
+    if (multiModelService) {
+      this.metrics.setMultiModelService(multiModelService);
+    }
     
     // Configure memory manager with our compaction frequency
     this.memoryManager.setCompactionInterval(this.MEMORY_COMPACTION_FREQUENCY);
@@ -442,6 +447,8 @@ export class ImpressionistEngine {
     this.director.setDebugPane(debugPane);
     this.metrics.setDebugPane(debugPane);
     this.memoryManager.setDebugPane(debugPane);
+    // Also pass memory manager to debug pane for tools
+    debugPane.setMemoryManager(this.memoryManager);
   }
 
   // Compatibility methods for existing UI

@@ -1,5 +1,6 @@
 import { SessionStats } from '@/engine/metricsCollector';
 import { MemorySessionStats } from '@/engine/memoryMetricsCollector';
+import { LangChainMetrics } from '@/services/multiModelService';
 
 interface LlmInteraction {
   timestamp: Date;
@@ -19,6 +20,9 @@ export class DebugPane {
   private llmInteractions: LlmInteraction[] = [];
   private maxInteractions: number = 20; // Keep last 20 interactions
   private currentMemories: { content: string; importance: number }[] = [];
+  private langchainMetrics: LangChainMetrics[] = [];
+  private maxMetrics: number = 50; // Keep last 50 metrics
+  private memoryManager: any = null; // Reference to memory manager for tools
 
   constructor() {
     this.container = this.createDebugPane();
@@ -26,6 +30,9 @@ export class DebugPane {
   }
 
   private createDebugPane(): HTMLElement {
+    // Add CSS styles for LangChain metrics if not already added
+    this.addLangChainStyles();
+    
     const pane = document.createElement('div');
     pane.className = 'debug-pane hidden';
     pane.innerHTML = `
@@ -36,15 +43,23 @@ export class DebugPane {
         </div>
       </div>
       <div class="debug-tabs">
-        <button class="debug-tab active" data-tab="api">📊 API Usage</button>
+        <button class="debug-tab active" data-tab="api">📊 Usage</button>
+        <button class="debug-tab" data-tab="langchain">⚡ LangChain</button>
         <button class="debug-tab" data-tab="memory">🧠 Memory</button>
-        <button class="debug-tab" data-tab="llm">🤖 LLM Logs</button>
+        <button class="debug-tab" data-tab="llm">🤖 Logs</button>
+        <button class="debug-tab" data-tab="tools">🛠️ Tools</button>
       </div>
       <div class="debug-content">
         <div class="debug-tab-content active" data-tab="api">
           <div class="api-dashboard">
             <div class="api-warnings"></div>
             <div class="api-stats"></div>
+          </div>
+        </div>
+        <div class="debug-tab-content" data-tab="langchain">
+          <div class="langchain-dashboard">
+            <div class="langchain-stats"></div>
+            <div class="langchain-metrics"></div>
           </div>
         </div>
         <div class="debug-tab-content" data-tab="memory">
@@ -58,6 +73,29 @@ export class DebugPane {
             <div class="llm-interactions"></div>
           </div>
         </div>
+        <div class="debug-tab-content" data-tab="tools">
+          <div class="tools-dashboard">
+            <div class="tool-section">
+              <h4>🧠 Memory System</h4>
+              <div class="tool-group">
+                <button class="tool-btn" id="force-memory-compaction">🗜️ Force Memory Compaction</button>
+                <p class="tool-description">Manually trigger memory compaction regardless of current memory count</p>
+              </div>
+            </div>
+            
+            <div class="tool-section">
+              <h4>💾 Data Management</h4>
+              <div class="tool-group">
+                <button class="tool-btn" id="export-debug-logs">📄 Export Debug Logs</button>
+                <p class="tool-description">Export comprehensive debug data for troubleshooting</p>
+              </div>
+              <div class="tool-group">
+                <button class="tool-btn danger" id="clear-all-data">🗑️ Clear All Data</button>
+                <p class="tool-description">Reset all stored data and settings (cannot be undone)</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     `;
 
@@ -69,6 +107,9 @@ export class DebugPane {
 
     const closeBtn = pane.querySelector('.debug-close-btn') as HTMLElement;
     closeBtn.addEventListener('click', () => this.hide());
+
+    // Add tool button event listeners
+    this.attachToolsEvents(pane);
 
     return pane;
   }
@@ -87,6 +128,8 @@ export class DebugPane {
     // Refresh current tab content
     if (this.currentTab === 'api') {
       this.updateApiDisplay();
+    } else if (this.currentTab === 'langchain') {
+      this.updateLangChainDisplay();
     } else if (this.currentTab === 'memory') {
       this.updateMemoryDisplay();
     } else if (this.currentTab === 'llm') {
@@ -128,6 +171,8 @@ export class DebugPane {
     // Refresh content for the active tab
     if (tabName === 'api') {
       this.updateApiDisplay();
+    } else if (tabName === 'langchain') {
+      this.updateLangChainDisplay();
     } else if (tabName === 'memory') {
       this.updateMemoryDisplay();
     } else if (tabName === 'llm') {
@@ -196,7 +241,8 @@ export class DebugPane {
     }
 
     // Display memory contents if available
-    if (this.currentMemories && this.currentMemories.length > 0) {
+    const memories = this.getCurrentMemories();
+    if (memories && memories.length > 0) {
       contentsContainer.innerHTML = this.renderMemoryContents();
     } else {
       contentsContainer.innerHTML = `
@@ -263,12 +309,13 @@ export class DebugPane {
    * Render current memory contents
    */
   private renderMemoryContents(): string {
+    const memories = this.getCurrentMemories();
     return `
       <div class="stats-section">
         <h4>🧠 Current Memory Contents</h4>
-        <p class="memory-count">Showing ${this.currentMemories.length} memories</p>
+        <p class="memory-count">Showing ${memories.length} memories</p>
         <div class="memory-list">
-          ${this.currentMemories.map((memory, index) => `
+          ${memories.map((memory, index) => `
             <div class="memory-item">
               <span class="memory-index">#${index + 1}</span>
               <span class="memory-importance">${memory.importance}/10</span>
@@ -381,7 +428,7 @@ export class DebugPane {
   }
 
   /**
-   * Update current memory contents
+   * Update current memory contents (backward compatibility)
    */
   public updateMemoryContents(memories: { content: string; importance: number }[]): void {
     this.currentMemories = [...memories];
@@ -389,6 +436,163 @@ export class DebugPane {
     // Update display if memory tab is active
     if (this.currentTab === 'memory' && this.isVisible) {
       this.updateMemoryDisplay();
+    }
+  }
+
+  /**
+   * Get current memories from memory manager if available
+   */
+  private getCurrentMemories(): { content: string; importance: number }[] {
+    if (this.memoryManager?.getAllMemories) {
+      return this.memoryManager.getAllMemories().map((m: any) => ({ 
+        content: m.content, 
+        importance: m.importance 
+      }));
+    }
+    return this.currentMemories;
+  }
+
+  /**
+   * Update the LangChain metrics tab
+   */
+  private updateLangChainDisplay(): void {
+    const langchainContainer = this.container.querySelector('.langchain-dashboard') as HTMLElement;
+    if (!langchainContainer) return;
+
+    const statsContainer = langchainContainer.querySelector('.langchain-stats') as HTMLElement;
+    const metricsContainer = langchainContainer.querySelector('.langchain-metrics') as HTMLElement;
+
+    if (this.langchainMetrics.length === 0) {
+      statsContainer.innerHTML = `
+        <div class="no-data">
+          <p>No LangChain metrics available yet. Metrics will appear here once API calls begin.</p>
+        </div>
+      `;
+      metricsContainer.innerHTML = '';
+      return;
+    }
+
+    // Render overall stats
+    statsContainer.innerHTML = this.renderLangChainStats();
+    
+    // Render recent metrics
+    metricsContainer.innerHTML = this.renderLangChainMetrics();
+  }
+
+  /**
+   * Render LangChain statistics
+   */
+  private renderLangChainStats(): string {
+    if (this.langchainMetrics.length === 0) return '';
+
+    const successful = this.langchainMetrics.filter(m => m.success).length;
+    const failed = this.langchainMetrics.length - successful;
+    const successRate = (successful / this.langchainMetrics.length) * 100;
+
+    const avgLatency = this.langchainMetrics.reduce((sum, m) => sum + m.latencyMs, 0) / this.langchainMetrics.length;
+    const totalTokens = this.langchainMetrics.reduce((sum, m) => sum + m.totalTokens, 0);
+    const avgTokens = totalTokens / this.langchainMetrics.length;
+
+    // Provider breakdown
+    const providerStats = this.langchainMetrics.reduce((acc, m) => {
+      if (!acc[m.provider]) {
+        acc[m.provider] = { count: 0, totalTokens: 0, totalLatency: 0 };
+      }
+      acc[m.provider].count++;
+      acc[m.provider].totalTokens += m.totalTokens;
+      acc[m.provider].totalLatency += m.latencyMs;
+      return acc;
+    }, {} as Record<string, { count: number; totalTokens: number; totalLatency: number }>);
+
+    const providerBreakdown = Object.entries(providerStats)
+      .map(([provider, stats]) => `
+        <tr>
+          <td>${provider.charAt(0).toUpperCase() + provider.slice(1)}</td>
+          <td>${stats.count}</td>
+          <td>${Math.round(stats.totalLatency / stats.count)}ms</td>
+          <td>${Math.round(stats.totalTokens / stats.count)}</td>
+        </tr>
+      `).join('');
+
+    return `
+      <div class="stats-section">
+        <h4>⚡ LangChain Performance</h4>
+        <table class="stats-table">
+          <tr><td>Total Requests</td><td>${this.langchainMetrics.length}</td></tr>
+          <tr><td>Success Rate</td><td>${successRate.toFixed(1)}%</td></tr>
+          <tr><td>Failed Requests</td><td>${failed}</td></tr>
+          <tr><td>Average Latency</td><td>${Math.round(avgLatency)}ms</td></tr>
+          <tr><td>Average Tokens</td><td>${Math.round(avgTokens)}</td></tr>
+          <tr><td>Total Tokens</td><td>${totalTokens.toLocaleString()}</td></tr>
+        </table>
+      </div>
+      
+      <div class="stats-section">
+        <h4>📊 Provider Breakdown</h4>
+        <table class="stats-table">
+          <tr><th>Provider</th><th>Requests</th><th>Avg Latency</th><th>Avg Tokens</th></tr>
+          ${providerBreakdown}
+        </table>
+      </div>
+    `;
+  }
+
+  /**
+   * Render recent LangChain metrics
+   */
+  private renderLangChainMetrics(): string {
+    const recentMetrics = this.langchainMetrics.slice(-10).reverse();
+    
+    const metricsHtml = recentMetrics.map((metric, index) => `
+      <div class="langchain-metric ${index === 0 ? 'latest' : ''} ${metric.success ? 'success' : 'error'}">
+        <div class="metric-header">
+          <span class="metric-time">${metric.timestamp.toLocaleTimeString()}</span>
+          <span class="metric-provider">${metric.provider}</span>
+          <span class="metric-model">${metric.model}</span>
+          <span class="metric-status ${metric.success ? 'success' : 'error'}">${metric.success ? '✅' : '❌'}</span>
+        </div>
+        
+        <div class="metric-details">
+          <div class="metric-tokens">
+            <span>📝 ${metric.promptTokens} → 💭 ${metric.completionTokens} (${metric.totalTokens} total)</span>
+          </div>
+          <div class="metric-timing">
+            <span>⏱️ ${Math.round(metric.latencyMs)}ms</span>
+          </div>
+          ${metric.errorType ? `
+            <div class="metric-error">
+              <span>❌ ${this.escapeHtml(metric.errorType)}</span>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `).join('');
+
+    return `
+      <div class="stats-section">
+        <h4>📈 Recent LangChain Requests</h4>
+        <p class="metrics-count">Showing last ${recentMetrics.length} requests</p>
+        <div class="langchain-metrics-list">
+          ${metricsHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Add a LangChain metrics entry
+   */
+  public addLangChainMetric(metric: LangChainMetrics): void {
+    this.langchainMetrics.push(metric);
+    
+    // Keep only the last N metrics
+    if (this.langchainMetrics.length > this.maxMetrics) {
+      this.langchainMetrics = this.langchainMetrics.slice(-this.maxMetrics);
+    }
+
+    // Update display if LangChain tab is active
+    if (this.currentTab === 'langchain' && this.isVisible) {
+      this.updateLangChainDisplay();
     }
   }
 
@@ -414,11 +618,334 @@ export class DebugPane {
   }
 
   /**
+   * Add LangChain-specific CSS styles
+   */
+  private addLangChainStyles(): void {
+    if (document.getElementById('langchain-styles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'langchain-styles';
+    style.textContent = `
+      .langchain-metric {
+        margin: 1rem 0;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        transition: all 0.2s ease;
+      }
+      
+      .langchain-metric.latest {
+        border-color: rgba(100, 181, 246, 0.5);
+        background: rgba(100, 181, 246, 0.05);
+      }
+      
+      .langchain-metric.error {
+        border-left: 4px solid #f44336;
+        background: rgba(244, 67, 54, 0.1);
+      }
+      
+      .langchain-metric.success {
+        border-left: 4px solid #4caf50;
+      }
+      
+      .metric-header {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.85rem;
+        color: var(--text-color);
+        opacity: 0.8;
+      }
+      
+      .metric-time {
+        font-weight: bold;
+        color: #64b5f6;
+      }
+      
+      .metric-provider {
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffd54f;
+        padding: 0.1rem 0.5rem;
+        border-radius: 3px;
+        font-size: 0.8rem;
+      }
+      
+      .metric-model {
+        color: #81c784;
+        font-style: italic;
+      }
+      
+      .metric-status.success {
+        color: #4caf50;
+      }
+      
+      .metric-status.error {
+        color: #f44336;
+      }
+      
+      .metric-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+      }
+      
+      .metric-tokens {
+        color: #ffb74d;
+      }
+      
+      .metric-timing {
+        color: #64b5f6;
+      }
+      
+      .metric-error {
+        color: #f44336;
+        background: rgba(244, 67, 54, 0.1);
+        padding: 0.5rem;
+        border-radius: 3px;
+        margin-top: 0.5rem;
+      }
+      
+      .langchain-metrics-list {
+        margin-top: 1rem;
+      }
+      
+      .metrics-count {
+        margin: 0 0 1rem;
+        padding: 0 1rem;
+        font-size: 0.85rem;
+        color: var(--text-color);
+        opacity: 0.7;
+        font-style: italic;
+      }
+      
+      .stats-table th {
+        background: rgba(255, 255, 255, 0.1);
+        font-weight: bold;
+        text-align: left;
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+      }
+      
+      /* Tools pane styling - TODO: redesign this entire section */
+      .tool-section {
+        margin: 1rem 0;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+      }
+      
+      .tool-section h4 {
+        margin: 0 0 1rem 0;
+      }
+      
+      .tool-btn {
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 0.75rem;
+        box-sizing: border-box;
+      }
+      
+      .tool-btn:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(100, 181, 246, 0.5);
+      }
+      
+      .tool-btn.danger:hover {
+        background: rgba(244, 67, 54, 0.1);
+        border-color: rgba(244, 67, 54, 0.6);
+      }
+      
+      .tool-description {
+        font-size: 0.85rem;
+        opacity: 0.7;
+        margin-top: 0.5rem;
+        font-style: italic;
+      }
+      
+      .tool-messages {
+        margin-top: 1rem;
+        max-height: 200px;
+        overflow-y: auto;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 0.75rem;
+      }
+      
+      .tool-message {
+        font-size: 0.85rem;
+        margin: 0.5rem 0;
+        opacity: 0.9;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 0.25rem;
+      }
+      
+      .tool-message:last-child {
+        border-bottom: none;
+      }
+      
+      /* Custom scrollbar styling for debug pane */
+      .debug-pane ::-webkit-scrollbar {
+        width: 8px;
+      }
+      
+      .debug-pane ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+      }
+      
+      .debug-pane ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+      }
+      
+      .debug-pane ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
+      }
+      
+      /* Firefox scrollbar styling */
+      .debug-pane {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+      }
+    `;
+    
+    document.head.appendChild(style);
+  }
+
+  /**
    * Escape HTML for safe display
    */
   private escapeHtml(text: string): string {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  /**
+   * Set memory manager reference for debug tools
+   */
+  public setMemoryManager(memoryManager: any): void {
+    this.memoryManager = memoryManager;
+  }
+
+  /**
+   * Attach event listeners for debug tools
+   */
+  private attachToolsEvents(pane: HTMLElement): void {
+    const forceCompactionBtn = pane.querySelector('#force-memory-compaction');
+    const exportLogsBtn = pane.querySelector('#export-debug-logs');
+    const clearDataBtn = pane.querySelector('#clear-all-data');
+
+    // Force memory compaction
+    forceCompactionBtn?.addEventListener('click', () => {
+      if (this.memoryManager) {
+        try {
+          // Force compaction by triggering it directly
+          this.memoryManager.triggerAsyncCompaction?.();
+          this.addToolMessage('🗜️ Memory compaction triggered manually');
+        } catch (error) {
+          this.addToolMessage(`❌ Error triggering compaction: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      } else {
+        this.addToolMessage('❌ Memory manager not available');
+      }
+    });
+
+    // Export debug logs
+    exportLogsBtn?.addEventListener('click', () => {
+      this.exportDebugLogs();
+    });
+
+    // Clear all data
+    clearDataBtn?.addEventListener('click', () => {
+      if (confirm('Clear all saved games, settings, and memories? This cannot be undone.')) {
+        try {
+          localStorage.clear();
+          if (this.memoryManager) {
+            this.memoryManager.reset?.();
+          }
+          this.addToolMessage('🗑️ All data cleared successfully');
+          // Refresh the page to reinitialize
+          setTimeout(() => location.reload(), 1000);
+        } catch (error) {
+          this.addToolMessage(`❌ Error clearing data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      }
+    });
+  }
+
+  /**
+   * Add a message to the tools section
+   */
+  private addToolMessage(message: string): void {
+    const toolsSection = this.container.querySelector('.tools-dashboard');
+    if (!toolsSection) return;
+
+    // Create or find the messages container
+    let messagesContainer = toolsSection.querySelector('.tool-messages') as HTMLElement;
+    if (!messagesContainer) {
+      messagesContainer = document.createElement('div');
+      messagesContainer.className = 'tool-messages';
+      toolsSection.appendChild(messagesContainer);
+    }
+
+    // Add the message
+    const messageEl = document.createElement('div');
+    messageEl.className = 'tool-message';
+    messageEl.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+    messagesContainer.appendChild(messageEl);
+
+    // Keep only last 5 messages
+    const messages = messagesContainer.querySelectorAll('.tool-message');
+    if (messages.length > 5) {
+      messages[0].remove();
+    }
+
+    // Auto-scroll to show new message
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
+  /**
+   * Export debug logs to file
+   */
+  private exportDebugLogs(): void {
+    const logs = {
+      timestamp: new Date().toISOString(),
+      sessionStats: this.sessionStats,
+      memoryStats: this.memoryStats,
+      warnings: this.warnings,
+      memoryWarnings: this.memoryWarnings,
+      langchainMetrics: this.langchainMetrics.slice(-20), // Last 20 metrics
+      llmInteractions: this.llmInteractions.slice(-10), // Last 10 interactions
+      currentMemories: this.currentMemories,
+      memoryManagerStats: this.memoryManager?.getStats?.() || null
+    };
+
+    const jsonString = JSON.stringify(logs, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `iffy-debug-logs-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    this.addToolMessage('📄 Debug logs exported successfully');
   }
 }

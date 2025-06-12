@@ -1,0 +1,339 @@
+title: "The Corridor of Mirrors"
+author: "Iffy Engine Team"
+blurb: "Navigate five rooms where reality bends through different narrative lenses."
+version: "1.0"
+context: "You find yourself in a mysterious corridor lined with ornate mirrors, each reflecting a different world. Five rooms await, connected in a perfect circle."
+
+narrative:
+  voice: "Adaptable - changes dramatically between rooms"
+  setting: "Interdimensional corridor connecting five distinct realities"
+  tone: "Varies completely by location - from clinical to poetic to noir"
+  themes: ["perspective", "narrative truth", "the nature of reality"]
+
+world:
+  characters:
+    mirror_keeper:
+      name: "The Keeper"
+      essence: "Enigmatic figure who appears differently in each room"
+      voice: "Adapts to match each room's narrative style"
+      arc: "mysterious → helpful guide → revealer of truth"
+
+  locations:
+    corridor:
+      description: "Central hallway with five ornate mirrors, each showing different reflections"
+      connections: ["clinical_lab", "poet_garden", "noir_office", "fairy_cottage", "minimalist_void"]
+      
+    clinical_lab:
+      description: "Sterile laboratory with precise measurements and scientific equipment"
+      style: "Technical, objective, measured"
+      connections: ["corridor", "poet_garden"]
+      
+    poet_garden:
+      description: "Lush garden where metaphors bloom like flowers"
+      style: "Lyrical, flowing, emotional"
+      connections: ["corridor", "noir_office"]
+      
+    noir_office:
+      description: "Shadow-filled detective office from 1940s film"
+      style: "Hard-boiled, cynical, atmospheric"
+      connections: ["corridor", "fairy_cottage"]
+      
+    fairy_cottage:
+      description: "Whimsical cottage straight from a children's storybook"
+      style: "Innocent, wonder-filled, simple"
+      connections: ["corridor", "minimalist_void"]
+      
+    minimalist_void:
+      description: "Empty white space with only essential elements"
+      style: "Sparse, philosophical, contemplative"
+      connections: ["corridor", "clinical_lab"]
+
+scenes:
+  - id: "corridor_start"
+    sketch: |
+      The corridor stretches before you, neither long nor short, lined with five mirrors
+      that each reflect something impossible. Your own reflection fractures across them:
+      
+      - A white-coated researcher taking notes
+      - A poet crowned with flowers
+      - A detective in a fedora
+      - A child with wide, wondering eyes
+      - A figure reduced to pure essence
+      
+      The Keeper materializes beside you - a shifting presence that seems to exist
+      in all reflections simultaneously. "Each mirror leads to truth," they say,
+      "but truth has many faces. Which reality calls to you?"
+    leads_to:
+      enter_lab: "approaching the laboratory mirror"
+      enter_garden: "stepping toward the garden mirror"
+      enter_office: "choosing the noir office mirror"
+      enter_cottage: "selecting the fairy cottage mirror"
+      enter_void: "walking to the minimalist void mirror"
+
+  - id: "enter_lab"
+    sketch: |
+      SUBJECT REPORT: MIRROR TRANSITION SUCCESSFUL
+      
+      Environment Assessment: Sterile laboratory facility. Temperature: 22.3°C. 
+      Humidity: 45%. Fluorescent lighting provides optimal visibility.
+      
+      You are now SUBJECT-47. The Keeper appears as DR. MERIDIAN, clipboard
+      in hand, wearing standard-issue lab coat (ID: LAB-COAT-7749).
+      
+      "Welcome to Reality Analysis Wing-C," Dr. Meridian states. "Your task:
+      examine the provided stimuli and record objective observations. Emotional
+      responses are contraindicated. Please proceed to workstation Alpha-7."
+      
+      Available equipment: microscope, measurement tools, data tablets.
+      Hypothesis: This room demands pure objectivity.
+    leads_to:
+      lab_to_garden: "exiting through eastern mirror portal"
+      lab_analysis: "engaging with laboratory procedures"
+      return_corridor: "returning to central corridor"
+
+  - id: "enter_garden"
+    sketch: |
+      Oh, sweet wanderer of worlds, you step into summer's embrace where
+      thoughts bloom wild as morning glories! The Keeper transforms before
+      your eyes into the GARDENER OF VERSES, robed in moss and crowned
+      with forget-me-nots.
+      
+      "Welcome, dear heart," they whisper, voice like wind through wheat,
+      "to the garden where feelings grow tall as sunflowers and every
+      word is honey on the tongue. Here, metaphors take root in rich
+      soul-soil, and truth wears a gown of petals."
+      
+      Butterflies of half-remembered dreams flutter past your shoulder.
+      The very air tastes of possibility and old rain. A fountain of
+      liquid starlight bubbles nearby, and in its depths, you see your
+      own heart reflected back, beautiful and strange.
+      
+      What seeds will you plant in this sacred earth?
+    leads_to:
+      garden_to_office: "following the shadow-path east"
+      garden_exploration: "wandering deeper into the metaphor-maze"
+      return_corridor: "returning to the mundane hallway"
+
+  - id: "enter_office"
+    sketch: |
+      The rain started three hours ago and shows no signs of letting up.
+      Just like this case.
+      
+      You're in my office now, champ. Name's KEEPER, though the street
+      calls me THE INVESTIGATOR. Fedora hangs on the coat rack like a
+      question mark, and the bourbon's getting low. This room's seen
+      more broken dreams than a divorce lawyer's waiting room.
+      
+      "So you're looking for answers," I say, lighting another Lucky Strike.
+      The smoke curls up toward the ceiling fan that hasn't worked since
+      Roosevelt was in office. "In this business, answers are like good
+      women - hard to find and harder to keep."
+      
+      The filing cabinet's full of cold cases. The coffee's colder. But
+      the truth? That burns hot as a two-dollar pistol.
+      
+      What's your angle, stranger?
+    leads_to:
+      office_to_cottage: "stepping through the bright doorway"
+      noir_investigation: "diving deeper into the shadows"
+      return_corridor: "heading back to the gallery"
+
+  - id: "enter_cottage"
+    sketch: |
+      Oh my! What a lovely visitor we have today! 
+      
+      You're in the most wonderful little cottage where everything is
+      just the right size and painted in the happiest colors! The Keeper
+      is now GRANDMOTHER WILLOW, with the kindest smile and cookies that
+      smell like sunshine and love.
+      
+      "Hello there, little lamb!" she says, clapping her hands together.
+      "Would you like some warm milk and a story? I have the most marvelous
+      tales about brave little mice and talking flowers!"
+      
+      The furniture is soft and round, and everything sparkles just a tiny
+      bit, like fairy dust settled on the windowsills. Outside, you can
+      hear the happy chirping of birds who know all the best songs.
+      
+      This is a place where dreams come true and everyone is always kind.
+      Isn't that nice?
+    leads_to:
+      cottage_to_void: "opening the quiet door"
+      fairy_tale_adventure: "exploring the magical cottage"
+      return_corridor: "going back to the big hallway"
+
+  - id: "enter_void"
+    sketch: |
+      Space.
+      
+      You. The Keeper.
+      
+      The Keeper speaks: "Here, essence."
+      
+      Nothing unnecessary. Only what is required. The Keeper appears as
+      THE ESSENTIAL - neither tall nor short, neither old nor young.
+      Simply present.
+      
+      "Question: What remains when all story is stripped away?"
+      
+      White. Silence. Truth.
+      
+      You exist. The choice exists. Nothing else.
+      
+      Choose.
+    leads_to:
+      void_to_lab: "entering the doorway marked 'data'"
+      void_contemplation: "remaining in the essential space"
+      return_corridor: "returning to complexity"
+
+  - id: "lab_to_garden"
+    sketch: |
+      TRANSITION PROTOCOL INITIATED
+      
+      As you step through the eastern portal, measurable changes occur:
+      - Temperature rises 3.7 degrees
+      - Humidity increases to 78%
+      - Light wavelength shifts toward amber spectrum
+      
+      ERROR: POETRY.EXE HAS CRASHED THE MEASUREMENT SYSTEMS
+      
+      Oh! The cold calculations melt away like winter snow, and suddenly
+      you're breathing in the perfume of possibility...
+    leads_to:
+      garden_exploration: "embracing the poetic transformation"
+
+  - id: "garden_to_office"
+    sketch: |
+      The flowers wilt to black and white as you follow the shadow-path.
+      Beauty curdles into cynicism. The sweet garden air turns thick with
+      cigarette smoke and broken promises.
+      
+      "Life ain't all roses, sweetheart," a voice growls from the gathering
+      darkness. "Time you learned that."
+    leads_to:
+      noir_investigation: "accepting the harsh truths"
+
+  - id: "office_to_cottage"
+    sketch: |
+      The shadows part like curtains, and suddenly everything is bright
+      and cheerful! The smoky air clears to reveal the scent of fresh-baked
+      cookies and happy sunshine!
+      
+      "Oh dear," says a gentle voice, "you look like you need a nice cup
+      of tea and a hug!"
+    leads_to:
+      fairy_tale_adventure: "letting wonder heal the cynicism"
+
+  - id: "cottage_to_void"
+    sketch: |
+      The colorful cottage fades.
+      
+      Decorations. Stories. Comfort.
+      All unnecessary.
+      
+      What remains?
+    leads_to:
+      void_contemplation: "confronting the essential"
+
+  - id: "void_to_lab"
+    sketch: |
+      SYSTEM RESTART INITIATED
+      
+      Essential elements reassemble into measurable components:
+      - One (1) Subject
+      - One (1) Environment  
+      - Multiple (5) Reality Options
+      
+      Beginning systematic analysis of experience data...
+    leads_to:
+      lab_analysis: "returning to objective measurement"
+
+  - id: "return_to_understanding"
+    sketch: |
+      You stand once more in the corridor, but now you understand. Each
+      mirror doesn't show different worlds - they show different ways of
+      seeing the same truth. The Keeper appears as themselves, finally:
+      a teacher in the guise of whatever lesson you needed.
+      
+      "Reality," they say, "is not fixed. It bends to the story we tell
+      about it. You have walked in five different truths. Which one felt
+      most real to you?"
+      
+      The mirrors still shimmer, but now you see they all reflect you.
+
+endings:
+  when:
+    - "player has visited at least three different rooms"
+    - "player chooses to leave the corridor OR gains deep understanding"
+  
+  variations:
+    - id: "complete_understanding"
+      when: "player has visited all five rooms AND understands the nature of narrative perspective"
+      sketch: |
+        You step back into your own world, but everything has changed. Not the
+        world itself - your eyes. You now see the laboratory in poetry, the
+        garden in hard facts, the office in fairy tale wonder. 
+        
+        The Keeper's final gift: the ability to choose your own narrative lens.
+        
+    - id: "partial_awakening"
+      when: "player has visited 3-4 rooms AND shows some understanding"
+      sketch: |
+        As you leave the corridor, you catch glimpses of the other perspectives
+        in your daily life. Sometimes the world feels like a lab, sometimes
+        like a poem. You're beginning to see that truth has many faces.
+        
+    - id: "confused_departure"
+      when: "player leaves without understanding OR visits fewer than 3 rooms"
+      sketch: |
+        You exit the corridor shaking your head. "Strange dream," you mutter.
+        But sometimes, when you're not paying attention, you catch the world
+        shifting between different stories. The mirrors left their mark.
+
+guidance: |
+  This story demonstrates how narrative perspective shapes reality. Each room
+  has COMPLETELY different writing styles that you must maintain consistently:
+  
+  CLINICAL LAB: 
+  - Use objective, scientific language
+  - Refer to player as "SUBJECT-47" 
+  - Include measurements, data, clinical observations
+  - The Keeper becomes "DR. MERIDIAN" - professional, detached
+  - Everything is measurable and categorized
+  
+  POET GARDEN:
+  - Lush, metaphorical language full of imagery
+  - Use flowing, emotional prose with rhythm
+  - The Keeper becomes "GARDENER OF VERSES" - wise, nurturing, speaks in metaphors
+  - Everything is described through natural and emotional metaphors
+  
+  NOIR OFFICE:
+  - Hard-boiled detective speak, cynical and atmospheric
+  - Use short, punchy sentences mixed with longer atmospheric ones
+  - The Keeper becomes "THE INVESTIGATOR" - world-weary, street-smart
+  - Everything filtered through crime/mystery lens with 1940s sensibility
+  
+  FAIRY COTTAGE:
+  - Innocent, wonder-filled language like children's stories
+  - Use simple, warm, reassuring words
+  - The Keeper becomes "GRANDMOTHER WILLOW" - kind, nurturing, protective
+  - Everything is magical and safe and good
+  
+  MINIMALIST VOID:
+  - Extremely spare language - only essential words
+  - Short sentences. Minimal descriptions.
+  - The Keeper becomes "THE ESSENTIAL" - speaks only when necessary
+  - Strip away all unnecessary elements
+  
+  CORRIDOR (neutral):
+  - Balanced, descriptive but not extreme in any direction
+  - The Keeper appears as their true self - a teacher/guide
+  
+  The key is DRAMATIC CONTRAST between rooms. When transitioning, show the
+  jarring shift in perspective. The same events could be described completely
+  differently in each room. This isn't just about different characters - it's
+  about different ways of seeing and describing reality itself.
+  
+  The player should feel like they're experiencing five different games with
+  five different writers. Maintain each room's style absolutely consistently
+  until they transition to another room.

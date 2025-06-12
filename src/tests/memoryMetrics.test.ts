@@ -32,7 +32,7 @@ describe('Memory Metrics Collection', () => {
         150,  // input tokens
         50,   // output tokens  
         1200, // latency ms
-        'claude-3-haiku-20240307',
+        'claude-3-5-haiku-latest',
         25,   // memories input
         15,   // memories output
         true  // success
@@ -57,7 +57,7 @@ describe('Memory Metrics Collection', () => {
         200,  // input tokens
         80,   // output tokens
         800,  // latency ms
-        'claude-3-haiku-20240307',
+        'claude-3-5-haiku-latest',
         10,   // memories input
         12,   // memories output (extraction can increase)
         true
@@ -74,7 +74,7 @@ describe('Memory Metrics Collection', () => {
         100,
         0,
         5000,
-        'claude-3-haiku-20240307',
+        'claude-3-5-haiku-latest',
         20,
         20, // No change due to error
         false,
@@ -127,14 +127,29 @@ describe('Memory Metrics Collection', () => {
   });
 
   describe('Cost Calculation', () => {
-    it('should calculate costs using Haiku pricing', () => {
+    it('should return zero cost when no MultiModelService is available', () => {
       // Add operation with known token counts
       memoryMetrics.trackMemoryRequest('compaction', 1000, 500, 1000, 'haiku', 20, 12, true);
       
       const stats = memoryMetrics.getSessionStats();
       
-      // Expected cost: (1000/1000 * 0.0025) + (500/1000 * 0.0125) = 0.0025 + 0.00625 = 0.00875
-      expect(stats.totalCost).toBeCloseTo(0.00875, 4);
+      // Should be zero since no MultiModelService is configured in test
+      expect(stats.totalCost).toBe(0);
+    });
+    
+    it('should calculate costs using MultiModelService when available', () => {
+      // Mock MultiModelService with calculateMemoryCost method
+      const mockMultiModelService = {
+        calculateMemoryCost: vi.fn().mockReturnValue(0.0028)
+      };
+      
+      memoryMetrics.setMultiModelService(mockMultiModelService);
+      memoryMetrics.trackMemoryRequest('compaction', 1000, 500, 1000, 'haiku', 20, 12, true);
+      
+      const stats = memoryMetrics.getSessionStats();
+      
+      expect(mockMultiModelService.calculateMemoryCost).toHaveBeenCalledWith(1000, 500);
+      expect(stats.totalCost).toBe(0.0028);
     });
   });
 
@@ -181,9 +196,12 @@ describe('Memory Metrics Collection', () => {
     });
 
     it('should warn about high costs', () => {
-      // Add expensive operations - need much higher token counts for Haiku pricing
-      // Cost calculation: input_cost + output_cost = (tokens/1000 * rate)
-      // For $0.50: need (100000/1000 * 0.0025) + (50000/1000 * 0.0125) = 0.25 + 0.625 = 0.875
+      // Mock MultiModelService with high cost calculation
+      const mockMultiModelService = {
+        calculateMemoryCost: vi.fn().mockReturnValue(0.30) // Each call returns $0.30
+      };
+      
+      memoryMetrics.setMultiModelService(mockMultiModelService);
       memoryMetrics.trackMemoryRequest('compaction', 100000, 50000, 1000, 'haiku', 50, 30, true);
       memoryMetrics.trackMemoryRequest('compaction', 100000, 50000, 1200, 'haiku', 40, 25, true);
 

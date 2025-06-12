@@ -5,8 +5,19 @@
  * using LLM-based compaction. Engine-agnostic and async-safe.
  */
 
-import { AnthropicService } from '@/services/anthropicService';
+import { MultiModelService } from '@/services/multiModelService';
 import { MemoryMetricsCollector } from './memoryMetricsCollector';
+import { z } from 'zod';
+
+// Schema for memory compaction response
+const CompactedMemorySchema = z.object({
+  content: z.string().describe('The consolidated memory content'),
+  importance: z.number().min(1).max(10).describe('Importance rating from 1-10')
+});
+
+const CompactionResponseSchema = z.object({
+  compactedMemories: z.array(CompactedMemorySchema).describe('Array of compacted memories')
+});
 
 export interface MemoryEntry {
   id: string;
@@ -22,8 +33,7 @@ export interface MemoryContext {
 }
 
 export class ImpressionistMemoryManager {
-  private anthropicService: AnthropicService;
-  private memoryModel: string = 'claude-3-haiku-20240307';
+  private multiModelService: MultiModelService;
   private debugPane?: any;
   private memoryMetrics: MemoryMetricsCollector;
   
@@ -41,12 +51,11 @@ export class ImpressionistMemoryManager {
   private isProcessing: boolean = false;
   private lastCompactionTime: Date | null = null;
 
-  constructor(anthropicService?: AnthropicService, memoryModel?: string) {
-    this.anthropicService = anthropicService || new AnthropicService();
+  constructor(multiModelService?: MultiModelService) {
+    this.multiModelService = multiModelService || new MultiModelService();
     this.memoryMetrics = new MemoryMetricsCollector();
-    if (memoryModel) {
-      this.memoryModel = memoryModel;
-    }
+    // Wire up MultiModelService to metrics collector for accurate pricing
+    this.memoryMetrics.setMultiModelService(this.multiModelService);
   }
 
   /**
@@ -210,16 +219,16 @@ export class ImpressionistMemoryManager {
   private shouldTriggerCompaction(): boolean {
     return (
       !this.isProcessing &&
-      this.anthropicService.isConfigured() &&
+      this.multiModelService.isConfigured() &&
       (this.memoriesSinceLastCompaction >= this.compactionInterval ||
        this.memories.length >= this.MAX_MEMORY_COUNT)
     );
   }
 
   /**
-   * Trigger async memory compaction
+   * Trigger async memory compaction (public for debug tools)
    */
-  private triggerAsyncCompaction(): void {
+  public triggerAsyncCompaction(): void {
     if (this.isProcessing) return;
 
     this.isProcessing = true;
@@ -255,24 +264,24 @@ export class ImpressionistMemoryManager {
 
     try {
       const prompt = this.buildCompactionPrompt();
-      const response = await this.anthropicService.makeRequestWithUsage(prompt, {
-        model: this.memoryModel
-      });
+      const response = await this.multiModelService.makeStructuredMemoryRequest(prompt, CompactionResponseSchema);
 
       const latencyMs = performance.now() - startTime;
-      const compactedMemories = this.parseCompactionResponse(response.content);
+      const compactedMemories = this.convertToMemoryEntries(response.data.compactedMemories);
       
       if (compactedMemories.length > 0) {
         this.memories = compactedMemories;
         console.log(`🗜️ Compacted to ${this.memories.length} memories`);
         
         // Track successful compaction metrics
+        const currentConfig = this.multiModelService.getConfig();
+        const memoryModel = currentConfig?.memoryModel || currentConfig?.model || 'unknown';
         this.memoryMetrics.trackMemoryRequest(
           'compaction',
           response.usage.input_tokens,
           response.usage.output_tokens,
           latencyMs,
-          this.memoryModel,
+          memoryModel,
           originalMemoryCount,
           this.memories.length,
           true
@@ -283,12 +292,14 @@ export class ImpressionistMemoryManager {
         }
       } else {
         // Track failed compaction (no memories returned)
+        const currentConfig = this.multiModelService.getConfig();
+        const memoryModel = currentConfig?.memoryModel || currentConfig?.model || 'unknown';
         this.memoryMetrics.trackMemoryRequest(
           'compaction',
           response.usage.input_tokens,
           response.usage.output_tokens,
           latencyMs,
-          this.memoryModel,
+          memoryModel,
           originalMemoryCount,
           0,
           false,
@@ -300,12 +311,14 @@ export class ImpressionistMemoryManager {
       console.error('Memory compaction error:', error);
       
       // Track failed compaction
+      const currentConfig = this.multiModelService.getConfig();
+      const memoryModel = currentConfig?.memoryModel || currentConfig?.model || 'unknown';
       this.memoryMetrics.trackMemoryRequest(
         'compaction',
         0, // Unknown token count on error
         0,
         latencyMs,
-        this.memoryModel,
+        memoryModel,
         originalMemoryCount,
         originalMemoryCount, // No change on error
         false,
@@ -352,39 +365,22 @@ Multiple memories: "Player has brass key", "Door is unlocked", "Key was hidden b
 ✅ CURRENT STATE (present facts):
 Multiple memories: "Alex has romantic feelings for player", "Player knows Alex's feelings", "Conversation was positive"
 
-RESPOND WITH JSON ONLY:
-{
-  "compactedMemories": [
-    {
-      "content": "Consolidated memory reflecting current state/knowledge",
-      "importance": 8
-    }
-  ]
-}
+Return an array of compacted memories. Each memory should have:
+- content: A clear, concise description of the current state or knowledge
+- importance: A number from 1-10 indicating how important this memory is
 
 Aim for around ${targetCount} memories. Prioritize current game state over historical actions.`;
   }
 
   /**
-   * Parse LLM compaction response
+   * Convert structured output to MemoryEntry objects
    */
-  private parseCompactionResponse(response: string): MemoryEntry[] {
-    try {
-      const parsed = JSON.parse(response);
-      
-      if (!parsed.compactedMemories || !Array.isArray(parsed.compactedMemories)) {
-        return this.memories; // Return original on parse failure
-      }
-
-      return parsed.compactedMemories.map((mem: any, index: number) => ({
-        id: `compacted_${Date.now()}_${index}`,
-        content: mem.content || `Compacted memory ${index + 1}`,
-        timestamp: new Date(),
-        importance: Math.max(1, Math.min(10, mem.importance || 5))
-      }));
-    } catch (error) {
-      console.error('Failed to parse compaction response:', error);
-      return this.memories; // Return original on error
-    }
+  private convertToMemoryEntries(compactedMemories: z.infer<typeof CompactedMemorySchema>[]): MemoryEntry[] {
+    return compactedMemories.map((mem, index) => ({
+      id: `compacted_${Date.now()}_${index}`,
+      content: mem.content,
+      timestamp: new Date(),
+      importance: mem.importance
+    }));
   }
 }
