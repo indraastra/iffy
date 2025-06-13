@@ -289,7 +289,9 @@ class ImpressionistIffyApp {
           return;
         }
       } else {
-        this.addSystemMessage('🗑️ API key removed');
+        // Clear the configuration when API key is removed
+        this.multiModelService.clearConfig();
+        this.addSystemMessage('🗑️ API key removed and configuration cleared');
       }
       
       closeMenu();
@@ -313,7 +315,7 @@ class ImpressionistIffyApp {
       <div class="message message-warning">
         <strong>🔑 API Key Required</strong><br>
         To use LLM-powered features, you need an Anthropic API key.<br>
-        <button id="quick-settings" style="margin-top: 0.5rem; padding: 0.5rem 1rem; background: var(--accent-color); color: white; border: none; border-radius: 4px; cursor: pointer;">
+        <button id="quick-settings" class="btn" style="margin-top: 0.5rem;">
           Configure API Key
         </button>
       </div>
