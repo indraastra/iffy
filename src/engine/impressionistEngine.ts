@@ -99,9 +99,9 @@ export class ImpressionistEngine {
   }
 
   /**
-   * Get initial story text
+   * Get initial story text - returns null if LLM processing needed
    */
-  getInitialText(): string {
+  getInitialText(): string | null {
     if (!this.story) return 'No story loaded. Please load a story to begin.';
     
     const sceneKeys = Object.keys(this.story.scenes);
@@ -114,7 +114,36 @@ export class ImpressionistEngine {
       return 'Story loaded, but no initial content available.';
     }
     
+    // If scene should be processed through LLM, return null to indicate processing needed
+    if (firstScene.process_sketch !== false) {
+      return null; // Signal that LLM processing is required
+    }
+    
     return firstScene.sketch;
+  }
+
+  /**
+   * Process initial scene through LLM if needed
+   */
+  async processInitialScene(): Promise<GameResponse> {
+    if (!this.story) {
+      throw new Error('No story loaded');
+    }
+    
+    const sceneKeys = Object.keys(this.story.scenes);
+    if (sceneKeys.length === 0) {
+      throw new Error('No scenes available');
+    }
+    
+    // Set the current scene if not already set
+    if (!this.gameState.currentScene) {
+      this.gameState.currentScene = sceneKeys[0];
+    }
+    
+    // Process using normal action flow - this will store in interaction history
+    return await this.processAction({
+      input: '<BEGIN STORY>'
+    });
   }
 
   /**
@@ -242,7 +271,8 @@ export class ImpressionistEngine {
       activeMemory: this.getRelevantMemories(input),
       
       // Guidance (~100 tokens)
-      guidance: this.story!.guidance
+      guidance: this.story!.guidance,
+      sceneGuidance: currentScene.guidance
     };
 
     // Available transitions (~100 tokens)

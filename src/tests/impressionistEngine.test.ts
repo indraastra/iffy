@@ -69,8 +69,31 @@ describe('ImpressionistEngine', () => {
   });
 
   describe('getInitialText', () => {
-    it('should return initial scene sketch', () => {
+    it('should return null when scene needs LLM processing (default behavior)', () => {
       engine.loadStory(mockStory);
+      const text = engine.getInitialText();
+      
+      expect(text).toBe(null); // Default process_sketch: true means LLM processing needed
+    });
+
+    it('should return initial scene sketch when process_sketch is false', () => {
+      const storyWithVerbatimSketch = {
+        ...mockStory,
+        scenes: {
+          start: {
+            sketch: 'You are at the beginning.',
+            process_sketch: false, // Explicitly set to false for verbatim display
+            leads_to: {
+              middle: 'when player progresses'
+            }
+          },
+          middle: {
+            sketch: 'You are in the middle of the story.'
+          }
+        }
+      };
+      
+      engine.loadStory(storyWithVerbatimSketch);
       const text = engine.getInitialText();
       
       expect(text).toBe('You are at the beginning.');

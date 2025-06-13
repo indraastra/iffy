@@ -61,16 +61,17 @@ world:
   characters:
     test_char:
       name: "Test Character"
-      essence: "A test character"
+      sketch: "A test character"
   
   locations:
     test_loc:
-      description: "A test location"
+      name: "Test Location"
+      sketch: "A test location"
   
   items:
     test_item:
       name: "Test Item"
-      description: "A test item"
+      sketch: "A test item"
   
   atmosphere:
     sensory: ["sight", "sound"]
@@ -212,7 +213,7 @@ invalid: yaml: content: [
         guidance: 'Test guidance',
         world: {
           characters: Object.fromEntries(
-            Array.from({ length: 6 }, (_, i) => [`char${i}`, { name: `Char ${i}`, essence: 'Test' }])
+            Array.from({ length: 6 }, (_, i) => [`char${i}`, { name: `Char ${i}`, sketch: 'Test' }])
           )
         }
       };

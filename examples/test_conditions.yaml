@@ -19,22 +19,23 @@ world:
   items:
     red_button:
       name: "Red Button"
-      description: "A large red button labeled 'DANGER'"
+      sketch: "A large red button labeled 'DANGER'"
       found_in: "test_chamber"
       
     blue_button:
       name: "Blue Button"
-      description: "A blue button labeled 'SAFE'"
+      sketch: "A blue button labeled 'SAFE'"
       found_in: "test_chamber"
       
     green_button:
       name: "Green Button"
-      description: "A green button labeled 'READY'"
+      sketch: "A green button labeled 'READY'"
       found_in: "test_chamber"
 
 scenes:
   chamber:
     location: "test_chamber"
+    process_sketch: false
     sketch: |
       You stand in a sterile white chamber. Three colored buttons are mounted on the wall:
       - A RED button labeled "DANGER"

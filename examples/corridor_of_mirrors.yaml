@@ -14,7 +14,7 @@ world:
   characters:
     mirror_keeper:
       name: "The Keeper"
-      essence: "Enigmatic figure who appears differently in each room"
+      sketch: "Enigmatic figure who appears differently in each room"
       voice: "Adapts to match each room's narrative style"
       arc: "mysterious → helpful guide → revealer of truth"
 
@@ -63,6 +63,7 @@ world:
 scenes:
   corridor_start:
     location: "corridor"
+    process_sketch: false
     sketch: |
       The corridor stretches before you, neither long nor short, lined with five mirrors
       that each reflect something impossible. Your own reflection fractures across them:

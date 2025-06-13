@@ -14,7 +14,7 @@ world:
   characters:
     alex:
       name: "Alex"
-      essence: "Your Friday night companion, unusually restless and fidgeting with mug of cold coffee"
+      sketch: "Your Friday night companion, unusually restless and fidgeting with mug of cold coffee"
       arc: "searching for words, wrestling with change"
       voice: "Measured speech with hidden currents"
   
@@ -28,6 +28,7 @@ world:
 scenes:
   opening:
     location: "grounded_cafe"
+    process_sketch: false
     sketch: |
       Rain streaks the café window, fracturing the neon outside into pink and blue. 
       You're in your usual corner booth at Grounded, where Chet Baker loops endlessly 

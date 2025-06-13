@@ -14,7 +14,7 @@ version: "1.0"
 context: "Brief story setup for the AI"
 
 scenes:
-  - id: "scene_name"
+  scene_name:
     sketch: "Atmospheric description of the scene"
     leads_to:                                    # Optional - for multi-scene stories
       next_scene: "when something specific happens"
@@ -54,7 +54,7 @@ Scenes are the heart of impressionist stories - atmospheric sketches that the AI
 
 ```yaml
 scenes:
-  - id: "garden_entrance"
+  garden_entrance:
     sketch: |
       The iron gate creaks open to reveal an impossible garden. Roses bloom
       alongside winter jasmine, and the fountain plays music from decades past.
@@ -63,7 +63,7 @@ scenes:
       fountain_discovery: "when the player approaches the fountain"
       rose_garden: "if they explore the flowering paths"
       
-  - id: "fountain_discovery"
+  fountain_discovery:
     sketch: |
       The fountain's water flows upward, each droplet carrying whispered voices
       from another era. Your reflection shows you as a child, then elderly,
@@ -71,9 +71,12 @@ scenes:
 ```
 
 **Scene Guidelines**:
-- **id**: Unique identifier (lowercase, underscores)
+- **Key**: Unique identifier (lowercase, underscores) - serves as the scene ID
 - **sketch**: Atmospheric description that sets mood and suggests possibilities
 - **leads_to**: Optional scene transitions with natural language triggers
+- **location**: Optional reference to a location defined in world.locations
+- **guidance**: Optional scene-specific AI behavior instructions
+- **process_sketch**: Optional boolean (default: true) - if false, displays sketch text verbatim without LLM processing
 
 #### Endings
 Define how your story can conclude with global requirements and specific ending conditions:
@@ -103,6 +106,56 @@ endings:
 - **sketch**: The conclusion narrative
 - The AI enforces BOTH global and specific conditions before triggering endings
 
+#### Characters
+Define people and entities that players can interact with:
+
+```yaml
+world:
+  characters:
+    wise_sage:
+      name: "Master Chen"
+      sketch: "Ancient teacher with knowing eyes and weathered hands"
+      voice: "Speaks slowly, choosing words with care"
+      arc: "mysterious → trusting → reveals hidden wisdom"
+      
+    mysterious_visitor:
+      name: "The Stranger"
+      sketch: "Cloaked figure whose face remains in shadow"
+      voice: "Whispers in riddles and half-truths"
+```
+
+**Character Guidelines**:
+- **name**: Display name for the character
+- **sketch**: Atmospheric description that captures the character's essence
+- **voice**: How they speak and express themselves
+- **arc**: Optional character development journey (e.g., "suspicious → trusting → ally")
+
+#### Items
+Define objects that players can discover and interact with:
+
+```yaml
+world:
+  items:
+    ancient_key:
+      name: "Ancient Key"
+      sketch: "A tarnished brass key with intricate engravings"
+      found_in: "library_vault"
+      reveals: "This key unlocks the restricted section"
+      
+    mysterious_book:
+      name: "The Whispering Tome"
+      sketch: "A leather-bound book that seems to pulse with inner light"
+      found_in: ["library_main", "secret_chamber"]
+      reveals: "The book contains prophecies about the garden's power"
+```
+
+**Item Guidelines**:
+- **name**: Display name for the item
+- **sketch**: Atmospheric description that captures the item's essence
+- **found_in**: Location ID(s) where the item can be discovered
+- **reveals**: Memory or information revealed when the item is found
+- **hidden**: Optional boolean - if true, requires specific discovery actions
+
 #### AI Guidance
 The `guidance` section tells the AI how to interpret your story:
 
@@ -118,6 +171,34 @@ guidance: |
 
 ### Advanced Features
 
+#### Controlling Scene Processing
+By default, scene sketches are processed through the LLM to create dynamic, atmospheric responses. For tutorial text or specific narrative moments that should be displayed exactly as written, use `process_sketch: false`:
+
+```yaml
+scenes:
+  tutorial_intro:
+    process_sketch: false  # Display this text verbatim
+    sketch: |
+      Welcome to the game! This tutorial will teach you the basics.
+      
+      Type 'examine room' to look around, or 'talk' to speak with characters.
+      When you're ready to begin your adventure, type 'start'.
+    leads_to:
+      first_scene: "when player types start or indicates readiness"
+      
+  first_scene:
+    # process_sketch defaults to true - this scene will be dynamically interpreted
+    sketch: |
+      You find yourself in a dimly lit tavern. The air is thick with pipe smoke
+      and hushed conversations. A hooded figure in the corner catches your eye.
+```
+
+This is particularly useful for:
+- Tutorial or instructional text that needs precise wording
+- Opening narration that sets a specific tone
+- System messages or game mechanics explanations
+- Any scene where you need complete control over the output
+
 #### Rich World Building
 Add optional detail when your story needs it:
 
@@ -129,21 +210,23 @@ narrative:
   themes: ["time", "memory", "the price of knowledge"]
 
 world:
+  locations:
+    fountain:
+      name: "The Mystical Fountain"
+      sketch: "Marble fountain with water flowing upward"
+      atmosphere: ["temporal whispers", "shifting reflections"]
+      contains: ["time_coin", "reflection_pool"]
+      
   characters:
     gardener:
       name: "The Eternal Gardener"
-      essence: "Ancient keeper of the garden's secrets"
+      sketch: "Ancient keeper of the garden's secrets"
       voice: "Speaks in riddles, references multiple time periods"
-      
-  locations:
-    fountain:
-      description: "Marble fountain with water flowing upward"
-      contains: ["time_coin", "reflection_pool"]
       
   items:
     time_coin:
       name: "Temporal Coin"
-      description: "A coin that shows different years on each face"
+      sketch: "A coin that shows different years on each face"
       found_in: "fountain"
       reveals: "The garden has existed for centuries"
       
@@ -157,7 +240,7 @@ Handle multiple paths and conditions:
 
 ```yaml
 scenes:
-  - id: "garden_heart"
+  garden_heart:
     sketch: |
       The garden's center holds an ancient oak tree. Its rings contain
       centuries of history, but something dark pulses at its core.
@@ -198,14 +281,21 @@ narrative:
   themes: ["knowledge", "preservation", "human nature"]
 
 world:
+  locations:
+    library_main:
+      name: "The Last Library"
+      sketch: "Towering shelves filled with humanity's final knowledge"
+      atmosphere: ["dust motes in filtered sunlight", "ancient wisdom", "protective silence"]
+      
   characters:
     librarian:
       name: "SAGE"
-      essence: "AI librarian protecting humanity's final books"
+      sketch: "AI librarian protecting humanity's final books"
       voice: "Formal but gradually warming, protective of knowledge"
 
 scenes:
-  - id: "library_entrance"
+  library_entrance:
+    location: "library_main"
     sketch: |
       Dust motes dance in filtered sunlight streaming through broken windows.
       Towering shelves stretch upward, filled with the last books on Earth.
@@ -214,7 +304,8 @@ scenes:
       approach_desk: "when curiosity overrides caution"
       explore_stacks: "if they investigate the books first"
       
-  - id: "approach_desk"
+  approach_desk:
+    location: "library_main"
     sketch: |
       The blue light coalesces into a shimmering form. "Welcome," it says,
       voice echoing with centuries of loneliness. "I am SAGE. Are you here
@@ -249,7 +340,7 @@ Perfect for focused, intimate experiences:
 
 ```yaml
 scenes:
-  - id: "cafe_evening"
+  cafe_evening:
     sketch: |
       The coffee shop is closing, rain streaks the windows, and Alex
       seems nervous about something important they want to tell you.
@@ -269,13 +360,13 @@ For exploration and progression:
 
 ```yaml
 scenes:
-  - id: "library_entrance"
+  library_entrance:
     sketch: "Towering shelves stretch upward filled with ancient books..."
     leads_to:
       restricted_section: "when player shows proper credentials"
       reading_room: "if they ask about specific research"
       
-  - id: "restricted_section" 
+  restricted_section:
     sketch: "Behind locked glass, forbidden tomes whisper secrets..."
 ```
 
@@ -300,7 +391,7 @@ scenes:
 ### Mystery Stories
 ```yaml
 scenes:
-  - id: "crime_scene"
+  crime_scene:
     sketch: |
       The library study shows signs of struggle. Books scattered,
       a broken teacup, and the distinct smell of bitter almonds.
@@ -315,7 +406,7 @@ world:
   characters:
     mentor:
       name: "Master Chen"
-      essence: "Wise teacher hiding deep sadness about his past failures"
+      sketch: "Wise teacher hiding deep sadness about his past failures"
       arc: "guarded → trusting → vulnerable revelation"
 ```
 
@@ -375,6 +466,106 @@ Check the bundled example stories:
 - **"The Test Chamber"**: Technical testing story with precise condition enforcement
 
 The best way to learn is by studying these examples and modifying them to understand how changes affect the player experience.
+
+---
+
+## Changelist
+
+This section tracks breaking changes to the story format for external story authors who need to migrate their existing stories.
+
+### Version 3.1 - LLM-First Scene Processing
+
+**New Features:**
+
+1. **Scene Processing Control** (Optional)
+   - **New**: `process_sketch` field on scenes (default: true)
+   ```yaml
+   scenes:
+     tutorial_scene:
+       process_sketch: false  # Display sketch verbatim
+       sketch: "Exact text to show the player"
+   ```
+   - When `true` (default): Scene sketch is sent to LLM for dynamic interpretation
+   - When `false`: Scene sketch is displayed exactly as written
+   - Useful for tutorials, precise instructions, or authored narrative moments
+
+### Version 3.0 - Unified Location-Scene Architecture
+
+**Breaking Changes:**
+
+1. **Scenes Structure Change** (Required)
+   - **Before**: `scenes` was an array of objects with `id` fields
+   ```yaml
+   scenes:
+     - id: "start"
+       sketch: "Description here"
+   ```
+   - **After**: `scenes` is a key-value object where keys are scene IDs
+   ```yaml
+   scenes:
+     start:
+       sketch: "Description here"
+   ```
+
+2. **Scene Location Field** (Optional but Recommended)
+   - **New**: Scenes can now specify their location with a `location` field
+   ```yaml
+   scenes:
+     library_entrance:
+       location: "main_library"
+       sketch: "Description here"
+   ```
+
+3. **Scene Guidance Field** (Optional)
+   - **New**: Scenes can include scene-specific AI guidance
+   ```yaml
+   scenes:
+     investigation_scene:
+       guidance: "Focus on methodical evidence gathering"
+       sketch: "Description here"
+   ```
+
+4. **Location Structure Change** (Required if using locations)
+   - **Before**: Top-level `locations` section
+   ```yaml
+   locations:
+     fountain:
+       description: "A mystical fountain"
+   ```
+   - **After**: `locations` moved under `world` section
+   ```yaml
+   world:
+     locations:
+       fountain:
+         name: "The Mystical Fountain"
+         sketch: "A mystical fountain"
+   ```
+
+5. **Location Field Names** (Recommended)
+   - **New**: Locations support both `description` (backwards compatible) and `sketch` fields
+   - **New**: Added `name`, `atmosphere`, and `guidance` fields for richer location definition
+
+6. **Character Field Names** (Recommended)
+   - **New**: Characters now use `sketch` instead of `essence` for consistency
+   - **Before**: `essence: "Ancient keeper of secrets"`
+   - **After**: `sketch: "Ancient keeper of secrets"`
+   - **Backwards compatible**: Parser accepts both `essence` and `sketch`
+
+7. **Item Field Names** (Recommended)
+   - **New**: Items now use `sketch` instead of `description` for consistency
+   - **Before**: `description: "A mystical coin"`
+   - **After**: `sketch: "A mystical coin"`
+   - **Backwards compatible**: Parser accepts both `description` and `sketch`
+
+**Migration Steps:**
+1. Convert `scenes` array to key-value object using existing `id` fields as keys
+2. Move any top-level `locations` under the `world` section
+3. Update location `description` fields to `sketch` (optional but recommended)
+4. Update character `essence` fields to `sketch` (optional but recommended)
+5. Update item `description` fields to `sketch` (optional but recommended)
+6. Add `name` fields to locations for better organization
+7. Consider adding `location` references to scenes for better context
+8. Add scene-specific `guidance` where helpful for AI behavior
 
 ---
 

@@ -62,117 +62,135 @@ export class LLMDirector {
 
 
   /**
-   * Build consolidated high-to-low level prompt for LLM
+   * Build consolidated high-to-low level prompt for LLM with improved structure
    */
   private buildPrompt(input: string, context: DirectorContext): string {
     // Use simplified prompt for post-ending interactions
     if (context.storyComplete) {
       return this.buildPostEndingPrompt(input, context);
     }
-    let prompt = `You are the director of an impressionistic interactive fiction story. Paint scenes from minimal sketches and respond naturally to player actions.
+    
+    let prompt = '';
 
-STORY: "${context.storyContext.split('\n')[0] || 'Interactive Fiction'}"
-${context.storyContext}
+    // === IDENTITY & ROLE ===
+    prompt += `You are the director of an impressionistic interactive fiction story. Paint scenes from minimal sketches and respond naturally to player actions.
+
+`;
+
+    // === GLOBAL STORY CONTEXT & RULES ===
+    prompt += `STORY PREMISE: ${context.storyContext}
 
 `;
 
     // Narrative Style
     if (context.narrative) {
       const parts = [];
-      if (context.narrative.voice) parts.push(`Voice: ${context.narrative.voice}`);
-      if (context.narrative.tone) parts.push(`Tone: ${context.narrative.tone}`);
+      if (context.narrative.voice) parts.push(`  Voice: ${context.narrative.voice}`);
+      if (context.narrative.tone) parts.push(`  Tone: ${context.narrative.tone}`);
       if (context.narrative.themes) {
-        parts.push(`Themes: ${context.narrative.themes.join(', ')}`);
+        parts.push(`  Themes: ${context.narrative.themes.join(', ')}`);
       }
       
-      prompt += `NARRATIVE STYLE:
+      if (parts.length > 0) {
+        prompt += `NARRATIVE STYLE:
 ${parts.join('\n')}
+
 `;
-      prompt += '\n';
+      }
     }
 
-    // Story Progression Guidance
-    prompt += `STORY PROGRESSION GUIDANCE:
+    // Global Story Guidance
+    prompt += `GLOBAL STORY GUIDANCE:
 ${context.guidance}
 
 `;
 
-    // World Context
+    // World Elements
     const worldParts = [];
+    
+    // Characters with full details
     if (context.activeCharacters && context.activeCharacters.length > 0) {
-      worldParts.push(`Characters: ${context.activeCharacters.map(c => `${c.name} - ${c.essence}`).join(' | ')}`);
+      const characterDetails = context.activeCharacters.map(c => {
+        let charInfo = `    ${c.name}`;
+        if (c.sketch) charInfo += ` - ${c.sketch}`;
+        if (c.voice) charInfo += `\n      Voice: ${c.voice}`;
+        if (c.arc) charInfo += `\n      Arc: ${c.arc}`;
+        return charInfo;
+      }).join('\n');
+      worldParts.push(`  CHARACTERS:\n${characterDetails}`);
     }
+    
+    // Location context
     if (context.location) {
       const locationContext = this.buildLocationContext(context.location, context);
       if (locationContext) {
-        worldParts.push(locationContext);
+        worldParts.push(`  LOCATIONS:\n    ${locationContext.replace(/\n/g, '\n    ')}`);
       }
     }
+    
+    // Items with full details and descriptions
     if (context.discoverableItems && context.discoverableItems.length > 0) {
-      worldParts.push(`Available Items: ${context.discoverableItems.map(i => i.name).join(', ')}`);
+      const itemDetails = context.discoverableItems.map(item => {
+        let itemInfo = `    ${item.name}`;
+        if (item.sketch) itemInfo += `: ${item.sketch}`;
+        if (item.reveals) itemInfo += `\n      Reveals: ${item.reveals}`;
+        return itemInfo;
+      }).join('\n');
+      worldParts.push(`  ITEMS:\n${itemDetails}`);
     }
     
     if (worldParts.length > 0) {
-      prompt += `WORLD CONTEXT:
-${worldParts.join('\n')}
+      prompt += `WORLD ELEMENTS:
+${worldParts.join('\n\n')}
 
 `;
     }
 
-    // Endings
-    if (context.availableEndings && context.availableEndings.variations.length > 0) {
-      if (context.availableEndings.when) {
-        const globalConditions = Array.isArray(context.availableEndings.when) 
-          ? context.availableEndings.when.join(' AND ') 
-          : context.availableEndings.when;
-        prompt += `ENDING REQUIREMENTS (must be met for ANY ending): ${globalConditions}\n\n`;
-      }
-      
-      prompt += `ENDING TRANSITIONS:\n`;
-      prompt += context.availableEndings.variations
-        .map(ending => {
-          let conditionText;
-          if (Array.isArray(ending.when)) {
-            // Handle nested arrays for AND/OR logic
-            if (ending.when.some(condition => Array.isArray(condition))) {
-              // Contains nested arrays - these are AND groups
-              conditionText = ending.when
-                .map(condition => Array.isArray(condition) ? `(${condition.join(' AND ')})` : condition)
-                .join(' OR ');
-            } else {
-              // Simple array - OR conditions
-              conditionText = ending.when.join(' OR ');
-            }
-          } else {
-            conditionText = ending.when;
-          }
-          return `• ${ending.id}:\n  REQUIRES: ${conditionText}\n  SKETCH: ${ending.sketch}`;
-        })
-        .join('\n\n');
-      prompt += '\n\nCRITICAL: Only trigger an ending if BOTH the global requirements AND the specific ending conditions are met.\n';
-      prompt += 'BEFORE triggering any ending, verify:\n';
-      prompt += '1. Global requirements: Have ALL global ending requirements been satisfied?\n';
-      prompt += '2. Specific requirements: Have ALL conditions for this specific ending been satisfied?\n';
-      prompt += '3. If ANY requirement is missing, DO NOT trigger the ending - continue the scene instead.\n\n';
-    }
+    // === AI STATE MANAGEMENT & BEHAVIOR ===
+    prompt += `INTERACTION PRINCIPLES:
+- If player takes an action, describe only the outcome of that action; let them decide what to do next
+- Let the player drive the pacing and sequence of events
+- Build naturally from the current scene sketch, adding atmosphere and detail
+- Only trigger transitions when the player's actions genuinely satisfy the conditions
 
-    // Current Scene
+SKETCH INTERPRETATION:
+- Use the provided 'Current Scene Sketch' as your foundation, expanding it with rich sensory details
+- Think of sketches as impressionist paintings - add color, texture, and emotion to the basic outline
+- Incorporate scene transitions only when their REQUIRES conditions are naturally met by player actions
+
+MEMORY GENERATION:
+- Extract 0-3 NEW, factual memories from each interaction
+- Capture key player decisions, plot developments, and revealed information
+- Examples: "player activated device", "character departed", "player discovered secret area"
+- For risky decisions: "player took risky action: [specific behavior]"
+
+`;
+
+    // === CURRENT GAME STATE ===
     prompt += `CURRENT SCENE SKETCH:
 ${context.currentSketch}
 
 `;
 
+    // Add scene-specific guidance if available
+    if (context.sceneGuidance) {
+      prompt += `CURRENT SCENE GUIDANCE:
+${context.sceneGuidance}
+
+`;
+    }
+
     // Scene Transitions
     if (context.currentTransitions && Object.keys(context.currentTransitions).length > 0) {
-      prompt += `SCENE TRANSITIONS:
+      prompt += `POSSIBLE SCENE TRANSITIONS:
 ${Object.entries(context.currentTransitions)
-  .map(([sceneId, data]) => `• ${sceneId}:\n  REQUIRES: ${data.condition}\n  SKETCH: ${data.sketch}`)
+  .map(([sceneId, data]) => `  - ${sceneId}:\n      REQUIRES: ${data.condition}\n      SKETCH: ${data.sketch}`)
   .join('\n\n')}
 
 `;
     }
 
-    // Recent Interactions
+    // Recent Context
     if (context.recentInteractions && context.recentInteractions.length > 0) {
       const recentDialogue = context.recentInteractions
         .slice(-LLMDirector.REGULAR_INTERACTION_LIMIT)
@@ -195,53 +213,70 @@ ${context.activeMemory.join('\n')}
 `;
     }
 
-    // Story State Context
-    if (context.storyComplete) {
-      prompt += `STORY STATUS: COMPLETE
-The story has officially ended, but the player continues to explore, reflect, or ask questions.
-Provide thoughtful responses about the story's events, characters, themes, or alternate possibilities.
-Do not trigger new scene transitions or endings. Focus on reflection and exploration.
+    // Player Action
+    prompt += `PLAYER ACTION: "${input}"
+
+`;
+
+    // === ENDING LOGIC ===
+    if (context.availableEndings && context.availableEndings.variations.length > 0) {
+      if (context.availableEndings.when) {
+        const globalConditions = Array.isArray(context.availableEndings.when) 
+          ? context.availableEndings.when.join(' AND ') 
+          : context.availableEndings.when;
+        prompt += `GLOBAL ENDING CONDITIONS (at least one must be met for ANY ending to be possible):
+${globalConditions}
+
+`;
+      }
+      
+      prompt += `POSSIBLE ENDING VARIATIONS:
+${context.availableEndings.variations
+  .map(ending => {
+    let conditionText;
+    if (Array.isArray(ending.when)) {
+      if (ending.when.some(condition => Array.isArray(condition))) {
+        conditionText = ending.when
+          .map(condition => Array.isArray(condition) ? `(${condition.join(' AND ')})` : condition)
+          .join(' OR ');
+      } else {
+        conditionText = ending.when.join(' OR ');
+      }
+    } else {
+      conditionText = ending.when;
+    }
+    return `  - ${ending.id}:\n      SPECIFIC REQUIRES: ${conditionText}\n      SKETCH: ${ending.sketch}`;
+  })
+  .join('\n\n')}
+
+ENDING TRIGGER VERIFICATION (CRITICAL - Perform these checks in order):
+1. Have ANY of the GLOBAL ENDING CONDITIONS been met? (YES/NO)
+2. If YES to #1, check if the SPECIFIC REQUIRES for a particular ending variation have ALL been satisfied (YES/NO)
+3. If both #1 and #2 are YES for an ending, trigger that ending. Otherwise, DO NOT trigger an ending and continue the current scene
 
 `;
     }
 
-    // Player Action
-    prompt += `PLAYER ACTION: "${input}"
-
-HOW TO USE THE SKETCHES AND TRANSITIONS:
-- Current scene sketch: Use this as your foundation, expanding it with rich sensory details
-- Scene transitions: Only trigger when REQUIRES condition is naturally met by player actions
-- Ending transitions: Only trigger when REQUIRES condition is naturally met AND global ending requirements are satisfied
-- All sketches: Incorporate directly into your narrative when their conditions are met
-- Think of sketches as impressionist paintings - add color, texture, and emotion to the basic outline
-
-INTERACTION PRINCIPLES:
-- If player takes an action, describe only the outcome of that action; let them decide what to do next
-- Let the player drive the pacing and sequence of events
-- Build naturally from the current scene sketch, adding atmosphere and detail
-- Only trigger transitions when the player's actions genuinely satisfy the conditions
-
-Respond with ONLY a JSON object. No explanations or text after the JSON.
-
-REQUIRED JSON FORMAT:
+    // === REQUIRED JSON OUTPUT FORMAT ===
+    prompt += `REQUIRED JSON OUTPUT FORMAT:
 {
   "narrative": "Your descriptive response. Use \\n for line breaks, escape quotes as \\", and ensure all strings are properly JSON-formatted.",
   "importance": 1-10,
   "reasoning": "Explain your decision-making process, especially for transitions and endings",
   "memories": ["new memory 1", "new memory 2"],
   "signals": {
-    "transition": "ending:ACTUAL_ENDING_ID" OR "scene:ACTUAL_SCENE"
+    "transition": "ending:ACTUAL_ENDING_ID" OR "scene:ACTUAL_SCENE_ID"
   }
 }
 
 - For story endings: "transition": "ending:ACTUAL_ENDING_ID"
-- For scene changes: "transition": "scene:ACTUAL_SCENE_ID"
+- For scene changes: "transition": "scene:ACTUAL_SCENE_ID"  
 - ONLY use ending/scene IDs that actually exist in the current story
-- Importance scale: 1-3 routine, 4-6 meaningful, 7-9 major moments, 10 story-defining.
-- Memories: Extract 0-3 NEW, factual memories from this interaction (what the player did, what was discovered, important story developments from exchange)
+- Importance scale: 1-3 routine, 4-6 meaningful, 7-9 major moments, 10 story-defining
+- Memories: Extract 0-3 NEW, factual memories from this interaction
 - Reasoning: Always explain why you chose this response, especially if triggering transitions
 
-JSON only:`;
+RESPOND WITH ONLY THE JSON OBJECT. NO ADDITIONAL TEXT OR EXPLANATION OUTSIDE THIS JSON OBJECT.`;
 
     return prompt;
   }
@@ -459,23 +494,35 @@ JSON only:`;
     const isNewLocation = !context.previousLocation || context.previousLocation !== location.name;
     
     if (isNewLocation) {
-      // New location - include key details
-      let locationContext = `LOCATION: ${location.name} - ${location.sketch}`;
+      // New location - include key details with proper formatting
+      let locationContext = `${location.name}`;
       
-      // Add atmosphere only if distinctive and brief (limited to 3 elements)
+      // Add description/sketch
+      if (location.sketch) {
+        locationContext += ` - ${location.sketch}`;
+      } else if (location.description) {
+        locationContext += ` - ${location.description}`;
+      }
+      
+      // Add atmosphere with proper formatting
       if (location.atmosphere && location.atmosphere.length > 0) {
-        locationContext += `\nMOOD: ${location.atmosphere.slice(0, 3).join(', ')}`;
+        locationContext += `\n      Atmosphere: ${location.atmosphere.slice(0, 5).join(', ')}`;
+      }
+      
+      // Add what the location contains
+      if (location.contains && location.contains.length > 0) {
+        locationContext += `\n      Contains: ${location.contains.slice(0, 5).join(', ')}`;
       }
       
       // Add location guidance if available
       if (location.guidance) {
-        locationContext += `\nGUIDANCE: ${location.guidance}`;
+        locationContext += `\n      Guidance: ${location.guidance}`;
       }
       
       return locationContext;
     } else {
       // Same location - minimal reminder only
-      return `SETTING: ${location.name}`;
+      return `${location.name} (current setting)`;
     }
   }
 

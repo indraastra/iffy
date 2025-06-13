@@ -22,6 +22,7 @@ export class ImpressionistGameManager {
   private multiModelService: MultiModelService;
   private parser: ImpressionistParser;
   private debugPane?: DebugPane;
+  private isProcessingInitialScene: boolean = false; // Flag to suppress initial scene action display
   
   // UI Elements
   private storyOutput: HTMLElement;
@@ -60,7 +61,7 @@ export class ImpressionistGameManager {
       }
       
       // Display story header and initial content
-      this.renderGameIntroduction();
+      await this.renderGameIntroduction();
       
       this.enableInput();
       
@@ -79,7 +80,12 @@ export class ImpressionistGameManager {
     if (!input.trim()) return;
     
     this.disableInput();
-    this.addMessage(input, 'player');
+    
+    // Don't show the player action if we're processing the initial scene
+    if (!this.isProcessingInitialScene) {
+      this.addMessage(input, 'player');
+    }
+    
     this.showTypingIndicator();
     
     try {
@@ -109,9 +115,9 @@ export class ImpressionistGameManager {
   }
 
   /**
-   * Render game introduction (title, author, blurb, initial text)
+   * Render just the game header (title, author, blurb)
    */
-  private renderGameIntroduction(): void {
+  private renderGameHeader(): void {
     const story = this.engine.getCurrentStory();
     if (!story) return;
 
@@ -125,7 +131,36 @@ export class ImpressionistGameManager {
     }
     
     this.addMessage('---', 'separator');
-    this.addMessage(this.engine.getInitialText(), 'story');
+  }
+
+  /**
+   * Render game introduction (title, author, blurb, initial text)
+   */
+  private async renderGameIntroduction(): Promise<void> {
+    // First render the header
+    this.renderGameHeader();
+    
+    // Then handle initial scene content
+    const initialText = this.engine.getInitialText();
+    if (initialText === null) {
+      // Process initial scene through LLM
+      this.addMessage('...', 'system'); // Show thinking indicator
+      try {
+        this.isProcessingInitialScene = true; // Flag to suppress next player action display
+        const response = await this.engine.processInitialScene();
+        this.clearLastMessage(); // Remove thinking indicator
+        this.addMessage(response.text, 'story');
+        this.isProcessingInitialScene = false; // Reset flag after processing complete
+      } catch (error) {
+        this.clearLastMessage(); // Remove thinking indicator
+        this.addMessage('❌ Failed to process initial scene', 'error');
+        console.error('Initial scene processing error:', error);
+        this.isProcessingInitialScene = false; // Reset flag even on error
+      }
+    } else {
+      // Show static initial text
+      this.addMessage(initialText, 'story');
+    }
   }
 
   /**
@@ -241,13 +276,19 @@ export class ImpressionistGameManager {
     this.engine.setUIRestoreCallback((_gameState: any, conversationHistory?: any[]) => {
       this.clearOutput();
       
-      // Re-render the game introduction using current story info
-      this.renderGameIntroduction();
+      // Show the game header (title, author, blurb) but don't regenerate initial content
+      this.renderGameHeader();
       
+      // Restore the conversation history
       if (conversationHistory) {
-        conversationHistory.forEach(line => {
+        conversationHistory.forEach((line, index) => {
           if (line.startsWith('Player:')) {
-            this.addMessage(line.replace(/^Player: /, ''), 'player');
+            const playerAction = line.replace(/^Player: /, '');
+            // Skip the first player action if it's "<BEGIN STORY>" (initial scene processing)
+            if (index === 0 && playerAction === '<BEGIN STORY>') {
+              return; // Skip this line
+            }
+            this.addMessage(playerAction, 'player');
           } else if (line.startsWith('Response:')) {
             this.addMessage(line.replace(/^Response: /, ''), 'story');
           }
@@ -407,6 +448,13 @@ export class ImpressionistGameManager {
     
     this.storyOutput.appendChild(div);
     this.storyOutput.scrollTop = this.storyOutput.scrollHeight;
+  }
+
+  private clearLastMessage(): void {
+    const lastMessage = this.storyOutput.lastElementChild;
+    if (lastMessage) {
+      this.storyOutput.removeChild(lastMessage);
+    }
   }
 
   /**

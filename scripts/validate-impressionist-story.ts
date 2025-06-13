@@ -142,8 +142,8 @@ async function validateStory(filePath: string): Promise<void> {
 const args = process.argv.slice(2);
 
 if (args.length === 0) {
-  console.log(`Usage: npm run validate-story <story-file.yaml>`);
-  console.log(`Example: npm run validate-story examples/the_final_word.yaml`);
+  console.log(`Usage: tsx scripts/validate-impressionist-story.ts <story-file.yaml>`);
+  console.log(`Example: tsx scripts/validate-impressionist-story.ts examples/the_final_word.yaml`);
   process.exit(1);
 }
 

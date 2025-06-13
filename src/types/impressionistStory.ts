@@ -28,6 +28,8 @@ export interface ImpressionistStory {
 export interface ImpressionistScene {
   sketch: string  // Impressionistic outline for LLM to interpret
   location?: string  // Optional reference to location key
+  guidance?: string  // Optional scene-specific guidance for LLM behavior
+  process_sketch?: boolean  // If true, send sketch through LLM (default: true). Set false for verbatim display
   leads_to?: Record<string, string>  // scene_id: "when this happens"
 }
 
@@ -66,10 +68,10 @@ export interface WorldDefinition {
   atmosphere?: AtmosphereDefinition
 }
 
-// Character essence over detailed stats
+// Character sketches over detailed stats
 export interface ImpressionistCharacter {
   name: string
-  essence: string  // One line capturing character core
+  sketch: string  // One line capturing character core
   arc?: string  // Emotional journey
   voice?: string  // How they speak
 }
@@ -87,7 +89,7 @@ export interface ImpressionistLocation {
 // Item impressions
 export interface ImpressionistItem {
   name: string
-  description: string
+  sketch: string  // Atmospheric description of the item
   found_in?: string | string[]  // Location ID(s) where discoverable
   reveals?: string  // Memory to add when found
   hidden?: boolean  // Requires discovery
@@ -135,6 +137,7 @@ export interface DirectorContext {
   
   // Guidance (~100 tokens)
   guidance: string
+  sceneGuidance?: string  // Optional scene-specific guidance
   
   // Story state signals
   storyComplete?: boolean  // True when story has ended but exploration continues
