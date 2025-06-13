@@ -10,24 +10,31 @@ narrative:
   themes: ["logic", "precision", "verification"]
 
 world:
+  locations:
+    test_chamber:
+      name: "Test Chamber"
+      sketch: "Sterile white chamber with three colored buttons and a heavy metal exit door"
+      atmosphere: ["sterile", "clinical", "systematic"]
+      
   items:
     red_button:
       name: "Red Button"
       description: "A large red button labeled 'DANGER'"
-      found_in: "chamber"
+      found_in: "test_chamber"
       
     blue_button:
       name: "Blue Button"
       description: "A blue button labeled 'SAFE'"
-      found_in: "chamber"
+      found_in: "test_chamber"
       
     green_button:
       name: "Green Button"
       description: "A green button labeled 'READY'"
-      found_in: "chamber"
+      found_in: "test_chamber"
 
 scenes:
-  - id: "chamber"
+  chamber:
+    location: "test_chamber"
     sketch: |
       You stand in a sterile white chamber. Three colored buttons are mounted on the wall:
       - A RED button labeled "DANGER"
@@ -41,7 +48,8 @@ scenes:
       secured: "player presses the blue button"
       ready: "player presses the green button"
 
-  - id: "armed"
+  armed:
+    location: "test_chamber"
     sketch: |
       The red button glows. Warning lights flash. The screen now reads:
       "DANGER MODE ACTIVATED. System armed and dangerous."
@@ -49,7 +57,8 @@ scenes:
       secured: "player presses the blue button"
       ready: "player presses the green button"
 
-  - id: "secured"
+  secured:
+    location: "test_chamber"
     sketch: |
       The blue button glows. Warning lights stop flashing. The screen reads:
       "SAFE MODE ACTIVATED. System secured."
@@ -57,7 +66,8 @@ scenes:
       armed: "player presses the red button"
       ready: "player presses the green button"
 
-  - id: "ready"
+  ready:
+    location: "test_chamber"
     sketch: |
       The green button glows. A soft chime sounds. The screen reads:
       "READY MODE ACTIVATED. System prepared for final sequence."

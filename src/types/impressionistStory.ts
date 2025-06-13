@@ -15,7 +15,7 @@ export interface ImpressionistStory {
   
   // Story essence (required)
   context: string  // 1-3 sentences capturing story essence
-  scenes: ImpressionistScene[]
+  scenes: Record<string, ImpressionistScene>  // Key-value structure for O(1) lookup
   endings: ImpressionistEndingCollection
   guidance: string  // LLM behavior hints
   
@@ -26,8 +26,8 @@ export interface ImpressionistStory {
 
 // Scene definition - impressionistic outlines
 export interface ImpressionistScene {
-  id: string
   sketch: string  // Impressionistic outline for LLM to interpret
+  location?: string  // Optional reference to location key
   leads_to?: Record<string, string>  // scene_id: "when this happens"
 }
 
@@ -76,7 +76,10 @@ export interface ImpressionistCharacter {
 
 // Location sketches
 export interface ImpressionistLocation {
-  description: string
+  name: string  // Display name for the location
+  sketch: string  // Atmospheric description of the location
+  atmosphere?: string[]  // Mood elements (limited to 3 for token efficiency)
+  guidance?: string  // Optional author guidance for this location
   connections?: string[]  // Connected location IDs
   contains?: string[]  // Item IDs found here
 }
@@ -126,6 +129,7 @@ export interface DirectorContext {
   
   // Optional enrichment (~200 tokens)
   location?: ImpressionistLocation
+  previousLocation?: string  // Previous location ID for context optimization
   discoverableItems?: ImpressionistItem[]
   activeCharacters?: ImpressionistCharacter[]
   

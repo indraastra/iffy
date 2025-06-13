@@ -5,7 +5,7 @@ import { LangChainMetrics } from '@/services/multiModelService';
 interface LlmInteraction {
   timestamp: Date;
   prompt: { text: string; tokenCount: number };
-  response: { narrative: string; signals?: any; tokenCount: number; importance?: number };
+  response: { narrative: string; signals?: any; reasoning?: string; memories?: string[]; tokenCount: number; importance?: number };
   context: { scene: string; memories: number; transitions: number };
 }
 
@@ -408,9 +408,30 @@ export class DebugPane {
             ${interaction.response.importance ? `<span class="importance-score">Importance: ${interaction.response.importance}/10</span>` : ''}
           </div>
           
+          ${interaction.response.reasoning ? `
+            <div class="interaction-reasoning">
+              <strong>🧠 LLM Reasoning:</strong>
+              <div class="reasoning-content">${this.escapeHtml(interaction.response.reasoning)}</div>
+            </div>
+          ` : ''}
+          
+          ${interaction.response.memories && interaction.response.memories.length > 0 ? `
+            <div class="interaction-memories">
+              <strong>💾 Response Memories (${interaction.response.memories.length}):</strong>
+              <div class="memories-list">
+                ${interaction.response.memories.map((memory, i) => `
+                  <div class="memory-item-compact">
+                    <span class="memory-index">#${i + 1}</span>
+                    <span class="memory-text">${this.escapeHtml(memory)}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+          
           ${interaction.response.signals ? `
             <div class="interaction-signals">
-              <strong>Signals:</strong>
+              <strong>⚡ Signals:</strong>
               <pre>${JSON.stringify(interaction.response.signals, null, 2)}</pre>
             </div>
           ` : ''}
@@ -618,13 +639,13 @@ export class DebugPane {
   }
 
   /**
-   * Add LangChain-specific CSS styles
+   * Add debug pane CSS styles
    */
   private addLangChainStyles(): void {
-    if (document.getElementById('langchain-styles')) return;
+    if (document.getElementById('debug-pane-styles')) return;
     
     const style = document.createElement('style');
-    style.id = 'langchain-styles';
+    style.id = 'debug-pane-styles';
     style.textContent = `
       .langchain-metric {
         margin: 1rem 0;
@@ -819,6 +840,61 @@ export class DebugPane {
       .debug-pane {
         scrollbar-width: thin;
         scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+      }
+      
+      /* New styles for reasoning and memories */
+      .interaction-reasoning {
+        margin: 0.75rem 0;
+        padding: 0.75rem;
+        background: rgba(108, 171, 251, 0.1);
+        border-left: 3px solid #6cabfb;
+        border-radius: 4px;
+      }
+      
+      .reasoning-content {
+        margin-top: 0.5rem;
+        font-style: italic;
+        color: #e3f2fd;
+        line-height: 1.4;
+        white-space: pre-wrap;
+      }
+      
+      .interaction-memories {
+        margin: 0.75rem 0;
+        padding: 0.75rem;
+        background: rgba(156, 39, 176, 0.1);
+        border-left: 3px solid #9c27b0;
+        border-radius: 4px;
+      }
+      
+      .memories-list {
+        margin-top: 0.5rem;
+      }
+      
+      .memory-item-compact {
+        display: flex;
+        align-items: flex-start;
+        margin: 0.25rem 0;
+        padding: 0.25rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      
+      .memory-item-compact:last-child {
+        border-bottom: none;
+      }
+      
+      .memory-index {
+        min-width: 2rem;
+        font-size: 0.8rem;
+        color: #9c27b0;
+        font-weight: bold;
+      }
+      
+      .memory-text {
+        flex: 1;
+        font-size: 0.9rem;
+        line-height: 1.3;
+        color: #f3e5f5;
       }
     `;
     

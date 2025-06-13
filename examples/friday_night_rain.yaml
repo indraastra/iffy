@@ -18,12 +18,16 @@ world:
       arc: "searching for words, wrestling with change"
       voice: "Measured speech with hidden currents"
   
-  atmosphere:
-    sensory: ["coffee aroma", "dark jazz", "rain on windows"]
-    mood: "intimate and contemplative, like a wong kar wai film"
+  locations:
+    grounded_cafe:
+      name: "Grounded Café"
+      sketch: "Modern urban café with corner booths, large windows, and soft jazz playing through speakers"
+      atmosphere: ["intimate", "contemplative", "rain-soaked"]
+      guidance: "This is the player and Alex's regular Friday evening spot - familiar yet charged with unspoken feelings"
 
 scenes:
-  - id: "opening"
+  opening:
+    location: "grounded_cafe"
     sketch: |
       Rain streaks the café window, fracturing the neon outside into pink and blue. 
       You're in your usual corner booth at Grounded, where Chet Baker loops endlessly 
