@@ -171,6 +171,14 @@ export class ImpressionistParser {
         parsed.location = String(scene.location).trim();
       }
 
+      // Optional scene-specific guidance
+      if (scene.guidance) {
+        parsed.guidance = String(scene.guidance).trim();
+      }
+
+      // Optional process_sketch flag (defaults to true for LLM-first engine)
+      parsed.process_sketch = scene.process_sketch !== undefined ? Boolean(scene.process_sketch) : true;
+
       // Parse leads_to transitions
       if (scene.leads_to) {
         parsed.leads_to = this.parseLeadsTo(scene.leads_to, `scenes.${sceneId}.leads_to`, warnings);
@@ -313,7 +321,7 @@ export class ImpressionistParser {
       const char = charData as any;
       characters[id] = {
         name: char.name || id,
-        essence: char.essence || 'A character in the story',
+        sketch: char.sketch || char.essence || 'A character in the story',  // Support both sketch and essence for backwards compatibility
         arc: char.arc,
         voice: char.voice
       };
@@ -371,7 +379,7 @@ export class ImpressionistParser {
       const item = itemData as any;
       items[id] = {
         name: item.name || id,
-        description: item.description || 'An item in the story',
+        sketch: item.sketch || item.description || 'An item in the story',  // Support both sketch and description for backwards compatibility
         found_in: item.found_in,
         reveals: item.reveals,
         hidden: Boolean(item.hidden)

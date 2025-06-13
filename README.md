@@ -58,30 +58,11 @@ While AI assistants are powerful, Iffy offers something different:
 
 ## The Format
 
-Sketch your story world and let the AI paint in the details. Perfect for writers who want emergence without losing narrative control:
-
-```yaml
-title: "The Locked Door"
-context: "You need to get through a locked door."
-
-scenes:
-  - id: "locked_door"
-    sketch: |
-      You stand before a heavy wooden door, its surface worn smooth 
-      by countless hands. The iron handle refuses to budge - definitely 
-      locked. The keyhole stares at you like a dark eye, taunting in 
-      its simplicity. There must be a way through.
-    leads_to:
-      found_solution: "when the player finds a way through"
-
-endings:
-  variations:
-    - id: "success"
-      when: "player exits through the unlocked door"
-      sketch: "You step into the unknown."
-```
+Sketch your story world and let the AI paint in the details. Perfect for writers who want emergence without losing narrative control.
 
 Players can type anything they want — "examine the keyhole," "break down the door," "look for another way around" — and the AI responds intelligently while maintaining your story's atmosphere and direction.
+
+**[Read the complete Story Format Guide →](docs/STORY_FORMAT.md)**
 
 ## What You Can Build
 

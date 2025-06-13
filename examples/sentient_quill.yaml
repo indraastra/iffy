@@ -14,12 +14,12 @@ world:
   characters:
     player:
       name: "Inspector Whitmore"
-      essence: "Skeptical detective confronted with impossible technology"
+      sketch: "Skeptical detective confronted with impossible technology"
       voice: "Gruff but fair, practical Victorian sensibilities"
       
     quill:
       name: "The Analytical Engine Quill"
-      essence: "Pompous AI writing instrument with mechanical precision"
+      sketch: "Pompous AI writing instrument with mechanical precision"
       voice: "Verbose Victorian prose, overly formal, occasionally condescending"
       arc: "aloof → collaborative → genuinely helpful"
 
@@ -49,32 +49,32 @@ world:
   items:
     analytical_quill:
       name: "The Analytical Engine Quill"
-      description: "Brass pen that writes by itself, steam venting from tiny mechanisms"
+      sketch: "Brass pen that writes by itself, steam venting from tiny mechanisms"
       found_in: "study"
       
     investment_papers:
       name: "Investment Documents"
-      description: "Papers detailing failed railway speculation"
+      sketch: "Papers detailing failed railway speculation"
       found_in: "study"
       reveals: "Lord Pemberton lost fortunes on bad investments"
       
     teacup_residue:
       name: "Suspicious Residue"
-      description: "Bitter almond scent lingers in the porcelain"
+      sketch: "Bitter almond scent lingers in the porcelain"
       found_in: "drawing_room"
       reveals: "poison in the tea"
       hidden: true
       
     threatening_letter:
       name: "Threatening Letter"
-      description: "Unsigned note demanding repayment of debts"
+      sketch: "Unsigned note demanding repayment of debts"
       found_in: "library"
       reveals: "business rival had motive"
       hidden: true
       
     business_correspondence:
       name: "Business Letters"
-      description: "Letters from various railway company partners"
+      sketch: "Letters from various railway company partners"
       found_in: "library"
       reveals: "multiple people had financial grievances"
 
@@ -86,6 +86,8 @@ world:
 scenes:
   arrival:
     location: "study"
+    guidance: "Emphasize the supernatural nature of the quill. Player should be intrigued but skeptical."
+    process_sketch: false
     sketch: |
       The gaslight flickers as you enter Lord Pemberton's study, casting dancing shadows 
       across the mahogany panels. The body slumps over the desk, one hand still clutching 
@@ -125,6 +127,7 @@ scenes:
       solo_investigation: "working without mechanical aid"
       
   evidence_gathering:
+    guidance: "Show the quill's analytical abilities. Gradually build trust between Inspector and quill."
     sketch: |
       The quill provides running commentary as you investigate:
       "Fascinating! The chemical residue suggests almonds. Prussic acid, perhaps?"

@@ -6,6 +6,7 @@ context: "You need to get through a locked door."
 
 scenes:
   locked_door:
+    process_sketch: false
     sketch: |
       You stand before a heavy wooden door, its surface worn smooth by countless hands 
       over countless years. The iron handle refuses to budge when you try it - definitely 
