@@ -178,6 +178,14 @@ export class MultiModelService {
     }
   }
 
+  public clearConfig(): void {
+    this.cancelActiveRequests();
+    this.currentConfig = null;
+    this.currentModel = null;
+    this.memoryModel = null;
+    localStorage.removeItem('iffy_llm_config');
+  }
+
   public setMetricsHandler(handler: (metrics: LangChainMetrics) => void): void {
     this.metricsHandler = handler;
     this.setupMetricsCallback();
