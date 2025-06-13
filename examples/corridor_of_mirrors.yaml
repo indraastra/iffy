@@ -20,36 +20,49 @@ world:
 
   locations:
     corridor:
-      description: "Central hallway with five ornate mirrors, each showing different reflections"
+      name: "The Corridor of Mirrors"
+      sketch: "Central hallway with five ornate mirrors, each showing different reflections"
+      atmosphere: ["mysterious", "interdimensional", "reflective"]
       connections: ["clinical_lab", "poet_garden", "noir_office", "fairy_cottage", "minimalist_void"]
       
     clinical_lab:
-      description: "Sterile laboratory with precise measurements and scientific equipment"
-      style: "Technical, objective, measured"
+      name: "Clinical Laboratory"
+      sketch: "Sterile laboratory with precise measurements and scientific equipment"
+      atmosphere: ["sterile", "objective", "measured"]
       connections: ["corridor", "poet_garden"]
+      guidance: "Technical, objective, measured narrative style"
       
     poet_garden:
-      description: "Lush garden where metaphors bloom like flowers"
-      style: "Lyrical, flowing, emotional"
+      name: "Garden of Verses"
+      sketch: "Lush garden where metaphors bloom like flowers"
+      atmosphere: ["lyrical", "flowing", "emotional"]
       connections: ["corridor", "noir_office"]
+      guidance: "Lyrical, flowing, emotional narrative style"
       
     noir_office:
-      description: "Shadow-filled detective office from 1940s film"
-      style: "Hard-boiled, cynical, atmospheric"
+      name: "Detective Office"
+      sketch: "Shadow-filled detective office from 1940s film"
+      atmosphere: ["shadowy", "cynical", "atmospheric"]
       connections: ["corridor", "fairy_cottage"]
+      guidance: "Hard-boiled, cynical, atmospheric narrative style"
       
     fairy_cottage:
-      description: "Whimsical cottage straight from a children's storybook"
-      style: "Innocent, wonder-filled, simple"
+      name: "Fairy Tale Cottage"
+      sketch: "Whimsical cottage straight from a children's storybook"
+      atmosphere: ["innocent", "wonder-filled", "magical"]
       connections: ["corridor", "minimalist_void"]
+      guidance: "Innocent, wonder-filled, simple narrative style"
       
     minimalist_void:
-      description: "Empty white space with only essential elements"
-      style: "Sparse, philosophical, contemplative"
+      name: "The Essential Space"
+      sketch: "Empty white space with only essential elements"
+      atmosphere: ["sparse", "philosophical", "contemplative"]
       connections: ["corridor", "clinical_lab"]
+      guidance: "Sparse, philosophical, contemplative narrative style"
 
 scenes:
-  - id: "corridor_start"
+  corridor_start:
+    location: "corridor"
     sketch: |
       The corridor stretches before you, neither long nor short, lined with five mirrors
       that each reflect something impossible. Your own reflection fractures across them:
@@ -70,7 +83,8 @@ scenes:
       enter_cottage: "selecting the fairy cottage mirror"
       enter_void: "walking to the minimalist void mirror"
 
-  - id: "enter_lab"
+  enter_lab:
+    location: "clinical_lab"
     sketch: |
       SUBJECT REPORT: MIRROR TRANSITION SUCCESSFUL
       
@@ -91,7 +105,8 @@ scenes:
       lab_analysis: "engaging with laboratory procedures"
       return_corridor: "returning to central corridor"
 
-  - id: "enter_garden"
+  enter_garden:
+    location: "poet_garden"
     sketch: |
       Oh, sweet wanderer of worlds, you step into summer's embrace where
       thoughts bloom wild as morning glories! The Keeper transforms before
@@ -114,7 +129,8 @@ scenes:
       garden_exploration: "wandering deeper into the metaphor-maze"
       return_corridor: "returning to the mundane hallway"
 
-  - id: "enter_office"
+  enter_office:
+    location: "noir_office"
     sketch: |
       The rain started three hours ago and shows no signs of letting up.
       Just like this case.
@@ -138,7 +154,8 @@ scenes:
       noir_investigation: "diving deeper into the shadows"
       return_corridor: "heading back to the gallery"
 
-  - id: "enter_cottage"
+  enter_cottage:
+    location: "fairy_cottage"
     sketch: |
       Oh my! What a lovely visitor we have today! 
       
@@ -162,7 +179,8 @@ scenes:
       fairy_tale_adventure: "exploring the magical cottage"
       return_corridor: "going back to the big hallway"
 
-  - id: "enter_void"
+  enter_void:
+    location: "minimalist_void"
     sketch: |
       Space.
       
@@ -186,7 +204,7 @@ scenes:
       void_contemplation: "remaining in the essential space"
       return_corridor: "returning to complexity"
 
-  - id: "lab_to_garden"
+  lab_to_garden:
     sketch: |
       TRANSITION PROTOCOL INITIATED
       
@@ -202,7 +220,7 @@ scenes:
     leads_to:
       garden_exploration: "embracing the poetic transformation"
 
-  - id: "garden_to_office"
+  garden_to_office:
     sketch: |
       The flowers wilt to black and white as you follow the shadow-path.
       Beauty curdles into cynicism. The sweet garden air turns thick with
@@ -213,7 +231,7 @@ scenes:
     leads_to:
       noir_investigation: "accepting the harsh truths"
 
-  - id: "office_to_cottage"
+  office_to_cottage:
     sketch: |
       The shadows part like curtains, and suddenly everything is bright
       and cheerful! The smoky air clears to reveal the scent of fresh-baked
@@ -224,7 +242,7 @@ scenes:
     leads_to:
       fairy_tale_adventure: "letting wonder heal the cynicism"
 
-  - id: "cottage_to_void"
+  cottage_to_void:
     sketch: |
       The colorful cottage fades.
       
@@ -235,7 +253,7 @@ scenes:
     leads_to:
       void_contemplation: "confronting the essential"
 
-  - id: "void_to_lab"
+  void_to_lab:
     sketch: |
       SYSTEM RESTART INITIATED
       
@@ -248,7 +266,8 @@ scenes:
     leads_to:
       lab_analysis: "returning to objective measurement"
 
-  - id: "return_to_understanding"
+  return_to_understanding:
+    location: "corridor"
     sketch: |
       You stand once more in the corridor, but now you understand. Each
       mirror doesn't show different worlds - they show different ways of

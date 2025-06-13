@@ -40,6 +40,7 @@ export class ImpressionistEngine {
   private director: LLMDirector;
   private metrics: MetricsCollector;
   private memoryManager: ImpressionistMemoryManager;
+  private previousLocation?: string; // For smart location context
   
   // Callbacks for UI integration
   private uiResetCallback?: () => void;
@@ -65,7 +66,7 @@ export class ImpressionistEngine {
   loadStory(story: ImpressionistStory): ImpressionistResult<ImpressionistState> {
     try {
       // Basic validation
-      if (!story || !story.title || !story.scenes || story.scenes.length === 0) {
+      if (!story || !story.title || !story.scenes || Object.keys(story.scenes).length === 0) {
         return {
           success: false,
           error: 'Invalid story: missing required fields (title, scenes)'
@@ -77,8 +78,13 @@ export class ImpressionistEngine {
 
       this.story = story;
       
-      // Set initial scene (first scene is entry point)
-      this.gameState.currentScene = story.scenes[0].id;
+      // Set initial scene (first scene key is entry point)
+      const sceneKeys = Object.keys(story.scenes);
+      if (sceneKeys.length > 0) {
+        this.gameState.currentScene = sceneKeys[0];
+      } else {
+        throw new Error('Story has no scenes');
+      }
 
       return {
         success: true,
@@ -98,7 +104,12 @@ export class ImpressionistEngine {
   getInitialText(): string {
     if (!this.story) return 'No story loaded. Please load a story to begin.';
     
-    const firstScene = this.story.scenes[0];
+    const sceneKeys = Object.keys(this.story.scenes);
+    if (sceneKeys.length === 0) {
+      return 'Story loaded, but no scenes available.';
+    }
+    
+    const firstScene = this.story.scenes[sceneKeys[0]];
     if (!firstScene?.sketch) {
       return 'Story loaded, but no initial content available.';
     }
@@ -214,7 +225,7 @@ export class ImpressionistEngine {
    */
   private getCurrentScene() {
     if (!this.story) return null;
-    return this.story.scenes.find(scene => scene.id === this.gameState.currentScene) || null;
+    return this.story.scenes[this.gameState.currentScene] || null;
   }
 
   /**
@@ -238,7 +249,7 @@ export class ImpressionistEngine {
     if (currentScene.leads_to) {
       context.currentTransitions = {};
       for (const [sceneId, condition] of Object.entries(currentScene.leads_to)) {
-        const targetScene = this.story!.scenes.find(s => s.id === sceneId);
+        const targetScene = this.story!.scenes[sceneId];
         if (targetScene) {
           context.currentTransitions[sceneId] = {
             condition: condition as string,
@@ -260,19 +271,19 @@ export class ImpressionistEngine {
 
     // Optional enrichment (~200 tokens)
     if (this.story!.world) {
-      // Add location details if current scene has a location
-      if (this.story!.world.locations) {
-        // For now, assume scene ID might match location ID
-        const location = this.story!.world.locations[currentScene.id];
+      // Add smart location context based on scene location reference
+      if (currentScene.location && this.story!.world.locations) {
+        const location = this.story!.world.locations[currentScene.location];
         if (location) {
           context.location = location;
+          context.previousLocation = this.previousLocation;
         }
       }
 
-      // Add discoverable items in current area
-      if (this.story!.world.items) {
+      // Add discoverable items in current scene's location
+      if (currentScene.location && this.story!.world.items) {
         context.discoverableItems = Object.values(this.story!.world.items)
-          .filter(item => item.found_in === currentScene.id);
+          .filter(item => item.found_in === currentScene.location);
       }
 
       // Add active characters
@@ -313,9 +324,16 @@ export class ImpressionistEngine {
   private transitionToScene(sceneId: string) {
     if (!this.story) return;
 
-    const targetScene = this.story.scenes.find(scene => scene.id === sceneId);
+    const targetScene = this.story.scenes[sceneId];
     if (targetScene) {
       console.log(`Scene transition: ${this.gameState.currentScene} -> ${sceneId}`);
+      
+      // Track location changes for smart context
+      const currentScene = this.story.scenes[this.gameState.currentScene];
+      if (currentScene?.location !== targetScene.location) {
+        this.previousLocation = currentScene?.location;
+      }
+      
       this.gameState.currentScene = sceneId;
     } else {
       console.warn(`Scene transition failed: scene ${sceneId} not found`);

@@ -21,17 +21,15 @@ describe('Memory System Compatibility', () => {
       version: '1.0',
       context: 'A story for testing memory systems.',
       
-      scenes: [
-        {
-          id: 'start',
+      scenes: {
+        start: {
           sketch: 'You begin your journey.',
           leads_to: { next: 'when ready to continue' }
         },
-        {
-          id: 'end',
+        end: {
           sketch: 'Your journey ends here.'
         }
-      ],
+      },
       
       endings: {
         variations: [

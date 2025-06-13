@@ -142,37 +142,44 @@ export class ImpressionistParser {
     return story;
   }
 
-  private parseScenes(data: any, errors: string[], warnings: string[]): ImpressionistScene[] {
-    if (!Array.isArray(data)) {
-      errors.push('scenes must be an array');
-      return [];
+  private parseScenes(data: any, errors: string[], warnings: string[]): Record<string, ImpressionistScene> {
+    if (!data || typeof data !== 'object') {
+      errors.push('scenes must be an object (key-value pairs)');
+      return {};
     }
 
-    return data.map((scene, index) => {
-      if (!scene || typeof scene !== 'object') {
-        errors.push(`Scene ${index} must be an object`);
-        return { id: `scene_${index}`, sketch: '' };
+    const scenes: Record<string, ImpressionistScene> = {};
+
+    for (const [sceneId, sceneData] of Object.entries(data)) {
+      if (!sceneData || typeof sceneData !== 'object') {
+        errors.push(`Scene '${sceneId}' must be an object`);
+        continue;
       }
 
+      const scene = sceneData as any;
       const parsed: ImpressionistScene = {
-        id: scene.id ? String(scene.id).trim() : `scene_${index}`,
         sketch: scene.sketch ? String(scene.sketch).trim() : ''
       };
       
       // Validate required fields
-      if (!parsed.id) {
-        errors.push(`Scene ${index} missing id`);
-      }
       if (!parsed.sketch) {
-        errors.push(`Scene ${index} missing sketch`);
+        errors.push(`Scene '${sceneId}' missing sketch`);
       }
 
+      // Optional location reference
+      if (scene.location) {
+        parsed.location = String(scene.location).trim();
+      }
+
+      // Parse leads_to transitions
       if (scene.leads_to) {
-        parsed.leads_to = this.parseLeadsTo(scene.leads_to, `scenes[${index}].leads_to`, warnings);
+        parsed.leads_to = this.parseLeadsTo(scene.leads_to, `scenes.${sceneId}.leads_to`, warnings);
       }
 
-      return parsed;
-    });
+      scenes[sceneId] = parsed;
+    }
+
+    return scenes;
   }
 
   private parseEndings(data: any, errors: string[], _warnings: string[]): ImpressionistEndingCollection {
@@ -330,8 +337,15 @@ export class ImpressionistParser {
       }
 
       const loc = locData as any;
+      
+      // Handle legacy 'description' field and new 'sketch' field
+      const sketch = loc.sketch || loc.description || 'A location in the story';
+      
       locations[id] = {
-        description: loc.description || 'A location in the story',
+        name: loc.name || id.replace(/_/g, ' '), // Default name from ID
+        sketch: sketch,
+        atmosphere: Array.isArray(loc.atmosphere) ? loc.atmosphere.slice(0, 3) : undefined, // Limit to 3 for token efficiency
+        guidance: loc.guidance ? String(loc.guidance).trim() : undefined,
         connections: Array.isArray(loc.connections) ? loc.connections : undefined,
         contains: Array.isArray(loc.contains) ? loc.contains : undefined
       };
@@ -408,42 +422,29 @@ export class ImpressionistParser {
     }
   }
 
-  private validateScenes(scenes: ImpressionistScene[], errors: string[], warnings: string[]) {
-    if (scenes.length === 0) {
+  private validateScenes(scenes: Record<string, ImpressionistScene>, errors: string[], warnings: string[]) {
+    const sceneIds = Object.keys(scenes);
+    
+    if (sceneIds.length === 0) {
       errors.push('At least one scene is required');
       return;
     }
 
-    const sceneIds = new Set<string>();
-    
-    scenes.forEach((scene, _index) => {
-      if (sceneIds.has(scene.id)) {
-        errors.push(`Duplicate scene ID: ${scene.id}`);
-      }
-      sceneIds.add(scene.id);
-
+    // Validate each scene
+    for (const [sceneId, scene] of Object.entries(scenes)) {
       if (!scene.sketch) {
-        errors.push(`Scene ${scene.id} missing sketch`);
+        errors.push(`Scene '${sceneId}' missing sketch`);
       }
 
       // Validate leads_to references
       if (scene.leads_to) {
-        for (const _targetScene of Object.keys(scene.leads_to)) {
-          // We'll validate references after all scenes are parsed
-        }
-      }
-    });
-
-    // Validate scene references
-    scenes.forEach(scene => {
-      if (scene.leads_to) {
-        for (const _targetScene of Object.keys(scene.leads_to)) {
-          if (!sceneIds.has(_targetScene)) {
-            warnings.push(`Scene ${scene.id} references unknown scene: ${_targetScene}`);
+        for (const targetScene of Object.keys(scene.leads_to)) {
+          if (!scenes[targetScene]) {
+            warnings.push(`Scene '${sceneId}' references unknown scene: '${targetScene}'`);
           }
         }
       }
-    });
+    }
   }
 
   private validateEndings(endings: ImpressionistEndingCollection, errors: string[], warnings: string[]) {
@@ -508,11 +509,11 @@ export class ImpressionistParser {
     }
 
     // Check scene transitions
-    story.scenes.forEach(scene => {
+    Object.entries(story.scenes).forEach(([sceneId, scene]) => {
       if (scene.leads_to) {
         Object.values(scene.leads_to).forEach(condition => {
           if (this.looksLikeCode(condition)) {
-            warnings.push(`Scene ${scene.id} transition looks like code, use natural language: "${condition}"`);
+            warnings.push(`Scene ${sceneId} transition looks like code, use natural language: "${condition}"`);
           }
         });
       }
@@ -550,7 +551,7 @@ export class ImpressionistParser {
     // Rough estimate of YAML line count
     let lines = 10; // Base metadata
     
-    lines += story.scenes.length * 4; // Average scene size
+    lines += Object.keys(story.scenes).length * 4; // Average scene size
     lines += story.endings.variations.length * 3; // Average ending size
     lines += story.guidance.split('\n').length;
     

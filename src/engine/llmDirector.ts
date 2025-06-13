@@ -103,7 +103,10 @@ ${context.guidance}
       worldParts.push(`Characters: ${context.activeCharacters.map(c => `${c.name} - ${c.essence}`).join(' | ')}`);
     }
     if (context.location) {
-      worldParts.push(`Location: ${context.location.description}`);
+      const locationContext = this.buildLocationContext(context.location, context);
+      if (locationContext) {
+        worldParts.push(locationContext);
+      }
     }
     if (context.discoverableItems && context.discoverableItems.length > 0) {
       worldParts.push(`Available Items: ${context.discoverableItems.map(i => i.name).join(', ')}`);
@@ -395,6 +398,7 @@ JSON only:`;
             narrative, 
             signals,
             reasoning,
+            memories,
             tokenCount: this.estimateTokens({ text: rawResponse }),
             importance
           },
@@ -443,6 +447,36 @@ JSON only:`;
   private estimateTokens(content: any): number {
     const text = typeof content === 'string' ? content : JSON.stringify(content);
     return Math.ceil(text.length / 4); // Rough estimate: 4 chars per token
+  }
+
+  /**
+   * Build smart location context with minimal token overhead
+   */
+  private buildLocationContext(location: any, context: DirectorContext): string {
+    if (!location) return '';
+    
+    // Check if this is a new location compared to previous
+    const isNewLocation = !context.previousLocation || context.previousLocation !== location.name;
+    
+    if (isNewLocation) {
+      // New location - include key details
+      let locationContext = `LOCATION: ${location.name} - ${location.sketch}`;
+      
+      // Add atmosphere only if distinctive and brief (limited to 3 elements)
+      if (location.atmosphere && location.atmosphere.length > 0) {
+        locationContext += `\nMOOD: ${location.atmosphere.slice(0, 3).join(', ')}`;
+      }
+      
+      // Add location guidance if available
+      if (location.guidance) {
+        locationContext += `\nGUIDANCE: ${location.guidance}`;
+      }
+      
+      return locationContext;
+    } else {
+      // Same location - minimal reminder only
+      return `SETTING: ${location.name}`;
+    }
   }
 
   /**

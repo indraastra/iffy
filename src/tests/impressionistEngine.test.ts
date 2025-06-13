@@ -19,19 +19,17 @@ describe('ImpressionistEngine', () => {
       blurb: 'A test story',
       version: '1.0',
       context: 'A test context for our story',
-      scenes: [
-        {
-          id: 'start',
+      scenes: {
+        start: {
           sketch: 'You are at the beginning.',
           leads_to: {
             middle: 'when player progresses'
           }
         },
-        {
-          id: 'middle',
+        middle: {
           sketch: 'You are in the middle of the story.'
         }
-      ],
+      },
       endings: {
         variations: [
           {
@@ -55,7 +53,7 @@ describe('ImpressionistEngine', () => {
     });
 
     it('should reject invalid stories', () => {
-      const invalidStory = { ...mockStory, scenes: [] };
+      const invalidStory = { ...mockStory, scenes: {} };
       const result = engine.loadStory(invalidStory);
       
       expect(result.success).toBe(false);

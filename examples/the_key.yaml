@@ -5,7 +5,7 @@ version: "1.0"
 context: "You need to get through a locked door."
 
 scenes:
-  - id: "locked_door"
+  locked_door:
     sketch: |
       You stand before a heavy wooden door, its surface worn smooth by countless hands 
       over countless years. The iron handle refuses to budge when you try it - definitely 
@@ -19,13 +19,17 @@ scenes:
     leads_to:
       opened_door: "when the player opens the door one way or another"
     
-  - id: "opened_door"
+  opened_door:
     sketch: "Beyond lies darkness."
 
 endings:
-  - id: "success"
-    when: "player exits through the open door"
-    sketch: "You step into the unknown."
+  when:
+    - "player has found a way through the door"
+  
+  variations:
+    - id: "success"
+      when: "player exits the room"
+      sketch: "You step into the unknown."
 
 guidance: |
   Let the player be creative. They might find a key, pick the lock,

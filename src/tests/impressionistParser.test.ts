@@ -20,7 +20,7 @@ version: "1.0"
 context: "A simple test context."
 
 scenes:
-  - id: "start"
+  start:
     sketch: "The beginning."
 
 endings:
@@ -40,7 +40,7 @@ guidance: "Test guidance."
       expect(result.story).toBeDefined();
       expect(result.story?.title).toBe('Test Story');
       expect(result.story?.author).toBe('Test Author');
-      expect(result.story?.scenes).toHaveLength(1);
+      expect(Object.keys(result.story?.scenes || {})).toHaveLength(1);
       expect(result.story?.endings.variations).toHaveLength(1);
     });
 
@@ -77,7 +77,7 @@ world:
     mood: "mysterious"
 
 scenes:
-  - id: "start"
+  start:
     sketch: "The beginning."
     leads_to:
       end: "when ready"
@@ -106,7 +106,7 @@ guidance: "Test guidance."
       const yamlContent = `
 title: "Test Story"
 # Missing author, blurb, version, context, guidance
-scenes: []
+scenes: {}
 endings: []
       `;
 
@@ -132,7 +132,7 @@ version: "1.0"
 context: "A simple test context."
 
 scenes:
-  - id: "start"
+  start:
     sketch: "The beginning."
     leads_to:
       end: "has_item:key"
@@ -175,15 +175,14 @@ invalid: yaml: content: [
         blurb: 'Test',
         version: '1.0',
         context: 'Test context',
-        scenes: [
-          {
-            id: 'start',
+        scenes: {
+          start: {
             sketch: 'Beginning',
             leads_to: {
               'nonexistent': 'when something happens'
             }
           }
-        ],
+        },
         endings: {
           variations: [
             {
@@ -208,7 +207,7 @@ invalid: yaml: content: [
         blurb: 'Test',
         version: '1.0',
         context: 'Test context',
-        scenes: [{ id: 'start', sketch: 'Beginning' }],
+        scenes: { start: { sketch: 'Beginning' } },
         endings: { variations: [{ id: 'end', when: 'story ends', sketch: 'The end' }] },
         guidance: 'Test guidance',
         world: {
