@@ -388,22 +388,19 @@ export class MultiModelService {
    * Handles different response formats across providers
    */
   public static extractTokenUsage(response: any): { input_tokens: number; output_tokens: number; total_tokens: number } {
-    // Try usage_metadata first (newer LangChain standard), then fallback to response_metadata
-    let usage = response.usage_metadata || response.usage || {};
-    if (!usage.input_tokens && !usage.output_tokens) {
+    // Check common locations for token usage data
+    let usage = response.usage_metadata || response.usage || response.tokenUsage || {};
+    
+    // If not found, check response_metadata (OpenAI pattern)
+    if (!usage.input_tokens && !usage.output_tokens && !usage.prompt_tokens && !usage.completion_tokens) {
       const metadata = response.response_metadata || {};
-      usage = metadata.token_usage || metadata.usage || {};
-    }
-
-    // If still not found, try the old LangChain pattern (for metrics callback)
-    if (!usage.input_tokens && !usage.output_tokens) {
-      usage = response.llmOutput?.tokenUsage || {};
+      usage = metadata.token_usage || metadata.usage || usage;
     }
 
     // Normalize token field names across providers
-    const inputTokens = usage.input_tokens || usage.prompt_tokens || 0;
-    const outputTokens = usage.output_tokens || usage.completion_tokens || 0;
-    const totalTokens = usage.total_tokens || (inputTokens + outputTokens);
+    const inputTokens = usage.input_tokens || usage.prompt_tokens || usage.promptTokens || 0;
+    const outputTokens = usage.output_tokens || usage.completion_tokens || usage.completionTokens || 0;
+    const totalTokens = usage.total_tokens || usage.totalTokens || (inputTokens + outputTokens);
 
     return {
       input_tokens: inputTokens,

@@ -81,13 +81,13 @@ ${context.storyContext}
       const parts = [];
       if (context.narrative.voice) parts.push(`Voice: ${context.narrative.voice}`);
       if (context.narrative.tone) parts.push(`Tone: ${context.narrative.tone}`);
+      if (context.narrative.themes) {
+        parts.push(`Themes: ${context.narrative.themes.join(', ')}`);
+      }
       
       prompt += `NARRATIVE STYLE:
-${parts.join(' | ')}
+${parts.join('\n')}
 `;
-      if (context.narrative.themes) {
-        prompt += `Themes: ${context.narrative.themes.join(', ')}\n`;
-      }
       prompt += '\n';
     }
 
@@ -143,7 +143,7 @@ ${worldParts.join('\n')}
           } else {
             conditionText = ending.when;
           }
-          return `• ${ending.id}:\n  REQUIRES: ${conditionText}\n  ENDING SKETCH: ${ending.sketch}`;
+          return `• ${ending.id}:\n  REQUIRES: ${conditionText}\n  SKETCH: ${ending.sketch}`;
         })
         .join('\n\n');
       prompt += '\n\nCRITICAL: Only trigger an ending if BOTH the global requirements AND the specific ending conditions are met.\n';
@@ -222,7 +222,7 @@ Respond with ONLY a JSON object. No explanations or text after the JSON.
 
 REQUIRED JSON FORMAT:
 {
-  "narrative": "Your descriptive response",
+  "narrative": "Your descriptive response. Use \\n for line breaks, escape quotes as \\", and ensure all strings are properly JSON-formatted.",
   "importance": 1-10,
   "reasoning": "Explain your decision-making process, especially for transitions and endings",
   "memories": ["new memory 1", "new memory 2"],
