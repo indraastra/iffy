@@ -29,10 +29,17 @@ export const POPULAR_MODELS: ModelOption[] = [
   // Anthropic
   {
     provider: 'anthropic',
+    model: 'claude-3-5-sonnet-latest',
+    displayName: 'Claude Sonnet 3.5',
+    description: 'Fast and highly capable',
+    costTier: 'premium'
+  },
+  {
+    provider: 'anthropic',
     model: 'claude-sonnet-4-20250514',
     displayName: 'Claude Sonnet 4',
     description: 'Most intelligent, highest quality',
-    costTier: 'premium'
+    costTier: 'enterprise'
   },
   {
     provider: 'anthropic',
@@ -89,7 +96,7 @@ export const POPULAR_MODELS: ModelOption[] = [
 
 // Default models per provider
 export const DEFAULT_MODELS: Record<LLMProvider, string> = {
-  anthropic: 'claude-sonnet-4-20250514',
+  anthropic: 'claude-3-5-sonnet-latest',
   openai: 'gpt-4o',
   google: 'gemini-2.0-flash'
 };
@@ -109,6 +116,7 @@ export interface ModelPricing {
 
 export const MODEL_PRICING: Record<string, ModelPricing> = {
   // Anthropic
+  'claude-3-5-sonnet-latest': { input: 3.00, output: 15.00 },
   'claude-sonnet-4-20250514': { input: 3.00, output: 15.00 },
   'claude-3-5-haiku-latest': { input: 0.80, output: 4.00 },
   

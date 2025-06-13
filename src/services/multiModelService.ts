@@ -45,19 +45,29 @@ class LangChainMetricsCallback extends BaseCallbackHandler {
 
   async handleLLMEnd(output: any) {
     const latencyMs = performance.now() - this.startTime;
-    const tokenUsage = output.llmOutput?.tokenUsage || {};
-    
-    // Extract token usage with provider-specific field mapping
-    const promptTokens = tokenUsage.promptTokens || tokenUsage.input_tokens || 0;
-    const completionTokens = tokenUsage.completionTokens || tokenUsage.output_tokens || 0;
-    const totalTokens = tokenUsage.totalTokens || tokenUsage.total_tokens || (promptTokens + completionTokens);
+    const { input_tokens, output_tokens, total_tokens } = MultiModelService.extractTokenUsage(output.llmOutput);
+
+    // Debug logging when tokens are missing
+    if (input_tokens === 0 && output_tokens === 0) {
+      console.warn('🔍 LangChain Metrics: No token usage found for', this.provider, this.model);
+      console.warn('🔍 Available output keys:', Object.keys(output));
+      if (output.usage_metadata) {
+        console.warn('🔍 usage_metadata:', output.usage_metadata);
+      }
+      if (output.response_metadata) {
+        console.warn('🔍 response_metadata:', output.response_metadata);
+      }
+      if (output.llmOutput) {
+        console.warn('🔍 llmOutput:', output.llmOutput);
+      }
+    }
 
     this.metricsHandler({
       provider: this.provider,
       model: this.model,
-      promptTokens,
-      completionTokens,
-      totalTokens,
+      promptTokens: input_tokens,
+      completionTokens: output_tokens,
+      totalTokens: total_tokens,
       latencyMs,
       success: true,
       timestamp: new Date()
@@ -365,12 +375,29 @@ export class MultiModelService {
 
   private parseResponse(response: any): LLMResponse {
     const content = response.content || '';
-    
+    const usage = MultiModelService.extractTokenUsage(response);
+
+    return {
+      content,
+      usage
+    };
+  }
+
+  /**
+   * Extract token usage from LangChain response object
+   * Handles different response formats across providers
+   */
+  public static extractTokenUsage(response: any): { input_tokens: number; output_tokens: number; total_tokens: number } {
     // Try usage_metadata first (newer LangChain standard), then fallback to response_metadata
-    let usage = response.usage_metadata || {};
+    let usage = response.usage_metadata || response.usage || {};
     if (!usage.input_tokens && !usage.output_tokens) {
       const metadata = response.response_metadata || {};
       usage = metadata.token_usage || metadata.usage || {};
+    }
+
+    // If still not found, try the old LangChain pattern (for metrics callback)
+    if (!usage.input_tokens && !usage.output_tokens) {
+      usage = response.llmOutput?.tokenUsage || {};
     }
 
     // Normalize token field names across providers
@@ -379,12 +406,9 @@ export class MultiModelService {
     const totalTokens = usage.total_tokens || (inputTokens + outputTokens);
 
     return {
-      content,
-      usage: {
-        input_tokens: inputTokens,
-        output_tokens: outputTokens,
-        total_tokens: totalTokens
-      }
+      input_tokens: inputTokens,
+      output_tokens: outputTokens,
+      total_tokens: totalTokens
     };
   }
 
