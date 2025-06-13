@@ -522,7 +522,7 @@ export class DebugPane {
           <tr><td>Success Rate</td><td>${successRate.toFixed(1)}%</td></tr>
           <tr><td>Failed Requests</td><td>${failed}</td></tr>
           <tr><td>Average Latency</td><td>${Math.round(avgLatency)}ms</td></tr>
-          <tr><td>Average Tokens</td><td>${Math.round(avgTokens)}</td></tr>
+          <tr><td>Average Tokens</td><td>${Math.round(avgTokens).toLocaleString()}</td></tr>
           <tr><td>Total Tokens</td><td>${totalTokens.toLocaleString()}</td></tr>
         </table>
       </div>
