@@ -70,6 +70,7 @@ export interface WorldDefinition {
 
 // Character sketches over detailed stats
 export interface ImpressionistCharacter {
+  id: string  // Character identifier (use "player" for player character)
   name: string
   sketch: string  // One line capturing character core
   arc?: string  // Emotional journey

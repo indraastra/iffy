@@ -320,6 +320,7 @@ export class ImpressionistParser {
 
       const char = charData as any;
       characters[id] = {
+        id,
         name: char.name || id,
         sketch: char.sketch || char.essence || 'A character in the story',  // Support both sketch and essence for backwards compatibility
         arc: char.arc,

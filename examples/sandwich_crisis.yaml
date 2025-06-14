@@ -11,7 +11,7 @@ narrative:
 
 world:
   characters:
-    jennifer:
+    player:
       name: "Jennifer"
       sketch: "An ordinary person thrust into the EXTRAORDINARY drama of lunch preparation"
       voice: "Inner thoughts increasingly influenced by soap opera narrator's dramatic style"

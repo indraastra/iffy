@@ -41,16 +41,35 @@ export class LangChainPrompts {
     // World Elements
     const worldParts = [];
 
-    // Characters with full details
+    // Characters with full details - separate player character from NPCs
     if (context.activeCharacters && context.activeCharacters.length > 0) {
-      const characterDetails = context.activeCharacters.map(c => {
-        let charInfo = `    ${c.name}`;
-        if (c.sketch) charInfo += ` - ${c.sketch}`;
-        if (c.voice) charInfo += `\n      Voice: ${c.voice}`;
-        if (c.arc) charInfo += `\n      Arc: ${c.arc}`;
-        return charInfo;
-      }).join('\n');
-      worldParts.push(`  CHARACTERS:\n${characterDetails}`);
+      const playerCharacter = context.activeCharacters.find(c => c.id === 'player');
+      const npcs = context.activeCharacters.filter(c => c.id !== 'player');
+      
+      const characterSections = [];
+      
+      // Player character section
+      if (playerCharacter) {
+        let playerInfo = `    ${playerCharacter.name} (PLAYER CHARACTER)`;
+        if (playerCharacter.sketch) playerInfo += ` - ${playerCharacter.sketch}`;
+        if (playerCharacter.voice) playerInfo += `\n      Voice: ${playerCharacter.voice}`;
+        if (playerCharacter.arc) playerInfo += `\n      Arc: ${playerCharacter.arc}`;
+        characterSections.push(`  PLAYER CHARACTER:\n${playerInfo}`);
+      }
+      
+      // NPCs section
+      if (npcs.length > 0) {
+        const npcDetails = npcs.map(c => {
+          let charInfo = `    ${c.name} (NPC)`;
+          if (c.sketch) charInfo += ` - ${c.sketch}`;
+          if (c.voice) charInfo += `\n      Voice: ${c.voice}`;
+          if (c.arc) charInfo += `\n      Arc: ${c.arc}`;
+          return charInfo;
+        }).join('\n');
+        characterSections.push(`  NON-PLAYER CHARACTERS (NPCs):\n${npcDetails}`);
+      }
+      
+      worldParts.push(...characterSections);
     }
 
     // Location context
@@ -316,12 +335,14 @@ RESPONSE GUIDELINES:
 - End your response in a way that invites further player action (except for story endings)
 
 CRITICAL INTERACTIVE FICTION RULES:
-- NEVER put words in the player's mouth or make them speak without explicit player input
-- NEVER have the player perform actions they didn't request
-- Let other characters speak and act, but the player controls only their own character
+- The PLAYER CHARACTER (marked above) is controlled exclusively by the player
+- NEVER put words in the player character's mouth or make them speak without explicit player input
+- NEVER have the player character perform actions they didn't request
+- All NON-PLAYER CHARACTERS (NPCs) are controlled by you - let them speak and act naturally
 - If an NPC is spoken to or addressed, they MUST reply as part of your response
 - If dialogue is initiated, let NPCs respond but wait for the player's next input before continuing
-- The player should feel agency over their character's words and actions at all times`;
+- The player should feel complete agency over their character's words and actions at all times
+- Maintain clear separation: Player controls the PLAYER CHARACTER, you control all NPCs`;
   }
 
   /**
