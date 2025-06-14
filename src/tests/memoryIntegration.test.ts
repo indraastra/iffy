@@ -11,11 +11,28 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ImpressionistEngine } from '@/engine/impressionistEngine';
 import { ImpressionistStory } from '@/types/impressionistStory';
 
+// Mock ActionClassifier
+const mockClassify = vi.fn();
+vi.mock('@/engine/actionClassifier', () => ({
+  ActionClassifier: vi.fn().mockImplementation(() => ({
+    classify: mockClassify,
+    setDebugPane: vi.fn()
+  }))
+}));
+
 describe('Memory Integration', () => {
   let engine: ImpressionistEngine;
   let mockStory: ImpressionistStory;
 
   beforeEach(() => {
+    // Reset mock
+    mockClassify.mockReset();
+    mockClassify.mockResolvedValue({
+      mode: 'action',
+      reasoning: 'Processing action',
+      confidence: 0.8
+    });
+    
     mockStory = {
       title: 'Memory Test Story',
       author: 'Test',
@@ -116,8 +133,8 @@ describe('Memory Integration', () => {
       const callArgs = mockService.makeStructuredRequest.mock.calls[0];
       const prompt = callArgs[0];
       
-      // The prompt should contain memory context
-      expect(prompt).toContain('KEY MEMORIES');
+      // The prompt should contain memory context in either ActionClassifier or action format
+      expect(prompt).toMatch(/(\*\*KEY MEMORIES:\*\*|\*\*Current State Facts:\*\*)/i);
     });
   });
 
@@ -160,35 +177,25 @@ describe('Memory Integration', () => {
   });
 
   describe('Multi-Part Response Tracking', () => {
-    it('should track both action and transition phases separately', async () => {
-      let callCount = 0;
+    it('should track single transition response', async () => {
+      // Mock ActionClassifier to trigger scene transition
+      mockClassify.mockResolvedValueOnce({
+        mode: 'sceneTransition',
+        targetId: 'next',
+        reasoning: 'Player action triggers transition',
+        confidence: 0.9
+      });
+
       const mockService = {
         isConfigured: vi.fn().mockReturnValue(true),
-        makeStructuredRequest: vi.fn().mockImplementation(() => {
-          callCount++;
-          if (callCount === 1) {
-            // First call: action response with scene transition
-            return Promise.resolve({
-              data: {
-                narrative: 'You decide to move forward.',
-                memories: ['Player moved forward'],
-                importance: 6,
-                signals: { scene: 'next' }
-              },
-              usage: { input_tokens: 100, output_tokens: 50, total_tokens: 150 }
-            });
-          } else {
-            // Second call: transition response
-            return Promise.resolve({
-              data: {
-                narrative: 'You find yourself in a new area.',
-                memories: ['Player entered new area'],
-                importance: 7,
-                signals: { scene: 'next' }
-              },
-              usage: { input_tokens: 120, output_tokens: 60, total_tokens: 180 }
-            });
-          }
+        makeStructuredRequest: vi.fn().mockResolvedValue({
+          data: {
+            narrative: 'You find yourself in a new area.',
+            memories: ['Player entered new area'],
+            importance: 7,
+            signals: { scene: 'next' }
+          },
+          usage: { input_tokens: 120, output_tokens: 60, total_tokens: 180 }
         })
       };
 
@@ -211,25 +218,18 @@ describe('Memory Integration', () => {
       
       await engine.processAction({ input: 'move forward' });
       
-      // Check that both phases were tracked
+      // Check that transition was tracked
       const gameState = engine.getGameState();
-      expect(gameState.interactions.length).toBe(2);
+      expect(gameState.interactions.length).toBe(1);
       
-      const actionPhase = gameState.interactions[0];
-      const transitionPhase = gameState.interactions[1];
+      const transitionResponse = gameState.interactions[0];
+      expect(transitionResponse.playerInput).toBe('move forward');
+      expect(transitionResponse.llmResponse).toBe('You find yourself in a new area.');
+      expect(transitionResponse.importance).toBe(7);
       
-      expect(actionPhase.playerInput).toBe('move forward [Action Phase]');
-      expect(actionPhase.llmResponse).toBe('You decide to move forward.');
-      expect(actionPhase.importance).toBe(6);
-      
-      expect(transitionPhase.playerInput).toBe('move forward [Transition Phase]');
-      expect(transitionPhase.llmResponse).toBe('You find yourself in a new area.');
-      expect(transitionPhase.importance).toBe(7);
-      
-      // Both should have different memories
+      // Memory should be recorded
       const memoryManager = engine.getMemoryManager();
       const memoryContext = memoryManager.getMemories(10);
-      expect(memoryContext.memories.some(m => m.includes('moved forward'))).toBe(true);
       expect(memoryContext.memories.some(m => m.includes('entered new area'))).toBe(true);
     });
   });

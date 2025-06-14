@@ -185,114 +185,90 @@ export class ActionClassifier {
   }
 
   private buildClassifierPrompt(context: ClassificationContext, previousErrors: ValidationIssue[] = []): string {
-    let prompt = `ROLE: Action Classifier for Interactive Fiction
-TASK: Determine if player action triggers scene transitions or story endings.
+    let prompt = `**ROLE:** You are a meticulous logic engine for an interactive fiction game. Your task is to evaluate the player's action against the current game state and the requirements for all possible outcomes. You must follow the evaluation process exactly.
 
-PLAYER ACTION: "${context.playerAction}"
-CURRENT SCENE: ${context.currentState.sceneId}
+**PLAYER INPUT:**
+* **Action:** \`${context.playerAction}\`
 
+**GAME STATE:**
+* **Scene Description:** ${context.currentState.sceneId}
+* **Current State Facts:**${context.recentMemories.length > 0 ? context.recentMemories.slice(0, 5).map(memory => `\n    * \`${memory}\``).join('') : '\n    * None'}
+
+**POSSIBLE OUTCOMES:**
 ${this.buildSceneTransitionSection(context)}
-${this.buildEndingSection(context)}
-
-RECENT CONTEXT (for condition evaluation):
-${context.recentMemories.length > 0 ? context.recentMemories.map(memory => `- ${memory}`).join('\n') : '- No recent context'}`;
+${this.buildEndingSection(context)}`;
 
     // Add retry context if this is a retry attempt
     if (previousErrors.length > 0) {
-      prompt += `\n\nPREVIOUS ATTEMPT ERRORS:
-${previousErrors.map(error => `- ${error.message}`).join('\n')}
-
-IMPORTANT: Address the above errors in your response. Ensure you:`;
-
+      prompt += `\n\n**PREVIOUS ERRORS TO FIX:**`;
       previousErrors.forEach(error => {
-        switch (error.type) {
-          case 'invalid_scene':
-            prompt += `\n- Only use scene IDs from the available transitions: ${context.currentSceneTransitions.map(t => t.id).join(', ')}`;
-            break;
-          case 'invalid_ending':
-            prompt += `\n- Only use ending IDs from the available endings: ${context.availableEndings?.variations.map(v => v.id).join(', ') || 'none'}`;
-            break;
-          case 'missing_target':
-            prompt += `\n- Include targetId when mode is "sceneTransition" or "ending"`;
-            break;
-        }
+        prompt += `\n* ${error.message}`;
       });
+      
+      const invalidScenes = previousErrors.filter(e => e.type === 'invalid_scene');
+      const invalidEndings = previousErrors.filter(e => e.type === 'invalid_ending');
+      
+      if (invalidScenes.length > 0) {
+        prompt += `\n* Valid scene IDs: ${context.currentSceneTransitions.map(t => t.id).join(', ')}`;
+      }
+      if (invalidEndings.length > 0) {
+        prompt += `\n* Valid ending IDs: ${context.availableEndings?.variations.map(v => v.id).join(', ') || 'none'}`;
+      }
     }
 
-    prompt += `\n\nEVALUATION PROCESS:
-1. SCENE TRANSITION CHECK:
-   - For each available scene transition, check if player action satisfies the condition
-   - Use exact condition matching - be literal about requirements
-   - If ANY condition is met, return mode "sceneTransition" with the correct targetId
+    prompt += `\n\n**EVALUATION & RESPONSE INSTRUCTIONS:**
+1. **Analyze the Input:** First, look at the player's \`Action\` and the \`Current State Facts\`.
+2. **Evaluate Endings:** Evaluate the \`Conditions\` for each ending one by one, in the order they are listed.
+3. **Think Step-by-Step:** For each ending, verbalize your reasoning. Check if the player's \`Action\` matches requirements. Then, check if the \`Current State Facts\` satisfy the conditions.
+4. **Select the First Match:** The correct outcome is the *first one* whose conditions are all met.
+5. **Default to Action:** If no scene transitions or endings have their conditions met, the mode must be \`action\`.
+6. **Format Response:** Provide your final answer in the specified JSON format. The \`reasoning\` field should be a brief one-sentence explanation.
 
-2. STORY ENDING CHECK (only if no scene transition found):
-   - First check if ALL global ending conditions are satisfied
-   - If global conditions are met, check each ending variation's conditions
-   - All conditions in a variation must be true (AND logic)
-   - If ANY variation's conditions are fully met, return mode "ending" with the correct targetId
-
-3. ACTION MODE (DEFAULT):
-   - Use "action" mode when:
-     * NO scene transition conditions are met
-     * NO ending conditions are met (either global conditions not satisfied OR no variation conditions fully met)
-     * Player is just performing a normal action (examine, talk, think, etc.)
-     * Player is continuing conversation without concluding it
-     * Player is expressing emotion or reaction without triggering story events
-   - "action" mode is the safe default - when in doubt, choose "action"
-
-RESPONSE FORMAT (JSON):
+**JSON RESPONSE FORMAT:**
+\`\`\`json
 {
-  "mode": "action" | "sceneTransition" | "ending",
-  "targetId": "exact sceneId or endingId from the lists above (required for sceneTransition/ending, omit for action)",
-  "reasoning": "Step-by-step explanation of condition checking",
-  "confidence": 0.95
+  "mode": "action|sceneTransition|ending",
+  "targetId": "scene/ending ID if applicable",
+  "reasoning": "Brief one-sentence explanation of which outcome was selected and why.",
+  "confidence": 0.99
 }
-
-CRITICAL RULES:
-- Be CONSERVATIVE - only trigger transitions/endings when conditions are absolutely, clearly met
-- Use EXACT IDs from the available options above
-- When unsure, default to "action" mode
-- Include targetId ONLY for sceneTransition and ending modes
-- "action" is the safe fallback for normal gameplay interactions`;
+\`\`\``;
 
     return prompt;
   }
 
   private buildSceneTransitionSection(context: ClassificationContext): string {
     if (!context.currentSceneTransitions || context.currentSceneTransitions.length === 0) {
-      return 'SCENE TRANSITIONS: None available from current scene';
+      return '* **Scene Transitions:** None';
     }
 
     const transitions = context.currentSceneTransitions
-      .map(t => `- ${t.id}: REQUIRES ${t.condition}`)
+      .map(t => `    * **ID:** \`${t.id}\`\n        * **Conditions:** ${t.condition}`)
       .join('\n');
 
-    return `SCENE TRANSITIONS:
-${transitions}`;
+    return `* **Scene Transitions:**\n${transitions}`;
   }
 
   private buildEndingSection(context: ClassificationContext): string {
     if (!context.availableEndings) {
-      return 'STORY ENDINGS: None available (story cannot end yet)';
+      return '* **Endings:** None';
     }
 
-    const globalConditions = context.availableEndings.globalConditions
-      .map(c => `- ${c}`)
-      .join('\n');
+    let section = '* **Endings:**';
+    
+    if (context.availableEndings.globalConditions.length > 0) {
+      section += `\n    * **Global requirements:** ${context.availableEndings.globalConditions.join(' AND ')}`;
+    }
 
     const variations = context.availableEndings.variations
-      .map(v => {
-        const conditions = v.conditions.map(c => `    * ${c}`).join('\n');
-        return `- ${v.id}:\n${conditions}`;
-      })
+      .map(v => `    * **ID:** \`${v.id}\`\n        * **Conditions:** ${v.conditions.join(' AND ')}`)
       .join('\n');
 
-    return `STORY ENDINGS:
-Global Conditions (ALL must be met for any ending to be possible):
-${globalConditions}
+    if (variations) {
+      section += `\n${variations}`;
+    }
 
-Ending Variations (ALL conditions in a variation must be met):
-${variations}`;
+    return section;
   }
 
   private validateClassificationResult(result: ClassificationResult, context: ClassificationContext): ValidationIssue[] {
