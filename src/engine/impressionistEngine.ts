@@ -40,6 +40,7 @@ export class ImpressionistEngine {
   private director: LangChainDirector;
   private metrics: MetricsCollector;
   private memoryManager: ImpressionistMemoryManager;
+  private multiModelService?: MultiModelService;
   private previousLocation?: string; // For smart location context
   
   // Callbacks for UI integration
@@ -50,6 +51,7 @@ export class ImpressionistEngine {
   private uiHideTypingCallback?: () => void;
 
   constructor(multiModelService?: MultiModelService) {
+    this.multiModelService = multiModelService;
     this.director = new LangChainDirector(multiModelService);
     this.metrics = new MetricsCollector();
     this.memoryManager = new ImpressionistMemoryManager(multiModelService);
@@ -679,6 +681,11 @@ export class ImpressionistEngine {
 
   loadGame(saveData: string): ImpressionistResult<ImpressionistState> {
     try {
+      // Cancel any outstanding requests (like initial scene processing)
+      if (this.multiModelService) {
+        this.multiModelService.cancelActiveRequests();
+      }
+      
       if (!this.story) {
         return {
           success: false,

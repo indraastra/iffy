@@ -176,6 +176,7 @@ describe('ImpressionistEngine', () => {
       // Mock MultiModel service
       const mockMultiModelService = {
         isConfigured: () => true,
+        cancelActiveRequests: vi.fn(),
         makeStructuredRequest: vi.fn()
           .mockResolvedValueOnce({
             data: { narrative: 'First response', memories: [], importance: 7, signals: {} },

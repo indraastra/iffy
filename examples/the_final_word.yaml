@@ -85,23 +85,25 @@ scenes:
     location: "the_final_word"
     guidance: |
       A scholar seeks Aquinas. Match the style of scholastic philosophy.
+      When the Aquinas seeker departs, prompt the player if they're ready to close the shop.
     sketch: |
       With a low rumble, the **[Lumina Press](item:the_lumina_press)** whirs to life, its heavy 
       flywheel gaining momentum. A deep, steady hum permeates the very stone, and warm 
       lamp glow casts dancing shadows across forbidden spines. Within moments, a soft 
       **rap** sounds from above.
     leads_to:
-      tutorial_end: "when the Aquinas seeker departs"
+      tutorial_end: "when the player closes the shop (prompt the player)"
 
   # End of Tutorial
   tutorial_end:
-    guidance: "Transition from tutorial to main game loop. Explain the daily cycle."
+    guidance: "Transition from tutorial to main game loop. Explain the daily cycle. Prompt the player if
+      they're ready for the next day."
     sketch: |
       Your first customer departs, carrying hidden wisdom into the dangerous world.
       You silence the **[Lumina Press](item:the_lumina_press)** and secure the shop. Each day will 
       bring new seekers, new styles, new risks. Tomorrow, anything might walk through that door.
     leads_to:
-      daily_preparation: "when you're ready for the next day"
+      daily_preparation: "when you're ready for the next day (prompt the player)"
 
   # Main Game Loop - Start of each day (shop closed)
   daily_preparation:
@@ -162,8 +164,8 @@ scenes:
   generated_encounter:
     location: "the_final_word"
     guidance: >
-      Generate a visitor seeking specific literature based on player activities. Adopt that
-      author's literary style for the encounter.
+      Generate a visitor seeking specific literature based on player activities. Adopt that author's
+      literary style for the encounter.
     sketch: |
       A soft **rap** from above, then footsteps descending into your sanctuary. Someone 
       enters as if drawn by an unseen force, their bearing, their first words, their very 
@@ -186,16 +188,8 @@ scenes:
 
 endings:
   when:
-  - "player chooses to permanently close the shop OR shop is compromised through risky decisions"
+  - "shop is compromised through risky decisions"
   variations:
-  - id: "voluntary_closure"
-    when: "player decides their work is done"
-    sketch: |
-      You silence the **[Lumina Press](item:the_lumina_press)** one final time. The Final Word has served 
-      its purpose - not as a place, but as an idea. Literature lives now in 
-      all the minds you've touched, all the conversations you've sparked. 
-      Some endings are also beginnings.
-
   - id: "discovered"
     when: "accumulated risks finally catch up OR player serves obvious authority figures"
     sketch: |

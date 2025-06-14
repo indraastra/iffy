@@ -45,6 +45,7 @@ describe('Memory Integration', () => {
       // Mock service that returns responses with memories
       const mockService = {
         isConfigured: vi.fn().mockReturnValue(true),
+        cancelActiveRequests: vi.fn(),
         makeStructuredRequest: vi.fn().mockResolvedValue({
           data: {
             narrative: 'You look around the room.',
@@ -88,6 +89,7 @@ describe('Memory Integration', () => {
     it('should include memories in LLM context', async () => {
       const mockService = {
         isConfigured: vi.fn().mockReturnValue(true),
+        cancelActiveRequests: vi.fn(),
         makeStructuredRequest: vi.fn().mockResolvedValue({
           data: {
             narrative: 'You recall important information.',
@@ -236,6 +238,7 @@ describe('Memory Integration', () => {
     it('should persist memories across save/load cycles', async () => {
       const mockService = {
         isConfigured: vi.fn().mockReturnValue(true),
+        cancelActiveRequests: vi.fn(),
         makeStructuredRequest: vi.fn().mockResolvedValue({
           data: {
             narrative: 'Test response.',
