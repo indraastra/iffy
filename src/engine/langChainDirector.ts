@@ -66,6 +66,74 @@ export class LangChainDirector {
     return this.multiModelService.isConfigured();
   }
 
+  /**
+   * Common method to handle LLM requests with consistent error handling and logging
+   */
+  private async makeLLMRequest(
+    promptBuilder: () => string,
+    logLabel: string,
+    contextInfo: { scene: string; memories: number; transitions: number },
+    defaultImportance: number = 5
+  ): Promise<DirectorResponse> {
+    if (!this.isConfigured()) {
+      return {
+        narrative: "🔑 API key required. Please configure your LLM provider in Settings to play.",
+        memories: [],
+        importance: 1,
+        signals: { error: "API key not configured" }
+      };
+    }
+
+    const startTime = performance.now();
+    const fullPrompt = promptBuilder();
+    
+    console.log(`📝 ${logLabel} Prompt:`, fullPrompt);
+    
+    // Use structured output
+    const result = await this.multiModelService.makeStructuredRequest(
+      fullPrompt,
+      DirectorResponseSchema
+    );
+
+    const latencyMs = performance.now() - startTime;
+    
+    console.log(`📝 ${logLabel} Response:`, result.data);
+
+    // Convert structured data to DirectorResponse
+    const response: DirectorResponse = {
+      narrative: result.data.narrative,
+      memories: result.data.memories || [],
+      importance: result.data.importance || defaultImportance,
+      signals: result.data.signals || {}
+    };
+
+    // Extract usage information for logging and metadata
+    const usage = result.usage;
+
+    // Log to debug pane if available
+    if (this.debugPane && this.debugPane.logLlmCall) {
+      this.debugPane.logLlmCall({
+        prompt: { text: logLabel, tokenCount: usage.input_tokens },
+        response: { 
+          narrative: response.narrative, 
+          reasoning: result.data.reasoning,
+          signals: response.signals,
+          memories: response.memories,
+          tokenCount: usage.output_tokens,
+          importance: response.importance
+        },
+        context: contextInfo
+      });
+    }
+
+    // Add metrics metadata for engine tracking
+    (response as any).usage = usage;
+    (response as any).latencyMs = latencyMs;
+    (response as any).contextSize = fullPrompt.length;
+
+    return response;
+  }
+
   // ========================================
   // PUBLIC API METHODS
   // ========================================
@@ -157,71 +225,20 @@ export class LangChainDirector {
    * Process player action (Phase 1)
    */
   private async processAction(input: string, context: DirectorContext): Promise<DirectorResponse> {
-    if (!this.isConfigured()) {
-      return {
-        narrative: "🔑 API key required. Please configure your LLM provider in Settings to play.",
-        memories: [],
-        importance: 1,
-        signals: { error: "API key not configured" }
-      };
-    }
-
-    const startTime = performance.now();
-
-    const contextPreamble = LangChainPrompts.buildContextPreamble(context);
-    const modeSpecificInstructions = LangChainPrompts.buildActionInstructions(input, context);
-    
-    const fullPrompt = `${contextPreamble}\n\n${modeSpecificInstructions}`;
-    console.log('📝 Action Processing Prompt:', fullPrompt);
-    
-    // Use structured output instead of JSON parsing
-    const result = await this.multiModelService.makeStructuredRequest(
-      fullPrompt,
-      DirectorResponseSchema
+    return this.makeLLMRequest(
+      () => {
+        const contextPreamble = LangChainPrompts.buildContextPreamble(context);
+        const modeSpecificInstructions = LangChainPrompts.buildActionInstructions(input, context);
+        return `${contextPreamble}\n\n${modeSpecificInstructions}`;
+      },
+      `Player: ${input}`,
+      {
+        scene: context.currentSketch || '',
+        memories: context.activeMemory?.length || 0,
+        transitions: Object.keys(context.currentTransitions || {}).length
+      },
+      5
     );
-
-    const latencyMs = performance.now() - startTime;
-    
-    console.log('📝 Action Processing Response:', result.data);
-
-    // Convert structured data to DirectorResponse
-    const response: DirectorResponse = {
-      narrative: result.data.narrative,
-      memories: result.data.memories || [],
-      importance: result.data.importance || 5,
-      signals: result.data.signals || {}
-    };
-
-    // Extract usage information for logging and metadata
-    const usage = result.usage;
-
-    // Log to debug pane if available
-    if (this.debugPane && this.debugPane.logLlmCall) {
-      this.debugPane.logLlmCall({
-        prompt: { text: `Player: ${input}`, tokenCount: usage.input_tokens },
-        response: { 
-          narrative: response.narrative, 
-          signals: response.signals,
-          memories: response.memories,
-          tokenCount: usage.output_tokens,
-          importance: response.importance
-        },
-        context: {
-          scene: context.currentSketch,
-          memories: context.activeMemory?.length || 0,
-          transitions: Object.keys(context.currentTransitions || {}).length
-        }
-      });
-    }
-
-    // Note: LangChain metrics are automatically tracked by the callback system in MultiModelService
-    
-    // Add metrics metadata for engine tracking
-    (response as any).usage = usage;
-    (response as any).latencyMs = latencyMs;
-    (response as any).contextSize = (contextPreamble + modeSpecificInstructions).length;
-    
-    return response;
   }
 
   /**
@@ -232,72 +249,74 @@ export class LangChainDirector {
     context: DirectorContext,
     transitionContext: string
   ): Promise<DirectorResponse> {
-    const startTime = performance.now();
-
     // Find target scene information
     const targetTransition = context.currentTransitions?.[targetSceneId];
     if (!targetTransition) {
       throw new Error(`Target scene ${targetSceneId} not found in transitions`);
     }
 
-    const contextPreamble = LangChainPrompts.buildContextPreamble(context);
-    const modeSpecificInstructions = LangChainPrompts.buildTransitionInstructions(
-      targetSceneId, 
-      targetTransition.sketch, 
-      transitionContext
+    const response = await this.makeLLMRequest(
+      () => {
+        const contextPreamble = LangChainPrompts.buildContextPreamble(context);
+        const modeSpecificInstructions = LangChainPrompts.buildTransitionInstructions(
+          targetSceneId, 
+          targetTransition.sketch, 
+          transitionContext
+        );
+        return `${contextPreamble}\n\n${modeSpecificInstructions}`;
+      },
+      `Transition to: ${targetSceneId}`,
+      {
+        scene: targetTransition.sketch,
+        memories: context.activeMemory?.length || 0,
+        transitions: Object.keys(context.currentTransitions || {}).length
+      },
+      6
     );
-
-    const fullPrompt = `${contextPreamble}\n\n${modeSpecificInstructions}`;
-    console.log('📝 Scene Transition Prompt:', fullPrompt);
-
-    // Use structured output instead of JSON parsing
-    const result = await this.multiModelService.makeStructuredRequest(
-      fullPrompt,
-      DirectorResponseSchema
-    );
-
-    const latencyMs = performance.now() - startTime;
-    
-    console.log('📝 Scene Transition Response:', result.data);
-
-    // Convert structured data to DirectorResponse
-    const response: DirectorResponse = {
-      narrative: result.data.narrative,
-      memories: result.data.memories || [],
-      importance: result.data.importance || 6,
-      signals: result.data.signals || {}
-    };
     
     // Ensure scene signal is set correctly for transitions
     response.signals = response.signals || {};
     response.signals.scene = targetSceneId;
 
-    // Extract usage information for logging and metadata
-    const usage = result.usage;
+    return response;
+  }
 
-    // Log to debug pane if available
-    if (this.debugPane && this.debugPane.logLlmCall) {
-      this.debugPane.logLlmCall({
-        prompt: { text: `Transition to: ${targetSceneId}`, tokenCount: usage.input_tokens },
-        response: { 
-          narrative: response.narrative, 
-          signals: response.signals,
-          memories: response.memories,
-          tokenCount: usage.output_tokens,
-          importance: response.importance
-        },
-        context: {
-          scene: targetTransition.sketch,
-          memories: context.activeMemory?.length || 0,
-          transitions: Object.keys(context.currentTransitions || {}).length
-        }
-      });
+  /**
+   * Process ending transition (Phase 2 of ending flow)
+   */
+  private async processEndingTransition(
+    endingId: string,
+    context: DirectorContext,
+    transitionContext: string
+  ): Promise<DirectorResponse> {
+    // Find the ending details
+    const targetEnding = context.availableEndings?.variations.find(e => e.id === endingId);
+    if (!targetEnding) {
+      throw new Error(`Unknown ending: ${endingId}`);
     }
 
-    // Add metrics metadata for engine tracking
-    (response as any).usage = usage;
-    (response as any).latencyMs = latencyMs;
-    (response as any).contextSize = (contextPreamble + modeSpecificInstructions).length;
+    const response = await this.makeLLMRequest(
+      () => {
+        const contextPreamble = LangChainPrompts.buildContextPreamble(context);
+        const modeSpecificInstructions = LangChainPrompts.buildEndingInstructions(
+          endingId,
+          targetEnding.sketch,
+          transitionContext
+        );
+        return `${contextPreamble}\n\n${modeSpecificInstructions}`;
+      },
+      `Ending: ${endingId}`,
+      {
+        scene: targetEnding.sketch,
+        memories: context.activeMemory?.length || 0,
+        transitions: 0
+      },
+      8
+    );
+    
+    // Ensure ending signal is set correctly for endings
+    response.signals = response.signals || {};
+    response.signals.ending = endingId;
 
     return response;
   }
@@ -321,7 +340,7 @@ export class LangChainDirector {
       // Yield the action response immediately for display
       yield actionResponse;
       
-      // Phase 2: Handle scene transition if needed
+      // Phase 2: Handle scene or ending transition if needed
       if (actionResponse.signals?.scene) {
         const targetSceneId = actionResponse.signals.scene;
 
@@ -342,6 +361,28 @@ export class LangChainDirector {
           signals: {
             ...actionResponse.signals,
             ...transitionResponse.signals
+          }
+        };
+      } else if (actionResponse.signals?.ending) {
+        const endingId = actionResponse.signals.ending;
+
+        const endingResponse = await this.processEndingTransition(
+          endingId, 
+          context, 
+          actionResponse.narrative
+        );
+
+        // Yield the ending response independently 
+        yield endingResponse;
+        
+        // Return the final combined response for completeness
+        return {
+          narrative: `${actionResponse.narrative}\n\n${endingResponse.narrative}`,
+          memories: [...(actionResponse.memories || []), ...(endingResponse.memories || [])],
+          importance: Math.max(actionResponse.importance || 5, endingResponse.importance || 5),
+          signals: {
+            ...actionResponse.signals,
+            ...endingResponse.signals
           }
         };
       }
@@ -367,111 +408,44 @@ export class LangChainDirector {
     sceneSketch: string,
     context: DirectorContext
   ): Promise<DirectorResponse> {
-    const startTime = performance.now();
-
-    const contextPreamble = LangChainPrompts.buildContextPreamble(context);
-    const modeSpecificInstructions = LangChainPrompts.buildInitialSceneInstructions(
-      sceneId, 
-      sceneSketch
+    return this.makeLLMRequest(
+      () => {
+        const contextPreamble = LangChainPrompts.buildContextPreamble(context);
+        const modeSpecificInstructions = LangChainPrompts.buildInitialSceneInstructions(
+          sceneId, 
+          sceneSketch
+        );
+        return `${contextPreamble}\n\n${modeSpecificInstructions}`;
+      },
+      `Initial Scene: ${sceneId}`,
+      {
+        scene: sceneSketch,
+        memories: context.activeMemory?.length || 0,
+        transitions: 0
+      },
+      7
     );
-
-    const fullPrompt = `${contextPreamble}\n\n${modeSpecificInstructions}`;
-    console.log('📝 Initial Scene Establishment Prompt:', fullPrompt);
-
-    // Use structured output instead of JSON parsing
-    const result = await this.multiModelService.makeStructuredRequest(
-      fullPrompt,
-      DirectorResponseSchema
-    );
-
-    const latencyMs = performance.now() - startTime;
-    
-    console.log('📝 Initial Scene Establishment Response:', result.data);
-
-    // Convert structured data to DirectorResponse
-    const response: DirectorResponse = {
-      narrative: result.data.narrative,
-      memories: result.data.memories || [],
-      importance: result.data.importance || 7,
-      signals: result.data.signals || {}
-    };
-
-    // Extract usage information for logging and metadata
-    const usage = result.usage;
-
-    // Log to debug pane if available
-    if (this.debugPane && this.debugPane.logLlmCall) {
-      this.debugPane.logLlmCall({
-        prompt: { text: `Initial Scene: ${sceneId}`, tokenCount: usage.input_tokens },
-        response: { 
-          narrative: response.narrative, 
-          signals: response.signals,
-          memories: response.memories,
-          tokenCount: usage.output_tokens,
-          importance: response.importance
-        },
-        context: {
-          scene: sceneSketch,
-          memories: context.activeMemory?.length || 0,
-          transitions: 0
-        }
-      });
-    }
-
-    // Add metrics metadata for engine tracking
-    (response as any).usage = usage;
-    (response as any).latencyMs = latencyMs;
-    (response as any).contextSize = (contextPreamble + modeSpecificInstructions).length;
-
-    return response;
   }
 
   /**
    * Handle post-ending interactions (reflection, questions, exploration)
    */
   private async processPostEndingInput(input: string, context: DirectorContext): Promise<DirectorResponse> {
-    if (!this.isConfigured()) {
-      return {
-        narrative: "🔑 API key required. Please configure your LLM provider in Settings to play.",
-        memories: [],
-        importance: 1,
-        signals: { error: "API key not configured" }
-      };
-    }
-
     try {
-      const startTime = performance.now();
-      
-      const contextPreamble = LangChainPrompts.buildContextPreamble(context);
-      const modeSpecificInstructions = LangChainPrompts.buildActionInstructions(input, context);
-      const fullPrompt = `${contextPreamble}\n\n${modeSpecificInstructions}`;
-      
-      console.log('📝 Post-Ending Call Prompt:', fullPrompt);
-      
-      // Use structured output instead of JSON parsing
-      const result = await this.multiModelService.makeStructuredRequest(
-        fullPrompt,
-        DirectorResponseSchema
+      return await this.makeLLMRequest(
+        () => {
+          const contextPreamble = LangChainPrompts.buildContextPreamble(context);
+          const modeSpecificInstructions = LangChainPrompts.buildActionInstructions(input, context);
+          return `${contextPreamble}\n\n${modeSpecificInstructions}`;
+        },
+        `Post-ending: ${input}`,
+        {
+          scene: context.currentSketch || 'Post-ending',
+          memories: context.activeMemory?.length || 0,
+          transitions: 0
+        },
+        5
       );
-      
-      const latencyMs = performance.now() - startTime;
-      
-      console.log('📝 Post-Ending Call Response:', result.data);
-      
-      // Convert structured data to DirectorResponse
-      const response: DirectorResponse = {
-        narrative: result.data.narrative,
-        memories: result.data.memories || [],
-        importance: result.data.importance || 5,
-        signals: result.data.signals || {}
-      };
-      
-      // Add usage information to the result for metrics tracking
-      (response as any).usage = result.usage;
-      (response as any).latencyMs = latencyMs;
-      (response as any).contextSize = fullPrompt.length;
-      
-      return response;
     } catch (error) {
       console.error('LangChain Director post-ending error:', error);
       return {

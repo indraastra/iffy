@@ -243,13 +243,17 @@ export class ImpressionistEngine {
       
       // Get LLM response with transition streaming for immediate UI updates
       const responseGenerator = this.director.processInputStreaming(action.input, context);
-      let response: DirectorResponse | undefined;
+      let finalResponse: DirectorResponse | undefined;
       let partCount = 0;
       let hasDisplayedFirstPart = false;
+      const allResponses: DirectorResponse[] = [];
 
       for await (const partialResponse of responseGenerator) {
         partCount++;
         console.log(`📝 Response part ${partCount} ready:`, partialResponse.narrative);
+        
+        // Collect each response for separate tracking
+        allResponses.push(partialResponse);
         
         // Display each part immediately via UI callback
         if (this.uiAddMessageCallback) {
@@ -263,10 +267,11 @@ export class ImpressionistEngine {
             this.uiAddMessageCallback(partialResponse.narrative, 'story');
             hasDisplayedFirstPart = true;
             
-            // If there will be more parts (i.e., a scene transition), show new loading indicator
-            // We can detect this by checking if this response has a scene signal
-            if (partialResponse.signals?.scene && this.uiShowTypingCallback) {
-              console.log('📝 Showing loading indicator for upcoming scene transition');
+            // If there will be more parts (i.e., a scene or ending transition), show new loading indicator
+            // We can detect this by checking if this response has a scene or ending signal
+            if ((partialResponse.signals?.scene || partialResponse.signals?.ending) && this.uiShowTypingCallback) {
+              const transitionType = partialResponse.signals?.scene ? 'scene transition' : 'story ending';
+              console.log(`📝 Showing loading indicator for upcoming ${transitionType}`);
               this.uiShowTypingCallback();
             }
           } else {
@@ -279,47 +284,68 @@ export class ImpressionistEngine {
           }
         }
         
-        response = partialResponse; // Keep track of the final response for state management
+        finalResponse = partialResponse; // Keep track of the final response for state management
       }
 
       // Ensure we have a response
-      if (!response) {
+      if (!finalResponse || allResponses.length === 0) {
         throw new Error('No response received from director');
       }
       
-      // Track metrics if usage information is available
-      if ((response as any).usage) {
-        const usage = (response as any).usage;
-        this.metrics.trackRequest(
-          usage.input_tokens,
-          usage.output_tokens,
-          (response as any).latencyMs || 0,
-          (response as any).contextSize || 0,
-          context.activeMemory?.length || 0,
-          this.gameState.currentScene
-        );
+      // Track metrics for each response part
+      for (const response of allResponses) {
+        if ((response as any).usage) {
+          const usage = (response as any).usage;
+          this.metrics.trackRequest(
+            usage.input_tokens,
+            usage.output_tokens,
+            (response as any).latencyMs || 0,
+            (response as any).contextSize || 0,
+            context.activeMemory?.length || 0,
+            this.gameState.currentScene
+          );
+        }
       }
       
       // Check for ending signals BEFORE applying them to determine if ending was triggered
-      const isEndingTriggered = !!response.signals?.ending;
+      const isEndingTriggered = !!finalResponse.signals?.ending;
       
-      // Apply any signals from the response (but don't trigger ending callback yet)
-      this.applyDirectorSignals(response);
+      // Apply any signals from the final response (but don't trigger ending callback yet)
+      this.applyDirectorSignals(finalResponse);
       
-      // Track this interaction in memory with metadata
-      this.trackInteraction(action.input, response.narrative, {
-        usage: (response as any).usage,
-        latencyMs: (response as any).latencyMs,
-        signals: response.signals,
-        llmImportance: response.importance,
-        memories: response.memories
-      });
+      // Track each response as a separate interaction
+      for (let i = 0; i < allResponses.length; i++) {
+        const response = allResponses[i];
+        const isFirstPart = i === 0;
+        const isTransitionPart = i > 0;
+        
+        // For multi-part responses, modify the input to indicate the part
+        let interactionInput = action.input;
+        if (allResponses.length > 1) {
+          if (isFirstPart) {
+            interactionInput = `${action.input} [Action Phase]`;
+          } else {
+            // Determine if this is a scene transition or ending transition
+            const phaseType = allResponses[0].signals?.ending ? 'Ending Phase' : 'Transition Phase';
+            interactionInput = `${action.input} [${phaseType}]`;
+          }
+        }
+        
+        this.trackInteraction(interactionInput, response.narrative, {
+          usage: (response as any).usage,
+          latencyMs: (response as any).latencyMs,
+          signals: response.signals,
+          llmImportance: response.importance,
+          memories: response.memories,
+          isTransitionPart
+        });
+      }
 
       // Return empty text since streaming callback handled the display
       return {
-        text: hasDisplayedFirstPart ? '' : response.narrative, // Fallback if no callback set
+        text: hasDisplayedFirstPart ? '' : finalResponse.narrative, // Fallback if no callback set
         gameState: { ...this.gameState },
-        error: response.signals?.error,
+        error: finalResponse.signals?.error,
         endingTriggered: isEndingTriggered
       };
     } catch (error) {

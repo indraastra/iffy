@@ -91,7 +91,7 @@ export class ImpressionistGameManager {
     try {
       const response = await this.engine.processAction({ input: input.trim() });
       
-      this.hideTypingIndicator();
+      // Engine handles hiding typing indicator via callbacks during streaming
       
       if (response.error) {
         this.addMessage(`⚠️ ${response.error}`, 'error');
@@ -110,6 +110,8 @@ export class ImpressionistGameManager {
       this.hideTypingIndicator();
       this.addMessage(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
     } finally {
+      // Ensure typing indicator is hidden and input is enabled
+      this.hideTypingIndicator();
       this.enableInput();
     }
   }
@@ -144,15 +146,15 @@ export class ImpressionistGameManager {
     const initialText = this.engine.getInitialText();
     if (initialText === null) {
       // Process initial scene through LLM
-      this.addMessage('...', 'system'); // Show thinking indicator
+      this.showTypingIndicator(); // Show proper breathing dots indicator
       try {
         this.isProcessingInitialScene = true; // Flag to suppress next player action display
         const response = await this.engine.processInitialScene();
-        this.clearLastMessage(); // Remove thinking indicator
+        this.hideTypingIndicator(); // Remove thinking indicator
         this.addMessage(response.text, 'story');
         this.isProcessingInitialScene = false; // Reset flag after processing complete
       } catch (error) {
-        this.clearLastMessage(); // Remove thinking indicator
+        this.hideTypingIndicator(); // Remove thinking indicator
         this.addMessage('❌ Failed to process initial scene', 'error');
         console.error('Initial scene processing error:', error);
         this.isProcessingInitialScene = false; // Reset flag even on error
@@ -271,6 +273,18 @@ export class ImpressionistGameManager {
   private setupEngine(): void {
     this.engine.setUIResetCallback(() => {
       this.clearOutput();
+    });
+    
+    this.engine.setUIAddMessageCallback((text: string, type: string) => {
+      this.addMessage(text, type);
+    });
+    
+    this.engine.setUIShowTypingCallback(() => {
+      this.showTypingIndicator();
+    });
+    
+    this.engine.setUIHideTypingCallback(() => {
+      this.hideTypingIndicator();
     });
     
     this.engine.setUIRestoreCallback((_gameState: any, conversationHistory?: any[]) => {
@@ -450,12 +464,6 @@ export class ImpressionistGameManager {
     this.storyOutput.scrollTop = this.storyOutput.scrollHeight;
   }
 
-  private clearLastMessage(): void {
-    const lastMessage = this.storyOutput.lastElementChild;
-    if (lastMessage) {
-      this.storyOutput.removeChild(lastMessage);
-    }
-  }
 
   /**
    * Format story text with basic markdown support and intelligent whitespace handling
@@ -528,24 +536,8 @@ export class ImpressionistGameManager {
    * Set up metrics updates to debug pane
    */
   private setupMetricsUpdates(): void {
-    if (!this.debugPane) return;
-
-    // Set up periodic metrics updates
-    setInterval(() => {
-      // Update session stats from engine metrics
-      const sessionStats = this.engine.getMetrics()?.getSessionStats();
-      if (sessionStats) {
-        this.debugPane!.updateSessionStats(sessionStats);
-      }
-
-      // Update memory stats from memory manager
-      const memoryManager = this.engine.getMemoryManager();
-      if (memoryManager) {
-        const memoryMetrics = memoryManager.getMemoryMetrics();
-        const memoryStats = memoryMetrics.getSessionStats();
-        const memoryWarnings = memoryMetrics.getMemoryWarnings();
-        this.debugPane!.updateMemoryStats(memoryStats, memoryWarnings);
-      }
-    }, 2000); // Update every 2 seconds
+    // LangChain metrics are automatically handled by the callback system in main.ts
+    // Engine metrics will be updated on-demand when API calls are made
+    // No periodic updates needed - this prevents unnecessary console spam
   }
 }
