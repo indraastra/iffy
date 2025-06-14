@@ -2,12 +2,13 @@ import { SessionStats } from '@/engine/metricsCollector';
 import { MemorySessionStats } from '@/engine/memoryMetricsCollector';
 import { LangChainMetrics } from '@/services/multiModelService';
 import { calculateRequestCost } from '@/services/llm/types';
+import './debugPane.css';
 
 interface LlmInteraction {
   timestamp: Date;
   prompt: { text: string; tokenCount: number };
   response: { narrative: string; signals?: any; reasoning?: string; memories?: string[]; tokenCount: number; importance?: number };
-  context: { scene: string; memories: number; transitions: number };
+  context: { scene: string; memories: number; transitions: number; classifier?: boolean };
 }
 
 export class DebugPane {
@@ -31,9 +32,6 @@ export class DebugPane {
   }
 
   private createDebugPane(): HTMLElement {
-    // Add CSS styles for LangChain metrics if not already added
-    this.addLangChainStyles();
-    
     const pane = document.createElement('div');
     pane.className = 'debug-pane hidden';
     pane.innerHTML = `
@@ -307,7 +305,7 @@ export class DebugPane {
           <tr><td>Total API Calls</td><td>${totalCalls}</td></tr>
           <tr><td>Story Calls</td><td>${storyStats?.totalCalls || 0}</td></tr>
           <tr><td>Memory Calls</td><td>${memStats?.totalCalls || 0}</td></tr>
-          <tr><td>LangChain Calls</td><td>${langchainCalls}</td></tr>
+          <tr><td>Action Calls</td><td>${this.getActionClassifierCalls()}</td></tr>
           <tr><td>Total Input Tokens</td><td>${totalInputTokens.toLocaleString()}</td></tr>
           <tr><td>Total Output Tokens</td><td>${totalOutputTokens.toLocaleString()}</td></tr>
           <tr><td>Total Session Cost</td><td>$${totalCost.toFixed(4)}</td></tr>
@@ -316,8 +314,9 @@ export class DebugPane {
       
       ${storyStats ? `
       <div class="stats-section">
-        <h4>🎮 Story API Stats</h4>
+        <h4>🎮 Quality Model Stats (Story Generation)</h4>
         <table class="stats-table">
+          <tr><td>Total Calls</td><td>${storyStats.totalCalls}</td></tr>
           <tr><td>Success Rate</td><td>${(storyStats.successfulCalls / Math.max(1, storyStats.totalCalls) * 100).toFixed(1)}%</td></tr>
           <tr><td>Average Latency</td><td>${Math.round(storyStats.avgLatency)}ms</td></tr>
           <tr><td>Avg Input Tokens</td><td>${Math.round(storyStats.avgInputTokens)}</td></tr>
@@ -326,30 +325,113 @@ export class DebugPane {
       </div>
       ` : ''}
       
-      ${memStats ? `
+      ${memStats || this.getActionClassifierCalls() > 0 ? `
       <div class="stats-section">
-        <h4>🧠 Memory API Stats</h4>
+        <h4>💰 Cost Model Stats (Memory & Action Classification)</h4>
         <table class="stats-table">
-          <tr><td>Success Rate</td><td>${(memStats.successfulCalls / Math.max(1, memStats.totalCalls) * 100).toFixed(1)}%</td></tr>
-          <tr><td>Average Latency</td><td>${Math.round(memStats.avgLatency)}ms</td></tr>
-          <tr><td>Compaction Calls</td><td>${memStats.compactionCalls}</td></tr>
-          <tr><td>Avg Compression</td><td>${(memStats.avgCompressionRatio * 100).toFixed(1)}%</td></tr>
+          <tr><td>Total Calls</td><td>${(memStats?.totalCalls || 0) + this.getActionClassifierCalls()}</td></tr>
+          <tr><td>Success Rate</td><td>${this.getCombinedCostModelSuccessRate()}%</td></tr>
+          <tr><td>Average Latency</td><td>${this.getCombinedCostModelLatency()}ms</td></tr>
+          <tr><td>Avg Input Tokens</td><td>${this.getCombinedCostModelInputTokens()}</td></tr>
+          <tr><td>Avg Output Tokens</td><td>${this.getCombinedCostModelOutputTokens()}</td></tr>
         </table>
       </div>
       ` : ''}
       
-      ${this.langchainMetrics.length > 0 ? `
-      <div class="stats-section">
-        <h4>⚡ LangChain Stats</h4>
-        <table class="stats-table">
-          <tr><td>Success Rate</td><td>${(this.langchainMetrics.filter(m => m.success).length / this.langchainMetrics.length * 100).toFixed(1)}%</td></tr>
-          <tr><td>Average Latency</td><td>${Math.round(this.langchainMetrics.reduce((sum, m) => sum + m.latencyMs, 0) / this.langchainMetrics.length)}ms</td></tr>
-          <tr><td>Avg Input Tokens</td><td>${Math.round(langchainInputTokens / this.langchainMetrics.length)}</td></tr>
-          <tr><td>Avg Output Tokens</td><td>${Math.round(langchainOutputTokens / this.langchainMetrics.length)}</td></tr>
-        </table>
-      </div>
-      ` : ''}
     `;
+  }
+
+  /**
+   * Get number of ActionClassifier calls from LangChain metrics
+   */
+  private getActionClassifierCalls(): number {
+    // Count from LLM interactions logged by ActionClassifier
+    return this.llmInteractions.filter(i => 
+      i.context.classifier === true
+    ).length;
+  }
+
+
+
+  /**
+   * Get combined cost model success rate (memory + action classifier)
+   */
+  private getCombinedCostModelSuccessRate(): string {
+    const memorySuccessfulCalls = this.memoryStats?.successfulCalls || 0;
+    const memoryTotalCalls = this.memoryStats?.totalCalls || 0;
+    
+    const actionInteractions = this.llmInteractions.filter(i => i.context.classifier === true);
+    const actionSuccessfulCalls = actionInteractions.filter(i => 
+      !i.response.narrative.includes('Error') && !i.response.narrative.includes('Failed')
+    ).length;
+    
+    const totalSuccessful = memorySuccessfulCalls + actionSuccessfulCalls;
+    const totalCalls = memoryTotalCalls + actionInteractions.length;
+    
+    if (totalCalls === 0) return '0.0';
+    return ((totalSuccessful / totalCalls) * 100).toFixed(1);
+  }
+
+  /**
+   * Get combined cost model average latency (memory + action classifier)
+   */
+  private getCombinedCostModelLatency(): number {
+    const memoryLatency = this.memoryStats?.avgLatency || 0;
+    const memoryWeight = this.memoryStats?.totalCalls || 0;
+    
+    // Estimate action classifier latency from LangChain metrics for cost model calls
+    const actionMetrics = this.langchainMetrics.filter(m => 
+      m.model.includes('haiku') || m.model.includes('mini') || m.model.includes('flash')
+    );
+    const actionLatency = actionMetrics.length > 0 
+      ? actionMetrics.reduce((sum, m) => sum + m.latencyMs, 0) / actionMetrics.length 
+      : 0;
+    const actionWeight = this.getActionClassifierCalls();
+    
+    const totalWeight = memoryWeight + actionWeight;
+    if (totalWeight === 0) return 0;
+    
+    return Math.round((memoryLatency * memoryWeight + actionLatency * actionWeight) / totalWeight);
+  }
+
+  /**
+   * Get combined cost model average input tokens (memory + action classifier)
+   */
+  private getCombinedCostModelInputTokens(): number {
+    const memoryInputTokens = this.memoryStats?.avgInputTokens || 0;
+    const memoryWeight = this.memoryStats?.totalCalls || 0;
+    
+    // Estimate from action classifier interactions
+    const actionInteractions = this.llmInteractions.filter(i => i.context.classifier === true);
+    const actionInputTokens = actionInteractions.length > 0 
+      ? actionInteractions.reduce((sum, i) => sum + i.prompt.tokenCount, 0) / actionInteractions.length 
+      : 0;
+    const actionWeight = actionInteractions.length;
+    
+    const totalWeight = memoryWeight + actionWeight;
+    if (totalWeight === 0) return 0;
+    
+    return Math.round((memoryInputTokens * memoryWeight + actionInputTokens * actionWeight) / totalWeight);
+  }
+
+  /**
+   * Get combined cost model average output tokens (memory + action classifier)
+   */
+  private getCombinedCostModelOutputTokens(): number {
+    const memoryOutputTokens = this.memoryStats?.avgOutputTokens || 0;
+    const memoryWeight = this.memoryStats?.totalCalls || 0;
+    
+    // Estimate from action classifier interactions
+    const actionInteractions = this.llmInteractions.filter(i => i.context.classifier === true);
+    const actionOutputTokens = actionInteractions.length > 0 
+      ? actionInteractions.reduce((sum, i) => sum + i.response.tokenCount, 0) / actionInteractions.length 
+      : 0;
+    const actionWeight = actionInteractions.length;
+    
+    const totalWeight = memoryWeight + actionWeight;
+    if (totalWeight === 0) return 0;
+    
+    return Math.round((memoryOutputTokens * memoryWeight + actionOutputTokens * actionWeight) / totalWeight);
   }
 
   /**
@@ -360,7 +442,7 @@ export class DebugPane {
     return `
       <div class="stats-section">
         <h4>🧠 Current Memory Contents</h4>
-        <p class="memory-count">Showing ${memories.length} memories</p>
+        <p class="memory-count">Showing all ${memories.length} memories</p>
         <div class="memory-list">
           ${memories.map((memory, index) => `
             <div class="memory-item">
@@ -436,54 +518,76 @@ export class DebugPane {
     const interactionsHtml = this.llmInteractions
       .slice()
       .reverse()
-      .map((interaction, index) => `
-        <div class="llm-interaction ${index === 0 ? 'latest' : ''}">
-          <div class="interaction-header">
-            <span class="interaction-time">${interaction.timestamp.toLocaleTimeString()}</span>
-            <span class="interaction-scene">📍 ${this.escapeHtml(interaction.context.scene)}</span>
-            <span class="interaction-context">🧠 ${interaction.context.memories} memories | 🔀 ${interaction.context.transitions} transitions</span>
-          </div>
-          
-          <div class="interaction-prompt">
-            <strong>Player Input:</strong> ${this.escapeHtml(interaction.prompt.text)}
-            <span class="token-count">(~${interaction.prompt.tokenCount} tokens)</span>
-          </div>
-          
-          <div class="interaction-response">
-            <strong>LLM Response:</strong> ${this.escapeHtml(interaction.response.narrative)}
-            <span class="token-count">(~${interaction.response.tokenCount} tokens)</span>
-            ${interaction.response.importance ? `<span class="importance-score">Importance: ${interaction.response.importance}/10</span>` : ''}
-          </div>
-          
-          ${interaction.response.reasoning ? `
-            <div class="interaction-reasoning">
-              <strong>🧠 LLM Reasoning:</strong>
-              <div class="reasoning-content">${this.escapeHtml(interaction.response.reasoning)}</div>
-            </div>
-          ` : ''}
-          
-          ${interaction.response.signals ? `
-            <div class="interaction-signals">
-              <strong>⚡ Signals:</strong>
-              <pre>${JSON.stringify(interaction.response.signals, null, 2)}</pre>
-            </div>
-          ` : ''}
-          
-          ${interaction.response.memories && interaction.response.memories.length > 0 ? `
-            <div class="interaction-memories">
-              <strong>💾 Response Memories (${interaction.response.memories.length}):</strong>
-              <div class="memories-list">
-                ${interaction.response.memories.map((memory, i) => `
-                  <div class="memory-item-compact">
-                    <span class="memory-index">#${i + 1}</span>
-                    <span class="memory-text">${this.escapeHtml(memory)}</span>
-                  </div>
-                `).join('')}
+      .map((interaction, index) => {
+        // Compact rendering for ActionClassifier
+        if (interaction.context.classifier) {
+          return `
+            <div class="llm-interaction classifier compact ${index === 0 ? 'latest' : ''}">
+              <div class="interaction-header">
+                <span class="interaction-time">${interaction.timestamp.toLocaleTimeString()}</span>
+                <span class="classifier-badge">🎯 ActionClassifier</span>
+              </div>
+              
+              <div class="classifier-summary">
+                <div class="player-action">📝 "${this.escapeHtml(interaction.prompt.text)}"</div>
+                <div class="classification-result">🎯 ${this.escapeHtml(interaction.response.narrative)}</div>
+                ${interaction.response.importance ? `<div class="confidence-score">📊 Confidence: ${(interaction.response.importance / 10).toFixed(2)}</div>` : ''}
+                ${interaction.response.reasoning ? `<div class="classifier-reasoning">💭 ${this.escapeHtml(interaction.response.reasoning)}</div>` : ''}
               </div>
             </div>
-          ` : ''}
-        </div>
-      `)
+          `;
+        }
+        
+        // Full rendering for regular interactions
+        return `
+          <div class="llm-interaction ${index === 0 ? 'latest' : ''}">
+            <div class="interaction-header">
+              <span class="interaction-time">${interaction.timestamp.toLocaleTimeString()}</span>
+              <span class="interaction-scene">📍 ${this.escapeHtml(interaction.context.scene)}</span>
+              <span class="interaction-context">🧠 ${interaction.context.memories} memories | 🔀 ${interaction.context.transitions} transitions</span>
+            </div>
+            
+            <div class="interaction-prompt">
+              <strong>Player Input:</strong> ${this.escapeHtml(interaction.prompt.text)}
+              <span class="token-count">(~${interaction.prompt.tokenCount} tokens)</span>
+            </div>
+            
+            <div class="interaction-response">
+              <strong>LLM Response:</strong> ${this.escapeHtml(interaction.response.narrative)}
+              <span class="token-count">(~${interaction.response.tokenCount} tokens)</span>
+              ${interaction.response.importance ? `<span class="importance-score">Importance: ${interaction.response.importance}/10</span>` : ''}
+            </div>
+            
+            ${interaction.response.reasoning ? `
+              <div class="interaction-reasoning">
+                <strong>🧠 LLM Reasoning:</strong>
+                <div class="reasoning-content">${this.escapeHtml(interaction.response.reasoning)}</div>
+              </div>
+            ` : ''}
+            
+            ${interaction.response.signals ? `
+              <div class="interaction-signals">
+                <strong>⚡ Signals:</strong>
+                <pre>${JSON.stringify(interaction.response.signals, null, 2)}</pre>
+              </div>
+            ` : ''}
+            
+            ${interaction.response.memories && interaction.response.memories.length > 0 ? `
+              <div class="interaction-memories">
+                <strong>💾 Response Memories (${interaction.response.memories.length}):</strong>
+                <div class="memories-list">
+                  ${interaction.response.memories.map((memory, i) => `
+                    <div class="memory-item-compact">
+                      <span class="memory-index">#${i + 1}</span>
+                      <span class="memory-text">${this.escapeHtml(memory)}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      })
       .join('');
 
     interactionsContainer.innerHTML = `
@@ -512,6 +616,7 @@ export class DebugPane {
    */
   private getCurrentMemories(): { content: string; importance: number }[] {
     if (this.memoryManager?.getAllMemories) {
+      // Get ALL memories, not just a subset
       return this.memoryManager.getAllMemories().map((m: any) => ({ 
         content: m.content, 
         importance: m.importance 
@@ -600,268 +705,6 @@ export class DebugPane {
     }
   }
 
-  /**
-   * Add debug pane CSS styles
-   */
-  private addLangChainStyles(): void {
-    if (document.getElementById('debug-pane-styles')) return;
-    
-    const style = document.createElement('style');
-    style.id = 'debug-pane-styles';
-    style.textContent = `
-      .langchain-metric {
-        margin: 1rem 0;
-        padding: 1rem;
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid var(--border-color);
-        border-radius: 6px;
-        transition: all 0.2s ease;
-      }
-      
-      .langchain-metric.latest {
-        border-color: rgba(100, 181, 246, 0.5);
-        background: rgba(100, 181, 246, 0.05);
-      }
-      
-      .langchain-metric.error {
-        border-left: 4px solid #f44336;
-        background: rgba(244, 67, 54, 0.1);
-      }
-      
-      .langchain-metric.success {
-        border-left: 4px solid #4caf50;
-      }
-      
-      .metric-header {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 0.75rem;
-        font-size: 0.85rem;
-        color: var(--text-color);
-        opacity: 0.8;
-      }
-      
-      .metric-time {
-        font-weight: bold;
-        color: #64b5f6;
-      }
-      
-      .metric-provider {
-        background: rgba(255, 193, 7, 0.2);
-        color: #ffd54f;
-        padding: 0.1rem 0.5rem;
-        border-radius: 3px;
-        font-size: 0.8rem;
-      }
-      
-      .metric-model {
-        color: #81c784;
-        font-style: italic;
-      }
-      
-      .metric-status.success {
-        color: #4caf50;
-      }
-      
-      .metric-status.error {
-        color: #f44336;
-      }
-      
-      .metric-details {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        font-size: 0.85rem;
-      }
-      
-      .metric-tokens {
-        color: #ffb74d;
-      }
-      
-      .metric-timing {
-        color: #64b5f6;
-      }
-      
-      .metric-error {
-        color: #f44336;
-        background: rgba(244, 67, 54, 0.1);
-        padding: 0.5rem;
-        border-radius: 3px;
-        margin-top: 0.5rem;
-      }
-      
-      .langchain-metrics-list {
-        margin-top: 1rem;
-      }
-      
-      .metrics-count {
-        margin: 0 0 1rem;
-        padding: 0 1rem;
-        font-size: 0.85rem;
-        color: var(--text-color);
-        opacity: 0.7;
-        font-style: italic;
-      }
-      
-      .stats-table th {
-        background: rgba(255, 255, 255, 0.1);
-        font-weight: bold;
-        text-align: left;
-        padding: 0.5rem 1rem;
-        border-bottom: 1px solid var(--border-color);
-      }
-      
-      /* Tools pane styling - TODO: redesign this entire section */
-      .tool-section {
-        margin: 1rem 0;
-        padding: 1rem;
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid var(--border-color);
-        border-radius: 6px;
-      }
-      
-      .tool-section h4 {
-        margin: 0 0 1rem 0;
-      }
-      
-      .tool-btn {
-        background: rgba(255, 255, 255, 0.02);
-        color: var(--text-color);
-        border: 1px solid var(--border-color);
-        padding: 0.75rem 1rem;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 0.85rem;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        width: 100%;
-        margin-bottom: 0.75rem;
-        box-sizing: border-box;
-      }
-      
-      .tool-btn:hover {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(100, 181, 246, 0.5);
-      }
-      
-      .tool-btn.danger:hover {
-        background: rgba(244, 67, 54, 0.1);
-        border-color: rgba(244, 67, 54, 0.6);
-      }
-      
-      .tool-description {
-        font-size: 0.85rem;
-        opacity: 0.7;
-        margin-top: 0.5rem;
-        font-style: italic;
-      }
-      
-      .tool-messages {
-        margin-top: 1rem;
-        max-height: 200px;
-        overflow-y: auto;
-        background: rgba(0, 0, 0, 0.2);
-        border: 1px solid var(--border-color);
-        border-radius: 6px;
-        padding: 0.75rem;
-      }
-      
-      .tool-message {
-        font-size: 0.85rem;
-        margin: 0.5rem 0;
-        opacity: 0.9;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        padding-bottom: 0.25rem;
-      }
-      
-      .tool-message:last-child {
-        border-bottom: none;
-      }
-      
-      /* Custom scrollbar styling for debug pane */
-      .debug-pane ::-webkit-scrollbar {
-        width: 8px;
-      }
-      
-      .debug-pane ::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 4px;
-      }
-      
-      .debug-pane ::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.3);
-        border-radius: 4px;
-      }
-      
-      .debug-pane ::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 255, 255, 0.5);
-      }
-      
-      /* Firefox scrollbar styling */
-      .debug-pane {
-        scrollbar-width: thin;
-        scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
-      }
-      
-      /* New styles for reasoning and memories */
-      .interaction-reasoning {
-        margin: 0.75rem 0;
-        padding: 0.75rem;
-        background: rgba(108, 171, 251, 0.1);
-        border-left: 3px solid #6cabfb;
-        border-radius: 4px;
-      }
-      
-      .reasoning-content {
-        margin-top: 0.5rem;
-        font-style: italic;
-        color: #e3f2fd;
-        line-height: 1.4;
-        white-space: pre-wrap;
-      }
-      
-      .interaction-memories {
-        margin: 0.75rem 0;
-        padding: 0.75rem;
-        background: rgba(156, 39, 176, 0.1);
-        border-left: 3px solid #9c27b0;
-        border-radius: 4px;
-      }
-      
-      .memories-list {
-        margin-top: 0.5rem;
-      }
-      
-      .memory-item-compact {
-        display: flex;
-        align-items: flex-start;
-        margin: 0.25rem 0;
-        padding: 0.25rem 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      }
-      
-      .memory-item-compact:last-child {
-        border-bottom: none;
-      }
-      
-      .memory-index {
-        min-width: 2rem;
-        font-size: 0.8rem;
-        color: #9c27b0;
-        font-weight: bold;
-      }
-      
-      .memory-text {
-        flex: 1;
-        font-size: 0.9rem;
-        line-height: 1.3;
-        color: #f3e5f5;
-      }
-    `;
-    
-    document.head.appendChild(style);
-  }
 
   /**
    * Escape HTML for safe display

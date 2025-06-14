@@ -179,6 +179,15 @@ export class ImpressionistEngine {
         error: response.signals?.error
       };
     } catch (error) {
+      // If the request was cancelled (e.g., due to loading a new game), silently return
+      if (error instanceof Error && (error.message.includes('cancelled') || error.message.includes('Aborted'))) {
+        return {
+          text: '',
+          gameState: this.gameState,
+          error: undefined
+        };
+      }
+      
       console.error('Error processing initial scene:', error);
       return {
         text: 'Sorry, I had trouble setting up the initial scene.',
@@ -206,19 +215,34 @@ export class ImpressionistEngine {
       context.storyComplete = true; // Signal that story has ended
       
       try {
-        const response = await this.director.processInput(action.input, context);
+        // Use streaming even for post-ending, but consume all responses
+        const responseGenerator = this.director.processInputStreaming(action.input, context);
+        let finalResponse: DirectorResponse | undefined;
+        
+        for await (const response of responseGenerator) {
+          finalResponse = response;
+          
+          // For post-ending, still update UI immediately for consistency
+          if (this.uiAddMessageCallback) {
+            this.uiAddMessageCallback(response.narrative, 'story');
+          }
+        }
+        
+        if (!finalResponse) {
+          throw new Error('No response received from director');
+        }
         
         // Track this post-ending interaction
-        this.trackInteraction(action.input, response.narrative, {
+        this.trackInteraction(action.input, finalResponse.narrative, {
           postEnding: true,
-          llmImportance: response.importance,
-          memories: response.memories
+          llmImportance: finalResponse.importance,
+          memories: finalResponse.memories
         });
         
         return {
-          text: response.narrative,
+          text: finalResponse.narrative,
           gameState: { ...this.gameState },
-          error: response.signals?.error
+          error: finalResponse.signals?.error
         };
       } catch (error) {
         return {
@@ -309,11 +333,11 @@ export class ImpressionistEngine {
         }
       }
       
-      // Check for ending signals BEFORE applying them to determine if ending was triggered
-      const isEndingTriggered = !!finalResponse.signals?.ending;
-      
       // Apply any signals from the final response (but don't trigger ending callback yet)
       this.applyDirectorSignals(finalResponse);
+      
+      // Check if an ending was actually triggered after applying signals (not just if signal existed)
+      const isEndingTriggered = this.gameState.isEnded;
       
       // Track each response as a separate interaction
       for (let i = 0; i < allResponses.length; i++) {
@@ -439,18 +463,28 @@ export class ImpressionistEngine {
 
 
   /**
+   * Check if a signal value is valid (not null, 'null', 'none', or empty)
+   */
+  private isValidSignal(signal: string | undefined | null): signal is string {
+    return signal != null && 
+           signal !== 'null' && 
+           signal !== 'none' && 
+           signal.trim() !== '';
+  }
+
+  /**
    * Apply signals from LLM Director response without triggering ending callback
    */
   private applyDirectorSignals(response: DirectorResponse) {
     if (!response.signals) return;
 
     // Scene transitions
-    if (response.signals.scene) {
+    if (this.isValidSignal(response.signals.scene)) {
       this.transitionToScene(response.signals.scene);
     }
 
     // Ending triggers (but don't call callback)
-    if (response.signals.ending) {
+    if (this.isValidSignal(response.signals.ending)) {
       this.triggerEnding(response.signals.ending);
     }
 

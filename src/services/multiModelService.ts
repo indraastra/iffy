@@ -131,7 +131,7 @@ class StreamingCallback extends BaseCallbackHandler {
 
 export class MultiModelService {
   private currentModel: BaseChatModel | null = null;
-  private memoryModel: BaseChatModel | null = null;
+  private costModel: BaseChatModel | null = null;
   private currentConfig: LLMConfig | null = null;
   private activeRequests: Set<AbortController> = new Set();
   private metricsCallback: LangChainMetricsCallback | null = null;
@@ -149,10 +149,10 @@ export class MultiModelService {
         
         // Check if saved models exist in our pricing/config data
         const mainModelValid = getModelPricing(config.model, config.provider);
-        const memoryModelValid = !config.memoryModel || getModelPricing(config.memoryModel, config.provider);
+        const costModelValid = !config.costModel || getModelPricing(config.costModel, config.provider);
         
-        if (!mainModelValid || !memoryModelValid) {
-          console.warn(`Found unknown model configuration (main: ${config.model}, memory: ${config.memoryModel}), clearing cache and using defaults`);
+        if (!mainModelValid || !costModelValid) {
+          console.warn(`Found unknown model configuration (quality: ${config.model}, cost: ${config.costModel}), clearing cache and using defaults`);
           localStorage.removeItem('iffy_llm_config');
           return;
         }
@@ -167,9 +167,9 @@ export class MultiModelService {
   public setConfig(config: LLMConfig): void {
     this.cancelActiveRequests();
     
-    // Ensure memory model is set to cheapest option if not specified
-    if (!config.memoryModel) {
-      config.memoryModel = getCheapestModel(config.provider);
+    // Ensure cost model is set to cheapest option if not specified
+    if (!config.costModel) {
+      config.costModel = getCheapestModel(config.provider);
     }
     
     this.currentConfig = config;
@@ -177,11 +177,11 @@ export class MultiModelService {
     
     try {
       this.currentModel = this.createModel(config);
-      this.memoryModel = this.createModelForMemory(config);
+      this.costModel = this.createCostModel(config);
       this.setupMetricsCallback();
     } catch (error) {
       this.currentModel = null;
-      this.memoryModel = null;
+      this.costModel = null;
       throw error;
     }
   }
@@ -190,7 +190,7 @@ export class MultiModelService {
     this.cancelActiveRequests();
     this.currentConfig = null;
     this.currentModel = null;
-    this.memoryModel = null;
+    this.costModel = null;
     localStorage.removeItem('iffy_llm_config');
   }
 
@@ -213,9 +213,9 @@ export class MultiModelService {
     return this.createModelWithSettings(config.provider, config.model, config.apiKey);
   }
 
-  private createModelForMemory(config: LLMConfig): BaseChatModel {
-    const memoryModel = config.memoryModel || getCheapestModel(config.provider);
-    return this.createModelWithSettings(config.provider, memoryModel, config.apiKey);
+  private createCostModel(config: LLMConfig): BaseChatModel {
+    const costModel = config.costModel || getCheapestModel(config.provider);
+    return this.createModelWithSettings(config.provider, costModel, config.apiKey);
   }
 
   private createModelWithSettings(provider: LLMProvider, model: string, apiKey: string): BaseChatModel {
@@ -311,8 +311,8 @@ export class MultiModelService {
     }
   }
 
-  public async makeMemoryRequestWithUsage(prompt: string): Promise<LLMResponse> {
-    return this.makeRequestWithModel(prompt, this.memoryModel);
+  public async makeCostRequestWithUsage(prompt: string): Promise<LLMResponse> {
+    return this.makeRequestWithModel(prompt, this.costModel);
   }
 
   /**
@@ -322,12 +322,12 @@ export class MultiModelService {
   public async makeStructuredRequest<T>(
     prompt: string, 
     schema: z.ZodSchema<T>,
-    options: { useMemoryModel?: boolean } = {}
+    options: { useCostModel?: boolean } = {}
   ): Promise<{ data: T; usage: LLMResponse['usage'] }> {
-    const model = options.useMemoryModel ? this.memoryModel : this.currentModel;
-    const modelName = options.useMemoryModel ? 
-      (this.currentConfig?.memoryModel || 'memory') : 
-      (this.currentConfig?.model || 'main');
+    const model = options.useCostModel ? this.costModel : this.currentModel;
+    const modelName = options.useCostModel ? 
+      (this.currentConfig?.costModel || 'cost') : 
+      (this.currentConfig?.model || 'quality');
     
     if (!model || !this.currentConfig) {
       throw new Error('No model configured. Please set up your API key in Settings.');
@@ -396,10 +396,10 @@ export class MultiModelService {
   }
 
   /**
-   * Convenience method for structured memory requests
+   * Convenience method for structured cost-optimized requests
    */
-  public async makeStructuredMemoryRequest<T>(prompt: string, schema: z.ZodSchema<T>): Promise<{ data: T; usage: LLMResponse['usage'] }> {
-    return this.makeStructuredRequest(prompt, schema, { useMemoryModel: true });
+  public async makeStructuredCostRequest<T>(prompt: string, schema: z.ZodSchema<T>): Promise<{ data: T; usage: LLMResponse['usage'] }> {
+    return this.makeStructuredRequest(prompt, schema, { useCostModel: true });
   }
 
   private async makeRequestWithModel(prompt: string, model: BaseChatModel | null): Promise<LLMResponse> {
@@ -514,13 +514,13 @@ export class MultiModelService {
   }
 
   /**
-   * Calculate cost for a memory request
+   * Calculate cost for a cost-optimized request
    */
-  public calculateMemoryCost(inputTokens: number, outputTokens: number): number {
+  public calculateCostModelCost(inputTokens: number, outputTokens: number): number {
     if (!this.currentConfig) return 0;
     
-    const memoryModel = this.currentConfig.memoryModel || getCheapestModel(this.currentConfig.provider);
-    return calculateRequestCost(memoryModel, this.currentConfig.provider, inputTokens, outputTokens);
+    const costModel = this.currentConfig.costModel || getCheapestModel(this.currentConfig.provider);
+    return calculateRequestCost(costModel, this.currentConfig.provider, inputTokens, outputTokens);
   }
 
   /**
@@ -539,15 +539,15 @@ export class MultiModelService {
   }
 
   /**
-   * Create a LangChain chain using the memory model (cheaper)
+   * Create a LangChain chain using the cost model (cheaper)
    */
-  public createMemoryChain(promptTemplate: PromptTemplate): LLMChain {
-    if (!this.memoryModel) {
-      throw new Error('No memory model configured. Please set up your API key in Settings.');
+  public createCostChain(promptTemplate: PromptTemplate): LLMChain {
+    if (!this.costModel) {
+      throw new Error('No cost model configured. Please set up your API key in Settings.');
     }
 
     return new LLMChain({
-      llm: this.memoryModel,
+      llm: this.costModel,
       prompt: promptTemplate,
       callbacks: this.metricsCallback ? [this.metricsCallback] : []
     });
@@ -600,30 +600,30 @@ export class MultiModelService {
   }
 
   /**
-   * Get the memory model for direct use (if needed)
+   * Get the cost model for direct use (if needed)
    */
-  public getMemoryModel(): BaseChatModel | null {
-    return this.memoryModel;
+  public getCostModel(): BaseChatModel | null {
+    return this.costModel;
   }
 
   /**
    * Get pricing information for the current models
    */
-  public getCurrentPricing(): { main: any; memory: any } | null {
+  public getCurrentPricing(): { quality: any; cost: any } | null {
     if (!this.currentConfig) return null;
     
-    const mainPricing = getModelPricing(this.currentConfig.model, this.currentConfig.provider);
-    const memoryModel = this.currentConfig.memoryModel || getCheapestModel(this.currentConfig.provider);
-    const memoryPricing = getModelPricing(memoryModel, this.currentConfig.provider);
+    const qualityPricing = getModelPricing(this.currentConfig.model, this.currentConfig.provider);
+    const costModel = this.currentConfig.costModel || getCheapestModel(this.currentConfig.provider);
+    const costPricing = getModelPricing(costModel, this.currentConfig.provider);
     
     return {
-      main: {
+      quality: {
         model: this.currentConfig.model,
-        pricing: mainPricing
+        pricing: qualityPricing
       },
-      memory: {
-        model: memoryModel,
-        pricing: memoryPricing
+      cost: {
+        model: costModel,
+        pricing: costPricing
       }
     };
   }

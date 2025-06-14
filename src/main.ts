@@ -133,7 +133,7 @@ class ImpressionistIffyApp {
     const maskedKey = currentKey ? currentKey.substring(0, 8) + '...' : 'Not configured';
     const currentProvider = currentConfig?.provider || 'anthropic';
     const currentModel = currentConfig?.model || MultiModelService.getDefaultModel(currentProvider);
-    const currentMemoryModel = currentConfig?.memoryModel || getCheapestModel(currentProvider);
+    const currentCostModel = currentConfig?.costModel || getCheapestModel(currentProvider);
     
     const menu = document.createElement('div');
     menu.className = 'impressionist-settings-menu';
@@ -160,7 +160,7 @@ class ImpressionistIffyApp {
           </div>
           
           <div class="setting-group">
-            <label for="llm-model">Main Model:</label>
+            <label for="llm-model">Quality Model:</label>
             <select id="llm-model" class="setting-input">
               ${this.renderModelOptions(currentProvider, currentModel)}
             </select>
@@ -168,11 +168,11 @@ class ImpressionistIffyApp {
           </div>
           
           <div class="setting-group">
-            <label for="memory-model">Memory Model:</label>
-            <select id="memory-model" class="setting-input">
-              ${this.renderModelOptions(currentProvider, currentMemoryModel)}
+            <label for="cost-model">Cost Model:</label>
+            <select id="cost-model" class="setting-input">
+              ${this.renderModelOptions(currentProvider, currentCostModel)}
             </select>
-            <small>Used for memory operations (defaults to cheapest model for cost efficiency)</small>
+            <small>Used for classifications and quick operations (defaults to cheapest model for cost efficiency)</small>
           </div>
           
           <div class="setting-group">
@@ -240,7 +240,7 @@ class ImpressionistIffyApp {
     const saveBtn = menu.querySelector('#save-settings');
     const providerSelect = menu.querySelector('#llm-provider') as HTMLSelectElement;
     const modelSelect = menu.querySelector('#llm-model') as HTMLSelectElement;
-    const memoryModelSelect = menu.querySelector('#memory-model') as HTMLSelectElement;
+    const costModelSelect = menu.querySelector('#cost-model') as HTMLSelectElement;
     const apiKeyInput = menu.querySelector('#settings-api-key') as HTMLInputElement;
     
     // Close menu
@@ -254,10 +254,10 @@ class ImpressionistIffyApp {
     providerSelect?.addEventListener('change', () => {
       const provider = providerSelect.value as LLMProvider;
       const defaultModel = MultiModelService.getDefaultModel(provider);
-      const defaultMemoryModel = getCheapestModel(provider);
+      const defaultCostModel = getCheapestModel(provider);
       
       modelSelect.innerHTML = this.renderModelOptions(provider, defaultModel);
-      memoryModelSelect.innerHTML = this.renderModelOptions(provider, defaultMemoryModel);
+      costModelSelect.innerHTML = this.renderModelOptions(provider, defaultCostModel);
       
       // Update help text
       const helpText = menu.querySelector('.help-text');
@@ -270,14 +270,14 @@ class ImpressionistIffyApp {
     saveBtn?.addEventListener('click', () => {
       const provider = providerSelect.value as LLMProvider;
       const model = modelSelect.value;
-      const memoryModel = memoryModelSelect.value;
+      const costModel = costModelSelect.value;
       const apiKey = apiKeyInput.value.trim();
       
       if (apiKey) {
         const config: LLMConfig = {
           provider,
           model,
-          memoryModel,
+          costModel,
           apiKey
         };
         

@@ -4,6 +4,8 @@
  * Provides specialized monitoring for memory compaction operations and efficiency.
  */
 
+import { calculateRequestCost, LLMProvider } from '@/services/llm/types';
+
 export interface MemoryMetric {
   requestId: string;
   timestamp: Date;
@@ -43,7 +45,6 @@ export interface MemorySessionStats {
 export class MemoryMetricsCollector {
   private metrics: MemoryMetric[] = [];
   private debugPane?: any;
-  private multiModelService?: any; // Optional reference for accurate pricing
 
 
   /**
@@ -276,12 +277,6 @@ export class MemoryMetricsCollector {
     this.debugPane = debugPane;
   }
 
-  /**
-   * Set MultiModelService for accurate pricing
-   */
-  setMultiModelService(multiModelService: any): void {
-    this.multiModelService = multiModelService;
-  }
 
   // Private helper methods
 
@@ -314,12 +309,20 @@ export class MemoryMetricsCollector {
   }
 
   private calculateRequestCost(metric: MemoryMetric): number {
-    if (!this.multiModelService?.calculateMemoryCost) {
-      console.warn('No MultiModelService available for memory cost calculation');
+    try {
+      // Try to determine the provider from the model name
+      let provider: LLMProvider = 'anthropic'; // Default fallback
+      if (metric.modelUsed.includes('gpt') || metric.modelUsed.includes('openai')) {
+        provider = 'openai';
+      } else if (metric.modelUsed.includes('gemini') || metric.modelUsed.includes('google')) {
+        provider = 'google';
+      }
+      
+      return calculateRequestCost(metric.modelUsed, provider, metric.inputTokens, metric.outputTokens);
+    } catch (error) {
+      console.warn('Could not calculate memory cost:', error);
       return 0;
     }
-    
-    return this.multiModelService.calculateMemoryCost(metric.inputTokens, metric.outputTokens);
   }
 
   private calculateTotalCost(): number {

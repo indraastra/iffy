@@ -474,15 +474,17 @@ export class ImpressionistGameManager {
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       // Convert paragraph breaks (double newlines) to <p> tags
       .replace(/\n\s*\n/g, '</p><p>')
-      // Remove single line breaks to allow text to flow naturally
-      .replace(/\n/g, ' ')
+      // Convert list items (lines starting with - or *) to proper list HTML
+      .replace(/\n(\s*[-*]\s+)/g, '<br>$1')
+      // Remove single line breaks to allow text to flow naturally (but preserve <br> tags)
+      .replace(/\n(?!<br>)/g, ' ')
       // Wrap in paragraph tags and clean up
       .replace(/^/, '<p>')
       .replace(/$/, '</p>')
       // Clean up empty paragraphs
       .replace(/<p>\s*<\/p>/g, '')
-      // Clean up multiple spaces
-      .replace(/\s+/g, ' ');
+      // Clean up multiple spaces (but preserve single spaces after list markers)
+      .replace(/\s+(?![-*]\s)/g, ' ');
   }
 
   /**

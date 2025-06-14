@@ -85,7 +85,7 @@ describe('MultiModelService', () => {
       expect(service.isConfigured()).toBe(true);
       expect(service.getConfig()).toEqual({
         ...config,
-        memoryModel: 'claude-3-5-haiku-latest' // Should auto-set cheapest memory model
+        costModel: 'claude-3-5-haiku-latest' // Should auto-set cheapest cost model
       });
     });
 
@@ -100,14 +100,14 @@ describe('MultiModelService', () => {
       expect(service.isConfigured()).toBe(true);
       expect(service.getConfig()).toEqual({
         ...config,
-        memoryModel: 'gpt-4o-mini'
+        costModel: 'gpt-4o-mini'
       });
     });
 
     it('should configure Google provider', () => {
       const config: LLMConfig = {
         provider: 'google',
-        model: 'gemini-2.5-pro',
+        model: 'gemini-2.5-pro-preview-06-05',
         apiKey: 'test-key'
       };
 
@@ -115,16 +115,16 @@ describe('MultiModelService', () => {
       expect(service.isConfigured()).toBe(true);
       expect(service.getConfig()).toEqual({
         ...config,
-        memoryModel: 'gemini-2.0-flash-lite'
+        costModel: 'gemini-2.0-flash-lite'
       });
     });
 
-    it('should preserve custom memory model', () => {
+    it('should preserve custom cost model', () => {
       const config: LLMConfig = {
         provider: 'anthropic',
         model: 'claude-sonnet-4-20250514',
         apiKey: 'test-key',
-        memoryModel: 'claude-sonnet-4-20250514' // Custom memory model
+        costModel: 'claude-sonnet-4-20250514' // Custom cost model
       };
 
       service.setConfig(config);
@@ -144,7 +144,7 @@ describe('MultiModelService', () => {
         'iffy_llm_config',
         JSON.stringify({
           ...config,
-          memoryModel: 'claude-3-5-haiku-latest'
+          costModel: 'claude-3-5-haiku-latest'
         })
       );
     });
@@ -184,8 +184,8 @@ describe('MultiModelService', () => {
       });
     });
 
-    it('should make memory model request with usage tracking', async () => {
-      const response = await service.makeMemoryRequestWithUsage('Test memory prompt');
+    it('should make cost model request with usage tracking', async () => {
+      const response = await service.makeCostRequestWithUsage('Test cost-optimized prompt');
       
       expect(response).toEqual({
         content: 'Test response',
@@ -317,8 +317,8 @@ describe('MultiModelService', () => {
       expect(cost).toBeCloseTo(0.0105, 4);
     });
 
-    it('should calculate memory model costs', () => {
-      const cost = service.calculateMemoryCost(1000, 500);
+    it('should calculate cost model costs', () => {
+      const cost = service.calculateCostModelCost(1000, 500);
       
       // Claude 3.5 Haiku: $0.80 input, $4.00 output per million tokens
       // (1000/1000000 * 0.80) + (500/1000000 * 4.00) = 0.0008 + 0.002 = 0.0028
@@ -337,18 +337,18 @@ describe('MultiModelService', () => {
       const unconfiguredService = new MultiModelService();
       
       expect(unconfiguredService.calculateCost(1000, 500)).toBe(0);
-      expect(unconfiguredService.calculateMemoryCost(1000, 500)).toBe(0);
+      expect(unconfiguredService.calculateCostModelCost(1000, 500)).toBe(0);
     });
 
     it('should get current pricing information', () => {
       const pricing = service.getCurrentPricing();
       
       expect(pricing).toEqual({
-        main: {
+        quality: {
           model: 'claude-sonnet-4-20250514',
           pricing: { input: 3.00, output: 15.00 }
         },
-        memory: {
+        cost: {
           model: 'claude-3-5-haiku-latest',
           pricing: { input: 0.80, output: 4.00 }
         }
@@ -450,7 +450,7 @@ describe('MultiModelService', () => {
     it('should support concurrent requests without interference', async () => {
       // Create two concurrent requests 
       const request1Promise = service.makeRequestWithUsage('Test prompt 1');
-      const request2Promise = service.makeMemoryRequestWithUsage('Test prompt 2');
+      const request2Promise = service.makeCostRequestWithUsage('Test prompt 2');
       
       // Both should be tracked in activeRequests
       expect((service as any).activeRequests.size).toBe(2);

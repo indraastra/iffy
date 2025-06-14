@@ -43,8 +43,6 @@ export class ImpressionistMemoryManager {
   constructor(multiModelService?: MultiModelService) {
     this.multiModelService = multiModelService || new MultiModelService();
     this.memoryMetrics = new MemoryMetricsCollector();
-    // Wire up MultiModelService to metrics collector for accurate pricing
-    this.memoryMetrics.setMultiModelService(this.multiModelService);
   }
 
   /**
@@ -257,7 +255,7 @@ export class ImpressionistMemoryManager {
 
     try {
       const prompt = this.buildCompactionPrompt();
-      const response = await this.multiModelService.makeStructuredRequest(prompt, CompactionResponseSchema, { useMemoryModel: true });
+      const response = await this.multiModelService.makeStructuredRequest(prompt, CompactionResponseSchema, { useCostModel: true });
 
       const latencyMs = performance.now() - startTime;
       const compactedMemories = this.convertToMemoryEntries(response.data.compactedMemories);
@@ -268,13 +266,13 @@ export class ImpressionistMemoryManager {
         
         // Track successful compaction metrics
         const currentConfig = this.multiModelService.getConfig();
-        const memoryModel = currentConfig?.memoryModel || currentConfig?.model || 'unknown';
+        const costModel = currentConfig?.costModel || currentConfig?.model || 'unknown';
         this.memoryMetrics.trackMemoryRequest(
           'compaction',
           response.usage.input_tokens,
           response.usage.output_tokens,
           latencyMs,
-          memoryModel,
+          costModel,
           originalMemoryCount,
           this.memories.length,
           true
@@ -286,13 +284,13 @@ export class ImpressionistMemoryManager {
       } else {
         // Track failed compaction (no memories returned)
         const currentConfig = this.multiModelService.getConfig();
-        const memoryModel = currentConfig?.memoryModel || currentConfig?.model || 'unknown';
+        const costModel = currentConfig?.costModel || currentConfig?.model || 'unknown';
         this.memoryMetrics.trackMemoryRequest(
           'compaction',
           response.usage.input_tokens,
           response.usage.output_tokens,
           latencyMs,
-          memoryModel,
+          costModel,
           originalMemoryCount,
           0,
           false,
@@ -305,13 +303,13 @@ export class ImpressionistMemoryManager {
       
       // Track failed compaction
       const currentConfig = this.multiModelService.getConfig();
-      const memoryModel = currentConfig?.memoryModel || currentConfig?.model || 'unknown';
+      const costModel = currentConfig?.costModel || currentConfig?.model || 'unknown';
       this.memoryMetrics.trackMemoryRequest(
         'compaction',
         0, // Unknown token count on error
         0,
         latencyMs,
-        memoryModel,
+        costModel,
         originalMemoryCount,
         originalMemoryCount, // No change on error
         false,

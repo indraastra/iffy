@@ -1,0 +1,309 @@
+/* Debug Pane Styles */
+
+.langchain-metric {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.langchain-metric.latest {
+  border-color: rgba(100, 181, 246, 0.5);
+  background: rgba(100, 181, 246, 0.05);
+}
+
+.langchain-metric.error {
+  border-left: 4px solid #f44336;
+  background: rgba(244, 67, 54, 0.1);
+}
+
+.langchain-metric.success {
+  border-left: 4px solid #4caf50;
+}
+
+.metric-header {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-color);
+  opacity: 0.8;
+}
+
+.metric-time {
+  font-weight: bold;
+  color: #64b5f6;
+}
+
+.metric-provider {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffd54f;
+  padding: 0.1rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
+}
+
+.metric-model {
+  color: #81c784;
+  font-style: italic;
+}
+
+.metric-status.success {
+  color: #4caf50;
+}
+
+.metric-status.error {
+  color: #f44336;
+}
+
+.metric-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.metric-tokens {
+  color: #ffb74d;
+}
+
+.metric-timing {
+  color: #64b5f6;
+}
+
+.metric-error {
+  color: #f44336;
+  background: rgba(244, 67, 54, 0.1);
+  padding: 0.5rem;
+  border-radius: 3px;
+  margin-top: 0.5rem;
+}
+
+.langchain-metrics-list {
+  margin-top: 1rem;
+}
+
+.metrics-count {
+  margin: 0 0 1rem;
+  padding: 0 1rem;
+  font-size: 0.85rem;
+  color: var(--text-color);
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.stats-table th {
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: bold;
+  text-align: left;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Tools pane styling */
+.tool-section {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+}
+
+.tool-section h4 {
+  margin: 0 0 1rem 0;
+}
+
+.tool-btn {
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 0.75rem;
+  box-sizing: border-box;
+}
+
+.tool-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(100, 181, 246, 0.5);
+}
+
+.tool-btn.danger:hover {
+  background: rgba(244, 67, 54, 0.1);
+  border-color: rgba(244, 67, 54, 0.6);
+}
+
+.tool-description {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+.tool-messages {
+  margin-top: 1rem;
+  max-height: 200px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.75rem;
+}
+
+.tool-message {
+  font-size: 0.85rem;
+  margin: 0.5rem 0;
+  opacity: 0.9;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.25rem;
+}
+
+.tool-message:last-child {
+  border-bottom: none;
+}
+
+/* Custom scrollbar styling for debug pane */
+.debug-pane ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.debug-pane ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.debug-pane ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.debug-pane ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Firefox scrollbar styling */
+.debug-pane {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+}
+
+/* Reasoning and memories styling */
+.interaction-reasoning {
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  background: rgba(108, 171, 251, 0.1);
+  border-left: 3px solid #6cabfb;
+  border-radius: 4px;
+}
+
+.reasoning-content {
+  margin-top: 0.5rem;
+  font-style: italic;
+  color: #e3f2fd;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.interaction-memories {
+  margin: 0.75rem 0;
+  padding: 0.75rem;
+  background: rgba(156, 39, 176, 0.1);
+  border-left: 3px solid #9c27b0;
+  border-radius: 4px;
+}
+
+.memories-list {
+  margin-top: 0.5rem;
+}
+
+.memory-item-compact {
+  display: flex;
+  align-items: flex-start;
+  margin: 0.25rem 0;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.memory-item-compact:last-child {
+  border-bottom: none;
+}
+
+.memory-index {
+  min-width: 2rem;
+  font-size: 0.8rem;
+  color: #9c27b0;
+  font-weight: bold;
+}
+
+.memory-text {
+  flex: 1;
+  font-size: 0.9rem;
+  line-height: 1.3;
+  color: #f3e5f5;
+}
+
+/* ActionClassifier specific styling */
+.llm-interaction.classifier {
+  border-left: 4px solid #ff9800;
+  background: rgba(255, 152, 0, 0.05);
+}
+
+.llm-interaction.classifier.compact {
+  padding: 0.5rem 0.75rem;
+  margin: 0.5rem 0;
+  overflow: hidden;
+  word-wrap: break-word;
+}
+
+.classifier-badge {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ffb74d;
+  padding: 0.1rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.classifier-summary {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.classifier-summary .player-action {
+  color: #e3f2fd;
+  font-style: italic;
+  word-wrap: break-word;
+  line-height: 1.3;
+}
+
+.classifier-summary .classification-result {
+  color: #ffb74d;
+  font-weight: bold;
+  word-wrap: break-word;
+  line-height: 1.3;
+}
+
+.classifier-summary .confidence-score {
+  color: #81c784;
+  font-size: 0.8rem;
+}
+
+.classifier-summary .classifier-reasoning {
+  color: #9e9e9e;
+  font-style: italic;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin-top: 0.25rem;
+  word-wrap: break-word;
+}
