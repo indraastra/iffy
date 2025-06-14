@@ -41,10 +41,9 @@ world:
       - "book_sections"
       - "personal_items"
   characters:
-    shopkeeper:
+    player:
       name: "You"
-      sketch: "Guardian of forbidden literature, adapting to each literary encounter"
-      voice: "Matches the style of whatever literature is being discussed"
+      sketch: "Shopkeeper and guardian of forbidden literature"
 
   items:
     the_lumina_press:
@@ -53,7 +52,7 @@ world:
         An archaic, motorized contraption with a heavy flywheel, generating both a coded tremor
         signal for the shop above and a trickle of electricity for the hidden lamps within. Its deep
         hum and subtle vibration tell discerning patrons that The Final Word is open. Operated by a
-        lever. A small brass plate reads, *"Verba volant, scripta manent."*
+        lever. A small inscription invites philosophical contemplation.
       found_in: "the_final_word"
       reveals: >
         The shop's operational status to those in the know, and provides the only source of light.
@@ -64,137 +63,137 @@ scenes:
     location: "the_final_word"
     process_sketch: true
     guidance: >
-      First day tutorial. Establish the world, introduce mechanics. The focus here is activating the
-      Lumina Press to open the shop.
+      Player's first day managing the bookshop. Establish the world, introduce mechanics. A
+      philosophical inscription above the Lumina Press should catch the player's attention and
+      invite contemplation. If the player reads or reflects on this quote, it establishes
+      philosophy  as the day's theme for when they eventually activate the Press. Trigger the
+      transition only when they actually pull the lever.
     sketch: |
       Pale morning light filters through grimy windows above. You descend the hidden 
       stairs to your underground sanctuary. Books line every wall - some safe, others 
       that could cost you everything. Today marks another day of literary resistance. 
-      The **[Lumina Press](item:the_lumina_press)** sits silent, waiting.
-    leads_to:
-      open_for_business: "when you activate the Lumina Press"
 
-  # Core Game Loop Scene - Shop is open, waiting for customers
-  open_for_business:
+      The **[Lumina Press](item:the_lumina_press)** sits silent, waiting. Above its brass 
+      lever, etched into the wall in careful Latin script, you notice an inscription: 
+      *"Fides quaerens intellectum"* - faith seeking understanding. The words seem to 
+      shimmer in the pale morning light, inviting contemplation.
+    leads_to:
+      aquinas_encounter: "pull the lever of the Lumina Press"
+
+  # Tutorial Customer - Direct from opening day
+  aquinas_encounter:
     location: "the_final_word"
-    guidance: >
-      The shop is now open, its signal active, but no customer has arrived yet. Maintain a sense of
-      quiet anticipation. Allow the player to perform minor, contemplative actions that reflect
-      waiting (e.g., tidying, listening, settling in). Player's actions during this waiting phase
-      should influence who arrives next. The next transition occurs when the player indicates
-      readiness for a customer. On the first day of business, always transition to `aquinas_day`.
+    guidance: |
+      The philosophical atmosphere established by the Latin inscription draws a scholar seeking
+      a work by Aquinas.
+      BUYER: A scholarly figure, movements measured and deliberate. Dust motes suspend in cathedral
+      light as centuries of theological inquiry seem to settle into the very air between you.
+      TONE: Embody scholastic philosophy completely: formal reasoning, theological precision,
+      methodical argumentation, Latin phrases where appropriate. This teaches the pattern for how
+      literary styles transform the entire encounter.
     sketch: |
-      With a low rumble, the **[Lumina_Press](item:the_lumina_press)** whirs to life, its heavy flywheel 
-      gaining momentum. A deep, steady hum permeates the very stone of the building, 
-      and the warm glow of the lamps casts dancing shadows across the forbidden spines. 
-      The coded tremor ripples subtly through the shop above, a silent invitation. 
-      You are open. Now, you wait. The air is thick with anticipation and the scent 
-      of old paper.
+      With a low rumble, the **[Lumina Press](item:the_lumina_press)** whirs to life, its heavy 
+      flywheel gaining momentum. A deep, steady hum permeates the very stone, and warm 
+      lamp glow casts dancing shadows across forbidden spines. Within moments, a soft 
+      **rap** sounds from above.
     leads_to:
-      # Tutorial customer for the first day
-      aquinas_day: "when player indicates readiness on their first day"
-      hemingway_day: "when player's waiting actions suggest war/conflict themes"
-      joyce_day: "when player's waiting actions suggest experimental/modernist themes"
-      # Regular game loop customers
-      generic_day: "when player indicates readiness and no specific author theme is strong"
+      tutorial_end: "when the Aquinas seeker departs"
 
-  # Tutorial Specific Customer - Aquinas
-  aquinas_day:
-    location: "the_final_word"
-    guidance: >
-      Embody scholastic philosophy completely: formal reasoning, theological precision, methodical
-      argumentation, Latin phrases where appropriate. This teaches the pattern.
-    sketch: |
-      A soft, distinct **rap** sounds from the concealed door above, followed by the faint 
-      creak of descending stairs. A scholarly figure enters, movements measured and 
-      deliberate. Dust motes suspend in cathedral light as centuries of theological 
-      inquiry seem to settle into the very air between you.
-    leads_to:
-      day_one_end: "when the Aquinas seeker departs"
-
-  # End of Tutorial Day
-  day_one_end:
-    guidance: "Transition smoothly, explain the daily cycle, prepare for infinite generation"
+  # End of Tutorial
+  tutorial_end:
+    guidance: "Transition from tutorial to main game loop. Explain the daily cycle."
     sketch: |
       Your first customer departs, carrying hidden wisdom into the dangerous world.
-      You silence the **[Lumina_Press](item:the_lumina_press)** and secure the shop. Each day will bring new 
-      seekers, new styles, new risks. Tomorrow, anything might walk through that door.
+      You silence the **[Lumina Press](item:the_lumina_press)** and secure the shop. Each day will 
+      bring new seekers, new styles, new risks. Tomorrow, anything might walk through that door.
     leads_to:
       daily_preparation: "when you're ready for the next day"
 
-  # Infinite generation cycle - Start of a new day (shop closed, player prepares)
+  # Main Game Loop - Start of each day (shop closed)
   daily_preparation:
     location: "the_final_word"
     guidance: >
       Shop is CLOSED (Lumina Press is off). IMPORTANT: Generate interesting environmental details
       that the player can discover and interact with - askew paintings, disorganized book sections,
-      personal items, etc. Let player's choice of what to engage with determine tomorrow's visitor
-      type. Track their activities to seed the encounter.
+      personal items, etc. Let player's choice of what to engage with determine who arrives when
+      they open. Track their activities to seed the encounter.
     sketch: |
-      Dawn breaks over your hidden sanctuary. The **[Lumina_Press](item:the_lumina_press)** is silent, 
+      Dawn breaks over your hidden sanctuary. The **[Lumina Press](item:the_lumina_press)** is silent, 
       its heavy flywheel dormant. This quiet time belongs to you alone - to read forbidden 
       works, rearrange dangerous volumes, or simply breathe among the words that could 
       destroy empires. The shop holds many details waiting to be discovered. You'll 
       activate the Press when you're ready to face whatever literary hunger today will bring.
     leads_to:
-      open_for_business: "when you activate the Lumina Press" # All days now go through the waiting phase
+      shop_opening: "when you activate the Lumina Press"
 
-  # Core Game Loop Scene - Generic customer arrival
-  generic_day:
+  # Main Game Loop - Shop opening and waiting
+  shop_opening:
     location: "the_final_word"
     guidance: >
-      CRITICAL: Based on player's morning activities (from daily_preparation) AND any waiting
-      actions (from open_for_business), generate a specific visitor seeking specific literature. If
-      multiple activities occurred, pick one arbitrarily. If no specific activities, generate any
-      appropriate encounter. Immediately and completely adopt that author's stylistic voice for ALL
-      elements: dialogue, description, atmosphere, pacing, themes.
+      The shop is now open but no customer has arrived yet. Allow contemplative waiting actions that
+      might further influence who arrives. Based on ALL player activities (from daily_preparation
+      AND any waiting actions here), determine what type of customer arrives.
     sketch: |
-      A soft, distinct **rap** sounds from the concealed door above, followed by the faint 
-      creak of descending stairs. Someone enters as if drawn by an unseen force, their 
-      bearing, their first words, their very presence reveals what literary appetite 
-      drives them to risk everything.
+      The **[Lumina Press](item:the_lumina_press)** rumbles to life, its steady hum permeating 
+      the building like a heartbeat. Warm light bathes the forbidden collection as the 
+      coded tremor ripples through the shop above - your silent invitation to those who 
+      know. You are open. The air is thick with anticipation and the scent of old paper.
     leads_to:
-      day_complete: "when this visitor's story concludes"
+      hemingway_encounter: "when activities suggest war/conflict themes"
+      joyce_encounter: "when activities suggest experimental/modernist themes"
+      generated_encounter: "when a customer arrives with any other literary appetite"
 
-  # Core Game Loop Scene - Specific customer arrival (Hemingway)
-  hemingway_day:
+  # Specific Pre-defined Encounters
+  hemingway_encounter:
     location: "the_final_word"
     guidance: >
       Pure Hemingway: sparse dialogue, understated emotion, what's unsaid matters most, short
-      sentences, iceberg theory, war themes. This encounter was triggered by specific player
-      preparation or waiting actions.
+      sentences, iceberg theory, war themes. Player's actions suggested this encounter type.
     sketch: |
-      A soft, distinct **rap** sounds from the concealed door above, followed by the faint 
-      creak of descending stairs. A veteran enters, weathered and quiet. Something about 
-      the shop's arrangement speaks to them. Rain sounds on windows. Words will be few. 
-      What matters lies beneath the surface, in the spaces between what gets said.
+      A soft **rap** from above, then careful footsteps descending. A veteran enters, 
+      weathered and quiet. Something about the shop's arrangement speaks to them. 
+      Rain sounds on windows. Words will be few. What matters lies beneath the surface, 
+      in the spaces between what gets said.
     leads_to:
       day_complete: "when the encounter ends"
 
-  # Core Game Loop Scene - Specific customer arrival (Joyce)
-  joyce_day:
+  joyce_encounter:
     location: "the_final_word"
     guidance: >
-      Stream-of-consciousness Joycean style: flowing thoughts, wordplay, Dublin references, complex
-      internal monologue, experimental language. This encounter was triggered by specific player
-      preparation or waiting actions.
+      Stream-of-consciousness Joycean style: flowing thoughts, wordplay, Dublin references,  complex
+      internal monologue, experimental language. Player's actions suggested this encounter type.
     sketch: |
-      A soft, distinct **rap** sounds from the concealed door above, followed by the faint 
-      creak of descending stairs. Someone flows through the door like thoughts through 
-      consciousness, eyes drawn to whatever modernist arrangement you've created, seeking 
-      Ulysses perhaps or Finnegans Wake, the great sprawling beautiful mess of language 
-      itself, words tumbling over words in the endless Dublin of the mind.
+      A soft **rap** from above, then flowing footsteps like thoughts cascading down stairs. 
+      Someone enters like consciousness itself, eyes drawn to whatever modernist arrangement 
+      you've created, seeking Ulysses perhaps or Finnegans Wake, the great sprawling beautiful 
+      mess of language itself, words tumbling over words in the endless Dublin of the mind.
     leads_to:
-      day_complete: "when the encounter ends"
+      day_complete: "when the literary river finds its end"
 
-  # Core Game Loop Scene - End of a regular day
+  # Generated Encounter - The infinite content engine
+  generated_encounter:
+    location: "the_final_word"
+    guidance: >
+      CRITICAL: Based on ALL player activities from daily_preparation and shop_opening, generate  a
+      specific visitor seeking specific literature. If multiple activities occurred, pick
+      one  arbitrarily. If no specific activities, generate any appropriate encounter.
+      Immediately  and completely adopt that author's stylistic voice for ALL elements: dialogue,
+      description,  atmosphere, pacing, themes.
+    sketch: |
+      A soft **rap** from above, then footsteps descending into your sanctuary. Someone 
+      enters as if drawn by an unseen force, their bearing, their first words, their very 
+      presence reveals what literary appetite drives them to risk everything for forbidden words.
+    leads_to:
+      day_complete: "when this visitor's story concludes"
+
+  # End of each day
   day_complete:
     guidance: >
       Provide satisfying conclusion to the day's encounter. Note consequences, track any risky
       decisions for potential discovery ending, transition to next day.
     sketch: |
       Another seeker departs into the uncertain world, carrying forbidden knowledge.
-      You secure the shop once more, silencing the **[Lumina_Press](item:the_lumina_press)**, knowing
+      You secure the shop once more, silencing the **[Lumina Press](item:the_lumina_press)**, knowing
       that tomorrow will bring fresh literary hunger to your door. Each day, the
       resistance continues one conversation at a time.
     leads_to:
@@ -207,7 +206,7 @@ endings:
   - id: "voluntary_closure"
     when: "player decides their work is done"
     sketch: |
-      You silence the **[Lumina_Press](item:the_lumina_press)** one final time. The Final Word has served 
+      You silence the **[Lumina Press](item:the_lumina_press)** one final time. The Final Word has served 
       its purpose - not as a place, but as an idea. Literature lives now in 
       all the minds you've touched, all the conversations you've sparked. 
       Some endings are also beginnings.
@@ -218,4 +217,4 @@ endings:
       Your caution finally failed you. They found your sanctuary, but not what 
       matters most. The books they seize are just paper - the real literature 
       lives in memory, in whispered conversations, in hearts that refuse to forget. 
-      The **[Lumina_Press](item:the_lumina_press)** falls silent, but its work was already done.
+      The **[Lumina Press](item:the_lumina_press)** falls silent, but its work was already done.

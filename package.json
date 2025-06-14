@@ -28,7 +28,6 @@
     "vitest": "^1.0.0"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.52.0",
     "@langchain/anthropic": "^0.3.22",
     "@langchain/google-genai": "^0.2.11",
     "@langchain/openai": "^0.5.13",

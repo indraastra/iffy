@@ -1,6 +1,7 @@
 import { SessionStats } from '@/engine/metricsCollector';
 import { MemorySessionStats } from '@/engine/memoryMetricsCollector';
 import { LangChainMetrics } from '@/services/multiModelService';
+import { calculateRequestCost } from '@/services/llm/types';
 
 interface LlmInteraction {
   timestamp: Date;
@@ -44,7 +45,6 @@ export class DebugPane {
       </div>
       <div class="debug-tabs">
         <button class="debug-tab active" data-tab="api">📊 Usage</button>
-        <button class="debug-tab" data-tab="langchain">⚡ LangChain</button>
         <button class="debug-tab" data-tab="memory">🧠 Memory</button>
         <button class="debug-tab" data-tab="llm">🤖 Logs</button>
         <button class="debug-tab" data-tab="tools">🛠️ Tools</button>
@@ -54,11 +54,6 @@ export class DebugPane {
           <div class="api-dashboard">
             <div class="api-warnings"></div>
             <div class="api-stats"></div>
-          </div>
-        </div>
-        <div class="debug-tab-content" data-tab="langchain">
-          <div class="langchain-dashboard">
-            <div class="langchain-stats"></div>
             <div class="langchain-metrics"></div>
           </div>
         </div>
@@ -128,8 +123,6 @@ export class DebugPane {
     // Refresh current tab content
     if (this.currentTab === 'api') {
       this.updateApiDisplay();
-    } else if (this.currentTab === 'langchain') {
-      this.updateLangChainDisplay();
     } else if (this.currentTab === 'memory') {
       this.updateMemoryDisplay();
     } else if (this.currentTab === 'llm') {
@@ -171,8 +164,6 @@ export class DebugPane {
     // Refresh content for the active tab
     if (tabName === 'api') {
       this.updateApiDisplay();
-    } else if (tabName === 'langchain') {
-      this.updateLangChainDisplay();
     } else if (tabName === 'memory') {
       this.updateMemoryDisplay();
     } else if (tabName === 'llm') {
@@ -205,7 +196,7 @@ export class DebugPane {
     }
 
     // Display combined API usage stats
-    if (this.sessionStats || this.memoryStats) {
+    if (this.sessionStats || this.memoryStats || this.langchainMetrics.length > 0) {
       statsContainer.innerHTML = this.renderCombinedApiStats();
     } else {
       statsContainer.innerHTML = `
@@ -213,6 +204,20 @@ export class DebugPane {
           <p>No API usage data available yet. Start playing to see session statistics.</p>
         </div>
       `;
+    }
+
+    // Display LangChain metrics in the same pane
+    const metricsContainer = apiContainer.querySelector('.langchain-metrics') as HTMLElement;
+    if (metricsContainer) {
+      if (this.langchainMetrics.length > 0) {
+        metricsContainer.innerHTML = this.renderLangChainMetrics();
+      } else {
+        metricsContainer.innerHTML = `
+          <div class="no-data">
+            <p>No LangChain metrics available yet. LangChain director will populate this section.</p>
+          </div>
+        `;
+      }
     }
   }
 
@@ -261,10 +266,39 @@ export class DebugPane {
     const storyStats = this.sessionStats;
     const memStats = this.memoryStats;
 
-    const totalCalls = (storyStats?.totalCalls || 0) + (memStats?.totalCalls || 0);
-    const totalInputTokens = (storyStats?.totalInputTokens || 0) + (memStats?.totalInputTokens || 0);
-    const totalOutputTokens = (storyStats?.totalOutputTokens || 0) + (memStats?.totalOutputTokens || 0);
-    const totalCost = (storyStats?.totalCost || 0) + (memStats?.totalCost || 0);
+    // Calculate LangChain totals
+    const langchainCalls = this.langchainMetrics.length;
+    const langchainInputTokens = this.langchainMetrics.reduce((sum, m) => sum + m.promptTokens, 0);
+    const langchainOutputTokens = this.langchainMetrics.reduce((sum, m) => sum + m.completionTokens, 0);
+    
+    // Calculate LangChain costs using the proper cost calculation
+    let langchainCost = 0;
+    try {
+      langchainCost = this.langchainMetrics.reduce((sum, metric) => {
+        if (metric.promptTokens > 0 || metric.completionTokens > 0) {
+          try {
+            const cost = calculateRequestCost(metric.model, metric.provider, metric.promptTokens, metric.completionTokens);
+            return sum + cost;
+          } catch (costError) {
+            console.warn('Could not calculate cost for metric:', metric, costError);
+            // Fallback to rough estimate
+            const costPer1kInput = 0.001;
+            const costPer1kOutput = 0.002;
+            const inputCost = (metric.promptTokens / 1000) * costPer1kInput;
+            const outputCost = (metric.completionTokens / 1000) * costPer1kOutput;
+            return sum + inputCost + outputCost;
+          }
+        }
+        return sum;
+      }, 0);
+    } catch (error) {
+      console.warn('Could not calculate LangChain costs:', error);
+    }
+    
+    const totalCalls = (storyStats?.totalCalls || 0) + (memStats?.totalCalls || 0) + langchainCalls;
+    const totalInputTokens = (storyStats?.totalInputTokens || 0) + (memStats?.totalInputTokens || 0) + langchainInputTokens;
+    const totalOutputTokens = (storyStats?.totalOutputTokens || 0) + (memStats?.totalOutputTokens || 0) + langchainOutputTokens;
+    const totalCost = (storyStats?.totalCost || 0) + (memStats?.totalCost || 0) + langchainCost;
 
     return `
       <div class="stats-section">
@@ -273,6 +307,7 @@ export class DebugPane {
           <tr><td>Total API Calls</td><td>${totalCalls}</td></tr>
           <tr><td>Story Calls</td><td>${storyStats?.totalCalls || 0}</td></tr>
           <tr><td>Memory Calls</td><td>${memStats?.totalCalls || 0}</td></tr>
+          <tr><td>LangChain Calls</td><td>${langchainCalls}</td></tr>
           <tr><td>Total Input Tokens</td><td>${totalInputTokens.toLocaleString()}</td></tr>
           <tr><td>Total Output Tokens</td><td>${totalOutputTokens.toLocaleString()}</td></tr>
           <tr><td>Total Session Cost</td><td>$${totalCost.toFixed(4)}</td></tr>
@@ -299,6 +334,18 @@ export class DebugPane {
           <tr><td>Average Latency</td><td>${Math.round(memStats.avgLatency)}ms</td></tr>
           <tr><td>Compaction Calls</td><td>${memStats.compactionCalls}</td></tr>
           <tr><td>Avg Compression</td><td>${(memStats.avgCompressionRatio * 100).toFixed(1)}%</td></tr>
+        </table>
+      </div>
+      ` : ''}
+      
+      ${this.langchainMetrics.length > 0 ? `
+      <div class="stats-section">
+        <h4>⚡ LangChain Stats</h4>
+        <table class="stats-table">
+          <tr><td>Success Rate</td><td>${(this.langchainMetrics.filter(m => m.success).length / this.langchainMetrics.length * 100).toFixed(1)}%</td></tr>
+          <tr><td>Average Latency</td><td>${Math.round(this.langchainMetrics.reduce((sum, m) => sum + m.latencyMs, 0) / this.langchainMetrics.length)}ms</td></tr>
+          <tr><td>Avg Input Tokens</td><td>${Math.round(langchainInputTokens / this.langchainMetrics.length)}</td></tr>
+          <tr><td>Avg Output Tokens</td><td>${Math.round(langchainOutputTokens / this.langchainMetrics.length)}</td></tr>
         </table>
       </div>
       ` : ''}
@@ -415,6 +462,13 @@ export class DebugPane {
             </div>
           ` : ''}
           
+          ${interaction.response.signals ? `
+            <div class="interaction-signals">
+              <strong>⚡ Signals:</strong>
+              <pre>${JSON.stringify(interaction.response.signals, null, 2)}</pre>
+            </div>
+          ` : ''}
+          
           ${interaction.response.memories && interaction.response.memories.length > 0 ? `
             <div class="interaction-memories">
               <strong>💾 Response Memories (${interaction.response.memories.length}):</strong>
@@ -426,13 +480,6 @@ export class DebugPane {
                   </div>
                 `).join('')}
               </div>
-            </div>
-          ` : ''}
-          
-          ${interaction.response.signals ? `
-            <div class="interaction-signals">
-              <strong>⚡ Signals:</strong>
-              <pre>${JSON.stringify(interaction.response.signals, null, 2)}</pre>
             </div>
           ` : ''}
         </div>
@@ -473,90 +520,6 @@ export class DebugPane {
     return this.currentMemories;
   }
 
-  /**
-   * Update the LangChain metrics tab
-   */
-  private updateLangChainDisplay(): void {
-    const langchainContainer = this.container.querySelector('.langchain-dashboard') as HTMLElement;
-    if (!langchainContainer) return;
-
-    const statsContainer = langchainContainer.querySelector('.langchain-stats') as HTMLElement;
-    const metricsContainer = langchainContainer.querySelector('.langchain-metrics') as HTMLElement;
-
-    if (this.langchainMetrics.length === 0) {
-      statsContainer.innerHTML = `
-        <div class="no-data">
-          <p>No LangChain metrics available yet. Metrics will appear here once API calls begin.</p>
-        </div>
-      `;
-      metricsContainer.innerHTML = '';
-      return;
-    }
-
-    // Render overall stats
-    statsContainer.innerHTML = this.renderLangChainStats();
-    
-    // Render recent metrics
-    metricsContainer.innerHTML = this.renderLangChainMetrics();
-  }
-
-  /**
-   * Render LangChain statistics
-   */
-  private renderLangChainStats(): string {
-    if (this.langchainMetrics.length === 0) return '';
-
-    const successful = this.langchainMetrics.filter(m => m.success).length;
-    const failed = this.langchainMetrics.length - successful;
-    const successRate = (successful / this.langchainMetrics.length) * 100;
-
-    const avgLatency = this.langchainMetrics.reduce((sum, m) => sum + m.latencyMs, 0) / this.langchainMetrics.length;
-    const totalTokens = this.langchainMetrics.reduce((sum, m) => sum + m.totalTokens, 0);
-    const avgTokens = totalTokens / this.langchainMetrics.length;
-
-    // Provider breakdown
-    const providerStats = this.langchainMetrics.reduce((acc, m) => {
-      if (!acc[m.provider]) {
-        acc[m.provider] = { count: 0, totalTokens: 0, totalLatency: 0 };
-      }
-      acc[m.provider].count++;
-      acc[m.provider].totalTokens += m.totalTokens;
-      acc[m.provider].totalLatency += m.latencyMs;
-      return acc;
-    }, {} as Record<string, { count: number; totalTokens: number; totalLatency: number }>);
-
-    const providerBreakdown = Object.entries(providerStats)
-      .map(([provider, stats]) => `
-        <tr>
-          <td>${provider.charAt(0).toUpperCase() + provider.slice(1)}</td>
-          <td>${stats.count}</td>
-          <td>${Math.round(stats.totalLatency / stats.count)}ms</td>
-          <td>${Math.round(stats.totalTokens / stats.count)}</td>
-        </tr>
-      `).join('');
-
-    return `
-      <div class="stats-section">
-        <h4>⚡ LangChain Performance</h4>
-        <table class="stats-table">
-          <tr><td>Total Requests</td><td>${this.langchainMetrics.length}</td></tr>
-          <tr><td>Success Rate</td><td>${successRate.toFixed(1)}%</td></tr>
-          <tr><td>Failed Requests</td><td>${failed}</td></tr>
-          <tr><td>Average Latency</td><td>${Math.round(avgLatency)}ms</td></tr>
-          <tr><td>Average Tokens</td><td>${Math.round(avgTokens).toLocaleString()}</td></tr>
-          <tr><td>Total Tokens</td><td>${totalTokens.toLocaleString()}</td></tr>
-        </table>
-      </div>
-      
-      <div class="stats-section">
-        <h4>📊 Provider Breakdown</h4>
-        <table class="stats-table">
-          <tr><th>Provider</th><th>Requests</th><th>Avg Latency</th><th>Avg Tokens</th></tr>
-          ${providerBreakdown}
-        </table>
-      </div>
-    `;
-  }
 
   /**
    * Render recent LangChain metrics
@@ -611,10 +574,9 @@ export class DebugPane {
       this.langchainMetrics = this.langchainMetrics.slice(-this.maxMetrics);
     }
 
-    // Update display if LangChain tab is active
-    if (this.currentTab === 'langchain' && this.isVisible) {
-      this.updateLangChainDisplay();
-    }
+    // Always update the API display when new LangChain metrics come in
+    // This ensures the Usage metrics table stays current
+    this.updateApiDisplay();
   }
 
   /**

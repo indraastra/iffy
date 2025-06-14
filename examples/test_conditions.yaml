@@ -7,26 +7,26 @@ context: "You are in a test chamber with three colored buttons and a door."
 narrative:
   voice: "Clear, direct, test-focused"
   tone: "Neutral testing environment"
-  themes: ["logic", "precision", "verification"]
+  themes: [ "logic", "precision", "verification" ]
 
 world:
   locations:
     test_chamber:
       name: "Test Chamber"
       sketch: "Sterile white chamber with three colored buttons and a heavy metal exit door"
-      atmosphere: ["sterile", "clinical", "systematic"]
-      
+      atmosphere: [ "sterile", "clinical", "systematic" ]
+
   items:
     red_button:
       name: "Red Button"
       sketch: "A large red button labeled 'DANGER'"
       found_in: "test_chamber"
-      
+
     blue_button:
       name: "Blue Button"
       sketch: "A blue button labeled 'SAFE'"
       found_in: "test_chamber"
-      
+
     green_button:
       name: "Green Button"
       sketch: "A green button labeled 'READY'"
@@ -41,60 +41,33 @@ scenes:
       - A RED button labeled "DANGER"
       - A BLUE button labeled "SAFE" 
       - A GREEN button labeled "READY"
-      
+
       A heavy metal door marked "EXIT" stands closed. A small screen above it reads:
       "CHAMBER PROTOCOL: Complete all required steps before exit."
-    leads_to:
-      armed: "player presses the red button"
-      secured: "player presses the blue button"
-      ready: "player presses the green button"
-
-  armed:
-    location: "test_chamber"
-    sketch: |
-      The red button glows. Warning lights flash. The screen now reads:
-      "DANGER MODE ACTIVATED. System armed and dangerous."
-    leads_to:
-      secured: "player presses the blue button"
-      ready: "player presses the green button"
-
-  secured:
-    location: "test_chamber"
-    sketch: |
-      The blue button glows. Warning lights stop flashing. The screen reads:
-      "SAFE MODE ACTIVATED. System secured."
-    leads_to:
-      armed: "player presses the red button"
-      ready: "player presses the green button"
-
-  ready:
-    location: "test_chamber"
-    sketch: |
-      The green button glows. A soft chime sounds. The screen reads:
-      "READY MODE ACTIVATED. System prepared for final sequence."
-    leads_to:
-      armed: "player presses the red button"
-      secured: "player presses the blue button"
+    guidance: |
+      Track button presses in memories as they happen. Players can press buttons in any order or combination.
+      Update the screen display and lighting based on which buttons have been pressed.
+      The chamber responds dynamically to button states rather than following a fixed sequence.
 
 endings:
   when:
-    - "player attempts to exit through the door"
-    
+  - "player attempts to exit through the door"
+
   variations:
-    - id: "perfect_exit"
-      when: "red button pressed AND blue button pressed AND green button pressed AND player opens door"
-      sketch: |
-        All systems check complete. The door slides open with a satisfying hiss.
-        You step through into bright daylight. Perfect execution.
-        
-    - id: "incomplete_exit"
-      when: "player opens door without completing all button presses"
-      sketch: |
-        The door refuses to budge. The screen flashes: "INCOMPLETE PROTOCOL. 
-        All three buttons must be pressed before exit."
-        
-    - id: "dangerous_exit"
-      when: "red button pressed AND player opens door without blue button"
-      sketch: |
-        ALARM! The door opens but sirens wail. You escaped, but left the system 
-        in a dangerous state. Security will not be pleased.
+  - id: "perfect_exit"
+    when: "player exits with all 3 buttons pressed"
+    sketch: |
+      All systems check complete. The door slides open with a satisfying hiss.
+      You step through into bright daylight. Perfect execution.
+
+  - id: "incomplete_exit"
+    when: "player exits with only blue or green buttons pressed"
+    sketch: |
+      The door refuses to budge. The screen flashes: "INCOMPLETE PROTOCOL. 
+      All three buttons must be pressed before exit."
+
+  - id: "dangerous_exit"
+    when: "player exits with only red button pressed"
+    sketch: |
+      ALARM! The door opens but sirens wail. You escaped, but left the system 
+      in a dangerous state. Security will not be pleased.

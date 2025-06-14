@@ -11,30 +11,30 @@ scenes:
       You stand before a heavy wooden door, its surface worn smooth by countless hands 
       over countless years. The iron handle refuses to budge when you try it - definitely 
       locked. The keyhole stares at you like a dark eye, taunting in its simplicity.
-      
+
       This door is all that stands between you and whatever lies beyond. The hallway 
       behind you stretches back into shadow, but you know there's no going back. Not now.
       Not after coming this far.
-      
+
       There must be a way through. There always is, if you're clever enough to find it.
     leads_to:
       opened_door: "when the player opens the door one way or another"
-    
+
   opened_door:
     sketch: "Beyond lies darkness."
 
 endings:
   when:
-    - "player has found a way through the door"
-  
+  - "player has found a way through the door"
+
   variations:
-    - id: "success"
-      when: "player exits the room"
-      sketch: "You step into the unknown."
+  - id: "success"
+    when: "player exits the room"
+    sketch: "You step into the unknown."
 
 guidance: |
   Let the player be creative. They might find a key, pick the lock,
   break a window, or convince someone to open it. Track their approach.
-  
+
   Respond naturally to creative solutions. If they try something reasonable,
   let it work - this is about emergence, not rigid puzzles.

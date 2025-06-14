@@ -115,7 +115,7 @@ describe('Memory Integration', () => {
       const prompt = callArgs[0];
       
       // The prompt should contain memory context
-      expect(prompt).toContain('RECENT MEMORY');
+      expect(prompt).toContain('KEY MEMORIES');
     });
   });
 
@@ -154,6 +154,81 @@ describe('Memory Integration', () => {
       
       const stats = memoryManager.getStats();
       expect(stats.totalMemories).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Multi-Part Response Tracking', () => {
+    it('should track both action and transition phases separately', async () => {
+      let callCount = 0;
+      const mockService = {
+        isConfigured: vi.fn().mockReturnValue(true),
+        makeStructuredRequest: vi.fn().mockImplementation(() => {
+          callCount++;
+          if (callCount === 1) {
+            // First call: action response with scene transition
+            return Promise.resolve({
+              data: {
+                narrative: 'You decide to move forward.',
+                memories: ['Player moved forward'],
+                importance: 6,
+                signals: { scene: 'next' }
+              },
+              usage: { input_tokens: 100, output_tokens: 50, total_tokens: 150 }
+            });
+          } else {
+            // Second call: transition response
+            return Promise.resolve({
+              data: {
+                narrative: 'You find yourself in a new area.',
+                memories: ['Player entered new area'],
+                importance: 7,
+                signals: { scene: 'next' }
+              },
+              usage: { input_tokens: 120, output_tokens: 60, total_tokens: 180 }
+            });
+          }
+        })
+      };
+
+      // Create story with scene transitions
+      const transitionStory = {
+        ...mockStory,
+        scenes: {
+          start: {
+            sketch: 'You are at the start.',
+            leads_to: { next: 'when player progresses' }
+          },
+          next: {
+            sketch: 'You have moved to the next scene.'
+          }
+        }
+      };
+
+      engine = new ImpressionistEngine(mockService as any);
+      engine.loadStory(transitionStory);
+      
+      await engine.processAction({ input: 'move forward' });
+      
+      // Check that both phases were tracked
+      const gameState = engine.getGameState();
+      expect(gameState.interactions.length).toBe(2);
+      
+      const actionPhase = gameState.interactions[0];
+      const transitionPhase = gameState.interactions[1];
+      
+      expect(actionPhase.playerInput).toBe('move forward [Action Phase]');
+      expect(actionPhase.llmResponse).toBe('You decide to move forward.');
+      expect(actionPhase.importance).toBe(6);
+      
+      expect(transitionPhase.playerInput).toBe('move forward [Transition Phase]');
+      expect(transitionPhase.llmResponse).toBe('You find yourself in a new area.');
+      expect(transitionPhase.importance).toBe(7);
+      
+      // Both should have different memories
+      const memoryManager = engine.getMemoryManager();
+      const memoryContext = memoryManager.getMemories(10);
+      expect(memoryContext.memories.some(m => m.includes('moved forward'))).toBe(true);
+      expect(memoryContext.memories.some(m => m.includes('entered new area'))).toBe(true);
     });
   });
 
