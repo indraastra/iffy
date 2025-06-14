@@ -84,13 +84,7 @@ scenes:
   aquinas_encounter:
     location: "the_final_word"
     guidance: |
-      The philosophical atmosphere established by the Latin inscription draws a scholar seeking
-      a work by Aquinas.
-      BUYER: A scholarly figure, movements measured and deliberate. Dust motes suspend in cathedral
-      light as centuries of theological inquiry seem to settle into the very air between you.
-      TONE: Embody scholastic philosophy completely: formal reasoning, theological precision,
-      methodical argumentation, Latin phrases where appropriate. This teaches the pattern for how
-      literary styles transform the entire encounter.
+      A scholar seeks Aquinas. Match the style of scholastic philosophy.
     sketch: |
       With a low rumble, the **[Lumina Press](item:the_lumina_press)** whirs to life, its heavy 
       flywheel gaining momentum. A deep, steady hum permeates the very stone, and warm 
@@ -113,10 +107,8 @@ scenes:
   daily_preparation:
     location: "the_final_word"
     guidance: >
-      Shop is CLOSED (Lumina Press is off). IMPORTANT: Generate interesting environmental details
-      that the player can discover and interact with - askew paintings, disorganized book sections,
-      personal items, etc. Let player's choice of what to engage with determine who arrives when
-      they open. Track their activities to seed the encounter.
+      Morning preparation time. The shop is closed. Player activities influence the type of visitor
+      who will arrive when they open.
     sketch: |
       Dawn breaks over your hidden sanctuary. The **[Lumina Press](item:the_lumina_press)** is silent, 
       its heavy flywheel dormant. This quiet time belongs to you alone - to read forbidden 
@@ -130,9 +122,7 @@ scenes:
   shop_opening:
     location: "the_final_word"
     guidance: >
-      The shop is now open but no customer has arrived yet. Allow contemplative waiting actions that
-      might further influence who arrives. Based on ALL player activities (from daily_preparation
-      AND any waiting actions here), determine what type of customer arrives.
+      Shop is open, waiting for visitors. Player activities influence who arrives.
     sketch: |
       The **[Lumina Press](item:the_lumina_press)** rumbles to life, its steady hum permeating 
       the building like a heartbeat. Warm light bathes the forbidden collection as the 
@@ -147,8 +137,7 @@ scenes:
   hemingway_encounter:
     location: "the_final_word"
     guidance: >
-      Pure Hemingway: sparse dialogue, understated emotion, what's unsaid matters most, short
-      sentences, iceberg theory, war themes. Player's actions suggested this encounter type.
+      A visitor seeks Hemingway. Match his literary style.
     sketch: |
       A soft **rap** from above, then careful footsteps descending. A veteran enters, 
       weathered and quiet. Something about the shop's arrangement speaks to them. 
@@ -160,8 +149,7 @@ scenes:
   joyce_encounter:
     location: "the_final_word"
     guidance: >
-      Stream-of-consciousness Joycean style: flowing thoughts, wordplay, Dublin references,  complex
-      internal monologue, experimental language. Player's actions suggested this encounter type.
+      A visitor seeks Joyce. Match his literary style.
     sketch: |
       A soft **rap** from above, then flowing footsteps like thoughts cascading down stairs. 
       Someone enters like consciousness itself, eyes drawn to whatever modernist arrangement 
@@ -174,11 +162,8 @@ scenes:
   generated_encounter:
     location: "the_final_word"
     guidance: >
-      CRITICAL: Based on ALL player activities from daily_preparation and shop_opening, generate  a
-      specific visitor seeking specific literature. If multiple activities occurred, pick
-      one  arbitrarily. If no specific activities, generate any appropriate encounter.
-      Immediately  and completely adopt that author's stylistic voice for ALL elements: dialogue,
-      description,  atmosphere, pacing, themes.
+      Generate a visitor seeking specific literature based on player activities. Adopt that
+      author's literary style for the encounter.
     sketch: |
       A soft **rap** from above, then footsteps descending into your sanctuary. Someone 
       enters as if drawn by an unseen force, their bearing, their first words, their very 
