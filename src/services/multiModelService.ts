@@ -4,6 +4,8 @@ import { HumanMessage } from '@langchain/core/messages';
 import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import { LLMChain } from "langchain/chains";
+import { PromptTemplate } from "@langchain/core/prompts";
 import { LLMProvider, LLMConfig, LLMResponse, DEFAULT_MODELS, getCheapestModel, calculateRequestCost, getModelPricing } from './llm/types';
 import { z } from 'zod';
 
@@ -31,6 +33,7 @@ class LangChainMetricsCallback extends BaseCallbackHandler {
   private provider: LLMProvider;
   private model: string;
   private metricsHandler: (metrics: LangChainMetrics) => void;
+  public lastUsage: { input_tokens: number; output_tokens: number; total_tokens: number } | null = null;
 
   constructor(provider: LLMProvider, model: string, metricsHandler: (metrics: LangChainMetrics) => void) {
     super();
@@ -45,11 +48,15 @@ class LangChainMetricsCallback extends BaseCallbackHandler {
 
   async handleLLMEnd(output: any) {
     const latencyMs = performance.now() - this.startTime;
+    
     const { input_tokens, output_tokens, total_tokens } = MultiModelService.extractTokenUsage(output.llmOutput);
+    
+    // Store usage for retrieval by executeChain
+    this.lastUsage = { input_tokens, output_tokens, total_tokens };
 
     // Debug logging when tokens are missing
     if (input_tokens === 0 && output_tokens === 0) {
-      console.warn('🔍 LangChain Metrics: No token usage found for', this.provider, this.model);
+      console.warn('⚠️ LangChain Metrics: No token usage found for', this.provider, this.model);
       console.warn('🔍 Available output keys:', Object.keys(output));
       if (output.usage_metadata) {
         console.warn('🔍 usage_metadata:', output.usage_metadata);
@@ -58,7 +65,8 @@ class LangChainMetricsCallback extends BaseCallbackHandler {
         console.warn('🔍 response_metadata:', output.response_metadata);
       }
       if (output.llmOutput) {
-        console.warn('🔍 llmOutput:', output.llmOutput);
+        console.warn('🔍 llmOutput keys:', Object.keys(output.llmOutput));
+        console.warn('🔍 llmOutput content:', output.llmOutput);
       }
     }
 
@@ -307,8 +315,21 @@ export class MultiModelService {
     return this.makeRequestWithModel(prompt, this.memoryModel);
   }
 
-  public async makeStructuredMemoryRequest<T>(prompt: string, schema: z.ZodSchema<T>): Promise<{ data: T; usage: LLMResponse['usage'] }> {
-    if (!this.memoryModel || !this.currentConfig) {
+  /**
+   * Make a structured output request with any model
+   * Returns typed data according to the provided Zod schema
+   */
+  public async makeStructuredRequest<T>(
+    prompt: string, 
+    schema: z.ZodSchema<T>,
+    options: { useMemoryModel?: boolean } = {}
+  ): Promise<{ data: T; usage: LLMResponse['usage'] }> {
+    const model = options.useMemoryModel ? this.memoryModel : this.currentModel;
+    const modelName = options.useMemoryModel ? 
+      (this.currentConfig?.memoryModel || 'memory') : 
+      (this.currentConfig?.model || 'main');
+    
+    if (!model || !this.currentConfig) {
       throw new Error('No model configured. Please set up your API key in Settings.');
     }
 
@@ -316,9 +337,29 @@ export class MultiModelService {
     this.activeRequests.add(abortController);
 
     try {
-      // Use structured output with the memory model
-      const structuredModel = this.memoryModel.withStructuredOutput(schema);
-      const callbacks = this.metricsCallback ? [this.metricsCallback] : [];
+      // Create a custom metrics callback to capture usage for this specific request
+      let capturedUsage: { input_tokens: number; output_tokens: number; total_tokens: number } | null = null;
+      
+      const metricsCapture = new LangChainMetricsCallback(
+        this.currentConfig.provider,
+        modelName,
+        (metrics) => {
+          // Capture the usage data
+          capturedUsage = {
+            input_tokens: metrics.promptTokens,
+            output_tokens: metrics.completionTokens,
+            total_tokens: metrics.totalTokens
+          };
+          // Also call the global handler if set
+          if (this.metricsHandler) {
+            this.metricsHandler(metrics);
+          }
+        }
+      );
+      
+      // Use structured output with the appropriate model
+      const structuredModel = model.withStructuredOutput(schema);
+      const callbacks = [metricsCapture];
       
       const response = await structuredModel.invoke(
         [new HumanMessage(prompt)],
@@ -328,18 +369,21 @@ export class MultiModelService {
         }
       );
 
-      // For structured output, we need to get usage metadata from the underlying response
-      // This is a bit tricky with LangChain's structured output, so we'll estimate based on the prompt
-      const estimatedUsage = {
-        input_tokens: Math.ceil(prompt.length / 4), // Rough estimate: 4 chars per token
+      // Use captured usage or fall back to estimation
+      const usage = capturedUsage || {
+        input_tokens: Math.ceil(prompt.length / 4),
         output_tokens: Math.ceil(JSON.stringify(response).length / 4),
         total_tokens: 0
       };
-      estimatedUsage.total_tokens = estimatedUsage.input_tokens + estimatedUsage.output_tokens;
+      
+      if (!capturedUsage) {
+        usage.total_tokens = usage.input_tokens + usage.output_tokens;
+        console.warn('Token usage not captured from LangChain, using estimation');
+      }
 
       return {
         data: response as T,
-        usage: estimatedUsage
+        usage
       };
     } catch (error: any) {
       if (error.name === 'AbortError') {
@@ -349,6 +393,13 @@ export class MultiModelService {
     } finally {
       this.activeRequests.delete(abortController);
     }
+  }
+
+  /**
+   * Convenience method for structured memory requests
+   */
+  public async makeStructuredMemoryRequest<T>(prompt: string, schema: z.ZodSchema<T>): Promise<{ data: T; usage: LLMResponse['usage'] }> {
+    return this.makeStructuredRequest(prompt, schema, { useMemoryModel: true });
   }
 
   private async makeRequestWithModel(prompt: string, model: BaseChatModel | null): Promise<LLMResponse> {
@@ -470,6 +521,89 @@ export class MultiModelService {
     
     const memoryModel = this.currentConfig.memoryModel || getCheapestModel(this.currentConfig.provider);
     return calculateRequestCost(memoryModel, this.currentConfig.provider, inputTokens, outputTokens);
+  }
+
+  /**
+   * Create a LangChain chain using the current model
+   */
+  public createChain(promptTemplate: PromptTemplate): LLMChain {
+    if (!this.currentModel) {
+      throw new Error('No model configured. Please set up your API key in Settings.');
+    }
+
+    return new LLMChain({
+      llm: this.currentModel,
+      prompt: promptTemplate,
+      callbacks: this.metricsCallback ? [this.metricsCallback] : []
+    });
+  }
+
+  /**
+   * Create a LangChain chain using the memory model (cheaper)
+   */
+  public createMemoryChain(promptTemplate: PromptTemplate): LLMChain {
+    if (!this.memoryModel) {
+      throw new Error('No memory model configured. Please set up your API key in Settings.');
+    }
+
+    return new LLMChain({
+      llm: this.memoryModel,
+      prompt: promptTemplate,
+      callbacks: this.metricsCallback ? [this.metricsCallback] : []
+    });
+  }
+
+  /**
+   * Execute a chain and return response with usage tracking
+   */
+  public async executeChain(
+    chain: LLMChain, 
+    inputs: Record<string, any>,
+    signal?: AbortSignal
+  ): Promise<{ text: string; usage?: any }> {
+    const abortController = new AbortController();
+    if (signal) {
+      signal.addEventListener('abort', () => abortController.abort());
+    }
+    this.activeRequests.add(abortController);
+
+    try {
+      // Include metrics callback if available
+      const callbacks = this.metricsCallback ? [this.metricsCallback] : [];
+      
+      const result = await chain.call(inputs, {
+        callbacks
+      });
+
+      // Get usage from metrics callback if available
+      const usage = this.metricsCallback?.lastUsage || result.usage;
+
+      return {
+        text: result.text || result.response || '',
+        usage
+      };
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        throw new Error('Request was cancelled');
+      }
+      throw this.normalizeError(error);
+    } finally {
+      this.activeRequests.delete(abortController);
+    }
+  }
+
+  /**
+   * Get the underlying LangChain model for direct use (if needed)
+   */
+  public getModel(): BaseChatModel | null {
+    return this.currentModel;
+  }
+
+  /**
+   * Get the memory model for direct use (if needed)
+   */
+  public getMemoryModel(): BaseChatModel | null {
+    return this.memoryModel;
   }
 
   /**
