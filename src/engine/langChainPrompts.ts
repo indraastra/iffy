@@ -9,7 +9,134 @@ import { DirectorContext } from '@/types/impressionistStory';
 export class LangChainPrompts {
 
   /**
-   * Build comprehensive context preamble for all scenarios
+   * Build context preamble for action processing (excludes transitions/endings)
+   */
+  static buildActionContextPreamble(context: DirectorContext): string {
+    let prompt = `ROLE: You are the **Game Director** for an interactive text-based story. Your primary goal is to **narrate the story** based on player actions.\n\n`;
+
+    // Story context
+    if (context.storyContext) {
+      prompt += `STORY CONTEXT:\n${context.storyContext}\n\n`;
+    }
+
+    // Global guidance
+    if (context.guidance) {
+      prompt += `GLOBAL STORY GUIDANCE:\n${context.guidance}\n\n`;
+    }
+
+    // Narrative Style
+    if (context.narrative) {
+      const parts = [];
+      if (context.narrative.voice) parts.push(`  Voice: ${context.narrative.voice}`);
+      if (context.narrative.tone) parts.push(`  Tone: ${context.narrative.tone}`);
+      if (context.narrative.themes) {
+        parts.push(`  Themes: ${context.narrative.themes.join(', ')}`);
+      }
+
+      if (parts.length > 0) {
+        prompt += `NARRATIVE STYLE:\n${parts.join('\n')}\n\n`;
+      }
+    }
+
+    // World Elements
+    const worldParts = [];
+
+    // Characters with full details - separate player character from NPCs
+    if (context.activeCharacters && context.activeCharacters.length > 0) {
+      const playerCharacter = context.activeCharacters.find(c => c.id === 'player');
+      const npcs = context.activeCharacters.filter(c => c.id !== 'player');
+      
+      const characterSections = [];
+      
+      // Player character section
+      if (playerCharacter) {
+        let playerInfo = `    ${playerCharacter.name} (PLAYER CHARACTER)`;
+        if (playerCharacter.sketch) playerInfo += ` - ${playerCharacter.sketch}`;
+        if (playerCharacter.voice) playerInfo += `\n      Voice: ${playerCharacter.voice}`;
+        if (playerCharacter.arc) playerInfo += `\n      Arc: ${playerCharacter.arc}`;
+        characterSections.push(`  PLAYER CHARACTER:\n${playerInfo}`);
+      }
+      
+      // NPCs section
+      if (npcs.length > 0) {
+        const npcDetails = npcs.map(c => {
+          let charInfo = `    ${c.name} (NPC)`;
+          if (c.sketch) charInfo += ` - ${c.sketch}`;
+          if (c.voice) charInfo += `\n      Voice: ${c.voice}`;
+          if (c.arc) charInfo += `\n      Arc: ${c.arc}`;
+          return charInfo;
+        }).join('\n');
+        characterSections.push(`  NON-PLAYER CHARACTERS (NPCs):\n${npcDetails}`);
+      }
+      
+      worldParts.push(...characterSections);
+    }
+
+    // Location context
+    if (context.location) {
+      let locationContext = `    ${context.location.name}`;
+      if (context.location.sketch) {
+        locationContext += ` - ${context.location.sketch}`;
+      }
+      if (context.location.atmosphere && context.location.atmosphere.length > 0) {
+        locationContext += `\n      Atmosphere: ${context.location.atmosphere.slice(0, 5).join(', ')}`;
+      }
+      if (context.location.contains && context.location.contains.length > 0) {
+        locationContext += `\n      Contains: ${context.location.contains.slice(0, 5).join(', ')}`;
+      }
+      if (context.location.guidance) {
+        locationContext += `\n      Guidance: ${context.location.guidance}`;
+      }
+      worldParts.push(`  LOCATIONS:\n${locationContext}`);
+    }
+
+    // Items with full details and descriptions
+    if (context.discoverableItems && context.discoverableItems.length > 0) {
+      const itemDetails = context.discoverableItems.map(item => {
+        let itemInfo = `    ${item.name}`;
+        if (item.sketch) itemInfo += `: ${item.sketch}`;
+        if (item.reveals) itemInfo += `\n      Reveals: ${item.reveals}`;
+        return itemInfo;
+      }).join('\n');
+      worldParts.push(`  ITEMS:\n${itemDetails}`);
+    }
+
+    if (worldParts.length > 0) {
+      prompt += `WORLD ELEMENTS:\n${worldParts.join('\n\n')}\n\n`;
+    }
+
+    // Current scene
+    if (context.currentSketch) {
+      prompt += `CURRENT SCENE DESCRIPTION:\n${context.currentSketch}\n\n`;
+    }
+
+    // Scene-specific guidance
+    if (context.sceneGuidance) {
+      prompt += `CURRENT SCENE DIRECTIVES:\n${context.sceneGuidance}\n\n`;
+    }
+
+    // Recent interactions
+    if (context.recentInteractions && context.recentInteractions.length > 0) {
+      const recentDialogue = context.recentInteractions
+        .slice(-5)
+        .flatMap(interaction => [
+          `Player: ${interaction.playerInput}`,
+          `Response: ${interaction.llmResponse}`
+        ]);
+
+      prompt += `RECENT DIALOGUE:\n${recentDialogue.join('\n')}\n\n`;
+    }
+
+    // Recent memory
+    if (context.activeMemory && context.activeMemory.length > 0) {
+      prompt += `KEY MEMORIES:\n${context.activeMemory.join('\n')}\n\n`;
+    }
+
+    return prompt;
+  }
+
+  /**
+   * Build comprehensive context preamble for transition/ending scenarios
    */
   static buildContextPreamble(context: DirectorContext): string {
     let prompt = `ROLE: You are the **Game Director** for an interactive text-based story. Your primary goal is to **narrate the story and manage its progression** based on player actions and predefined game logic.\n\n`;
@@ -173,7 +300,7 @@ export class LangChainPrompts {
   }
 
   /**
-   * Generate mode-specific instructions for action processing
+   * Generate instructions for action processing (no classification logic)
    */
   static buildActionInstructions(playerInput: string, context: DirectorContext): string {
     let instructions = '';
@@ -191,26 +318,6 @@ Since the story is complete, do NOT use any transition signals.
 
     instructions += `PLAYER ACTION: "${playerInput}"
 
-TRIGGER EVALUATION STEPS (CRITICAL - Document this process in your reasoning field):
-1. **Scene Transition Check:**
-   - Review 'SCENE TRANSITION RULES' above.
-   - Check if the current player action meets any transition requirement.
-   - If YES, identify the target scene ID.
-   - If NO, proceed to Ending Check.
-2. **Story Ending Check:**
-   - First, verify if the current action ("${playerInput}") meets any 'STORY ENDING CONDITIONS'. (YES/NO)
-   - If YES, for each 'AVAILABLE ENDING VARIATIONS', check if ALL parts of its condition are satisfied:
-     * Look at KEY MEMORIES and RECENT DIALOGUE for past actions/state
-     * Check if current action completes the final requirement
-     * Conditions use simple AND logic - ALL parts must be true
-   - If an ending's conditions are fully met, identify its ending ID.
-   - If NO conditions are met, proceed to next step.
-3. **Signal Output:**
-   - If a Scene Transition was triggered in step 1, include "scene": "target_scene_id" in your signals.
-   - If a Story Ending was triggered in step 2, include "ending": "ending_id" in your signals.
-   - Prioritize ending over scene transition if both could apply.
-   - Document your condition checking in the reasoning field.
-
 ${this.getCoreResponseGuidelines()}
 
 ${this.getStructuredResponseInstructions()}`;
@@ -221,26 +328,24 @@ ${this.getStructuredResponseInstructions()}`;
   /**
    * Generate mode-specific instructions for scene transitions
    */
-  static buildTransitionInstructions(targetSceneId: string, sceneSketch: string, transitionContext: string): string {
+  static buildTransitionInstructions(targetSceneId: string, sceneSketch: string, playerAction: string): string {
     return `SCENE TRANSITION IN PROGRESS
 
 You are transitioning to scene: ${targetSceneId}
 
+PLAYER ACTION THAT TRIGGERED THIS TRANSITION: "${playerAction}"
+
 TARGET SCENE DESCRIPTION (use as foundation):
 ${sceneSketch}
 
-PREVIOUS ACTION RESPONSE (this has already been shown to the player):
-${transitionContext}
-
 SCENE TRANSITION DIRECTIVES:
-- DO NOT repeat the previous response - provide ONLY new content that continues from where it left off
+- Incorporate the player's action into the transition narrative
+- Show how the player's action leads to or causes the scene change
 - Use the scene description as your foundation - expand it with rich atmospheric details
-- Smoothly flow from the previous action's immediate result to establishing this new scene
 - Establish the new environment, mood, and any characters present
-- Focus on sensory details and atmosphere that weren't covered in the action response
-- This is scene establishment continuing from the action, not a separate narrative
+- Focus on sensory details and atmosphere
 - Maintain the story's narrative voice and tone throughout
-- KEEP RESPONSE CONCISE: 50-150 words maximum, 1-3 paragraphs
+- KEEP RESPONSE CONCISE: 100-200 words maximum, 2-4 paragraphs
 - Record important details about the new scene or transition as memories
 - Rate the importance of this transition (typically 6-8 for scene changes)
 
@@ -250,26 +355,25 @@ ${this.getStructuredResponseInstructions()}`;
   /**
    * Generate mode-specific instructions for ending transitions
    */
-  static buildEndingInstructions(endingId: string, endingSketch: string, transitionContext: string): string {
+  static buildEndingInstructions(endingId: string, endingSketch: string, playerAction: string): string {
     return `STORY ENDING IN PROGRESS
 
 You are concluding the story with ending: ${endingId}
 
+PLAYER ACTION THAT TRIGGERED THIS ENDING: "${playerAction}"
+
 ENDING DESCRIPTION (use as foundation):
 ${endingSketch}
 
-PREVIOUS ACTION RESPONSE (this has already been shown to the player):
-${transitionContext}
-
 STORY ENDING DIRECTIVES:
-- DO NOT repeat the previous response - provide ONLY new content that continues from where it left off
+- Incorporate the player's action into the ending narrative
+- Show how the player's action leads to or reveals this ending
 - Use the ending description as your foundation - expand it with rich, conclusive details
-- Smoothly flow from the previous action's immediate result to this story conclusion
 - Provide emotional closure and resolution appropriate to the story's themes
-- Focus on the significance and meaning of this ending that wasn't covered in the action response
-- This should feel like a natural continuation that brings the story to a satisfying conclusion
+- Focus on the significance and meaning of this ending
+- This should feel like a natural progression from the player's action to story conclusion
 - Maintain the story's narrative voice and tone throughout
-- KEEP RESPONSE CONCISE: 150-250 words maximum, 1-3 paragraphs
+- KEEP RESPONSE CONCISE: 150-250 words maximum, 2-4 paragraphs
 - Record key conclusion details or emotional beats as memories
 - Rate the importance of this ending (typically 8-10 for story endings)
 - Include ending signal in your response
@@ -323,28 +427,22 @@ FORMATTING INSTRUCTIONS:
    */
   static getCoreResponseGuidelines(): string {
     return `TASK:
-- FIRST: Think through the player's action and the transition/ending conditions step-by-step
-- Process the player's action and provide a narrative response based on the current scene and context
-- Implement the 'TRIGGER EVALUATION STEPS' above to check for scene transitions and story endings
-- Do NOT describe any transition or ending process in the narrative itself – just the immediate result of the action
-- Keep the narrative response focused on the action's immediate consequences and the current scene
+- Process ONLY the player's exact action - no additional actions or assumptions
+- Provide the immediate result of their specific action, nothing more
+- Focus purely on narrative response - transitions/endings are handled separately
 - Rate the significance of this interaction (1-10, default 5)
 
 RESPONSE GUIDELINES:
 - Adhere to the global and scene directives given by the story author
-- End your response in a way that invites further player action (except for story endings)
+- End your response in a way that invites further player action
 - VARIETY: Vary sentence structure, descriptive details, and phrasing between responses
 - Avoid repetitive patterns or formulaic descriptions
 
 CRITICAL INTERACTIVE FICTION RULES:
-- The PLAYER CHARACTER (marked above) is controlled exclusively by the player
-- NEVER put words in the player character's mouth or make them speak without explicit player input
-- NEVER have the player character perform actions they didn't request
-- All NON-PLAYER CHARACTERS (NPCs) are controlled by you - let them speak and act naturally
-- If an NPC is spoken to or addressed, they MUST reply as part of your response
-- If dialogue is initiated, let NPCs respond but wait for the player's next input before continuing
-- The player should feel complete agency over their character's words and actions at all times
-- Maintain clear separation: Player controls the PLAYER CHARACTER, you control all NPCs`;
+- Player controls PLAYER CHARACTER exclusively - never make them speak or act beyond their input
+- You control all NPCs - let them respond naturally to player actions
+- Process only the player's exact action (e.g., "examine door" ≠ "open door")
+- If dialogue is initiated, NPCs must reply but wait for player's next input to continue`;
   }
 
   /**
@@ -355,10 +453,10 @@ CRITICAL INTERACTIVE FICTION RULES:
 ${this.getRichTextFormattingInstructions()}
 
 RESPONSE FORMAT:
-- reasoning: Concise evaluation of player's action and interaction with transition conditions (2-3 sentences max)
+- reasoning: Concise evaluation of player's action and its immediate effects (2-3 sentences max)
 - narrative: Your narrative response with rich formatting
 - memories: Array of important details to remember: discoveries, changes to the world, or new knowledge the player has gained
 - importance: Rate the significance of this interaction (1-10, default 5)
-- signals: Include scene transitions or endings as needed`;
+- signals: Leave empty {} for action responses - transitions handled separately`;
   }
 }

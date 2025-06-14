@@ -2,9 +2,7 @@
  * LangChain Director - Handles scene transitions using structured output
  * 
  * PUBLIC API METHODS (use these):
- * - processInput() - Main entry point for all player input
- * - processInputWithTransition() - Same as above but with transition callbacks
- * - processInputStreaming() - Streaming version that yields intermediate results
+ * - processInputStreaming() - Main entry point for all player input (streaming)
  * - processInitialSceneEstablishment() - For story opening scenes
  * 
  * INTERNAL METHODS (don't call directly):
@@ -17,6 +15,7 @@ import { DirectorContext, DirectorResponse } from '@/types/impressionistStory';
 import { LangChainPrompts } from './langChainPrompts';
 import { MultiModelService } from '@/services/multiModelService';
 import { DirectorResponseSchema } from '@/schemas/directorSchemas';
+import { ActionClassifier, ClassificationContext, SceneTransition } from './actionClassifier';
 
 export interface TransitionCallbacks {
   onActionComplete?: (response: DirectorResponse) => void;
@@ -33,6 +32,7 @@ export class LangChainDirector {
   private multiModelService: MultiModelService;
   private options: LangChainDirectorOptions;
   private debugPane?: any;
+  private actionClassifier: ActionClassifier;
 
   constructor(
     multiModelService?: MultiModelService, 
@@ -50,6 +50,9 @@ export class LangChainDirector {
     }
 
     this.multiModelService = multiModelService || new MultiModelService();
+    this.actionClassifier = new ActionClassifier(this.multiModelService, {
+      debugMode: this.options.debugMode
+    });
   }
 
   /**
@@ -57,6 +60,7 @@ export class LangChainDirector {
    */
   setDebugPane(debugPane: any): void {
     this.debugPane = debugPane;
+    this.actionClassifier.setDebugPane(debugPane);
   }
 
   /**
@@ -65,6 +69,7 @@ export class LangChainDirector {
   isConfigured(): boolean {
     return this.multiModelService.isConfigured();
   }
+
 
   /**
    * Common method to handle LLM requests with consistent error handling and logging
@@ -139,100 +144,57 @@ export class LangChainDirector {
   // ========================================
 
   /**
-   * Main entry point for all player input processing
-   * Automatically handles post-ending vs normal gameplay
+   * Build context for ActionClassifier from DirectorContext
    */
-  async processInput(input: string, context: DirectorContext): Promise<DirectorResponse> {
-    // Use simplified prompt for post-ending interactions
-    if (context.storyComplete) {
-      return this.processPostEndingInput(input, context);
+  private buildClassifierContext(input: string, context: DirectorContext): ClassificationContext {
+    // Convert scene transitions from DirectorContext format
+    const sceneTransitions: SceneTransition[] = [];
+    if (context.currentTransitions) {
+      for (const [sceneId, data] of Object.entries(context.currentTransitions)) {
+        sceneTransitions.push({
+          id: sceneId,
+          condition: data.condition
+        });
+      }
     }
-    
-    return this.processInputWithTransition(input, context);
-  }
 
-  /**
-   * Process input with transition callbacks for fine-grained control
-   * Use this when you need to react to specific transition events
-   */
-  async processInputWithTransition(
-    input: string, 
-    context: DirectorContext,
-    callbacks?: TransitionCallbacks
-  ): Promise<DirectorResponse> {
-    if (!this.isConfigured()) {
-      return {
-        narrative: "🔑 API key required. Please configure your LLM provider in Settings to play.",
-        memories: [],
-        importance: 1,
-        signals: { error: "API key not configured" }
+    // Convert endings from DirectorContext format
+    let availableEndings;
+    if (context.availableEndings) {
+      const globalConditions = Array.isArray(context.availableEndings.when) 
+        ? context.availableEndings.when 
+        : [context.availableEndings.when || ''];
+
+      availableEndings = {
+        globalConditions: globalConditions.filter(c => c.trim() !== ''),
+        variations: context.availableEndings.variations.map(ending => ({
+          id: ending.id,
+          conditions: Array.isArray(ending.when) ? ending.when : [ending.when || '']
+        }))
       };
     }
 
-    try {
-      // Phase 1: Process action
-      const actionResponse = await this.processAction(input, context);
-      
-      // Phase 2: Handle scene transition if needed
-      if (actionResponse.signals?.scene) {
-        const targetSceneId = actionResponse.signals.scene;
-        
-        // Notify transition starting
-        if (callbacks?.onTransitionStart) {
-          callbacks.onTransitionStart(targetSceneId);
-        }
-
-        const transitionResponse = await this.processSceneTransition(
-          targetSceneId, 
-          context, 
-          actionResponse.narrative
-        );
-
-        // Notify transition complete
-        if (callbacks?.onTransitionComplete) {
-          callbacks.onTransitionComplete(transitionResponse);
-        }
-
-        // For non-streaming, we DO want to combine the responses since they're displayed as one unit
-        // However, if the LLM already repeated the action content in the transition, we should avoid double display
-        const hasRepeatedContent = transitionResponse.narrative.includes(actionResponse.narrative.substring(0, 100));
-        
-        return {
-          narrative: hasRepeatedContent 
-            ? transitionResponse.narrative 
-            : `${actionResponse.narrative}\n\n${transitionResponse.narrative}`,
-          memories: [...(actionResponse.memories || []), ...(transitionResponse.memories || [])],
-          importance: Math.max(actionResponse.importance || 5, transitionResponse.importance || 5),
-          signals: {
-            ...actionResponse.signals,
-            ...transitionResponse.signals
-          }
-        };
+    return {
+      playerAction: input,
+      currentSceneTransitions: sceneTransitions,
+      availableEndings,
+      recentMemories: context.activeMemory || [],
+      currentState: {
+        sceneId: context.currentSketch || 'unknown',
+        isEnded: context.storyComplete
       }
-
-      // Notify action complete for non-transition actions
-      if (callbacks?.onActionComplete) {
-        callbacks.onActionComplete(actionResponse);
-      }
-
-      return actionResponse;
-
-    } catch (error) {
-      console.error('LangChain Director error:', error);
-      return {
-        narrative: 'Sorry, I had trouble processing that command. Try something else.',
-        signals: { error: error instanceof Error ? error.message : 'Unknown error' }
-      };
-    }
+    };
   }
 
+
+
   /**
-   * Process player action (Phase 1)
+   * Process player action (narrative only - no classification)
    */
   private async processAction(input: string, context: DirectorContext): Promise<DirectorResponse> {
     return this.makeLLMRequest(
       () => {
-        const contextPreamble = LangChainPrompts.buildContextPreamble(context);
+        const contextPreamble = LangChainPrompts.buildActionContextPreamble(context);
         const modeSpecificInstructions = LangChainPrompts.buildActionInstructions(input, context);
         return `${contextPreamble}\n\n${modeSpecificInstructions}`;
       },
@@ -240,7 +202,7 @@ export class LangChainDirector {
       {
         scene: context.currentSketch || '',
         memories: context.activeMemory?.length || 0,
-        transitions: Object.keys(context.currentTransitions || {}).length
+        transitions: 0 // No transition logic in action processing
       },
       5
     );
@@ -252,7 +214,7 @@ export class LangChainDirector {
   private async processSceneTransition(
     targetSceneId: string,
     context: DirectorContext,
-    transitionContext: string
+    playerAction: string
   ): Promise<DirectorResponse> {
     // Find target scene information
     const targetTransition = context.currentTransitions?.[targetSceneId];
@@ -262,11 +224,12 @@ export class LangChainDirector {
 
     const response = await this.makeLLMRequest(
       () => {
-        const contextPreamble = LangChainPrompts.buildContextPreamble(context);
+        // Use simplified context for transitions - no need for scene conditions
+        const contextPreamble = LangChainPrompts.buildActionContextPreamble(context);
         const modeSpecificInstructions = LangChainPrompts.buildTransitionInstructions(
           targetSceneId, 
           targetTransition.sketch, 
-          transitionContext
+          playerAction
         );
         return `${contextPreamble}\n\n${modeSpecificInstructions}`;
       },
@@ -292,7 +255,7 @@ export class LangChainDirector {
   private async processEndingTransition(
     endingId: string,
     context: DirectorContext,
-    transitionContext: string
+    playerAction: string
   ): Promise<DirectorResponse> {
     // Find the ending details
     const targetEnding = context.availableEndings?.variations.find(e => e.id === endingId);
@@ -302,11 +265,12 @@ export class LangChainDirector {
 
     const response = await this.makeLLMRequest(
       () => {
-        const contextPreamble = LangChainPrompts.buildContextPreamble(context);
+        // Use simplified context for endings - no need for scene conditions
+        const contextPreamble = LangChainPrompts.buildActionContextPreamble(context);
         const modeSpecificInstructions = LangChainPrompts.buildEndingInstructions(
           endingId,
           targetEnding.sketch,
-          transitionContext
+          playerAction
         );
         return `${contextPreamble}\n\n${modeSpecificInstructions}`;
       },
@@ -328,61 +292,53 @@ export class LangChainDirector {
 
 
   /**
-   * Streaming version that yields responses as they complete
-   * Yields action response first, then transition response if needed
+   * Streaming version using ActionClassifier for mode determination
+   * Makes exactly one story LLM call based on classified mode
    */
   async* processInputStreaming(input: string, context: DirectorContext): AsyncGenerator<DirectorResponse, void, unknown> {
     // Use simplified prompt for post-ending interactions
     if (context.storyComplete) {
       const response = await this.processPostEndingInput(input, context);
       yield response;
-      return; // Exit generator after yielding
+      return;
     }
 
     try {
-      // Phase 1: Process action
-      const actionResponse = await this.processAction(input, context);
-      
-      // Yield the action response immediately for display
-      yield actionResponse;
-      
-      // Phase 2: Handle scene or ending transition if needed
-      if (actionResponse.signals?.scene) {
-        const targetSceneId = actionResponse.signals.scene;
+      // Phase 1: Classify the action using cheaper model
+      const classifierContext = this.buildClassifierContext(input, context);
+      const classification = await this.actionClassifier.classify(classifierContext);
 
-        const transitionResponse = await this.processSceneTransition(
-          targetSceneId, 
-          context, 
-          actionResponse.narrative
-        );
-
-        // Yield the transition response independently 
-        yield transitionResponse;
-        return; // Exit generator
-      } else if (actionResponse.signals?.ending) {
-        const endingId = actionResponse.signals.ending;
-
-        const endingResponse = await this.processEndingTransition(
-          endingId, 
-          context, 
-          actionResponse.narrative
-        );
-
-        // Yield the ending response independently 
-        yield endingResponse;
-        return; // Exit generator
+      if (this.options.debugMode) {
+        console.log(`🎯 Action classification: ${classification.mode}${classification.targetId ? ` → ${classification.targetId}` : ''} (confidence: ${classification.confidence})`);
+        console.log(`📝 Director executing: ${classification.mode} mode`);
       }
 
-      // No transition needed - action response was already yielded above
-      return; // Exit generator
+      // Phase 2: Execute based on classification (single LLM call)
+      switch (classification.mode) {
+        case 'action':
+          // Just process the action - no transitions
+          console.log(`📝 Processing action only`);
+          yield await this.processAction(input, context);
+          break;
 
+        case 'sceneTransition':
+          // Skip action phase - go directly to transition with player action incorporated
+          console.log(`📝 Processing scene transition to ${classification.targetId}`);
+          yield await this.processSceneTransition(classification.targetId!, context, input);
+          break;
+
+        case 'ending':
+          // Skip action phase - go directly to ending with player action incorporated
+          console.log(`📝 Processing story ending ${classification.targetId}`);
+          yield await this.processEndingTransition(classification.targetId!, context, input);
+          break;
+      }
     } catch (error) {
       console.error('LangChain Director streaming error:', error);
       yield {
         narrative: 'Sorry, I had trouble processing that command. Try something else.',
         signals: { error: error instanceof Error ? error.message : 'Unknown error' }
       };
-      return; // Exit generator
     }
   }
 

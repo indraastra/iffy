@@ -1,0 +1,182 @@
+title: "The Final Word v2"
+author: "Iffy Collective"
+blurb: "Run an underground bookstore where literature lives dangerously"
+version: "2.0"
+context: >
+  In a world where books are banned, you operate a secret bookstore beneath an old print shop. Each
+  day brings new seekers of forbidden literature, and each encounter transforms to match the style
+  of whatever author they seek. This simplified version focuses on clear actions and direct
+  transitions.
+
+# Global guidance - applies to all scenes
+guidance: >
+  This is a story about literary resistance. Each visitor seeks specific authors/works, and the
+  entire encounter should transform to match that literature's style. Be very explicit about what
+  actions the player can take to advance the story. Always end scenes with clear, direct questions
+  about what the player wants to do next.
+
+narrative:
+  voice: "Second person, present tense, adapting to requested literary styles"
+  tone: "Atmospheric, dangerous, reverent toward literature"
+  themes:
+  - "literary resistance"
+  - "censorship"
+  - "underground culture"
+  - "stylistic metamorphosis"
+
+world:
+  locations:
+    the_final_word:
+      name: "The Final Word"
+      sketch: "Hidden beneath a defunct print shop, accessible through a concealed door"
+      atmosphere:
+      - "dust motes in lamplight"
+      - "leather bindings"
+      - "whispered secrets"
+      - "constant vigilance"
+      contains:
+      - "hidden_shelves"
+      - "reading_nook"
+      - "secure_safe"
+      - "emergency_exits"
+      - "various_paintings"
+      - "book_sections"
+      - "personal_items"
+  characters:
+    player:
+      name: "You"
+      sketch: "Shopkeeper and guardian of forbidden literature"
+
+  items:
+    the_lumina_press:
+      name: "The Lumina Press"
+      sketch: >
+        An archaic, motorized contraption with a heavy flywheel, generating both a coded tremor
+        signal for the shop above and a trickle of electricity for the hidden lamps within. Its deep
+        hum and subtle vibration tell discerning patrons that The Final Word is open. Operated by a
+        brass lever. A small inscription invites philosophical contemplation.
+      found_in: "the_final_word"
+      reveals: >
+        The shop's operational status to those in the know, and provides the only source of light.
+    
+    summa_theologica:
+      name: "Summa Theologica"
+      sketch: >
+        A hefty volume bound in dark leather, containing Aquinas's greatest work on the marriage of
+        faith and reason. You set this out yesterday after receiving a carefully worded request - 
+        today's customer specifically asked for "the marriage of faith and reason."
+      found_in: "the_final_word"
+      reveals: >
+        This philosophical masterwork awaits its intended reader. You remember the whispered 
+        request: "Something by the scholar who proved God through reason."
+
+scenes:
+  # Tutorial - First Day
+  opening_tutorial:
+    location: "the_final_word"
+    process_sketch: true
+    guidance: >
+      Player's first day. Guide them to discover the book on the counter and understand 
+      how it connects to the day's customer. The Summa Theologica sets up the Aquinas 
+      encounter, teaching them that books left out determine who arrives. Only transition 
+      when they actually pull the lever to open.
+    sketch: |
+      Pale morning light filters through grimy windows above. You descend the hidden 
+      stairs to your underground sanctuary, ready for another day of literary resistance. 
+      Books line every wall - some safe, others that could cost you everything.
+
+      On the central counter sits the **[Summa Theologica](item:summa_theologica)** you 
+      prepared yesterday after receiving that whispered request. The dark leather volume 
+      lies open, ready for today's expected visitor who seeks "the marriage of faith and 
+      reason." Above the counter, the **[Lumina Press](item:the_lumina_press)** waits 
+      with its brass lever gleaming, ready to signal that The Final Word is open for business.
+
+      **What would you like to do?** You could:
+      - Examine the book you prepared for today's customer
+      - Explore different sections of your sanctuary  
+      - **Pull the lever** when ready to open for your expected visitor
+    leads_to:
+      aquinas_encounter: "when the player pulls the lever of the Lumina Press"
+
+  # First Customer - Always Aquinas themed
+  aquinas_encounter:
+    location: "the_final_word"
+    guidance: >
+      A scholar seeks Aquinas, matching scholastic philosophy style. Make it clear that 
+      the book on the counter drew this specific customer - this teaches the core mechanic. 
+      After the encounter concludes naturally, transition automatically to the next day to 
+      begin the daily cycle proper.
+    sketch: |
+      With a low rumble, the **[Lumina Press](item:the_lumina_press)** whirs to life, its heavy 
+      flywheel gaining momentum. A deep, steady hum permeates the very stone, and warm 
+      lamp glow casts dancing shadows across forbidden spines. 
+
+      Within moments, a soft **rap** sounds from above, then measured footsteps descending.
+      Your expected visitor has arrived, drawn by yesterday's whispered arrangement. The 
+      **[Summa Theologica](item:summa_theologica)** waits exactly where you placed it - 
+      someone whose very bearing speaks of scholarly pursuit and the marriage of faith and 
+      reason. This is how the underground works: careful preparation for those who dare to seek.
+    leads_to:
+      shop_cycle: "when the encounter ends OR customer leaves OR day concludes"
+
+  # Main Game Loop - Daily Operations
+  shop_cycle:
+    location: "the_final_word"
+    guidance: >
+      This is the main daily cycle. The shop starts closed. Player can explore, read books,
+      organize, or do other activities that will influence what type of customer arrives. Be very
+      explicit: ask "What would you like to do?" and list options like "explore the shop", "read
+      forbidden books", "organize your collection", or "open the shop" when the player seems
+      unfocused. Only transition when they explicitly say "open shop", "pull the lever", or similar
+      direct action.
+    sketch: |
+      **The next morning...**
+
+      After yesterday's successful encounter with the Aquinas scholar, you've locked the shop 
+      for the night and now face another day of literary resistance. The **[Lumina Press](item:the_lumina_press)** 
+      is silent, its heavy flywheel dormant. The counter sits empty - no pre-arranged requests today.
+
+      This quiet time is yours - to read forbidden works, rearrange dangerous volumes, explore 
+      your collection, or simply prepare for whatever literary hunger today will bring. Unlike 
+      yesterday's planned encounter, today's customer will be drawn by whatever you choose to 
+      focus on during these morning hours.
+
+      **What would you like to do?** You could:
+      - Read from your forbidden collection
+      - Organize books by theme or author
+      - Explore hidden sections of your sanctuary
+      - **Open the shop** when ready for today's unknown visitor
+    leads_to:
+      customer_encounter: "when the player explicitly opens the shop OR pulls the lever OR says open"
+
+  # Customer Encounters - All visitors handled here
+  customer_encounter:
+    location: "the_final_word"
+    guidance: >
+      Generate a customer seeking specific literature based on the player's recent activities. Adopt
+      that author's style for the entire encounter. This is NOT the first customer - that was
+      Aquinas. After the encounter concludes naturally, transition automatically to the next day.
+      One customer per day - this maintains the story's pacing and prevents exhaustion.
+    sketch: |
+      The **[Lumina Press](item:the_lumina_press)** rumbles to life, its steady hum permeating 
+      the building like a heartbeat. Warm light bathes the forbidden collection as the 
+      coded tremor ripples through the shop above.
+
+      Within moments, a soft **rap** sounds from above, then careful footsteps descending. 
+      Someone enters your sanctuary, drawn by whatever literary appetite your morning 
+      activities have summoned. Their bearing, their first words, their very presence 
+      reveals what forbidden author calls to them.
+    leads_to:
+      shop_cycle: "when the encounter ends OR customer leaves OR day concludes"
+
+endings:
+  when:
+  - "shop is compromised through risky decisions"
+  variations:
+  - id: "discovered"
+    when: "accumulated risks finally catch up OR player serves obvious authority figures"
+    sketch: |
+      Your caution finally failed you. They found your sanctuary, but not what 
+      matters most. The books they seize are just paper - the real literature 
+      lives in memory, in whispered conversations, in hearts that refuse to forget. 
+      The **[Lumina Press](item:the_lumina_press)** falls silent, but its work was already done.

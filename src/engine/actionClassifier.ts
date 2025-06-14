@@ -1,0 +1,351 @@
+/**
+ * ActionClassifier - Determines if player actions trigger scene transitions or story endings
+ * 
+ * Uses a cheaper model to classify player intent before expensive narrative generation.
+ * Implements retry logic for invalid targets and graceful fallback to action mode.
+ */
+
+import { MultiModelService } from '@/services/multiModelService';
+import { z } from 'zod';
+
+export interface SceneTransition {
+  id: string;
+  condition: string;
+}
+
+export interface EndingVariation {
+  id: string;
+  conditions: string[]; // AND logic - all must be true
+}
+
+export interface ClassificationContext {
+  playerAction: string;
+  currentSceneTransitions: SceneTransition[];
+  availableEndings?: {
+    globalConditions: string[]; // Must be met for ANY ending to be possible
+    variations: EndingVariation[];
+  };
+  recentMemories: string[];
+  currentState: {
+    sceneId: string;
+    isEnded?: boolean;
+  };
+}
+
+export interface ClassificationResult {
+  mode: 'action' | 'sceneTransition' | 'ending';
+  targetId?: string;
+  reasoning: string;
+  confidence: number;
+}
+
+interface ValidationIssue {
+  type: 'invalid_scene' | 'invalid_ending' | 'missing_target';
+  message: string;
+  invalidValue?: string;
+}
+
+const ClassificationResultSchema = z.object({
+  mode: z.enum(['action', 'sceneTransition', 'ending']),
+  targetId: z.string().optional(),
+  reasoning: z.string(),
+  confidence: z.number().min(0).max(1)
+});
+
+export class ActionClassifier {
+  private static readonly MAX_RETRIES = 3;
+  private debugPane?: any;
+  
+  constructor(
+    private multiModelService: MultiModelService,
+    private options: { debugMode?: boolean } = {}
+  ) {}
+
+  /**
+   * Set debug pane for logging (optional)
+   */
+  setDebugPane(debugPane: any): void {
+    this.debugPane = debugPane;
+  }
+
+  async classify(context: ClassificationContext): Promise<ClassificationResult> {
+    return await this.classifyWithRetries(context, 0, []);
+  }
+
+  private async classifyWithRetries(
+    context: ClassificationContext, 
+    attemptNumber: number,
+    previousErrors: ValidationIssue[]
+  ): Promise<ClassificationResult> {
+    const startTime = performance.now();
+    
+    // Check if MultiModelService is configured
+    if (!this.multiModelService.isConfigured()) {
+      return {
+        mode: 'action',
+        reasoning: 'ActionClassifier: MultiModelService not configured, defaulting to action mode',
+        confidence: 0.1
+      };
+    }
+    
+    try {
+      const prompt = this.buildClassifierPrompt(context, previousErrors);
+      
+      // Always log the action classification prompt for debugging
+      console.log(`🎯 ActionClassifier Prompt (attempt ${attemptNumber + 1}):`);
+      console.log('─'.repeat(80));
+      console.log(prompt);
+      console.log('─'.repeat(80));
+      
+      if (this.options.debugMode) {
+        console.log(`🔍 ActionClassifier attempt ${attemptNumber + 1}:`, prompt);
+      }
+
+      const result = await this.multiModelService.makeStructuredRequest(
+        prompt,
+        ClassificationResultSchema,
+        { useCostModel: true }
+      );
+
+      const latencyMs = performance.now() - startTime;
+
+      // Log the classification result with reasoning
+      console.log(`🎯 ActionClassifier Result:`);
+      console.log(`   Mode: ${result.data.mode}${result.data.targetId ? ` → ${result.data.targetId}` : ''}`);
+      console.log(`   Confidence: ${(result.data.confidence * 100).toFixed(0)}%`);
+      console.log(`   Reasoning: ${result.data.reasoning}`);
+
+      // Track metrics for classifier calls
+      if ((result as any).usage) {
+        const usage = (result as any).usage;
+        console.log(`   Tokens: ${usage.input_tokens}→${usage.output_tokens}, Latency: ${latencyMs.toFixed(0)}ms`);
+
+        // Log to debug pane if available
+        if (this.debugPane && this.debugPane.logLlmCall) {
+          this.debugPane.logLlmCall({
+            prompt: { 
+              text: `ActionClassifier: ${context.playerAction}`, 
+              tokenCount: usage.input_tokens 
+            },
+            response: { 
+              narrative: `Mode: ${result.data.mode}${result.data.targetId ? ` → ${result.data.targetId}` : ''}`,
+              reasoning: result.data.reasoning,
+              signals: { mode: result.data.mode, targetId: result.data.targetId },
+              memories: [], // Classifier doesn't generate memories
+              tokenCount: usage.output_tokens,
+              importance: Math.round(result.data.confidence * 10) // Convert confidence to importance scale
+            },
+            context: {
+              scene: context.currentState.sceneId,
+              memories: context.recentMemories.length,
+              transitions: context.currentSceneTransitions.length,
+              classifier: true // Flag to identify classifier calls
+            }
+          });
+        }
+      }
+
+      // Validate the classification result
+      const validationIssues = this.validateClassificationResult(result.data, context);
+      
+      if (validationIssues.length > 0) {
+        if (attemptNumber < ActionClassifier.MAX_RETRIES - 1) {
+          console.warn(`🔄 ActionClassifier retry ${attemptNumber + 1} due to validation issues:`, validationIssues);
+          return await this.classifyWithRetries(context, attemptNumber + 1, validationIssues);
+        } else {
+          console.warn('🚨 ActionClassifier max retries exceeded, falling back to action mode');
+          return this.createFallbackResult(validationIssues);
+        }
+      }
+
+      if (this.options.debugMode) {
+        console.log(`✅ ActionClassifier success on attempt ${attemptNumber + 1}:`, result.data);
+      }
+
+      return result.data;
+    } catch (error) {
+      const latencyMs = performance.now() - startTime;
+      console.warn(`🔍 ActionClassifier error after ${latencyMs.toFixed(0)}ms:`, error);
+      
+      if (attemptNumber < ActionClassifier.MAX_RETRIES - 1) {
+        console.warn(`🔄 ActionClassifier retry ${attemptNumber + 1} due to error:`, error);
+        const errorIssue: ValidationIssue = {
+          type: 'missing_target',
+          message: `Classification failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        };
+        return await this.classifyWithRetries(context, attemptNumber + 1, [errorIssue]);
+      } else {
+        console.warn('🚨 ActionClassifier max retries exceeded due to errors, falling back to action mode');
+        return this.createFallbackResult([{
+          type: 'missing_target',
+          message: `All classification attempts failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        }]);
+      }
+    }
+  }
+
+  private buildClassifierPrompt(context: ClassificationContext, previousErrors: ValidationIssue[] = []): string {
+    let prompt = `ROLE: Action Classifier for Interactive Fiction
+TASK: Determine if player action triggers scene transitions or story endings.
+
+PLAYER ACTION: "${context.playerAction}"
+CURRENT SCENE: ${context.currentState.sceneId}
+
+${this.buildSceneTransitionSection(context)}
+${this.buildEndingSection(context)}
+
+RECENT CONTEXT (for condition evaluation):
+${context.recentMemories.length > 0 ? context.recentMemories.map(memory => `- ${memory}`).join('\n') : '- No recent context'}`;
+
+    // Add retry context if this is a retry attempt
+    if (previousErrors.length > 0) {
+      prompt += `\n\nPREVIOUS ATTEMPT ERRORS:
+${previousErrors.map(error => `- ${error.message}`).join('\n')}
+
+IMPORTANT: Address the above errors in your response. Ensure you:`;
+
+      previousErrors.forEach(error => {
+        switch (error.type) {
+          case 'invalid_scene':
+            prompt += `\n- Only use scene IDs from the available transitions: ${context.currentSceneTransitions.map(t => t.id).join(', ')}`;
+            break;
+          case 'invalid_ending':
+            prompt += `\n- Only use ending IDs from the available endings: ${context.availableEndings?.variations.map(v => v.id).join(', ') || 'none'}`;
+            break;
+          case 'missing_target':
+            prompt += `\n- Include targetId when mode is "sceneTransition" or "ending"`;
+            break;
+        }
+      });
+    }
+
+    prompt += `\n\nEVALUATION PROCESS:
+1. SCENE TRANSITION CHECK:
+   - For each available scene transition, check if player action satisfies the condition
+   - Use exact condition matching - be literal about requirements
+   - If ANY condition is met, return mode "sceneTransition" with the correct targetId
+
+2. STORY ENDING CHECK (only if no scene transition found):
+   - First check if ALL global ending conditions are satisfied
+   - If global conditions are met, check each ending variation's conditions
+   - All conditions in a variation must be true (AND logic)
+   - If ANY variation's conditions are fully met, return mode "ending" with the correct targetId
+
+3. ACTION MODE (DEFAULT):
+   - Use "action" mode when:
+     * NO scene transition conditions are met
+     * NO ending conditions are met (either global conditions not satisfied OR no variation conditions fully met)
+     * Player is just performing a normal action (examine, talk, think, etc.)
+     * Player is continuing conversation without concluding it
+     * Player is expressing emotion or reaction without triggering story events
+   - "action" mode is the safe default - when in doubt, choose "action"
+
+RESPONSE FORMAT (JSON):
+{
+  "mode": "action" | "sceneTransition" | "ending",
+  "targetId": "exact sceneId or endingId from the lists above (required for sceneTransition/ending, omit for action)",
+  "reasoning": "Step-by-step explanation of condition checking",
+  "confidence": 0.95
+}
+
+CRITICAL RULES:
+- Be CONSERVATIVE - only trigger transitions/endings when conditions are absolutely, clearly met
+- Use EXACT IDs from the available options above
+- When unsure, default to "action" mode
+- Include targetId ONLY for sceneTransition and ending modes
+- "action" is the safe fallback for normal gameplay interactions`;
+
+    return prompt;
+  }
+
+  private buildSceneTransitionSection(context: ClassificationContext): string {
+    if (!context.currentSceneTransitions || context.currentSceneTransitions.length === 0) {
+      return 'SCENE TRANSITIONS: None available from current scene';
+    }
+
+    const transitions = context.currentSceneTransitions
+      .map(t => `- ${t.id}: REQUIRES ${t.condition}`)
+      .join('\n');
+
+    return `SCENE TRANSITIONS:
+${transitions}`;
+  }
+
+  private buildEndingSection(context: ClassificationContext): string {
+    if (!context.availableEndings) {
+      return 'STORY ENDINGS: None available (story cannot end yet)';
+    }
+
+    const globalConditions = context.availableEndings.globalConditions
+      .map(c => `- ${c}`)
+      .join('\n');
+
+    const variations = context.availableEndings.variations
+      .map(v => {
+        const conditions = v.conditions.map(c => `    * ${c}`).join('\n');
+        return `- ${v.id}:\n${conditions}`;
+      })
+      .join('\n');
+
+    return `STORY ENDINGS:
+Global Conditions (ALL must be met for any ending to be possible):
+${globalConditions}
+
+Ending Variations (ALL conditions in a variation must be met):
+${variations}`;
+  }
+
+  private validateClassificationResult(result: ClassificationResult, context: ClassificationContext): ValidationIssue[] {
+    const issues: ValidationIssue[] = [];
+
+    // Check if targetId is required but missing
+    if ((result.mode === 'sceneTransition' || result.mode === 'ending') && !result.targetId) {
+      issues.push({
+        type: 'missing_target',
+        message: `Mode "${result.mode}" requires a targetId but none was provided`
+      });
+      return issues; // Early return since we can't validate targetId
+    }
+
+    // Check if targetId is provided when not needed
+    if (result.mode === 'action' && result.targetId) {
+      console.warn(`ActionClassifier: targetId "${result.targetId}" provided for action mode, ignoring`);
+      // This is not a validation failure, just clean it up
+      result.targetId = undefined;
+    }
+
+    // Validate scene transition targets
+    if (result.mode === 'sceneTransition' && result.targetId) {
+      const validSceneIds = context.currentSceneTransitions.map(t => t.id);
+      if (!validSceneIds.includes(result.targetId)) {
+        issues.push({
+          type: 'invalid_scene',
+          message: `Scene "${result.targetId}" is not available from current scene. Available: ${validSceneIds.join(', ')}`,
+          invalidValue: result.targetId
+        });
+      }
+    }
+
+    // Validate ending targets
+    if (result.mode === 'ending' && result.targetId && context.availableEndings) {
+      const validEndingIds = context.availableEndings.variations.map(v => v.id);
+      if (!validEndingIds.includes(result.targetId)) {
+        issues.push({
+          type: 'invalid_ending',
+          message: `Ending "${result.targetId}" is not available in this story. Available: ${validEndingIds.join(', ')}`,
+          invalidValue: result.targetId
+        });
+      }
+    }
+
+    return issues;
+  }
+
+  private createFallbackResult(issues: ValidationIssue[]): ClassificationResult {
+    return {
+      mode: 'action',
+      reasoning: `Fallback to action mode due to validation issues: ${issues.map(i => i.message).join('; ')}`,
+      confidence: 0.1
+    };
+  }
+}

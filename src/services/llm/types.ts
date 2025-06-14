@@ -4,7 +4,7 @@ export interface LLMConfig {
   provider: LLMProvider;
   model: string;
   apiKey: string;
-  memoryModel?: string; // Optional separate model for memory operations
+  costModel?: string; // Optional separate model for cost-optimized operations
 }
 
 export interface LLMResponse {
@@ -73,9 +73,16 @@ export const POPULAR_MODELS: ModelOption[] = [
   // Google
   {
     provider: 'google',
-    model: 'gemini-2.5-pro',
+    model: 'gemini-2.5-pro-preview-06-05',
     displayName: 'Gemini 2.5 Pro',
     description: 'State-of-the-art reasoning',
+    costTier: 'enterprise'
+  },
+  {
+    provider: 'google',
+    model: 'gemini-2.5-flash-preview-05-20',
+    displayName: 'Gemini 2.5 Flash',
+    description: 'Fast and capable with thinking',
     costTier: 'premium'
   },
   {
@@ -101,8 +108,8 @@ export const DEFAULT_MODELS: Record<LLMProvider, string> = {
   google: 'gemini-2.0-flash'
 };
 
-// Default memory models per provider (efficient options for memory operations)
-export const DEFAULT_MEMORY_MODELS: Record<LLMProvider, string> = {
+// Default cost models per provider (efficient options for cost-optimized operations)
+export const DEFAULT_COST_MODELS: Record<LLMProvider, string> = {
   anthropic: 'claude-3-5-haiku-latest',
   openai: 'gpt-4o-mini',
   google: 'gemini-2.0-flash-lite'
@@ -129,7 +136,8 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
   'o3-mini': { input: 1.10, output: 4.40 },
   
   // Google
-  'gemini-2.5-pro': { input: 1.25, output: 10.00 }, // ≤200K context
+  'gemini-2.5-pro-preview-06-05': { input: 1.25, output: 10.00 }, // ≤200K context, includes thinking tokens
+  'gemini-2.5-flash-preview-05-20': { input: 0.15, output: 0.60 }, // Non-thinking output, thinking tokens cost $3.50/M
   'gemini-2.0-flash': { input: 0.10, output: 0.40 },
   'gemini-2.0-flash-lite': { input: 0.075, output: 0.30 },
   'gemini-1.5-pro': { input: 1.25, output: 5.00 }, // ≤128K context
@@ -145,7 +153,7 @@ export const DEFAULT_PROVIDER_PRICING: Record<LLMProvider, ModelPricing> = {
 
 // Helper function to get the cheapest model for a provider
 export function getCheapestModel(provider: LLMProvider): string {
-  return DEFAULT_MEMORY_MODELS[provider];
+  return DEFAULT_COST_MODELS[provider];
 }
 
 // Helper function to calculate cost for a request

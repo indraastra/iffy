@@ -127,29 +127,24 @@ describe('Memory Metrics Collection', () => {
   });
 
   describe('Cost Calculation', () => {
-    it('should return zero cost when no MultiModelService is available', () => {
-      // Add operation with known token counts
-      memoryMetrics.trackMemoryRequest('compaction', 1000, 500, 1000, 'haiku', 20, 12, true);
+    it('should calculate cost using built-in pricing when MultiModelService is not available', () => {
+      // Add operation with known token counts for Anthropic Claude model
+      memoryMetrics.trackMemoryRequest('compaction', 1000, 500, 1000, 'claude-3-5-haiku-latest', 20, 12, true);
       
       const stats = memoryMetrics.getSessionStats();
       
-      // Should be zero since no MultiModelService is configured in test
-      expect(stats.totalCost).toBe(0);
+      // Should calculate cost using built-in calculateRequestCost function
+      expect(stats.totalCost).toBeGreaterThan(0);
     });
     
-    it('should calculate costs using MultiModelService when available', () => {
-      // Mock MultiModelService with calculateMemoryCost method
-      const mockMultiModelService = {
-        calculateMemoryCost: vi.fn().mockReturnValue(0.0028)
-      };
-      
-      memoryMetrics.setMultiModelService(mockMultiModelService);
-      memoryMetrics.trackMemoryRequest('compaction', 1000, 500, 1000, 'haiku', 20, 12, true);
+    it('should calculate costs using built-in cost calculation', () => {
+      // Add operation with known token counts for Anthropic Claude model
+      memoryMetrics.trackMemoryRequest('compaction', 1000, 500, 1000, 'claude-3-5-haiku-latest', 20, 12, true);
       
       const stats = memoryMetrics.getSessionStats();
       
-      expect(mockMultiModelService.calculateMemoryCost).toHaveBeenCalledWith(1000, 500);
-      expect(stats.totalCost).toBe(0.0028);
+      // Should calculate cost using the built-in calculateRequestCost function
+      expect(stats.totalCost).toBeGreaterThan(0);
     });
   });
 
@@ -196,17 +191,13 @@ describe('Memory Metrics Collection', () => {
     });
 
     it('should warn about high costs', () => {
-      // Mock MultiModelService with high cost calculation
-      const mockMultiModelService = {
-        calculateMemoryCost: vi.fn().mockReturnValue(0.30) // Each call returns $0.30
-      };
-      
-      memoryMetrics.setMultiModelService(mockMultiModelService);
-      memoryMetrics.trackMemoryRequest('compaction', 100000, 50000, 1000, 'haiku', 50, 30, true);
-      memoryMetrics.trackMemoryRequest('compaction', 100000, 50000, 1200, 'haiku', 40, 25, true);
+      // Add expensive operations (high token counts should result in higher costs)
+      memoryMetrics.trackMemoryRequest('compaction', 100000, 50000, 1000, 'claude-3-5-haiku-latest', 50, 30, true);
+      memoryMetrics.trackMemoryRequest('compaction', 100000, 50000, 1200, 'claude-3-5-haiku-latest', 40, 25, true);
 
       const warnings = memoryMetrics.getMemoryWarnings();
       
+      // High token counts should trigger the cost warning
       expect(warnings).toContain('💰 Memory system costs above $0.50 this session');
     });
   });
