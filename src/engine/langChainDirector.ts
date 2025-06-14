@@ -193,9 +193,14 @@ export class LangChainDirector {
           callbacks.onTransitionComplete(transitionResponse);
         }
 
-        // Combine responses - director handles the narrative combination
+        // For non-streaming, we DO want to combine the responses since they're displayed as one unit
+        // However, if the LLM already repeated the action content in the transition, we should avoid double display
+        const hasRepeatedContent = transitionResponse.narrative.includes(actionResponse.narrative.substring(0, 100));
+        
         return {
-          narrative: `${actionResponse.narrative}\n\n${transitionResponse.narrative}`,
+          narrative: hasRepeatedContent 
+            ? transitionResponse.narrative 
+            : `${actionResponse.narrative}\n\n${transitionResponse.narrative}`,
           memories: [...(actionResponse.memories || []), ...(transitionResponse.memories || [])],
           importance: Math.max(actionResponse.importance || 5, transitionResponse.importance || 5),
           signals: {
@@ -326,11 +331,12 @@ export class LangChainDirector {
    * Streaming version that yields responses as they complete
    * Yields action response first, then transition response if needed
    */
-  async* processInputStreaming(input: string, context: DirectorContext): AsyncGenerator<DirectorResponse, DirectorResponse, unknown> {
+  async* processInputStreaming(input: string, context: DirectorContext): AsyncGenerator<DirectorResponse, void, unknown> {
     // Use simplified prompt for post-ending interactions
     if (context.storyComplete) {
       const response = await this.processPostEndingInput(input, context);
-      return response; // Final return, no intermediate yields
+      yield response;
+      return; // Exit generator after yielding
     }
 
     try {
@@ -352,17 +358,7 @@ export class LangChainDirector {
 
         // Yield the transition response independently 
         yield transitionResponse;
-        
-        // Return the final combined response for completeness
-        return {
-          narrative: `${actionResponse.narrative}\n\n${transitionResponse.narrative}`,
-          memories: [...(actionResponse.memories || []), ...(transitionResponse.memories || [])],
-          importance: Math.max(actionResponse.importance || 5, transitionResponse.importance || 5),
-          signals: {
-            ...actionResponse.signals,
-            ...transitionResponse.signals
-          }
-        };
+        return; // Exit generator
       } else if (actionResponse.signals?.ending) {
         const endingId = actionResponse.signals.ending;
 
@@ -374,28 +370,19 @@ export class LangChainDirector {
 
         // Yield the ending response independently 
         yield endingResponse;
-        
-        // Return the final combined response for completeness
-        return {
-          narrative: `${actionResponse.narrative}\n\n${endingResponse.narrative}`,
-          memories: [...(actionResponse.memories || []), ...(endingResponse.memories || [])],
-          importance: Math.max(actionResponse.importance || 5, endingResponse.importance || 5),
-          signals: {
-            ...actionResponse.signals,
-            ...endingResponse.signals
-          }
-        };
+        return; // Exit generator
       }
 
-      // No transition needed, return the action response as final
-      return actionResponse;
+      // No transition needed - action response was already yielded above
+      return; // Exit generator
 
     } catch (error) {
       console.error('LangChain Director streaming error:', error);
-      return {
+      yield {
         narrative: 'Sorry, I had trouble processing that command. Try something else.',
         signals: { error: error instanceof Error ? error.message : 'Unknown error' }
       };
+      return; // Exit generator
     }
   }
 

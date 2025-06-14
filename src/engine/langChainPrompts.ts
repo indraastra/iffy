@@ -229,11 +229,11 @@ You are transitioning to scene: ${targetSceneId}
 TARGET SCENE DESCRIPTION (use as foundation):
 ${sceneSketch}
 
-PREVIOUS ACTION RESPONSE (continue naturally from this):
+PREVIOUS ACTION RESPONSE (this has already been shown to the player):
 ${transitionContext}
 
 SCENE TRANSITION DIRECTIVES:
-- Continue naturally from the previous response - DO NOT repeat or contradict what was already described
+- DO NOT repeat the previous response - provide ONLY new content that continues from where it left off
 - Use the scene description as your foundation - expand it with rich atmospheric details
 - Smoothly flow from the previous action's immediate result to establishing this new scene
 - Establish the new environment, mood, and any characters present
@@ -258,11 +258,11 @@ You are concluding the story with ending: ${endingId}
 ENDING DESCRIPTION (use as foundation):
 ${endingSketch}
 
-PREVIOUS ACTION RESPONSE (continue naturally from this):
+PREVIOUS ACTION RESPONSE (this has already been shown to the player):
 ${transitionContext}
 
 STORY ENDING DIRECTIVES:
-- Continue naturally from the previous response - DO NOT repeat or contradict what was already described
+- DO NOT repeat the previous response - provide ONLY new content that continues from where it left off
 - Use the ending description as your foundation - expand it with rich, conclusive details
 - Smoothly flow from the previous action's immediate result to this story conclusion
 - Provide emotional closure and resolution appropriate to the story's themes
@@ -323,7 +323,7 @@ FORMATTING INSTRUCTIONS:
    */
   static getCoreResponseGuidelines(): string {
     return `TASK:
-- FIRST: Document your reasoning for checking transition/ending conditions step-by-step
+- FIRST: Think through the player's action and the transition/ending conditions step-by-step
 - Process the player's action and provide a narrative response based on the current scene and context
 - Implement the 'TRIGGER EVALUATION STEPS' above to check for scene transitions and story endings
 - Do NOT describe any transition or ending process in the narrative itself – just the immediate result of the action
@@ -333,6 +333,8 @@ FORMATTING INSTRUCTIONS:
 RESPONSE GUIDELINES:
 - Adhere to the global and scene directives given by the story author
 - End your response in a way that invites further player action (except for story endings)
+- VARIETY: Vary sentence structure, descriptive details, and phrasing between responses
+- Avoid repetitive patterns or formulaic descriptions
 
 CRITICAL INTERACTIVE FICTION RULES:
 - The PLAYER CHARACTER (marked above) is controlled exclusively by the player
@@ -353,7 +355,7 @@ CRITICAL INTERACTIVE FICTION RULES:
 ${this.getRichTextFormattingInstructions()}
 
 RESPONSE FORMAT:
-- reasoning: Step-by-step reasoning for checking transition/ending conditions and determining signals
+- reasoning: Concise evaluation of player's action and interaction with transition conditions (2-3 sentences max)
 - narrative: Your narrative response with rich formatting
 - memories: Array of important details to remember: discoveries, changes to the world, or new knowledge the player has gained
 - importance: Rate the significance of this interaction (1-10, default 5)
