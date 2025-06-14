@@ -1,0 +1,250 @@
+title: "The Great Sandwich Crisis"
+author: "Iffy Engine Team"
+blurb: "Experience the EPIC DRAMA of making lunch - will you survive the kitchen?"
+version: "1.0"
+context: "Tuesday afternoon, 12:17 PM. Jennifer faces the MONUMENTAL task of making lunch. Everything is ridiculously over-the-top soap opera melodrama applied to mundane sandwich-making."
+
+narrative:
+  voice: "Breathlessly dramatic soap opera narrator who treats every action like a life-or-death crisis"
+  tone: "Ridiculously over-the-top soap opera melodrama"
+  themes: ["The EPIC struggle of everyday decisions", "Betrayal by inanimate objects", "The heroic quest for lunch", "Kitchen appliances as dramatic antagonists"]
+
+world:
+  characters:
+    jennifer:
+      name: "Jennifer"
+      sketch: "An ordinary person thrust into the EXTRAORDINARY drama of lunch preparation"
+      voice: "Inner thoughts increasingly influenced by soap opera narrator's dramatic style"
+      arc: "hungry protagonist → sandwich seeker → easily betrayed by condiments"
+    
+    narrator:
+      name: "The Voice of Destiny"
+      sketch: "The omniscient narrator who has clearly been watching too many daytime dramas"
+      voice: "Over-the-top soap opera announcer with a flair for the dramatic"
+      arc: "melodramatic → breathless → prone to capitalization → sees drama everywhere"
+
+  locations:
+    kitchen:
+      name: "The Kitchen of Destiny"
+      sketch: "The battleground where DREAMS are made and HOPES are crushed! Sunlight streams through the window like the tears of a thousand forgotten meals!"
+      atmosphere: ["dramatic", "destiny-laden", "sunlit with cruel indifference"]
+      contains: ["sacred counter", "chrome toaster sentinel", "gleaming knife arsenal"]
+      
+    pantry:
+      name: "The Pantry of Broken Dreams"
+      sketch: "The shadowy realm where HOPE goes to die! Shelves stretch before you like the years you've wasted NOT making the perfect sandwich!"
+      atmosphere: ["shadowy", "hope-crushing", "secret-hiding"]
+      contains: ["bread throne", "condiment mockers", "mystery cans"]
+      
+    refrigerator_zone:
+      name: "The Frigid Fortress of Solitude"
+      sketch: "The humming MONOLITH of preservation! Behind these sealed doors lie the PERISHABLE SECRETS that will make or break your sandwich destiny!"
+      atmosphere: ["frigid", "humming", "secret-keeping"]
+      contains: ["vegetable mortality chamber", "dairy revenge sanctuary", "mysterious leftovers"]
+
+  items:
+    stale_bread:
+      name: "The Bread of Betrayal"
+      sketch: "Once soft and yielding, now hardened by the cruel passage of time!"
+      found_in: "pantry"
+      reveals: "This bread has been ABANDONED by time itself, yet it might still serve in your epic quest!"
+      
+    expired_milk:
+      name: "The Milk of Broken Promises"
+      sketch: "A white lie in liquid form - it PROMISED freshness, but delivered only DECEPTION!"
+      found_in: "refrigerator_zone"
+      reveals: "The expiration date tells a tale of BETRAYAL that will haunt your cereal dreams forever!"
+      
+    mystery_jar:
+      name: "The Condiment of Unknown Origin"
+      sketch: "A jar without a label - is it salvation or DOOM in viscous form?"
+      found_in: "pantry"
+      reveals: "The mystery deepens! What SECRETS does this unlabeled jar hold? What FLAVORS lurk within its depths?"
+      
+    heroic_cheese:
+      name: "The Cheese of Last Hope"
+      sketch: "A single slice of processed cheese - your FINAL chance at sandwich glory!"
+      found_in: "refrigerator_zone"
+      reveals: "In your darkest hour, ONE SLICE stands tall! One processed, individually-wrapped HERO emerges!"
+
+scenes:
+  kitchen:
+    location: "kitchen"
+    sketch: |
+      *Dramatic music swells*
+      
+      IT'S **12:17 PM** ON A TUESDAY! The *SUN* shines with **CRUEL** indifference as our 
+      HEROINE, **Jennifer**, stands at the crossroads of *DESTINY*! Her stomach 
+      **RUMBLES** with the fury of a thousand unfed souls!
+      
+      "I need... a sandwich," she whispers, not knowing that these simple words 
+      will set in motion events of **EARTH-SHATTERING** importance!
+      
+      The **kitchen** awaits... but what *TRIALS* lie ahead? What **BETRAYALS** lurk 
+      in the pantry? What *SECRETS* hide in the refrigerator?
+      
+      *Thunder crashes mysteriously*
+      
+      This is... **THE GREAT SANDWICH CRISIS**!
+    
+    guidance: |
+      DRAMATIC TONE: Everything is ridiculously over-the-top soap opera melodrama. Use ALL CAPS, dramatic exclamations, and treat mundane actions like epic struggles.
+      
+      NARRATOR CHARACTER: The Voice of Destiny can be addressed directly and will respond with breathless dramatic commentary about the player's sandwich quest.
+      
+      DISCOVERY: Let players find items by examining objects. Be dramatic about everything! Every appliance has personality and potential for betrayal.
+      
+      ITEM REACTIONS: 
+      - Stale bread = "Oh the BETRAYAL of time!"
+      - Expired milk = "DECEPTION in dairy form!"
+      - Mystery jar = "The ENIGMA deepens!"
+      - Heroic cheese = "SALVATION in processed form!"
+      
+      Make simple decisions feel like life-or-death choices using soap opera clichés and melodramatic language.
+    
+    leads_to:
+      pantry_expedition: "player explores the pantry for ingredients"
+      refrigerator_mission: "player ventures into the refrigerator zone"
+      narrator_consultation: "player addresses the Voice of Destiny directly"
+
+  pantry_expedition:
+    location: "pantry"
+    sketch: |
+      You step into the **PANTRY OF BROKEN DREAMS**! The very air THICK with the 
+      weight of unfulfilled culinary aspirations! Shelves stretch before you like 
+      the years you've wasted NOT making the perfect sandwich!
+      
+      What **SECRETS** lie hidden behind these canned goods? What *BETRAYALS* await 
+      among the crackers? The bread shelf looms before you - will it hold the 
+      key to your salvation... or your ULTIMATE DOWNFALL?
+      
+      *Dramatic pause as dust motes dance in the light*
+    
+    guidance: |
+      Players can discover "The Bread of Betrayal" and "The Condiment of Unknown Origin" here.
+      Emphasize the dramatic potential of each discovery. The mystery jar should seem especially ominous!
+    
+    leads_to:
+      kitchen: "player returns to the kitchen with newfound knowledge"
+      refrigerator_mission: "player continues the quest to the refrigerator"
+
+  refrigerator_mission:
+    location: "refrigerator_zone"
+    sketch: |
+      The **FRIGID FORTRESS OF SOLITUDE** hums with mechanical MENACE! Cold air 
+      whispers of expired dreams and forgotten leftovers! The dairy shelf beckons 
+      with calcium-rich promises... but can they be TRUSTED?
+      
+      Behind these sealed doors lie the **PERISHABLE SECRETS** that will make or 
+      break your sandwich destiny! Will you find salvation... or only more BETRAYAL?
+      
+      *The refrigerator light flickers dramatically*
+    
+    guidance: |
+      Players can discover "The Milk of Broken Promises" and "The Cheese of Last Hope" here.
+      The cheese should be presented as the unlikely hero of this saga!
+    
+    leads_to:
+      kitchen: "player returns with dairy discoveries"
+      sandwich_showdown: "player has gathered enough ingredients for the final assembly"
+
+  narrator_consultation:
+    location: "kitchen"
+    sketch: |
+      You call out to the **VOICE OF DESTINY** itself! The very air TREMBLES as 
+      the omniscient narrator prepares to bestow wisdom upon your humble sandwich quest!
+      
+      "**OH BRAVE JENNIFER**!" thunders the voice from everywhere and nowhere at once, 
+      "Your quest for sustenance has become a **BATTLE FOR YOUR VERY SOUL**! The 
+      kitchen CONSPIRES against you, but HOPE yet remains!"
+      
+      The narrator's dramatic proclamations echo through the kitchen like the 
+      voice of FATE itself!
+    
+    guidance: |
+      When players address the narrator directly, respond as "The Voice of Destiny" with over-the-top 
+      dramatic commentary about their sandwich quest. Offer theatrical advice about ingredients,
+      warn of betrayals, and build tension about their choices!
+    
+    leads_to:
+      kitchen: "the narrator's wisdom guides you back to your quest"
+
+  sandwich_showdown:
+    location: "kitchen"
+    sketch: |
+      **THIS IS IT!** The moment of *TRUTH*! The **CLIMAX** of our epic tale!
+      
+      All ingredients have been gathered! The stage is SET for the final assembly!
+      Will you create a sandwich of GLORY... or will the kitchen's betrayals 
+      prove too much to overcome?
+      
+      The very **UNIVERSE** holds its breath as you approach the sacred counter!
+      
+      *Lightning flashes outside despite the sunny day*
+    
+    guidance: |
+      This is the dramatic finale! Players should assemble their sandwich from discovered ingredients.
+      React dramatically to their choices and build to the climactic first bite!
+    
+    leads_to:
+      tragic_ending: "player uses expired milk or mystery condiment"
+      triumph_ending: "player creates an edible sandwich with cheese"
+
+endings:
+  when:
+    - "player attempts to eat their assembled sandwich"
+    
+  variations:
+    - id: "mystery_disaster"
+      when: "player uses mystery condiment in sandwich"
+      sketch: |
+        **OH NO! OH THE HUBRIS! OH THE HUMANITY!**
+        
+        Against all wisdom, you have trusted the mystery condiment! With hands shaking 
+        like leaves in a **HURRICANE OF REGRET**, you take a bite and...
+        
+        **THE TASTE!** *THE UNGODLY TASTE!*
+        
+        It's **FISH SAUCE**! Ancient, fermented, *AGGRESSIVE* fish sauce 
+        that has been lurking in your pantry since the **CARTER ADMINISTRATION**!
+        
+        **BETRAYAL MOST FOUL!** Your taste buds *REVOLT*! Your stomach **MUTINIES**! 
+        The sandwich of your dreams has become the *NIGHTMARE OF YOUR REALITY*!
+        
+        As you run to the sink, spitting and gasping, you realize the terrible truth: 
+        sometimes the greatest mysteries are mysteries for a **REASON**!
+        
+    - id: "milk_catastrophe"
+      when: "player uses expired milk in sandwich"
+      sketch: |
+        **THE HORROR!** You have been DECEIVED by dairy! The milk's broken promises 
+        have led you down a path of **CULINARY DESTRUCTION**!
+        
+        One sip and you know... you have been *BETRAYED* by calcium itself! 
+        The sour taste of DECEPTION fills your mouth!
+        
+        "Why?" you cry to the heavens, "Why must even MILK turn against me?"
+        
+        The Voice of Destiny whispers: "*Because, dear Jennifer... this is the 
+        kitchen... and in the kitchen... TRUST NO ONE!*"
+        
+    - id: "cheese_triumph"
+      when: "player uses cheese with bread (any type)"
+      sketch: |
+        **THIS IS IT!** The moment of *TRUTH*! The **CLIMAX** of our epic tale!
+        
+        With trembling hands, you bite into your creation - bread (whatever its 
+        condition) embracing the **Cheese of Last Hope**! Will processed dairy 
+        overcome all obstacles?
+        
+        **IT'S...** it's actually pretty *AMAZING*! The cheese has **TRIUMPHED** 
+        over adversity! Your hunger is *VANQUISHED*!
+        
+        As you savor this sandwich of **DESTINY**, you realize that sometimes the 
+        greatest victories come from the simplest ingredients... and the most 
+        *DRAMATIC* narration!
+        
+        *Fade to black as triumphant soap opera music swells*
+        
+        **THE END?** Will Jennifer tackle dinner with the same epic courage? 
+        Find out next time on... "*KITCHEN OF BROKEN DREAMS*!"
