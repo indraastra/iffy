@@ -6,11 +6,28 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ImpressionistEngine } from '@/engine/impressionistEngine';
 import { ImpressionistStory } from '@/types/impressionistStory';
 
+// Mock ActionClassifier
+const mockClassify = vi.fn();
+vi.mock('@/engine/actionClassifier', () => ({
+  ActionClassifier: vi.fn().mockImplementation(() => ({
+    classify: mockClassify,
+    setDebugPane: vi.fn()
+  }))
+}));
+
 describe('ImpressionistEngine', () => {
   let engine: ImpressionistEngine;
   let mockStory: ImpressionistStory;
 
   beforeEach(() => {
+    // Reset mock
+    mockClassify.mockReset();
+    mockClassify.mockResolvedValue({
+      mode: 'action',
+      reasoning: 'Processing action',
+      confidence: 0.8
+    });
+    
     engine = new ImpressionistEngine();
     
     mockStory = {
