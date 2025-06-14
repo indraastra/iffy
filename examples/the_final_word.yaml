@@ -82,7 +82,7 @@ scenes:
       quiet anticipation. Allow the player to perform minor, contemplative actions that reflect
       waiting (e.g., tidying, listening, settling in). Player's actions during this waiting phase
       should influence who arrives next. The next transition occurs when the player indicates
-      readiness for a customer.
+      readiness for a customer. On the first day of business, always transition to `aquinas_day`.
     sketch: |
       With a low rumble, the **[Lumina_Press](item:the_lumina_press)** whirs to life, its heavy flywheel 
       gaining momentum. A deep, steady hum permeates the very stone of the building, 
@@ -93,10 +93,10 @@ scenes:
     leads_to:
       # Tutorial customer for the first day
       aquinas_day: "when player indicates readiness on their first day"
-      # Regular game loop customers
-      open_day: "when player indicates readiness and no specific author theme is strong"
       hemingway_day: "when player's waiting actions suggest war/conflict themes"
       joyce_day: "when player's waiting actions suggest experimental/modernist themes"
+      # Regular game loop customers
+      generic_day: "when player indicates readiness and no specific author theme is strong"
 
   # Tutorial Specific Customer - Aquinas
   aquinas_day:
@@ -140,7 +140,7 @@ scenes:
       open_for_business: "when you activate the Lumina Press" # All days now go through the waiting phase
 
   # Core Game Loop Scene - Generic customer arrival
-  open_day:
+  generic_day:
     location: "the_final_word"
     guidance: >
       CRITICAL: Based on player's morning activities (from daily_preparation) AND any waiting

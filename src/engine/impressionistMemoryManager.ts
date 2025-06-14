@@ -7,17 +7,7 @@
 
 import { MultiModelService } from '@/services/multiModelService';
 import { MemoryMetricsCollector } from './memoryMetricsCollector';
-import { z } from 'zod';
-
-// Schema for memory compaction response
-const CompactedMemorySchema = z.object({
-  content: z.string().describe('The consolidated memory content'),
-  importance: z.number().min(1).max(10).describe('Importance rating from 1-10')
-});
-
-const CompactionResponseSchema = z.object({
-  compactedMemories: z.array(CompactedMemorySchema).describe('Array of compacted memories')
-});
+import { CompactionResponseSchema } from '@/schemas/memorySchemas';
 
 export interface MemoryEntry {
   id: string;
@@ -40,7 +30,6 @@ export class ImpressionistMemoryManager {
   // Configuration constants
   private readonly DEFAULT_COMPACTION_INTERVAL = 5; // Compact every 5 memories
   private readonly MAX_MEMORY_COUNT = 50; // Total memories before forced compaction
-  private readonly MAX_RETURNED_MEMORIES = 15; // Max memories returned for context
   private readonly COMPACTION_TARGET_RATIO = 0.7; // Compact to 70% of current count
   private readonly MIN_MEMORIES_FOR_COMPACTION = 3; // Need at least 3 memories to compact
   
@@ -90,8 +79,8 @@ export class ImpressionistMemoryManager {
   /**
    * Get memories for context building (returns in chronological order: oldest to newest)
    */
-  getMemories(limit?: number): MemoryContext {
-    const maxMemories = limit || this.MAX_RETURNED_MEMORIES;
+  getMemories(limit: number): MemoryContext {
+    const maxMemories = limit;
     
     // Sort by importance and recency to select the most relevant memories
     const relevantMemories = [...this.memories]
@@ -268,7 +257,7 @@ export class ImpressionistMemoryManager {
 
     try {
       const prompt = this.buildCompactionPrompt();
-      const response = await this.multiModelService.makeStructuredMemoryRequest(prompt, CompactionResponseSchema);
+      const response = await this.multiModelService.makeStructuredRequest(prompt, CompactionResponseSchema, { useMemoryModel: true });
 
       const latencyMs = performance.now() - startTime;
       const compactedMemories = this.convertToMemoryEntries(response.data.compactedMemories);
@@ -379,7 +368,7 @@ Aim for around ${targetCount} memories. Prioritize current game state over histo
   /**
    * Convert structured output to MemoryEntry objects
    */
-  private convertToMemoryEntries(compactedMemories: z.infer<typeof CompactedMemorySchema>[]): MemoryEntry[] {
+  private convertToMemoryEntries(compactedMemories: { content: string; importance: number }[]): MemoryEntry[] {
     return compactedMemories.map((mem, index) => ({
       id: `compacted_${Date.now()}_${index}`,
       content: mem.content,

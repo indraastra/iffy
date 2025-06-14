@@ -176,14 +176,14 @@ describe('ImpressionistEngine', () => {
       // Mock MultiModel service
       const mockMultiModelService = {
         isConfigured: () => true,
-        makeRequestWithUsage: vi.fn()
+        makeStructuredRequest: vi.fn()
           .mockResolvedValueOnce({
-            content: JSON.stringify({ narrative: 'First response', importance: 7 }),
-            usage: { input_tokens: 100, output_tokens: 50 }
+            data: { narrative: 'First response', memories: [], importance: 7, signals: {} },
+            usage: { input_tokens: 100, output_tokens: 50, total_tokens: 150 }
           })
           .mockResolvedValueOnce({
-            content: JSON.stringify({ narrative: 'Second response', importance: 5 }),
-            usage: { input_tokens: 120, output_tokens: 60 }
+            data: { narrative: 'Second response', memories: [], importance: 5, signals: {} },
+            usage: { input_tokens: 120, output_tokens: 60, total_tokens: 180 }
           })
       };
 
@@ -363,12 +363,14 @@ describe('ImpressionistEngine', () => {
       // Mock MultiModel service for this test
       const mockMultiModelService = {
         isConfigured: () => true,
-        makeRequestWithUsage: vi.fn().mockResolvedValue({
-          content: JSON.stringify({
+        makeStructuredRequest: vi.fn().mockResolvedValue({
+          data: {
             narrative: 'Test response',
-            importance: 5
-          }),
-          usage: { input_tokens: 100, output_tokens: 50 }
+            memories: ['Test memory'],
+            importance: 5,
+            signals: {}
+          },
+          usage: { input_tokens: 100, output_tokens: 50, total_tokens: 150 }
         })
       };
 
@@ -401,12 +403,14 @@ describe('ImpressionistEngine', () => {
       // Mock LLM response with importance
       const mockService = {
         isConfigured: vi.fn().mockReturnValue(true),
-        makeRequestWithUsage: vi.fn().mockResolvedValue({
-          content: JSON.stringify({
+        makeStructuredRequest: vi.fn().mockResolvedValue({
+          data: {
             narrative: 'Test response',
-            importance: 7
-          }),
-          usage: { input_tokens: 100, output_tokens: 50 }
+            memories: ['Test memory'],
+            importance: 7,
+            signals: {}
+          },
+          usage: { input_tokens: 100, output_tokens: 50, total_tokens: 150 }
         })
       };
       

@@ -5,15 +5,18 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ImpressionistMemoryManager } from '@/engine/impressionistMemoryManager';
 
-// Mock Anthropic service
+// Mock MultiModel service
 const mockMultiModelService = {
   isConfigured: vi.fn().mockReturnValue(false),
-  makeRequest: vi.fn().mockResolvedValue(JSON.stringify({
-    compactedMemories: [
-      { content: "Compacted memory 1", importance: 8 },
-      { content: "Compacted memory 2", importance: 6 }
-    ]
-  }))
+  makeStructuredRequest: vi.fn().mockResolvedValue({
+    data: {
+      compactedMemories: [
+        { content: "Compacted memory 1", importance: 8 },
+        { content: "Compacted memory 2", importance: 6 }
+      ]
+    },
+    usage: { input_tokens: 200, output_tokens: 100, total_tokens: 300 }
+  })
 };
 
 describe('ImpressionistMemoryManager', () => {
@@ -78,14 +81,14 @@ describe('ImpressionistMemoryManager', () => {
       memoryManager.addMemory('Very high importance', 10);
     });
 
-    it('should return memories sorted by importance and recency', () => {
-      const context = memoryManager.getMemories();
+    it('should return most important memories when limit allows all', () => {
+      const context = memoryManager.getMemories(10);
       
       expect(context.memories).toHaveLength(4);
       expect(context.totalCount).toBe(4);
-      // Should be sorted by importance (highest first)
-      expect(context.memories[0]).toBe('Very high importance');
-      expect(context.memories[1]).toBe('High importance');
+      // When limit is high enough for all memories, they should all be included
+      expect(context.memories).toContain('Low importance');
+      expect(context.memories).toContain('Very high importance');
     });
 
     it('should respect custom limit', () => {
@@ -97,7 +100,7 @@ describe('ImpressionistMemoryManager', () => {
 
     it('should return empty context when no memories', () => {
       const emptyManager = new ImpressionistMemoryManager();
-      const context = emptyManager.getMemories();
+      const context = emptyManager.getMemories(10);
       
       expect(context.memories).toHaveLength(0);
       expect(context.totalCount).toBe(0);
@@ -114,7 +117,7 @@ describe('ImpressionistMemoryManager', () => {
         memoryManager.addMemory(`Memory ${i}`);
       }
       
-      expect(mockMultiModelService.makeRequest).not.toHaveBeenCalled();
+      expect(mockMultiModelService.makeStructuredRequest).not.toHaveBeenCalled();
     });
 
     it('should set compaction interval', () => {

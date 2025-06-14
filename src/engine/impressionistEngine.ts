@@ -14,7 +14,7 @@ import {
   ImpressionistInteraction
 } from '@/types/impressionistStory';
 import { MultiModelService } from '@/services/multiModelService';
-import { LLMDirector } from './llmDirector';
+import { LangChainDirector } from './langChainDirector';
 import { MetricsCollector } from './metricsCollector';
 import { ImpressionistMemoryManager } from './impressionistMemoryManager';
 
@@ -31,13 +31,13 @@ export interface GameResponse {
 
 export class ImpressionistEngine {
   // Configuration constants
-  private readonly CONTEXT_MEMORIES_LIMIT = 10; // memories passed to LLM context
+  private readonly CONTEXT_MEMORIES_LIMIT = 25; // memories passed to LLM context
   private readonly MEMORY_COMPACTION_FREQUENCY = 5; // compact every N memories
   private readonly INTERACTION_ROLLING_WINDOW = 20; // max interactions stored in state
   
   private story: ImpressionistStory | null = null;
   private gameState: ImpressionistState = this.createInitialState();
-  private director: LLMDirector;
+  private director: LangChainDirector;
   private metrics: MetricsCollector;
   private memoryManager: ImpressionistMemoryManager;
   private previousLocation?: string; // For smart location context
@@ -45,9 +45,12 @@ export class ImpressionistEngine {
   // Callbacks for UI integration
   private uiResetCallback?: () => void;
   private uiRestoreCallback?: (gameState: any, conversationHistory?: any[]) => void;
+  private uiAddMessageCallback?: (text: string, type: string) => void;
+  private uiShowTypingCallback?: () => void;
+  private uiHideTypingCallback?: () => void;
 
   constructor(multiModelService?: MultiModelService) {
-    this.director = new LLMDirector(multiModelService);
+    this.director = new LangChainDirector(multiModelService);
     this.metrics = new MetricsCollector();
     this.memoryManager = new ImpressionistMemoryManager(multiModelService);
     
@@ -139,11 +142,48 @@ export class ImpressionistEngine {
     if (!this.gameState.currentScene) {
       this.gameState.currentScene = sceneKeys[0];
     }
-    
-    // Process using normal action flow - this will store in interaction history
-    return await this.processAction({
-      input: '<BEGIN STORY>'
-    });
+
+    try {
+      // Get current scene
+      const currentScene = this.getCurrentScene();
+      if (!currentScene) {
+        return {
+          text: 'Story state is invalid - no current scene.',
+          gameState: this.gameState,
+          error: 'Invalid scene state'
+        };
+      }
+
+      // Build context for initial scene establishment
+      const context = this.buildDirectorContext('<BEGIN STORY>', currentScene);
+      
+      // Process initial scene as a transition/establishment rather than an action
+      const response = await this.director.processInitialSceneEstablishment(
+        this.gameState.currentScene,
+        currentScene.sketch,
+        context
+      );
+      
+      // Track this initial scene processing in memory
+      this.trackInteraction('<BEGIN STORY>', response.narrative, {
+        initialScene: true,
+        llmImportance: response.importance,
+        memories: response.memories
+      });
+
+      return {
+        text: response.narrative,
+        gameState: { ...this.gameState },
+        error: response.signals?.error
+      };
+    } catch (error) {
+      console.error('Error processing initial scene:', error);
+      return {
+        text: 'Sorry, I had trouble setting up the initial scene.',
+        gameState: this.gameState,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
   }
 
   /**
@@ -201,8 +241,51 @@ export class ImpressionistEngine {
       // Build context for LLM
       const context = this.buildDirectorContext(action.input, currentScene);
       
-      // Get LLM response
-      const response = await this.director.processInput(action.input, context);
+      // Get LLM response with transition streaming for immediate UI updates
+      const responseGenerator = this.director.processInputStreaming(action.input, context);
+      let response: DirectorResponse | undefined;
+      let partCount = 0;
+      let hasDisplayedFirstPart = false;
+
+      for await (const partialResponse of responseGenerator) {
+        partCount++;
+        console.log(`📝 Response part ${partCount} ready:`, partialResponse.narrative);
+        
+        // Display each part immediately via UI callback
+        if (this.uiAddMessageCallback) {
+          if (!hasDisplayedFirstPart) {
+            // Hide the initial loading indicator from processInput before showing first response
+            if (this.uiHideTypingCallback) {
+              this.uiHideTypingCallback();
+            }
+            
+            // First part - display immediately
+            this.uiAddMessageCallback(partialResponse.narrative, 'story');
+            hasDisplayedFirstPart = true;
+            
+            // If there will be more parts (i.e., a scene transition), show new loading indicator
+            // We can detect this by checking if this response has a scene signal
+            if (partialResponse.signals?.scene && this.uiShowTypingCallback) {
+              console.log('📝 Showing loading indicator for upcoming scene transition');
+              this.uiShowTypingCallback();
+            }
+          } else {
+            // Hide any loading indicator before showing subsequent parts
+            if (this.uiHideTypingCallback) {
+              this.uiHideTypingCallback();
+            }
+            // Subsequent parts - display
+            this.uiAddMessageCallback(partialResponse.narrative, 'story');
+          }
+        }
+        
+        response = partialResponse; // Keep track of the final response for state management
+      }
+
+      // Ensure we have a response
+      if (!response) {
+        throw new Error('No response received from director');
+      }
       
       // Track metrics if usage information is available
       if ((response as any).usage) {
@@ -232,8 +315,9 @@ export class ImpressionistEngine {
         memories: response.memories
       });
 
+      // Return empty text since streaming callback handled the display
       return {
-        text: response.narrative,
+        text: hasDisplayedFirstPart ? '' : response.narrative, // Fallback if no callback set
         gameState: { ...this.gameState },
         error: response.signals?.error,
         endingTriggered: isEndingTriggered
@@ -496,6 +580,18 @@ export class ImpressionistEngine {
 
   setUIRestoreCallback(callback: (gameState: any, conversationHistory?: any[]) => void): void {
     this.uiRestoreCallback = callback;
+  }
+
+  setUIAddMessageCallback(callback: (text: string, type: string) => void): void {
+    this.uiAddMessageCallback = callback;
+  }
+
+  setUIShowTypingCallback(callback: () => void): void {
+    this.uiShowTypingCallback = callback;
+  }
+
+  setUIHideTypingCallback(callback: () => void): void {
+    this.uiHideTypingCallback = callback;
   }
 
 

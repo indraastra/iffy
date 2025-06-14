@@ -45,6 +45,10 @@ async function validateStory(filePath: string): Promise<void> {
         if (world.items) console.log(`   Items: ${Object.keys(world.items).length}`);
       }
       
+      // Track validation issues
+      let hasErrors = false;
+      let hasWarnings = false;
+      
       // Check for unreachable scenes
       console.log(`\n🔗 Scene Connectivity Check:`);
       const scenes = result.story.scenes;
@@ -73,6 +77,7 @@ async function validateStory(filePath: string): Promise<void> {
         const unreachableScenes = sceneIds.filter(id => !reachableScenes.has(id));
         if (unreachableScenes.length > 0) {
           console.log(`   ⚠️  Unreachable scenes: ${unreachableScenes.join(', ')}`);
+          hasWarnings = true;
         } else {
           console.log(`   ✅ All scenes are reachable`);
         }
@@ -91,6 +96,7 @@ async function validateStory(filePath: string): Promise<void> {
         
         if (missingSceneRefs.length > 0) {
           console.log(`   ❌ Missing scene references: ${missingSceneRefs.join(', ')}`);
+          hasErrors = true;
         } else {
           console.log(`   ✅ All scene references are valid`);
         }
@@ -120,12 +126,21 @@ async function validateStory(filePath: string): Promise<void> {
         const unusedLocations = Object.keys(locations).filter(id => !usedLocations.has(id));
         if (unusedLocations.length > 0) {
           console.log(`   ⚠️  Unused locations: ${unusedLocations.join(', ')}`);
+          hasWarnings = true;
         } else {
           console.log(`   ✅ All locations are used`);
         }
       }
       
-      console.log(`\n🎉 Validation complete!`);
+      // Final validation result
+      if (hasErrors) {
+        console.log(`\n❌ Validation failed! Fix the errors above.`);
+        process.exit(1);
+      } else if (hasWarnings) {
+        console.log(`\n⚠️  Validation completed with warnings.`);
+      } else {
+        console.log(`\n🎉 Validation complete!`);
+      }
     } else {
       console.log(`\n❌ Story could not be parsed`);
       process.exit(1);
