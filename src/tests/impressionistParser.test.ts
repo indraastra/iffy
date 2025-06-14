@@ -213,7 +213,7 @@ invalid: yaml: content: [
         guidance: 'Test guidance',
         world: {
           characters: Object.fromEntries(
-            Array.from({ length: 6 }, (_, i) => [`char${i}`, { name: `Char ${i}`, sketch: 'Test' }])
+            Array.from({ length: 6 }, (_, i) => [`char${i}`, { id: `char${i}`, name: `Char ${i}`, sketch: 'Test' }])
           )
         }
       };
