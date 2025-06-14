@@ -6,6 +6,17 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { LangChainDirector } from '@/engine/langChainDirector';
 import { DirectorContext, DirectorResponse } from '@/types/impressionistStory';
 
+// Mock the ActionClassifier module
+const mockClassify = vi.fn();
+const mockSetDebugPane = vi.fn();
+
+vi.mock('@/engine/actionClassifier', () => ({
+  ActionClassifier: vi.fn().mockImplementation(() => ({
+    classify: mockClassify,
+    setDebugPane: mockSetDebugPane
+  }))
+}));
+
 // Mock MultiModelService
 const mockMultiModelService = {
   isConfigured: vi.fn(),
@@ -27,6 +38,14 @@ describe('LangChainDirector', () => {
     // Default mock setup - will be overridden in specific tests
     mockMultiModelService.makeStructuredRequest = vi.fn();
     mockMultiModelService.isConfigured = vi.fn().mockReturnValue(true);
+    
+    // Reset ActionClassifier mock to default action mode
+    mockClassify.mockResolvedValue({
+      mode: 'action',
+      reasoning: 'Default action mode',
+      confidence: 0.95
+    });
+    mockSetDebugPane.mockClear();
     
     director = new LangChainDirector(mockMultiModelService as any, {
       debugMode: false
@@ -60,15 +79,13 @@ describe('LangChainDirector', () => {
 
   // Helper function to set up ActionClassifier + Director mock sequence
   function setupMockSequence(classifierMode: 'action' | 'sceneTransition' | 'ending', targetId?: string, directorResponse?: any) {
-    const classifierResponse = {
-      data: {
-        mode: classifierMode,
-        targetId,
-        reasoning: `Test classification: ${classifierMode}`,
-        confidence: 0.9
-      },
-      usage: { input_tokens: 50, output_tokens: 25, total_tokens: 75 }
-    };
+    // Mock ActionClassifier response
+    mockClassify.mockResolvedValueOnce({
+      mode: classifierMode,
+      targetId,
+      reasoning: `Test classification: ${classifierMode}`,
+      confidence: 0.9
+    });
 
     const defaultDirectorResponse = {
       data: {
@@ -80,9 +97,9 @@ describe('LangChainDirector', () => {
       usage: { input_tokens: 100, output_tokens: 50, total_tokens: 150 }
     };
 
-    mockMultiModelService.makeStructuredRequest = vi.fn()
-      .mockResolvedValueOnce(classifierResponse)
-      .mockResolvedValue(directorResponse || defaultDirectorResponse);
+    // Mock Director response (only one call now)
+    mockMultiModelService.makeStructuredRequest
+      .mockResolvedValueOnce(directorResponse || defaultDirectorResponse);
   }
 
   // Helper function to collect all responses from streaming method
@@ -189,46 +206,40 @@ describe('LangChainDirector', () => {
   });
 
   describe('Scene Transitions', () => {
-    it('should process action and scene transition in sequence', async () => {
-      // Mock action response with transition signal
-      const actionResponse = {
-        data: {
-          narrative: "You open the door.",
-          memories: ["Player opened door"],
-          importance: 6,
-          signals: {
-            scene: "next_room"
-          }
-        },
-        usage: { input_tokens: 100, output_tokens: 50, total_tokens: 150 }
-      };
+    it('should process scene transition directly with ActionClassifier', async () => {
+      // Mock ActionClassifier to return sceneTransition mode
+      mockClassify.mockResolvedValueOnce({
+        mode: 'sceneTransition',
+        targetId: 'next_room',
+        reasoning: 'Player opened door condition met',
+        confidence: 0.95
+      });
 
-      // Mock transition response
+      // Mock single transition response (incorporates player action)
       const transitionResponse = {
         data: {
-          narrative: "Light floods through as you step into a bright hallway. The walls gleam with polished marble, and distant echoes suggest vast spaces ahead.",
-          memories: ["Entered a bright marble hallway"],
+          narrative: "You push open the heavy door and step through. Light floods in as you enter a bright hallway. The walls gleam with polished marble, and distant echoes suggest vast spaces ahead.",
+          memories: ["Player opened door", "Entered a bright marble hallway"],
           importance: 6,
           signals: {}
         },
-        usage: { input_tokens: 120, output_tokens: 60, total_tokens: 180 }
+        usage: { input_tokens: 120, output_tokens: 80, total_tokens: 200 }
       };
 
       mockMultiModelService.makeStructuredRequest
-        .mockResolvedValueOnce(actionResponse)  // First call: action
-        .mockResolvedValueOnce(transitionResponse);  // Second call: transition
+        .mockResolvedValueOnce(transitionResponse);  // Only one call now
 
       const result = await collectStreamingResponses("open door", mockContext);
 
-      // Verify combined result
-      expect(result.narrative).toContain("You open the door");
-      expect(result.narrative).toContain("Light floods through");
+      // Verify single integrated response
+      expect(result.narrative).toContain("You push open the heavy door");
+      expect(result.narrative).toContain("Light floods in");
       expect(result.memories).toContain("Player opened door");
       expect(result.memories).toContain("Entered a bright marble hallway");
       expect(result.signals?.scene).toBe("next_room");
 
-      // Verify two structured requests were made
-      expect(mockMultiModelService.makeStructuredRequest).toHaveBeenCalledTimes(2);
+      // Verify only one structured request was made (ActionClassifier + transition)
+      expect(mockMultiModelService.makeStructuredRequest).toHaveBeenCalledTimes(1);
     });
 
     it('should gracefully ignore transition to unknown scene', async () => {
@@ -298,6 +309,13 @@ describe('LangChainDirector', () => {
 
   describe('Context Building', () => {
     it('should include all context elements in action prompt', async () => {
+      // Setup ActionClassifier to return action mode
+      mockClassify.mockResolvedValueOnce({
+        mode: 'action',
+        reasoning: 'Regular action',
+        confidence: 0.95
+      });
+
       const mockResponse = {
         data: {
           narrative: "Test response",
@@ -315,14 +333,14 @@ describe('LangChainDirector', () => {
       const callArgs = mockMultiModelService.makeStructuredRequest.mock.calls[0];
       const prompt = callArgs[0];
       
-      // Verify context elements are included in the prompt
+      // Verify context elements are included in the prompt (action processing uses simplified context)
       expect(prompt).toContain("Test story context");
       expect(prompt).toContain("Test guidance");
       expect(prompt).toContain("A simple room with a door");
       expect(prompt).toContain("Keep it simple");
-      expect(prompt).toContain("next_room: REQUIRES when player opens door");
       expect(prompt).toContain("Player entered the room");
       expect(prompt).toContain("look around");
+      // Note: Transitions are NOT included in action processing prompts (handled by ActionClassifier)
     });
   });
 
@@ -339,22 +357,21 @@ describe('LangChainDirector', () => {
     });
 
     it('should handle transition chain failures', async () => {
-      const actionResponse = {
-        data: {
-          narrative: "Action succeeded",
-          memories: [],
-          importance: 5,
-          signals: { scene: "next_room" }
-        },
-        usage: { input_tokens: 100, output_tokens: 50, total_tokens: 150 }
-      };
+      // Mock ActionClassifier to return sceneTransition mode
+      mockClassify.mockResolvedValueOnce({
+        mode: 'sceneTransition',
+        targetId: 'next_room',
+        reasoning: 'Transition condition met',
+        confidence: 0.95
+      });
 
+      // Mock the transition processing to fail
       mockMultiModelService.makeStructuredRequest
-        .mockResolvedValueOnce(actionResponse)
         .mockRejectedValueOnce(new Error("Transition failed"));
 
       const result = await collectStreamingResponses("test", mockContext);
 
+      expect(result.narrative).toBe("Sorry, I had trouble processing that command. Try something else.");
       expect(result.signals?.error).toBe("Transition failed");
     });
   });
