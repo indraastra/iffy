@@ -10,6 +10,8 @@
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "validate-story": "tsx scripts/validate-story.ts",
+    "debug-classifier": "tsx scripts/debug-classifier.ts",
+    "test-prompt": "tsx scripts/test-prompt.ts",
     "bundle-examples": "tsx scripts/bundle-examples.ts",
     "test": "vitest",
     "test:run": "vitest run",

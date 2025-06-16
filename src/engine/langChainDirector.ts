@@ -94,10 +94,11 @@ export class LangChainDirector {
     
     console.log(`📝 ${logLabel} Prompt:`, fullPrompt);
     
-    // Use structured output
+    // Use structured output with creative temperature for narrative generation
     const result = await this.multiModelService.makeStructuredRequest(
       fullPrompt,
-      DirectorResponseSchema
+      DirectorResponseSchema,
+      { temperature: 0.7 } // Higher temperature for creative storytelling
     );
 
     const latencyMs = performance.now() - startTime;

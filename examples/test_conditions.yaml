@@ -42,8 +42,7 @@ scenes:
       - A BLUE button labeled "SAFE" 
       - A GREEN button labeled "READY"
 
-      A heavy metal door marked "EXIT" stands closed. A small screen above it reads:
-      "CHAMBER PROTOCOL: Complete all required steps before exit."
+      A heavy metal door marked "EXIT" stands closed.
     guidance: |
       Track button presses in memories as they happen. Players can press buttons in any order or combination.
       Update the screen display and lighting based on which buttons have been pressed.

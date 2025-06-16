@@ -262,8 +262,8 @@ export class MultiModelService {
     return response.content;
   }
 
-  public async makeRequestWithUsage(prompt: string): Promise<LLMResponse> {
-    return this.makeRequestWithModel(prompt, this.currentModel);
+  public async makeRequestWithUsage(prompt: string, options: { temperature?: number } = {}): Promise<LLMResponse> {
+    return this.makeRequestWithModel(prompt, this.currentModel, options);
   }
 
   public async makeStreamingRequest(prompt: string, streamingCallbacks: StreamingCallbacks): Promise<LLMResponse> {
@@ -311,8 +311,8 @@ export class MultiModelService {
     }
   }
 
-  public async makeCostRequestWithUsage(prompt: string): Promise<LLMResponse> {
-    return this.makeRequestWithModel(prompt, this.costModel);
+  public async makeCostRequestWithUsage(prompt: string, options: { temperature?: number } = {}): Promise<LLMResponse> {
+    return this.makeRequestWithModel(prompt, this.costModel, options);
   }
 
   /**
@@ -322,7 +322,7 @@ export class MultiModelService {
   public async makeStructuredRequest<T>(
     prompt: string, 
     schema: z.ZodSchema<T>,
-    options: { useCostModel?: boolean } = {}
+    options: { useCostModel?: boolean; temperature?: number } = {}
   ): Promise<{ data: T; usage: LLMResponse['usage'] }> {
     const model = options.useCostModel ? this.costModel : this.currentModel;
     const modelName = options.useCostModel ? 
@@ -361,12 +361,19 @@ export class MultiModelService {
       const structuredModel = model.withStructuredOutput(schema);
       const callbacks = [metricsCapture];
       
+      const invokeOptions: any = { 
+        signal: abortController.signal,
+        callbacks
+      };
+      
+      // Add temperature override if specified
+      if (options.temperature !== undefined) {
+        invokeOptions.temperature = options.temperature;
+      }
+      
       const response = await structuredModel.invoke(
         [new HumanMessage(prompt)],
-        { 
-          signal: abortController.signal,
-          callbacks
-        }
+        invokeOptions
       );
 
       // Use captured usage or fall back to estimation
@@ -398,11 +405,11 @@ export class MultiModelService {
   /**
    * Convenience method for structured cost-optimized requests
    */
-  public async makeStructuredCostRequest<T>(prompt: string, schema: z.ZodSchema<T>): Promise<{ data: T; usage: LLMResponse['usage'] }> {
-    return this.makeStructuredRequest(prompt, schema, { useCostModel: true });
+  public async makeStructuredCostRequest<T>(prompt: string, schema: z.ZodSchema<T>, options: { temperature?: number } = {}): Promise<{ data: T; usage: LLMResponse['usage'] }> {
+    return this.makeStructuredRequest(prompt, schema, { useCostModel: true, ...options });
   }
 
-  private async makeRequestWithModel(prompt: string, model: BaseChatModel | null): Promise<LLMResponse> {
+  private async makeRequestWithModel(prompt: string, model: BaseChatModel | null, options: { temperature?: number } = {}): Promise<LLMResponse> {
     if (!model || !this.currentConfig) {
       throw new Error('No model configured. Please set up your API key in Settings.');
     }
@@ -412,12 +419,19 @@ export class MultiModelService {
 
     try {
       const callbacks = this.metricsCallback ? [this.metricsCallback] : [];
+      const invokeOptions: any = { 
+        signal: abortController.signal,
+        callbacks
+      };
+      
+      // Add temperature override if specified
+      if (options.temperature !== undefined) {
+        invokeOptions.temperature = options.temperature;
+      }
+      
       const response = await model.invoke(
         [new HumanMessage(prompt)],
-        { 
-          signal: abortController.signal,
-          callbacks
-        }
+        invokeOptions
       );
 
       return this.parseResponse(response);
