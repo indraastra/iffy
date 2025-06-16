@@ -1,0 +1,39 @@
+name: "Test Chamber - Perfect Exit"
+storyFile: "examples/test_conditions.yaml"
+
+# Player configuration - using a smart model for logical reasoning
+playerModel:
+  provider: "anthropic"
+  model: "claude-3-5-sonnet-latest"
+
+# Engine configuration - using same model for consistency
+engineModel:
+  provider: "anthropic"
+  model: "claude-3-5-sonnet-latest"
+
+# Goals for the player
+goals:
+- type: "reach_ending"
+  target: "perfect_exit"
+  priority: "required"
+  description: "Press all three buttons (red, blue, green) and then exit through the door"
+
+# Test parameters
+maxTurns: 15
+
+# Success criteria
+successCriteria:
+  allRequiredGoals: true
+  withinTurnLimit: true
+
+# Observability settings
+observability:
+  interactive: true
+  showThinking: true
+  verbosity: "quiet"
+
+# Logging settings
+logging:
+  saveTranscript: true
+  saveDebugInfo: true
+  logDirectory: "./tests/logs"

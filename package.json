@@ -16,6 +16,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
+    "test:llm-player": "tsx tests/integration/llm-player/run-test.ts",
+    "test:llm-player:auto": "tsx tests/integration/llm-player/run-test.ts --auto",
     "docs:serve": "npx http-server docs -p 8080 -o",
     "docs:dev": "echo 'Documentation available at: http://localhost:8080' && npm run docs:serve"
   },
@@ -23,6 +25,7 @@
     "@types/js-yaml": "^4.0.0",
     "@types/node": "^22.15.30",
     "@vitest/ui": "^1.0.0",
+    "dotenv": "^16.5.0",
     "jsdom": "^23.0.0",
     "tsx": "^4.19.4",
     "typescript": "^5.0.0",
