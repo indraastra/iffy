@@ -104,7 +104,7 @@ export class ActionClassifier {
       const result = await this.multiModelService.makeStructuredRequest(
         prompt,
         ClassificationResultSchema,
-        { useCostModel: true }
+        { useCostModel: true, temperature: 0.1 } // Low temperature for deterministic classification
       );
 
       const latencyMs = performance.now() - startTime;
@@ -219,7 +219,7 @@ ${this.buildEndingSection(context)}`;
     prompt += `\n\n**EVALUATION & RESPONSE INSTRUCTIONS:**
 1. **Analyze the Input:** First, look at the player's \`Action\` and the \`Current State Facts\`.
 2. **Evaluate Endings:** Evaluate the \`Conditions\` for each ending one by one, in the order they are listed.
-3. **Think Step-by-Step:** For each ending, verbalize your reasoning. Check if the player's \`Action\` matches requirements. Then, check if the \`Current State Facts\` satisfy the conditions.
+3. **Think Step-by-Step:** For each ending, verbalize your reasoning. Check if the player's \`Action\` matches conditions. Then, check if the \`Current State Facts\` satisfy the conditions.
 4. **Select the First Match:** The correct outcome is the *first one* whose conditions are all met.
 5. **Default to Action:** If no scene transitions or endings have their conditions met, the mode must be \`action\`.
 6. **Format Response:** Provide your final answer in the specified JSON format. The \`reasoning\` field should be a brief one-sentence explanation.
@@ -229,7 +229,7 @@ ${this.buildEndingSection(context)}`;
 {
   "mode": "action|sceneTransition|ending",
   "targetId": "scene/ending ID if applicable",
-  "reasoning": "Brief one-sentence explanation of which outcome was selected and why.",
+  "reasoning": "Step-by-step explanation of which outcome was selected and why.",
   "confidence": 0.99
 }
 \`\`\``;

@@ -255,7 +255,7 @@ export class ImpressionistMemoryManager {
 
     try {
       const prompt = this.buildCompactionPrompt();
-      const response = await this.multiModelService.makeStructuredRequest(prompt, CompactionResponseSchema, { useCostModel: true });
+      const response = await this.multiModelService.makeStructuredRequest(prompt, CompactionResponseSchema, { useCostModel: true, temperature: 0.3 }); // Medium temperature for factual summarization with some flexibility
 
       const latencyMs = performance.now() - startTime;
       const compactedMemories = this.convertToMemoryEntries(response.data.compactedMemories);
