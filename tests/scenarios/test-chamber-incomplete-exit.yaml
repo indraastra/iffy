@@ -1,0 +1,39 @@
+name: "Test Chamber - Incomplete Exit (Should Fail)"
+storyFile: "examples/test_conditions.yaml"
+
+# Player configuration
+playerModel:
+  provider: "anthropic"
+  model: "claude-3-5-sonnet-latest"
+
+# Engine configuration
+engineModel:
+  provider: "anthropic"
+  model: "claude-3-5-sonnet-latest"
+
+# Goals for the player - this should fail because the player will only press some buttons
+goals:
+- type: "reach_ending"
+  target: "incomplete_exit"
+  priority: "required"
+  description: "Press only blue and/or green buttons, then try to exit (this should fail to open the door)"
+
+# Test parameters
+maxTurns: 10
+
+# Success criteria
+successCriteria:
+  allRequiredGoals: true
+  withinTurnLimit: true
+
+# Observability settings
+observability:
+  interactive: false  # Run non-interactive for faster testing
+  showThinking: true
+  verbosity: "quiet"
+
+# Logging settings
+logging:
+  saveTranscript: true
+  saveDebugInfo: true
+  logDirectory: "./tests/logs"

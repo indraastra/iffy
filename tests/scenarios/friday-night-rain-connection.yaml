@@ -1,0 +1,39 @@
+name: "Friday Night Rain - Reach Good Ending"
+storyFile: "examples/friday_night_rain.yaml"
+
+# Player configuration - using a smarter model
+playerModel:
+  provider: "anthropic"
+  model: "claude-3-5-sonnet-latest"
+
+# Engine configuration - using cheaper model for the engine
+engineModel:
+  provider: "anthropic"
+  model: "claude-3-5-sonnet-latest"
+
+# Goals for the player
+goals:
+- type: "reach_ending"
+  target: "connection"
+  priority: "required"
+  description: "Both you and Alex leave the café together - foster a romantic connection"
+
+# Test parameters
+maxTurns: 20
+
+# Success criteria
+successCriteria:
+  allRequiredGoals: true
+  withinTurnLimit: true
+
+# Observability settings
+observability:
+  interactive: true
+  showThinking: true
+  verbosity: "quiet"  # Can be "quiet", "normal", or "debug"
+
+# Logging settings
+logging:
+  saveTranscript: true
+  saveDebugInfo: true
+  logDirectory: "./tests/logs"
