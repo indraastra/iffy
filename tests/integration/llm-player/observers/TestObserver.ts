@@ -70,13 +70,8 @@ export class ConsoleTestObserver implements TestObserver {
     console.log(this.color('>', '90') + ' ' + state.visibleText);
     console.log();
 
-    if (state.availableActions.length > 0) {
-      console.log(this.color('Available actions:', '33'));
-      state.availableActions.forEach((action, i) => {
-        console.log(`  ${i + 1}. ${action}`);
-      });
-      console.log();
-    }
+    // Skip showing available actions for free-form games
+    // The LLM should respond naturally without seeing specific action options
   }
 
   onPlayerThinking(thinking: string): void {

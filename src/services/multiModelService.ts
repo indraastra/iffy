@@ -142,6 +142,11 @@ export class MultiModelService {
   }
 
   private loadSavedConfig(): void {
+    // Check if localStorage is available (browser environment)
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+    
     const saved = localStorage.getItem('iffy_llm_config');
     if (saved) {
       try {
@@ -153,7 +158,9 @@ export class MultiModelService {
         
         if (!mainModelValid || !costModelValid) {
           console.warn(`Found unknown model configuration (quality: ${config.model}, cost: ${config.costModel}), clearing cache and using defaults`);
-          localStorage.removeItem('iffy_llm_config');
+          if (typeof localStorage !== 'undefined') {
+            localStorage.removeItem('iffy_llm_config');
+          }
           return;
         }
         
@@ -173,7 +180,11 @@ export class MultiModelService {
     }
     
     this.currentConfig = config;
-    localStorage.setItem('iffy_llm_config', JSON.stringify(config));
+    
+    // Save to localStorage if available
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('iffy_llm_config', JSON.stringify(config));
+    }
     
     try {
       this.currentModel = this.createModel(config);
@@ -191,7 +202,9 @@ export class MultiModelService {
     this.currentConfig = null;
     this.currentModel = null;
     this.costModel = null;
-    localStorage.removeItem('iffy_llm_config');
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('iffy_llm_config');
+    }
   }
 
   public setMetricsHandler(handler: (metrics: LangChainMetrics) => void): void {

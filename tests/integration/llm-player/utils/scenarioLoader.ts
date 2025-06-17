@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import * as yaml from 'js-yaml';
 import { TestScenario } from '../core/types';
+import { enrichModelConfigWithApiKey } from './apiConfig';
 
 export async function loadScenario(filePath: string): Promise<TestScenario> {
   const content = await readFile(filePath, 'utf-8');
@@ -10,8 +11,8 @@ export async function loadScenario(filePath: string): Promise<TestScenario> {
   const scenario: TestScenario = {
     name: data.name || 'Unnamed Test',
     storyFile: data.storyFile,
-    playerModel: data.playerModel,
-    engineModel: data.engineModel,
+    playerModel: data.playerModel ? enrichModelConfigWithApiKey(data.playerModel) : undefined,
+    engineModel: data.engineModel ? enrichModelConfigWithApiKey(data.engineModel) : undefined,
     goals: data.goals || [],
     maxTurns: data.maxTurns,
     successCriteria: data.successCriteria || {

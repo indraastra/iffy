@@ -91,14 +91,11 @@ export class ActionClassifier {
     try {
       const prompt = this.buildClassifierPrompt(context, previousErrors);
       
-      // Always log the action classification prompt for debugging
-      console.log(`🎯 ActionClassifier Prompt (attempt ${attemptNumber + 1}):`);
-      console.log('─'.repeat(80));
-      console.log(prompt);
-      console.log('─'.repeat(80));
-      
       if (this.options.debugMode) {
-        console.log(`🔍 ActionClassifier attempt ${attemptNumber + 1}:`, prompt);
+        console.log(`🎯 ActionClassifier Prompt (attempt ${attemptNumber + 1}):`);
+        console.log('─'.repeat(80));
+        console.log(prompt);
+        console.log('─'.repeat(80));
       }
 
       const result = await this.multiModelService.makeStructuredRequest(

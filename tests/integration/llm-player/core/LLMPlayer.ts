@@ -1,6 +1,7 @@
 import { GameState, Goal, ModelConfig } from './types';
 import { PlayerStrategy } from '../strategies/PlayerStrategy';
 import { SimpleGoalStrategy } from '../strategies/SimpleGoalStrategy';
+import { CostTracker } from '../utils/costTracker';
 
 export class LLMPlayer {
   private strategy: PlayerStrategy;
@@ -12,6 +13,7 @@ export class LLMPlayer {
     goals: Goal[];
     modelConfig?: ModelConfig;
     strategy?: PlayerStrategy;
+    costTracker?: CostTracker;
   }) {
     this.goals = options.goals;
     this.modelConfig = options.modelConfig || {
@@ -19,7 +21,7 @@ export class LLMPlayer {
       model: 'claude-3-sonnet-20240229'
     };
     
-    this.strategy = options.strategy || new SimpleGoalStrategy(this.modelConfig);
+    this.strategy = options.strategy || new SimpleGoalStrategy(this.modelConfig, options.costTracker);
   }
 
   async chooseAction(
