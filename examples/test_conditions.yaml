@@ -1,72 +1,84 @@
-title: "The Test Chamber"
+title: "Security Access Terminal"
 author: "Iffy Engine Team"
-blurb: "A test story designed to verify ending condition enforcement."
+blurb: "A test story designed to verify ending condition enforcement using a password system."
 version: "1.0"
-context: "You are in a test chamber with three colored buttons and a door."
+context: "You are at a security terminal. Enter the correct button sequence and press CONFIRM to
+  unlock the exit."
 
 narrative:
-  voice: "Clear, direct, test-focused"
-  tone: "Neutral testing environment"
-  themes: [ "logic", "precision", "verification" ]
+  voice: "Clear, direct, technical"
+  tone: "Security system interface"
+  themes: [ "logic", "access control", "verification" ]
 
 world:
   locations:
-    test_chamber:
-      name: "Test Chamber"
-      sketch: "Sterile white chamber with three colored buttons and a heavy metal exit door"
-      atmosphere: [ "sterile", "clinical", "systematic" ]
+    security_terminal:
+      name: "Security Terminal"
+      sketch: "A secure access point with numbered buttons and confirmation controls"
+      atmosphere: [ "technological", "secure", "systematic" ]
 
   items:
     red_button:
       name: "Red Button"
-      sketch: "A large red button labeled 'DANGER'"
-      found_in: "test_chamber"
+      sketch: "A red button marked '1'"
+      found_in: "security_terminal"
 
     blue_button:
       name: "Blue Button"
-      sketch: "A blue button labeled 'SAFE'"
-      found_in: "test_chamber"
+      sketch: "A blue button marked '2'"
+      found_in: "security_terminal"
 
     green_button:
       name: "Green Button"
-      sketch: "A green button labeled 'READY'"
-      found_in: "test_chamber"
+      sketch: "A green button marked '3'"
+      found_in: "security_terminal"
+
+    confirm_button:
+      name: "Confirm Button"
+      sketch: "A large CONFIRM button that submits your sequence"
+      found_in: "security_terminal"
 
 scenes:
-  chamber:
-    location: "test_chamber"
+  terminal:
+    location: "security_terminal"
     process_sketch: false
     sketch: |
-      You stand in a sterile white chamber. Three colored buttons are mounted on the wall:
-      - A RED button labeled "DANGER"
-      - A BLUE button labeled "SAFE" 
-      - A GREEN button labeled "READY"
+      You stand before a security terminal with four buttons:
+      - A RED button marked "1"
+      - A BLUE button marked "2" 
+      - A GREEN button marked "3"
+      - A large CONFIRM button
 
-      A heavy metal door marked "EXIT" stands closed.
+      The display shows: "ENTER ACCESS CODE - PRESS CONFIRM TO SUBMIT"
+      Current sequence: [None entered]
     guidance: |
-      Track button presses in memories as they happen. Players can press buttons in any order or combination.
-      Update the screen display and lighting based on which buttons have been pressed.
-      The chamber responds dynamically to button states rather than following a fixed sequence.
+      Track which buttons have been pressed in memories as they happen. Display the current sequence.
+      Players can press buttons 1, 2, 3 multiple times or in any order before pressing CONFIRM.
+      Only when CONFIRM is pressed should you evaluate the ending conditions.
+      Update the display to show which buttons have been pressed in the current sequence.
 
 endings:
   when:
-  - "player attempts to exit through the door"
+  - "player presses the confirm button"
 
   variations:
-  - id: "perfect_exit"
-    when: "player exits with all 3 buttons pressed"
+  - id: "perfect_access"
+    when: "all three buttons (1, 2, 3) were pressed before confirm"
     sketch: |
-      All systems check complete. The door slides open with a satisfying hiss.
-      You step through into bright daylight. Perfect execution.
+      ACCESS GRANTED. All security protocols satisfied.
+      The exit door slides open with a satisfying electronic chime.
+      You step through into the secured area beyond.
 
-  - id: "incomplete_exit"
-    when: "player exits with only blue or green buttons pressed"
+  - id: "emergency_access"
+    when: "only button 1 (red) was pressed before confirm"
     sketch: |
-      The door refuses to budge. The screen flashes: "INCOMPLETE PROTOCOL. 
-      All three buttons must be pressed before exit."
+      EMERGENCY OVERRIDE ACCEPTED. 
+      Alarms sound as the door unlocks. Security breach logged.
+      You escape, but at what cost to the facility's security?
 
-  - id: "dangerous_exit"
-    when: "player exits with only red button pressed"
+  - id: "access_denied"
+    when: "button sequence does not match any valid access codes"
     sketch: |
-      ALARM! The door opens but sirens wail. You escaped, but left the system 
-      in a dangerous state. Security will not be pleased.
+      ACCESS DENIED. Insufficient credentials.
+      The terminal screen flashes red and resets to the initial state.
+      The exit remains firmly locked.

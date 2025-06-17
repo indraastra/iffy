@@ -50,9 +50,7 @@ export class LangChainDirector {
     }
 
     this.multiModelService = multiModelService || new MultiModelService();
-    this.actionClassifier = new ActionClassifier(this.multiModelService, {
-      debugMode: this.options.debugMode
-    });
+    this.actionClassifier = new ActionClassifier(this.multiModelService);
   }
 
   /**
@@ -180,6 +178,11 @@ export class LangChainDirector {
       currentSceneTransitions: sceneTransitions,
       availableEndings,
       recentMemories: context.activeMemory || [],
+      recentInteractions: context.recentInteractions?.map(interaction => ({
+        playerInput: interaction.playerInput,
+        llmResponse: interaction.llmResponse
+      })) || [],
+      activeMemory: context.activeMemory || [],
       currentState: {
         sceneId: context.currentSketch || 'unknown',
         isEnded: context.storyComplete
