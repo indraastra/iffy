@@ -228,16 +228,17 @@ export class MultiModelService {
 
   private createCostModel(config: LLMConfig): BaseChatModel {
     const costModel = config.costModel || getCheapestModel(config.provider);
-    return this.createModelWithSettings(config.provider, costModel, config.apiKey);
+    return this.createModelWithSettings(config.provider, costModel, config.apiKey, 0.3); // Lower default for cost model
   }
 
-  private createModelWithSettings(provider: LLMProvider, model: string, apiKey: string): BaseChatModel {
+
+  private createModelWithSettings(provider: LLMProvider, model: string, apiKey: string, temperature: number = 0.7): BaseChatModel {
     switch (provider) {
       case 'anthropic':
         return new ChatAnthropic({
           anthropicApiKey: apiKey,
           model: model,
-          temperature: 0.7,
+          temperature: temperature,
           maxTokens: 4000,
         });
         
@@ -245,7 +246,7 @@ export class MultiModelService {
         return new ChatOpenAI({
           openAIApiKey: apiKey,
           model: model,
-          temperature: 0.7,
+          temperature: temperature,
           maxTokens: 4000,
         });
         
@@ -253,7 +254,7 @@ export class MultiModelService {
         return new ChatGoogleGenerativeAI({
           apiKey: apiKey,
           model: model,
-          temperature: 0.7,
+          temperature: temperature,
           maxOutputTokens: 4000,
         });
         
@@ -371,18 +372,21 @@ export class MultiModelService {
       );
       
       // Use structured output with the appropriate model
-      const structuredModel = model.withStructuredOutput(schema);
+      // If temperature override is specified, create a new model instance with that temperature
+      let modelToUse = model;
+      if (options.temperature !== undefined) {
+        const config = this.currentConfig!;
+        const modelName = options.useCostModel ? (config.costModel || getCheapestModel(config.provider)) : config.model;
+        modelToUse = this.createModelWithSettings(config.provider, modelName, config.apiKey, options.temperature);
+      }
+      
+      const structuredModel = modelToUse.withStructuredOutput(schema);
       const callbacks = [metricsCapture];
       
       const invokeOptions: any = { 
         signal: abortController.signal,
         callbacks
       };
-      
-      // Add temperature override if specified
-      if (options.temperature !== undefined) {
-        invokeOptions.temperature = options.temperature;
-      }
       
       const response = await structuredModel.invoke(
         [new HumanMessage(prompt)],

@@ -43,7 +43,7 @@ Choose your preferred AI provider based on your priorities:
 
 **Performance Notes**: Based on our testing with Anthropic and Google models, Gemini provides the fastest response times for interactive gameplay, while Claude models produce the highest quality narrative prose and character interactions. The tradeoff is speed vs. storytelling excellence.
 
-**Testing Framework**: We're actively developing comprehensive model testing. See our [integration test documentation](tests/integration/llm-player/README.md) for automated story and engine performance testing across different model configurations (work in progress).
+**Testing Framework**: We're actively developing comprehensive model testing. See our [development guide testing section](docs/DEVELOPMENT.md#running-tests) for automated story and engine performance testing across different model configurations.
 
 Use your own API keys and control your costs. Mix and match models for different purposes — use powerful models for story generation and cheaper ones for background tasks.
 
@@ -83,6 +83,19 @@ Players can type anything they want — "examine the keyhole," "break down the d
 - **Experimental Fiction**: Push the boundaries of what storytelling can be
 - **Personal Narratives**: Interactive memoirs, therapy tools, creative exercises
 
+## Known Issues
+
+### Action Classification Reliability
+
+The **ActionClassifier** component, which determines when to transition between scenes or trigger story endings, has some limitations:
+
+- **Model Dependency**: Classification accuracy varies significantly across AI models. Some models are more reliable at understanding transition conditions than others.
+- **Complex Conditions**: Stories with intricate logical conditions (like specific button sequences or multi-step puzzles) may not always trigger reliably.
+- **Robustness**: The classifier can occasionally misinterpret player actions or fail to recognize when transition conditions are met.
+
+**Current Status**: We're actively working on improving classification reliability through better prompt engineering and testing across different model configurations. See our [testing framework](docs/DEVELOPMENT.md#running-tests) for ongoing reliability assessments.
+
+**Workaround**: When authoring stories, prefer simpler, more explicit transition conditions over complex logical requirements. Test your stories across multiple AI models to ensure consistent behavior.
 
 ## Get Started Today
 

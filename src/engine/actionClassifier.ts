@@ -106,7 +106,7 @@ export class ActionClassifier {
       const result = this.convertToLegacyFormat(rawResult.data, context);
 
       // Log the complete classification input and output
-      console.log(`🎯 ActionClassifier Input:`);
+      console.log(`🎯 ActionClassifier Request (useCostModel: true, should be temperature 0.1):`);
       console.log('─'.repeat(80));
       console.log(prompt);
       console.log('─'.repeat(80));
@@ -212,7 +212,7 @@ Action: \`${context.playerAction}\`
 \`\`\`json
 {
   "result": "continue" | "T0" | "T1" | "T2" ...,
-  "reasoning": "Brief explanation"
+  "reasoning": "Brief explanation (1-2 sentences max)"
 }
 \`\`\``;
 
