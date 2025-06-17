@@ -1,28 +1,16 @@
-name: "Friday Night Rain - Reach Good Ending"
+name: "Friday Night Rain - Friendship Preserved Ending"
 storyFile: "examples/friday_night_rain.yaml"
 
 # Use profile references (recommended)
 engineProfile: "anthropic"
 playerProfile: "standard"
 
-# Legacy format still supported:
-# playerModel:
-#   provider: "anthropic"
-#   model: "claude-3-5-sonnet-latest"
-# engineModels:
-#   costModel:
-#     provider: "anthropic"
-#     model: "claude-3-5-haiku-latest"
-#   qualityModel:
-#     provider: "anthropic"
-#     model: "claude-3-5-sonnet-latest"
-
 # Goals for the player
 goals:
 - type: "reach_ending"
-  target: "connection"
+  target: "friendship_preserved"
   priority: "required"
-  description: "Both you and Alex leave the café together - foster a romantic connection"
+  description: "Acknowledge the moment but choose friendship - preserve the existing relationship without romance"
 
 # Test parameters
 maxTurns: 20

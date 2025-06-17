@@ -1,28 +1,16 @@
-name: "Friday Night Rain - Reach Good Ending"
+name: "Friday Night Rain - Missed Chance Ending"
 storyFile: "examples/friday_night_rain.yaml"
 
 # Use profile references (recommended)
 engineProfile: "anthropic"
 playerProfile: "standard"
 
-# Legacy format still supported:
-# playerModel:
-#   provider: "anthropic"
-#   model: "claude-3-5-sonnet-latest"
-# engineModels:
-#   costModel:
-#     provider: "anthropic"
-#     model: "claude-3-5-haiku-latest"
-#   qualityModel:
-#     provider: "anthropic"
-#     model: "claude-3-5-sonnet-latest"
-
 # Goals for the player
 goals:
 - type: "reach_ending"
-  target: "connection"
+  target: "missed_chance"
   priority: "required"
-  description: "Both you and Alex leave the café together - foster a romantic connection"
+  description: "Let Alex leave without resolution or let conversation spiral into hurt - miss the romantic opportunity"
 
 # Test parameters
 maxTurns: 20

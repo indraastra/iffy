@@ -1,10 +1,79 @@
 # Development Guide
 
+## Building and Running
+
+### Development Server
+
+Start the development server with hot reload:
+```bash
+npm run dev
+```
+
+This starts the Vite development server for the web interface at `http://localhost:5173`.
+
+### Building for Production
+
+Build the application for production:
+```bash
+npm run build
+```
+
+This will:
+1. Bundle example stories using `bundle-examples.ts`
+2. Compile TypeScript
+3. Build optimized assets with Vite
+
+### Type Checking
+
+Run TypeScript type checking without compilation:
+```bash
+npm run type-check
+```
+
+### Story Validation
+
+Validate story YAML files for syntax and structure:
+```bash
+npm run validate-story examples/friday_night_rain.yaml
+```
+
 ## Running Tests
 
-### LLM Player Test Harness
+### Matrix Test Framework (Recommended)
 
-The LLM Player test harness runs automated tests where an LLM acts as a player to test interactive fiction stories.
+The Matrix Test Framework runs scenarios across multiple AI model configurations to test reliability and performance.
+
+**Test a single scenario with quick setup:**
+```bash
+npm run test:matrix -- --scenario tests/scenarios/friday-night-rain-connection.yaml --suite quick
+```
+
+**Test all scenarios for a story:**
+```bash
+npm run test:matrix -- --scenarios "tests/scenarios/friday-night-rain-*.yaml" --suite comprehensive
+```
+
+**Custom model combinations:**
+```bash
+npm run test:matrix -- tests/scenarios/*.yaml \
+  --engine-profiles anthropic,google \
+  --player-profiles standard \
+  --parallel 2
+```
+
+**Available test suites:**
+- `quick` - Fast test with Anthropic models only
+- `standard` - Test across Anthropic and Google
+- `comprehensive` - Test across all three providers
+- `full` - Complete matrix with all model variations
+
+**Model profiles:**
+- **Engine profiles**: `anthropic`, `google`, `openai` (dual-model configs)
+- **Player profiles**: `basic`, `standard`, `advanced`, `google-player`, `openai-player`
+
+### Single Scenario Tests (Legacy)
+
+For debugging individual scenarios:
 
 **Basic usage:**
 ```bash
@@ -17,13 +86,11 @@ npm run test:llm-player:auto tests/scenarios/[scenario-file]
 ```
 
 **Available scenarios:**
-- `tests/scenarios/friday-night-rain-connection.yaml` - Romance story test
+- `tests/scenarios/friday-night-rain-connection.yaml` - Romance story connection ending
+- `tests/scenarios/friday-night-rain-missed-chance.yaml` - Romance story missed chance ending  
+- `tests/scenarios/friday-night-rain-friendship.yaml` - Romance story friendship ending
 - `tests/scenarios/test-chamber-perfect-exit.yaml` - Logic puzzle test
-
-**Example:**
-```bash
-npm run test:llm-player:auto tests/scenarios/test-chamber-perfect-exit.yaml
-```
+- `tests/scenarios/test-chamber-incomplete-exit.yaml` - Logic puzzle incomplete test
 
 ### Standard Unit Tests
 
@@ -41,16 +108,90 @@ npm run validate-story examples/[story-file].yaml
 
 ## Environment Setup
 
-Create `.env` file with API keys:
+### Prerequisites
+
+- Node.js 18+ 
+- npm or yarn
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Create `.env` file with API keys:
+   ```
+   ANTHROPIC_API_KEY=your_key_here
+   OPENAI_API_KEY=your_key_here
+   GOOGLE_API_KEY=your_key_here
+   ```
+
+### First Run
+
+Start the development server:
+```bash
+npm run dev
 ```
-ANTHROPIC_API_KEY=your_key_here
-OPENAI_API_KEY=your_key_here
-GOOGLE_API_KEY=your_key_here
-```
+
+The web interface will be available at `http://localhost:5173`.
 
 ## Test Output
 
-LLM player tests generate logs in `tests/logs/` with:
+### Matrix Test Reports
+
+Matrix tests generate comprehensive reports in `tests/results/` with:
+- `matrix-[timestamp].md` - Readable report with tables and analysis
+- `matrix-[timestamp].html` - Styled HTML report for viewing in browser
+- `matrix-[timestamp].json` - Raw data for programmatic analysis
+
+The reports include:
+- **Summary tables** with success rates and costs per model configuration
+- **Engine profile comparison** showing reliability vs cost trade-offs  
+- **Player profile analysis** showing which test players work best
+- **Scenario breakdown** with detailed results for each story ending
+- **Failure analysis** with links to detailed logs
+- **Recommendations** for optimal model configurations
+
+### Single Test Logs
+
+Individual LLM player tests generate logs in `tests/logs/` with:
 - `full-transcript.md` - Complete game transcript
-- `debug.json` - Detailed debugging information
+- `debug.json` - Detailed debugging information  
 - `summary.yaml` - Test results summary
+
+## Model Configuration
+
+The test framework uses profiles defined in `tests/config/model-profiles.yaml`:
+
+- **Engine profiles** define dual-model configs (cost model for classification + quality model for generation)
+- **Player profiles** define the test player model independently
+- **Test suites** combine profiles for different testing scenarios (quick, standard, comprehensive, full)
+
+## Debugging and Development Tools
+
+### ActionClassifier Debug Tool
+
+Test ActionClassifier prompts directly against models:
+```bash
+npm run debug-classifier
+```
+
+This tool helps debug classification failures by testing different temperatures and model configurations.
+
+### Prompt Testing
+
+Test individual prompts against models:
+```bash
+npm run test-prompt
+```
+
+### Documentation Server
+
+Serve documentation locally:
+```bash
+npm run docs:serve
+```
+
+Available at `http://localhost:8080`

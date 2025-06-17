@@ -1,19 +1,22 @@
 import { PlayerStrategy, PlayerContext } from './PlayerStrategy';
 import { ModelConfig } from '../core/types';
 import { MultiModelService } from '../../../../src/services/multiModelService';
+import { CostTracker } from '../utils/costTracker';
 import { z } from 'zod';
 
 const PlayerDecisionSchema = z.object({
-  thinking: z.string().describe('Your reasoning about which action best advances your goals'),
-  action: z.string().describe('The exact action you choose from the available options')
+  thinking: z.string().describe('Your reasoning about what to do next to advance your goals'),
+  action: z.string().describe('What you say or do - dialogue, actions, or thoughts that feel natural for this moment')
 });
 
 export class SimpleGoalStrategy implements PlayerStrategy {
   private modelService: MultiModelService;
   private modelConfig: ModelConfig;
+  private costTracker?: CostTracker;
 
-  constructor(modelConfig: ModelConfig) {
+  constructor(modelConfig: ModelConfig, costTracker?: CostTracker) {
     this.modelConfig = modelConfig;
+    this.costTracker = costTracker;
     this.modelService = new MultiModelService();
     
     // Configure the model service
@@ -22,6 +25,17 @@ export class SimpleGoalStrategy implements PlayerStrategy {
       model: modelConfig.model,
       apiKey: modelConfig.apiKey || process.env[`${modelConfig.provider.toUpperCase()}_API_KEY`] || ''
     });
+    
+    // Set up cost tracking if available
+    if (this.costTracker) {
+      this.modelService.setMetricsHandler((metrics) => {
+        this.costTracker!.recordPlayerUsage(
+          this.modelConfig,
+          metrics.promptTokens,
+          metrics.completionTokens
+        );
+      });
+    }
   }
 
   async decideAction(context: PlayerContext): Promise<{
@@ -55,7 +69,7 @@ export class SimpleGoalStrategy implements PlayerStrategy {
       console.error('Error getting player decision:', error);
       // Fallback to simple action
       return {
-        action: context.currentState.availableActions[0] || 'Continue',
+        action: 'Continue with the story',
         thinking: 'Error occurred, choosing default action'
       };
     }
@@ -84,7 +98,9 @@ IMPORTANT: Respond like a normal person would. Use simple, direct language. For 
 - Say "Hey, what's wrong?" instead of "I inquire about the source of your apparent distress"
 - Say "I press the red button" instead of "I deliberately engage with the crimson activation mechanism"
 
-Be concise and human. Keep your goals in mind but act naturally.`;
+Be concise and human. Keep your goals in mind but act naturally.
+
+Respond with what you would naturally say or do in this situation. You can express dialogue, actions, or thoughts - whatever feels most appropriate for the moment.`;
 
     return prompt;
   }

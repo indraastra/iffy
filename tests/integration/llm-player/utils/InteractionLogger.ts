@@ -1,6 +1,7 @@
 import { writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { InteractionLog, TestScenario, TestResult, GameState } from '../core/types';
+import { generateTimestamp } from './cliUtils';
 
 export class InteractionLogger {
   private logs: InteractionLog[] = [];
@@ -43,7 +44,7 @@ export class InteractionLogger {
 
   private async saveMarkdown(scenario: TestScenario, result: TestResult): Promise<void> {
     const lines: string[] = [
-      `# ${scenario.name} - Test Run ${new Date().toISOString()}`,
+      `# ${scenario.name} - Test Run ${generateTimestamp()}`,
       '',
       '## Configuration',
       `- Story: ${scenario.storyFile}`,
@@ -120,8 +121,8 @@ export class InteractionLogger {
       testRun: {
         id: `test-${Date.now()}`,
         scenario: scenario.name,
-        startTime: this.logs[0]?.timestamp || new Date().toISOString(),
-        endTime: new Date().toISOString(),
+        startTime: this.logs[0]?.timestamp || generateTimestamp(),
+        endTime: generateTimestamp(),
         config: {
           storyFile: scenario.storyFile,
           playerModel: scenario.playerModel,
@@ -144,7 +145,7 @@ export class InteractionLogger {
   private async saveSummary(scenario: TestScenario, result: TestResult): Promise<void> {
     const summary = {
       testName: scenario.name,
-      timestamp: new Date().toISOString(),
+      timestamp: generateTimestamp(),
       success: result.success,
       turnsPlayed: result.turnsPlayed,
       duration: `${(result.duration / 1000).toFixed(2)}s`,

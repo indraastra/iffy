@@ -18,6 +18,7 @@
     "test:ui": "vitest --ui",
     "test:llm-player": "tsx tests/integration/llm-player/run-test.ts",
     "test:llm-player:auto": "tsx tests/integration/llm-player/run-test.ts --auto",
+    "test:matrix": "tsx tests/integration/llm-player/run-matrix.ts",
     "docs:serve": "npx http-server docs -p 8080 -o",
     "docs:dev": "echo 'Documentation available at: http://localhost:8080' && npm run docs:serve"
   },
@@ -36,6 +37,7 @@
     "@langchain/anthropic": "^0.3.22",
     "@langchain/google-genai": "^0.2.11",
     "@langchain/openai": "^0.5.13",
+    "glob": "^11.0.3",
     "js-yaml": "^4.1.0",
     "langchain": "^0.3.28",
     "zod": "^3.25.56"

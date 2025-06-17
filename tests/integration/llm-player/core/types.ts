@@ -93,4 +93,13 @@ export interface TestResult {
   logPath?: string;
   duration: number;
   assessment?: EndingAssessment;
+  costs?: {
+    engine: {
+      classification: number;
+      generation: number;
+      total: number;
+    };
+    player: number;
+    total: number;
+  };
 }
