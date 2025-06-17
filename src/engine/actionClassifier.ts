@@ -26,6 +26,11 @@ export interface ClassificationContext {
     variations: EndingVariation[];
   };
   recentMemories: string[];
+  recentInteractions?: Array<{
+    playerInput: string;
+    llmResponse: string;
+  }>;
+  activeMemory?: string[];
   currentState: {
     sceneId: string;
     isEnded?: boolean;
@@ -46,10 +51,8 @@ interface ValidationIssue {
 }
 
 const ClassificationResultSchema = z.object({
-  mode: z.enum(['action', 'sceneTransition', 'ending']),
-  targetId: z.string().optional(),
-  reasoning: z.string(),
-  confidence: z.number().min(0).max(1)
+  result: z.string(), // "continue" or "T0", "T1", etc.
+  reasoning: z.string()
 });
 
 export class ActionClassifier {
@@ -57,8 +60,7 @@ export class ActionClassifier {
   private debugPane?: any;
   
   constructor(
-    private multiModelService: MultiModelService,
-    private options: { debugMode?: boolean } = {}
+    private multiModelService: MultiModelService
   ) {}
 
   /**
@@ -91,14 +93,8 @@ export class ActionClassifier {
     try {
       const prompt = this.buildClassifierPrompt(context, previousErrors);
       
-      if (this.options.debugMode) {
-        console.log(`🎯 ActionClassifier Prompt (attempt ${attemptNumber + 1}):`);
-        console.log('─'.repeat(80));
-        console.log(prompt);
-        console.log('─'.repeat(80));
-      }
 
-      const result = await this.multiModelService.makeStructuredRequest(
+      const rawResult = await this.multiModelService.makeStructuredRequest(
         prompt,
         ClassificationResultSchema,
         { useCostModel: true, temperature: 0.1 } // Low temperature for deterministic classification
@@ -106,15 +102,25 @@ export class ActionClassifier {
 
       const latencyMs = performance.now() - startTime;
 
-      // Log the classification result with reasoning
-      console.log(`🎯 ActionClassifier Result:`);
-      console.log(`   Mode: ${result.data.mode}${result.data.targetId ? ` → ${result.data.targetId}` : ''}`);
-      console.log(`   Confidence: ${(result.data.confidence * 100).toFixed(0)}%`);
-      console.log(`   Reasoning: ${result.data.reasoning}`);
+      // Convert the new format to the existing ClassificationResult format
+      const result = this.convertToLegacyFormat(rawResult.data, context);
+
+      // Log the complete classification input and output
+      console.log(`🎯 ActionClassifier Input:`);
+      console.log('─'.repeat(80));
+      console.log(prompt);
+      console.log('─'.repeat(80));
+      console.log(`🎯 ActionClassifier Raw Output:`);
+      console.log(`   Result: ${rawResult.data.result}`);
+      console.log(`   Reasoning: ${rawResult.data.reasoning}`);
+      console.log(`🎯 ActionClassifier Converted Result:`);
+      console.log(`   Mode: ${result.mode}${result.targetId ? ` → ${result.targetId}` : ''}`);
+      console.log(`   Confidence: ${(result.confidence * 100).toFixed(0)}%`);
+      console.log(`   Reasoning: ${result.reasoning}`);
 
       // Track metrics for classifier calls
-      if ((result as any).usage) {
-        const usage = (result as any).usage;
+      if ((rawResult as any).usage) {
+        const usage = (rawResult as any).usage;
         console.log(`   Tokens: ${usage.input_tokens}→${usage.output_tokens}, Latency: ${latencyMs.toFixed(0)}ms`);
 
         // Log to debug pane if available
@@ -125,12 +131,12 @@ export class ActionClassifier {
               tokenCount: usage.input_tokens 
             },
             response: { 
-              narrative: `Mode: ${result.data.mode}${result.data.targetId ? ` → ${result.data.targetId}` : ''}`,
-              reasoning: result.data.reasoning,
-              signals: { mode: result.data.mode, targetId: result.data.targetId },
+              narrative: `Mode: ${result.mode}${result.targetId ? ` → ${result.targetId}` : ''}`,
+              reasoning: result.reasoning,
+              signals: { mode: result.mode, targetId: result.targetId },
               memories: [], // Classifier doesn't generate memories
               tokenCount: usage.output_tokens,
-              importance: Math.round(result.data.confidence * 10) // Convert confidence to importance scale
+              importance: Math.round(result.confidence * 10) // Convert confidence to importance scale
             },
             context: {
               scene: context.currentState.sceneId,
@@ -142,8 +148,8 @@ export class ActionClassifier {
         }
       }
 
-      // Validate the classification result
-      const validationIssues = this.validateClassificationResult(result.data, context);
+      // Validate the converted classification result
+      const validationIssues = this.validateClassificationResult(result, context);
       
       if (validationIssues.length > 0) {
         if (attemptNumber < ActionClassifier.MAX_RETRIES - 1) {
@@ -155,11 +161,8 @@ export class ActionClassifier {
         }
       }
 
-      if (this.options.debugMode) {
-        console.log(`✅ ActionClassifier success on attempt ${attemptNumber + 1}:`, result.data);
-      }
 
-      return result.data;
+      return result;
     } catch (error) {
       const latencyMs = performance.now() - startTime;
       console.warn(`🔍 ActionClassifier error after ${latencyMs.toFixed(0)}ms:`, error);
@@ -182,91 +185,165 @@ export class ActionClassifier {
   }
 
   private buildClassifierPrompt(context: ClassificationContext, previousErrors: ValidationIssue[] = []): string {
-    let prompt = `**ROLE:** You are a meticulous logic engine for an interactive fiction game. Your task is to evaluate the player's action against the current game state and the requirements for all possible outcomes. You must follow the evaluation process exactly.
+    // Build context sections
+    const transitions = this.buildTransitionsSection(context);
+    const memoriesSection = this.buildMemoriesSection(context);
+    
+    let prompt = `**TASK:** Evaluate player action against current state and determine next step.
 
-**PLAYER INPUT:**
-* **Action:** \`${context.playerAction}\`
+**STATE:**
+Scene: ${context.currentState.sceneId}
 
-**GAME STATE:**
-* **Scene Description:** ${context.currentState.sceneId}
-* **Current State Facts:**${context.recentMemories.length > 0 ? context.recentMemories.slice(0, 5).map(memory => `\n    * \`${memory}\``).join('') : '\n    * None'}
+${memoriesSection}
 
-**POSSIBLE OUTCOMES:**
-${this.buildSceneTransitionSection(context)}
-${this.buildEndingSection(context)}`;
+**TRANSITIONS:**
+${transitions}
+
+**INPUT:**
+Action: \`${context.playerAction}\`
+
+**EVALUATION RULES:**
+1. Check each transition condition against the current action and state
+2. A condition is met ONLY if ALL requirements are explicitly satisfied
+3. Partial or implied satisfaction = NOT MET
+4. If no conditions are met, return "continue"
+
+**RESPONSE:**
+\`\`\`json
+{
+  "result": "continue" | "T0" | "T1" | "T2" ...,
+  "reasoning": "Brief explanation"
+}
+\`\`\``;
 
     // Add retry context if this is a retry attempt
     if (previousErrors.length > 0) {
-      prompt += `\n\n**PREVIOUS ERRORS TO FIX:**`;
+      prompt += `\n\n**RETRY NOTES:**`;
       previousErrors.forEach(error => {
-        prompt += `\n* ${error.message}`;
+        prompt += `\n- ${error.message}`;
       });
-      
-      const invalidScenes = previousErrors.filter(e => e.type === 'invalid_scene');
-      const invalidEndings = previousErrors.filter(e => e.type === 'invalid_ending');
-      
-      if (invalidScenes.length > 0) {
-        prompt += `\n* Valid scene IDs: ${context.currentSceneTransitions.map(t => t.id).join(', ')}`;
-      }
-      if (invalidEndings.length > 0) {
-        prompt += `\n* Valid ending IDs: ${context.availableEndings?.variations.map(v => v.id).join(', ') || 'none'}`;
-      }
     }
-
-    prompt += `\n\n**EVALUATION & RESPONSE INSTRUCTIONS:**
-1. **Analyze the Input:** First, look at the player's \`Action\` and the \`Current State Facts\`.
-2. **Evaluate Endings:** Evaluate the \`Conditions\` for each ending one by one, in the order they are listed.
-3. **Think Step-by-Step:** For each ending, verbalize your reasoning. Check if the player's \`Action\` matches conditions. Then, check if the \`Current State Facts\` satisfy the conditions.
-4. **Select the First Match:** The correct outcome is the *first one* whose conditions are all met.
-5. **Default to Action:** If no scene transitions or endings have their conditions met, the mode must be \`action\`.
-6. **Format Response:** Provide your final answer in the specified JSON format. The \`reasoning\` field should be a brief one-sentence explanation.
-
-**JSON RESPONSE FORMAT:**
-\`\`\`json
-{
-  "mode": "action|sceneTransition|ending",
-  "targetId": "scene/ending ID if applicable",
-  "reasoning": "Step-by-step explanation of which outcome was selected and why.",
-  "confidence": 0.99
-}
-\`\`\``;
 
     return prompt;
   }
 
-  private buildSceneTransitionSection(context: ClassificationContext): string {
-    if (!context.currentSceneTransitions || context.currentSceneTransitions.length === 0) {
-      return '* **Scene Transitions:** None';
-    }
-
-    const transitions = context.currentSceneTransitions
-      .map(t => `    * **ID:** \`${t.id}\`\n        * **Conditions:** ${t.condition}`)
-      .join('\n');
-
-    return `* **Scene Transitions:**\n${transitions}`;
-  }
-
-  private buildEndingSection(context: ClassificationContext): string {
-    if (!context.availableEndings) {
-      return '* **Endings:** None';
-    }
-
-    let section = '* **Endings:**';
+  private buildMemoriesSection(context: ClassificationContext): string {
+    const sections: string[] = [];
     
-    if (context.availableEndings.globalConditions.length > 0) {
-      section += `\n    * **Global requirements:** ${context.availableEndings.globalConditions.join(' AND ')}`;
+    // Recent dialogue (most important for classification)
+    if (context.recentInteractions && context.recentInteractions.length > 0) {
+      const recentDialogue = context.recentInteractions
+        .slice(-3) // Last 3 interactions for context
+        .flatMap(interaction => [
+          `Player: ${interaction.playerInput}`,
+          `Response: ${interaction.llmResponse}`
+        ]);
+      sections.push(`**Recent Dialogue:**\n${recentDialogue.join('\n')}`);
     }
-
-    const variations = context.availableEndings.variations
-      .map(v => `    * **ID:** \`${v.id}\`\n        * **Conditions:** ${v.conditions.join(' AND ')}`)
-      .join('\n');
-
-    if (variations) {
-      section += `\n${variations}`;
+    
+    // Key memories (background context) - include all since they're compact
+    if (context.activeMemory && context.activeMemory.length > 0) {
+      const memories = context.activeMemory
+        .map(memory => `- ${memory}`)
+        .join('\n');
+      sections.push(`**Memories:**\n${memories}`);
     }
-
-    return section;
+    
+    // Fallback to recentMemories if new fields not available (backward compatibility)
+    if (sections.length === 0 && context.recentMemories && context.recentMemories.length > 0) {
+      const memories = context.recentMemories
+        .map(memory => `- ${memory}`)
+        .join('\n');
+      sections.push(`**Memories:**\n${memories}`);
+    }
+    
+    return sections.length > 0 ? sections.join('\n\n') : '**Memories:**\n- None';
   }
+
+  private convertToLegacyFormat(rawResult: { result: string; reasoning: string }, context: ClassificationContext): ClassificationResult {
+    // Handle "continue" case
+    if (rawResult.result === 'continue') {
+      return {
+        mode: 'action',
+        reasoning: rawResult.reasoning,
+        confidence: 0.9
+      };
+    }
+    
+    // Handle "T0", "T1", etc. format
+    const transitionMatch = rawResult.result.match(/^T(\d+)$/);
+    if (transitionMatch) {
+      const transitionIndex = parseInt(transitionMatch[1], 10);
+      
+      // Build the combined transitions list (same as in buildTransitionsSection)
+      const allTransitions: Array<{ id: string; type: 'scene' | 'ending' }> = [];
+      
+      // Add scene transitions first
+      if (context.currentSceneTransitions) {
+        context.currentSceneTransitions.forEach(t => {
+          allTransitions.push({ id: t.id, type: 'scene' });
+        });
+      }
+      
+      // Add ending transitions
+      if (context.availableEndings) {
+        context.availableEndings.variations.forEach(e => {
+          allTransitions.push({ id: e.id, type: 'ending' });
+        });
+      }
+      
+      // Find the transition at the specified index
+      if (transitionIndex < allTransitions.length) {
+        const transition = allTransitions[transitionIndex];
+        return {
+          mode: transition.type === 'scene' ? 'sceneTransition' : 'ending',
+          targetId: transition.id,
+          reasoning: rawResult.reasoning,
+          confidence: 0.95
+        };
+      }
+    }
+    
+    // Fallback for invalid format
+    console.warn(`ActionClassifier: Invalid result format "${rawResult.result}", falling back to action mode`);
+    return {
+      mode: 'action',
+      reasoning: `Invalid result format "${rawResult.result}": ${rawResult.reasoning}`,
+      confidence: 0.1
+    };
+  }
+
+  private buildTransitionsSection(context: ClassificationContext): string {
+    const allTransitions: Array<{ id: string; condition: string; type: 'scene' | 'ending' }> = [];
+    
+    // Add scene transitions
+    if (context.currentSceneTransitions) {
+      context.currentSceneTransitions.forEach(t => {
+        allTransitions.push({ id: t.id, condition: t.condition, type: 'scene' });
+      });
+    }
+    
+    // Add ending transitions
+    if (context.availableEndings) {
+      context.availableEndings.variations.forEach(e => {
+        const conditions = [...context.availableEndings!.globalConditions, ...e.conditions];
+        allTransitions.push({ 
+          id: e.id, 
+          condition: conditions.join(' AND '), 
+          type: 'ending' 
+        });
+      });
+    }
+    
+    if (allTransitions.length === 0) {
+      return '- None';
+    }
+    
+    return allTransitions
+      .map((t, index) => `- T${index}: ${t.condition}`)
+      .join('\n');
+  }
+
 
   private validateClassificationResult(result: ClassificationResult, context: ClassificationContext): ValidationIssue[] {
     const issues: ValidationIssue[] = [];

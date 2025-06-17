@@ -35,10 +35,15 @@ Define your world with simple YAML sketches. The AI handles natural language pro
 No multiple-choice menus or rigid commands. Players type naturally and the system responds intelligently while respecting your story's boundaries and vision.
 
 ### Bring Your Own Model
-Choose your preferred AI provider:
-- **Anthropic** (Claude) - Recommended for best results
-- **OpenAI** (GPT-4) - Widely available option
-- **Google** (Gemini) - Fast and cost-effective
+Choose your preferred AI provider based on your priorities:
+
+- **Anthropic** (Claude) - **Best narrative quality** with excellent creative writing and character development. Slower response times but superior storytelling.
+- **Google** (Gemini) - **Fastest performance** with good quality and cost-effectiveness. Great for responsive gameplay.
+- **OpenAI** (GPT-4) - Supported but not extensively tested yet.
+
+**Performance Notes**: Based on our testing with Anthropic and Google models, Gemini provides the fastest response times for interactive gameplay, while Claude models produce the highest quality narrative prose and character interactions. The tradeoff is speed vs. storytelling excellence.
+
+**Testing Framework**: We're actively developing comprehensive model testing. See our [integration test documentation](tests/integration/llm-player/README.md) for automated story and engine performance testing across different model configurations (work in progress).
 
 Use your own API keys and control your costs. Mix and match models for different purposes — use powerful models for story generation and cheaper ones for background tasks.
 

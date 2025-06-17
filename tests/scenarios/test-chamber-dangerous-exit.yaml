@@ -1,4 +1,4 @@
-name: "Security Terminal - Access Denied"
+name: "Security Terminal - Emergency Access"
 storyFile: "examples/test_conditions.yaml"
 
 # Player configuration
@@ -11,12 +11,12 @@ engineModel:
   provider: "anthropic"
   model: "claude-3-5-sonnet-latest"
 
-# Goals for the player - this should result in access denied
+# Goals for the player - should achieve emergency access
 goals:
 - type: "reach_ending"
-  target: "access_denied"
+  target: "emergency_access"
   priority: "required"
-  description: "Press some buttons but not the correct sequence (avoiding both perfect and emergency cases), then press CONFIRM (access should be denied)"
+  description: "Press only button 1 (red), then press CONFIRM to trigger emergency override"
 
 # Test parameters
 maxTurns: 10

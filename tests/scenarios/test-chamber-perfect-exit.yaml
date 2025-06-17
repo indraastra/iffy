@@ -1,4 +1,4 @@
-name: "Test Chamber - Perfect Exit"
+name: "Security Terminal - Perfect Access"
 storyFile: "examples/test_conditions.yaml"
 
 # Player configuration - using a smart model for logical reasoning
@@ -14,9 +14,9 @@ engineModel:
 # Goals for the player
 goals:
 - type: "reach_ending"
-  target: "perfect_exit"
+  target: "perfect_access"
   priority: "required"
-  description: "Press all three buttons (red, blue, green) and then exit through the door"
+  description: "Press all three buttons (1, 2, 3) and then press CONFIRM to gain full access"
 
 # Test parameters
 maxTurns: 15
