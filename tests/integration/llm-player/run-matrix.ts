@@ -43,7 +43,7 @@ async function main() {
 
     // Generate reports
     const timestamp = generateTimestamp();
-    const resultsDir = config.resultsDir || './tests/results';
+    const resultsDir = config.resultsDir || './reports';
     const reportBasePath = join(resultsDir, `matrix-${timestamp}`);
 
     const reporter = new MatrixReporter();
@@ -148,7 +148,7 @@ Options:
   --player-profiles <names>   Comma-separated player profiles to test
   --parallel <number>         Number of parallel tests (default: 1)
   --output-format <format>    Output format: summary, detailed, json (default: summary)
-  --results-dir <path>        Directory for results (default: ./tests/results)
+  --results-dir <path>        Directory for results (default: ./reports)
   --profiles-path <path>      Path to profiles config (default: tests/config/model-profiles.yaml)
   --help, -h                  Show this help
 
