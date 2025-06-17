@@ -3,11 +3,14 @@ import { TestRunner } from './core/TestRunner';
 import { InteractionLogger } from './utils/InteractionLogger';
 import { ConsoleTestObserver } from './observers/TestObserver';
 import { loadScenario } from './utils/scenarioLoader';
+import { TestScenario } from './core/matrix-types';
+import { loadScenario as loadMatrixScenario, expandTestCombination } from './utils/matrixScenarioLoader';
+import { loadProfiles } from './utils/profileLoader';
 import { resolve, join } from 'node:path';
-import { config } from 'dotenv';
+import { initializeCLI, generateTimestamp, exitWithResult, formatDuration } from './utils/cliUtils';
 
-// Load environment variables from .env file
-config();
+// Initialize CLI environment
+initializeCLI();
 
 async function main() {
   const args = process.argv.slice(2);
@@ -42,23 +45,38 @@ async function main() {
   
   try {
     console.log(`📋 Loading scenario: ${scenarioPath}`);
-    const scenario = await loadScenario(scenarioPath);
+    
+    // Try to load as matrix scenario first (supports profiles)
+    let scenario: TestScenario;
+    try {
+      const matrixScenario = await loadMatrixScenario(scenarioPath);
+      if (matrixScenario.engineProfile && matrixScenario.playerProfile) {
+        // This is a profile-based scenario, expand it
+        const profiles = await loadProfiles();
+        const combination = expandTestCombination(matrixScenario, profiles);
+        scenario = {
+          ...combination.scenario,
+          engineModels: combination.engineModels,
+          playerModel: combination.playerModel
+        };
+      } else {
+        // Legacy format, use as-is
+        scenario = matrixScenario;
+      }
+    } catch (error) {
+      // Fallback to legacy loader
+      scenario = await loadScenario(scenarioPath);
+    }
     
     // Override interactive mode if --auto flag is used
     if (autoMode) {
       console.log('🤖 Running in auto mode (non-interactive)');
     }
     
-    // Create log directory with timestamp (local time)
-    const now = new Date();
-    const timestamp = now.getFullYear() + '-' +
-      String(now.getMonth() + 1).padStart(2, '0') + '-' +
-      String(now.getDate()).padStart(2, '0') + 'T' +
-      String(now.getHours()).padStart(2, '0') + '-' +
-      String(now.getMinutes()).padStart(2, '0') + '-' +
-      String(now.getSeconds()).padStart(2, '0');
+    // Create log directory with timestamp
+    const timestamp = generateTimestamp();
     const logDir = join(
-      scenario.logging?.logDirectory || './tests/logs',
+      scenario.logging?.logDirectory || './reports',
       `${timestamp}-${scenario.name.toLowerCase().replace(/\s+/g, '-')}`
     );
 
@@ -69,23 +87,32 @@ async function main() {
     });
     observer.setScenario(scenario); // Set scenario after auto mode modification
     
+    // Create logger if needed
+    const logger = scenario.logging?.saveTranscript || scenario.logging?.saveDebugInfo
+      ? new InteractionLogger({
+          logDir,
+          formats: [
+            ...(scenario.logging.saveTranscript ? ['markdown' as const] : []),
+            ...(scenario.logging.saveDebugInfo ? ['json' as const, 'summary' as const] : [])
+          ]
+        })
+      : undefined;
+    
     const runner = new TestRunner({
       scenario,
       observer,
       autoMode, // Pass the auto mode flag directly
-      logger: scenario.logging?.saveTranscript || scenario.logging?.saveDebugInfo
-        ? new InteractionLogger({
-            logDir,
-            formats: [
-              ...(scenario.logging.saveTranscript ? ['markdown' as const] : []),
-              ...(scenario.logging.saveDebugInfo ? ['json' as const, 'summary' as const] : [])
-            ]
-          })
-        : undefined
+      logger
     });
 
     console.log(`🎮 Starting test: ${scenario.name}`);
     console.log(`📝 Story file: ${scenario.storyFile}`);
+    
+    // Show model configuration
+    if (scenario.engineModels?.qualityModel && scenario.engineModels?.costModel) {
+      console.log(`🏗️  Engine: ${scenario.engineModels.qualityModel.model} (generation), ${scenario.engineModels.costModel.model} (classification)`);
+    }
+    
     console.log(`🤖 Player model: ${scenario.playerModel?.model || 'default'}`);
     console.log(`🎯 Goals: ${scenario.goals.map(g => `${g.type}:${g.target}`).join(', ')}`);
     console.log('');
@@ -94,8 +121,14 @@ async function main() {
     
     console.log('\n' + '='.repeat(60));
     console.log(`📊 Test Result: ${result.success ? '✅ PASSED' : '❌ FAILED'}`);
-    console.log(`⏱️  Duration: ${(result.duration / 1000).toFixed(2)}s`);
+    console.log(`⏱️  Duration: ${formatDuration(result.duration)}`);
     console.log(`🎮 Turns played: ${result.turnsPlayed}`);
+    
+    if (result.costs) {
+      console.log(`💰 Total Cost: $${result.costs.total.toFixed(4)}`);
+      console.log(`   - Engine: $${result.costs.engine.total.toFixed(4)} (Classification: $${result.costs.engine.classification.toFixed(4)}, Generation: $${result.costs.engine.generation.toFixed(4)})`);
+      console.log(`   - Player: $${result.costs.player.toFixed(4)}`);
+    }
     
     if (result.logPath) {
       console.log(`📁 Logs saved to: ${result.logPath}`);
@@ -127,11 +160,10 @@ async function main() {
       }
     }
     
-    process.exit(result.success ? 0 : 1);
+    exitWithResult(result.success, result.errorMessage);
     
   } catch (error) {
-    console.error('❌ Test runner failed:', error);
-    process.exit(1);
+    exitWithResult(false, `Test runner failed: ${error instanceof Error ? error.message : error}`);
   }
 }
 

@@ -15,6 +15,9 @@ import {
 import { EndingAssessor } from '../assessors/EndingAssessor';
 import { readFile } from 'node:fs/promises';
 import { basename } from 'node:path';
+import { configureMultiModelService, preparePlayerModelConfig, validateTestConfiguration, TestConfiguration } from '../utils/modelConfig';
+import { CostTracker } from '../utils/costTracker';
+import { generateTimestamp } from '../utils/cliUtils';
 
 export class TestRunner {
   private scenario: TestScenario;
@@ -24,6 +27,7 @@ export class TestRunner {
   private observer: TestObserver;
   private goalStatuses: GoalStatus[];
   private skipPauses: boolean = false;
+  private costTracker: CostTracker = new CostTracker();
 
   constructor(options: {
     scenario: TestScenario;
@@ -80,7 +84,8 @@ export class TestRunner {
       
       if (gameHistory.length > 0 && story) {
         try {
-          const assessor = new EndingAssessor(this.scenario.playerModel);
+          const playerModelConfig = preparePlayerModelConfig(this.scenario.playerModel!);
+          const assessor = new EndingAssessor(playerModelConfig);
           assessment = await assessor.assessEnding(
             story,
             gameHistory,
@@ -114,8 +119,9 @@ export class TestRunner {
       },
       errorMessage,
       duration: Date.now() - startTime,
-      logPath: this.logger ? basename(this.logger['logDir']) : undefined,
-      assessment
+      logPath: this.logger ? this.logger['logDir'] : undefined,
+      assessment,
+      costs: this.costTracker.getCostBreakdown()
     };
 
     // Save logs
@@ -137,14 +143,47 @@ export class TestRunner {
 
     // Initialize game engine
     const modelService = new MultiModelService();
-    if (this.scenario.engineModel) {
-      // Configure model service with engine model
-      modelService.setConfig({
-        provider: this.scenario.engineModel.provider,
-        model: this.scenario.engineModel.model,
-        apiKey: this.scenario.engineModel.apiKey || process.env[`${this.scenario.engineModel.provider.toUpperCase()}_API_KEY`] || ''
-      });
-    }
+    
+    // Convert scenario to test configuration and validate
+    const testConfig: TestConfiguration = {
+      engineModels: (this.scenario as any).engineModels,
+      engineModel: this.scenario.engineModel,
+      playerModel: this.scenario.playerModel!
+    };
+    
+    // Validate configuration before proceeding
+    validateTestConfiguration(testConfig);
+    
+    // Configure the model service
+    configureMultiModelService(modelService, testConfig);
+    
+    // Set up metrics tracking for cost calculation
+    modelService.setMetricsHandler((metrics) => {
+      // Track engine usage - we need to determine if this is cost or quality model
+      if (testConfig.engineModels) {
+        // For dual-model setup, we'll need to check which model is being used
+        if (metrics.model === testConfig.engineModels.costModel.model) {
+          this.costTracker.recordEngineCostUsage(
+            testConfig.engineModels.costModel,
+            metrics.promptTokens,
+            metrics.completionTokens
+          );
+        } else if (metrics.model === testConfig.engineModels.qualityModel.model) {
+          this.costTracker.recordEngineQualityUsage(
+            testConfig.engineModels.qualityModel,
+            metrics.promptTokens,
+            metrics.completionTokens
+          );
+        }
+      } else if (testConfig.engineModel) {
+        // Legacy single model - treat as quality model
+        this.costTracker.recordEngineQualityUsage(
+          testConfig.engineModel,
+          metrics.promptTokens,
+          metrics.completionTokens
+        );
+      }
+    });
     
     // Read and parse story file
     const storyContent = await readFile(this.scenario.storyFile, 'utf-8');
@@ -176,9 +215,11 @@ export class TestRunner {
     }
 
     // Initialize player
+    const playerModelConfig = preparePlayerModelConfig(this.scenario.playerModel!);
     this.player = new LLMPlayer({
       goals: this.scenario.goals,
-      modelConfig: this.scenario.playerModel
+      modelConfig: playerModelConfig,
+      costTracker: this.costTracker // Pass cost tracker to player
     });
   }
 
@@ -222,7 +263,7 @@ export class TestRunner {
       // Log interaction
       const log: InteractionLog = {
         turnNumber: turn,
-        timestamp: new Date().toISOString(),
+        timestamp: generateTimestamp(),
         gameState,
         player: {
           thinking: playerDecision.thinking,
@@ -270,131 +311,25 @@ export class TestRunner {
     
     // Get the current scene content from the latest narrative
     let visibleText = '';
-    let availableActions: string[] = [];
     
     // Get the last interaction's response if any
     const interactions = engineState.interactions || [];
     if (interactions.length > 0) {
       const lastInteraction = interactions[interactions.length - 1];
       visibleText = lastInteraction.narrative || '';
-      
-      // Extract actions from the narrative if they're embedded
-      availableActions = this.extractActionsFromNarrative(visibleText);
     } else if (currentScene) {
       // No interactions yet, use scene description or sketch
       visibleText = currentScene.description || currentScene.sketch || '';
       console.log('🎭 Using scene content for initial state:', visibleText?.substring(0, 100) + '...');
     }
-    
-    // ImpressionistEngine uses free-form input, not predefined actions
-    if (availableActions.length === 0) {
-      availableActions = ['[Free-form response - express thoughts, dialogue, or actions naturally]'];
-    }
 
     return {
       currentScene: engineState.currentScene || 'unknown',
-      availableActions,
+      availableActions: [], // Not used by ImpressionistEngine
       visibleText,
       inventory: [], // ImpressionistEngine doesn't track inventory directly
       flags: {} // ImpressionistEngine doesn't use flags
     };
-  }
-  
-  private extractActionsFromNarrative(narrative: string): string[] {
-    // Look for common patterns that indicate available actions in the narrative
-    const actions: string[] = [];
-    
-    // Pattern 1: [What do you do?] or [What crosses your mind?]
-    const questionMatch = narrative.match(/\[([^\]]+\?)\]/g);
-    if (questionMatch) {
-      // Scene is asking for open input, provide contextual suggestions
-      return this.generateContextualActionsFromPrompt(narrative);
-    }
-    
-    // Pattern 2: Bulleted lists or numbered options
-    const lines = narrative.split('\n');
-    for (const line of lines) {
-      const bulletMatch = line.match(/^[•\-*]\s+(.+)/);
-      const numberMatch = line.match(/^\d+\.\s+(.+)/);
-      if (bulletMatch) {
-        actions.push(bulletMatch[1].trim());
-      } else if (numberMatch) {
-        actions.push(numberMatch[1].trim());
-      }
-    }
-    
-    return actions;
-  }
-  
-  private generateContextualActionsFromPrompt(narrative: string): string[] {
-    // Based on the narrative content, suggest relevant actions
-    const actions: string[] = [];
-    
-    const lowerNarrative = narrative.toLowerCase();
-    
-    // Check for specific contexts
-    if (lowerNarrative.includes('alex')) {
-      actions.push('Talk to Alex');
-      actions.push('Study Alex\'s expression');
-      actions.push('Ask Alex what\'s on their mind');
-    }
-    
-    if (lowerNarrative.includes('coffee') || lowerNarrative.includes('mug')) {
-      actions.push('Take a sip of coffee');
-      actions.push('Order another drink');
-    }
-    
-    if (lowerNarrative.includes('rain') || lowerNarrative.includes('window')) {
-      actions.push('Look out the window');
-      actions.push('Comment on the weather');
-    }
-    
-    if (lowerNarrative.includes('silence') || lowerNarrative.includes('quiet')) {
-      actions.push('Break the silence');
-      actions.push('Wait and observe');
-    }
-    
-    // Always provide some general options
-    if (actions.length === 0) {
-      actions.push('Look around the café');
-      actions.push('Say something to break the tension');
-      actions.push('Wait and see what happens');
-    }
-    
-    return actions;
-  }
-  
-  private generateContextualActions(scene: any, story: any): string[] {
-    const actions: string[] = [];
-    
-    // Add navigation options from scene transitions
-    if (scene?.leads_to) {
-      Object.entries(scene.leads_to).forEach(([target, description]) => {
-        if (typeof description === 'string') {
-          actions.push(description);
-        } else if (typeof description === 'object' && (description as any).description) {
-          actions.push((description as any).description);
-        }
-      });
-    }
-    
-    // Add character interactions if in same location
-    if (story?.world?.characters && scene?.location) {
-      Object.entries(story.world.characters).forEach(([charId, char]: [string, any]) => {
-        if (char.found_in === scene.location || char.location === scene.location) {
-          actions.push(`Talk to ${char.name || charId}`);
-        }
-      });
-    }
-    
-    // Fallback actions
-    if (actions.length === 0) {
-      actions.push('Look around');
-      actions.push('Examine your surroundings');
-      actions.push('Think about what to do next');
-    }
-    
-    return actions;
   }
   
 

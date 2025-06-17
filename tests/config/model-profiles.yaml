@@ -1,0 +1,83 @@
+# Model profiles configuration for test matrix
+# Engine profiles define the dual-model configuration used by the engine
+# Player profiles define the model used by the test player
+
+engineProfiles:
+  anthropic:
+    costModel:
+      # Used for ActionClassifier (DEFAULT_COST_MODELS)
+      provider: "anthropic"
+      model: "claude-3-5-haiku-latest"
+    qualityModel:
+      # Used for narrative generation (DEFAULT_MODELS)
+      provider: "anthropic"
+      model: "claude-3-5-sonnet-latest"
+    description: "Default Anthropic configuration"
+
+  google:
+    costModel:
+      provider: "google"
+      model: "gemini-2.0-flash-lite"
+    qualityModel:
+      provider: "google"
+      model: "gemini-2.0-flash"
+    description: "Default Google configuration"
+
+  openai:
+    costModel:
+      provider: "openai"
+      model: "gpt-4o-mini"
+    qualityModel:
+      provider: "openai"
+      model: "gpt-4o"
+    description: "Default OpenAI configuration"
+
+# Test player profiles - these are independent of engine configuration
+playerProfiles:
+  basic:
+    provider: "anthropic"
+    model: "claude-3-5-haiku-latest"
+    description: "Basic player for quick tests"
+
+  standard:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
+    description: "Standard player with good reasoning"
+
+  advanced:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
+    temperature: 0.7
+    description: "More creative player for edge case discovery"
+
+  google-player:
+    provider: "google"
+    model: "gemini-1.5-pro"
+    description: "Google-based test player"
+
+  openai-player:
+    provider: "openai"
+    model: "gpt-4o"
+    description: "OpenAI-based test player"
+
+# Test suites combine engine and player configurations
+testSuites:
+  quick:
+    engineProfiles: [ "google" ]
+    playerProfiles: [ "basic" ]
+    description: "Quick smoke test"
+
+  standard:
+    engineProfiles: [ "anthropic", "google" ]
+    playerProfiles: [ "standard" ]
+    description: "Standard test across main providers"
+
+  comprehensive:
+    engineProfiles: [ "anthropic", "google", "openai" ]
+    playerProfiles: [ "standard", "google-player" ]
+    description: "Comprehensive cross-provider testing"
+
+  full:
+    engineProfiles: [ "anthropic", "google", "openai" ]
+    playerProfiles: [ "basic", "standard", "advanced" ]
+    description: "Complete test matrix for release validation"
