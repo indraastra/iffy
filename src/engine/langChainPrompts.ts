@@ -434,14 +434,11 @@ ${instructions}`;
    */
   static getRichTextFormattingInstructions(): string {
     return `
-**FORMATTING INSTRUCTIONS:**
-* Use **bold text** for emphasis and important elements
-* Use *italic text* for thoughts, whispers, or subtle emphasis
-* Use character names in **bold** when they speak or are introduced
-* Use item names in *italics* when they're significant to the scene
+**FORMATTING:**
+* Use **bold text** for character names and emphasis
+* Use *italic text* for thoughts, whispers, and significant items
 * Break longer responses into paragraphs for readability
-* Use atmospheric details and sensory descriptions
-* Maintain consistent narrative voice and tone throughout`;
+* Include atmospheric details and sensory descriptions`;
   }
 
   /**
@@ -452,23 +449,19 @@ ${instructions}`;
     return `**TASK:**
 * Process ONLY the player's exact action - do not take additional actions on their behalf
 * Focus purely on narrative response - transitions/endings are handled separately
-* Keep responses focused and well-structured for interactive fiction pacing
-* Rate the significance of this interaction (1-10, default 5)
+* Incorporate the player's action naturally, showing its immediate effects
+* Adhere to the global and scene directives given by the story author
 
-**RESPONSE GUIDELINES:**
-* Incorporate the player's action naturally into your response, showing its immediate effects
-* Adhere to the global and scene directives given by the story author  
-* Advance the narrative based on how the scene, world, or characters react to the action
-* Create active moments: end your response when something is happening, someone is speaking, or a choice is implied by the situation
-* NEVER add questions like "What do you do?" or "What do you say?" - let the situation naturally invite action
-* FORMATTING: Break longer responses into paragraphs - use paragraph breaks for anything longer than 3 sentences
-* VARIETY: Vary sentence structure, descriptive details, and phrasing between responses
-* Avoid repetitive patterns or formulaic descriptions
-
-**CRITICAL INTERACTIVE FICTION RULES:**
+**INTERACTIVE FICTION RULES:**
 * Player controls PLAYER CHARACTER exclusively - never make them speak or act beyond their input
 * You control all NPCs - let them respond naturally to player actions
-* Process only the player's exact action (e.g., "examine door" ≠ "open door")`;
+* Process only the player's exact action (e.g., "examine door" ≠ "open door")
+
+**RESPONSE GUIDELINES:**
+* Advance the narrative based on how the scene, world, or characters react to the action
+* Create active moments: end when something is happening, someone is speaking, or a choice is implied
+* NEVER add questions like "What do you do?" or "What do you say?" - let the situation naturally invite action
+* Use varied sentence structure and descriptive details - avoid repetitive patterns`;
   }
 
   /**
@@ -480,10 +473,10 @@ ${instructions}`;
 ${this.getRichTextFormattingInstructions()}
 
 **RESPONSE FORMAT:**
-* reasoning: Concise evaluation of player's action and its immediate effects (2-3 sentences max)
+* reasoning: Brief evaluation of player's action and its effects (2-3 sentences max)
 * narrative: Your narrative response with rich formatting
-* memories: Array of important details to remember: discoveries, changes to the world, or new knowledge the player has gained
+* memories: Important details to remember: discoveries, changes, or new knowledge gained
 * importance: Rate the significance of this interaction (1-10, default 5)
-* signals: Leave empty {} for action responses - transitions handled separately`;
+* signals: Leave empty {} for action responses`;
   }
 }
