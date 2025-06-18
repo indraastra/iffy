@@ -18,11 +18,11 @@ export const DirectorSignalsSchema = z.object({
  * (actions, transitions, initial scenes, endings)
  */
 export const DirectorResponseSchema = z.object({
-  reasoning: z.string().describe('Your step-by-step reasoning for checking conditions and determining any signals'),
+  reasoning: z.string().describe('Your step-by-step reasoning for this response'),
   narrative: z.string().describe('The narrative response with rich text formatting'),
   memories: z.array(z.string()).default([]).describe('Important details to remember: discoveries, changes to the world, or new knowledge the player has gained'),
   importance: z.number().min(1).max(10).default(5).describe('How important this interaction is (1-10)'),
-  signals: DirectorSignalsSchema.optional().describe('Optional signals for scene transitions or endings')
+  signals: DirectorSignalsSchema.optional().describe('Scene transitions and endings (handled automatically)')
 }).describe('Complete response to player action or scene establishment');
 
 /**

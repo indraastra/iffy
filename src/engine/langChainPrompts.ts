@@ -476,7 +476,6 @@ ${this.getRichTextFormattingInstructions()}
 * reasoning: Brief evaluation of player's action and its effects (2-3 sentences max)
 * narrative: Your narrative response with rich formatting  
 * memories: Important details to remember: discoveries, changes, or new knowledge gained
-* importance: Rate the significance of this interaction (1-10, default 5)
-* signals: Usually empty {} - scene transitions handled separately`;
+* importance: Rate the significance of this interaction (1-10, default 5)`;
   }
 }
