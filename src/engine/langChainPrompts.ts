@@ -459,8 +459,8 @@ ${instructions}`;
 * Incorporate the player's action naturally into your response, showing its immediate effects
 * Adhere to the global and scene directives given by the story author  
 * Advance the narrative based on how the scene, world, or characters react to the action
-* End with meaningful opportunities for player interaction - avoid passive waiting states
-* Give the player something significant they can say or do based on where your response leaves off
+* Create active moments: end your response when something is happening, someone is speaking, or a choice is implied by the situation
+* NEVER add questions like "What do you do?" or "What do you say?" - let the situation naturally invite action
 * FORMATTING: Break longer responses into paragraphs - use paragraph breaks for anything longer than 3 sentences
 * VARIETY: Vary sentence structure, descriptive details, and phrasing between responses
 * Avoid repetitive patterns or formulaic descriptions
