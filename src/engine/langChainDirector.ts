@@ -184,7 +184,7 @@ export class LangChainDirector {
       })) || [],
       activeMemory: context.activeMemory || [],
       currentState: {
-        sceneId: context.currentSketch || 'unknown',
+        sceneSketch: context.currentSketch || 'unknown',
         isEnded: context.storyComplete
       }
     };
