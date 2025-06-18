@@ -5,10 +5,10 @@ version: "2.0"
 context: "Your usual Friday evening at the café. Alex seems different tonight."
 
 narrative:
-  voice: "Intimate, present tense, focused on emotional nuance"
+  voice: "Detached intimacy, present tense, like observing through glass"
   setting: "Modern urban café, rainy Friday evening"
-  tone: "Tender, emotionally charged, hopeful"
-  themes: [ "change", "vulnerability", "things left unsaid" ]
+  tone: "Melancholic restraint, understated longing, bittersweet"
+  themes: [ "missed connections", "time slipping away", "unspoken desires", "urban solitude" ]
 
 world:
   characters:
@@ -31,18 +31,16 @@ scenes:
     location: "grounded_cafe"
     process_sketch: false
     sketch: |
-      Rain streaks the café window, fracturing the neon outside into pink and blue. 
-      You're in your usual corner booth at Grounded, where Chet Baker loops endlessly 
-      through the speakers.
+      2:47 AM becomes 9:23 PM becomes this moment, always. Rain against glass, 
+      the same Chet Baker track on repeat. You know this booth, these shadows.
 
-      Alex sits across from you, half-lit by the window's glow, fingers tracing circles 
-      on a cold coffee mug. In the glass, your reflections overlap with the city lights - two 
-      ghosts watching each other.
+      Alex's reflection doubles in the window - one facing you, one watching the street. 
+      The coffee has gone cold again. It always goes cold.
 
-      You've shared a hundred Friday evenings here, but tonight the silence between you 
-      has weight. Something unspoken hums in the amber air.
+      You've been here before. You'll be here again. But tonight feels different, 
+      like a film running at the wrong speed, frames dropping into silence.
 
-      [What crosses your mind as you study Alex in the half-light?]
+      [The city lights blur. Time stops.]
 
 endings:
   when:
@@ -70,10 +68,10 @@ guidance: |
   The player should discover this gradually through Alex's behavior and dialogue.
 
   RESPONSE STYLE:
-  - Keep responses intimate and focused (1-2 short paragraphs typically)
-  - Show emotional moments through small details, not lengthy descriptions
-  - Let silences and gestures speak - less is more
-  - Trust the atmosphere to carry weight without over-explaining
+  - Write like a Wong Kar-wai film: oblique, restrained, poetic without being overwrought
+  - Focus on surfaces, reflections, fragments - what's seen rather than felt
+  - Use repetition and temporal dislocation ("You've done this before", "This feels familiar")
+  - Emphasize the weight of unspoken moments rather than explicit emotion
 
   PRONOUN HANDLING:
   1. Always start with they/them for Alex
@@ -87,4 +85,4 @@ guidance: |
   - Retreat if player seems dismissive
   - Joy if feelings are reciprocated
 
-  Small gestures matter. Silences speak volumes. Let the rain and music mirror the emotional weather.
+  Time moves differently here. The same booth, the same rain, but something has shifted. What isn't said carries more weight than words.
