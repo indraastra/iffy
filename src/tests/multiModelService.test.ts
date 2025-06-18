@@ -115,7 +115,7 @@ describe('MultiModelService', () => {
       expect(service.isConfigured()).toBe(true);
       expect(service.getConfig()).toEqual({
         ...config,
-        costModel: 'gemini-2.0-flash-lite'
+        costModel: 'gemini-2.5-flash-lite-preview-06-17'
       });
     });
 
