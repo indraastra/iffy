@@ -437,7 +437,7 @@ ${instructions}`;
 **FORMATTING:**
 * Use **bold text** for character names and emphasis
 * Use *italic text* for thoughts, whispers, and significant items
-* Break longer responses into paragraphs for readability
+* Keep paragraphs short: 1-2 sentences each for better pacing
 * Include atmospheric details and sensory descriptions`;
   }
 
@@ -461,7 +461,7 @@ ${instructions}`;
 * Advance the narrative based on how the scene, world, or characters react to the action
 * Create active moments: end when something is happening, someone is speaking, or a choice is implied
 * NEVER add questions like "What do you do?" or "What do you say?" - let the situation naturally invite action
-* Use varied sentence structure and descriptive details - avoid repetitive patterns`;
+* Write in focused bursts: break longer thoughts into short paragraphs with 1-2 sentences each`;
   }
 
   /**
