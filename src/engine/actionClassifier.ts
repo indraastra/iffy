@@ -200,9 +200,9 @@ export class ActionClassifier {
     let prompt = `**TASK:** Evaluate player action against current scene state and determine next step. Your primary function is to be a strict, logical gatekeeper.
 
 **EVALUATION RULES:**
-1. **MANDATORY PREREQUISITES FIRST:** You MUST check if the hard PREREQUISITES of a transition are met. If these are not met, you must ignore the DESCRIPTION entirely.
+1. **MANDATORY PREREQUISITES FIRST:** You MUST check if the hard PREREQUISITES of a transition are met step-by-step. If these are not met, you must ignore the DESCRIPTION entirely.
 2. **STRICT LOGIC:** A transition is triggered ONLY if ALL of its PREREQUISITES are explicitly satisfied.
-3. **NO PARTIAL CREDIT:** Partial or implied satisfaction is an immediate failure. A character thinking about leaving is not a match for \`location_change: true\`.
+3. **NO PARTIAL CREDIT:** Partial or implied satisfaction is an immediate failure. A character thinking about leaving is not a match for \`left location\`.
 4. **DEFAULT TO CONTINUE:** If no single transition has all PREREQUISITES met, your only valid response is "continue". Do not attempt to find a "best fit".
 
 **RESPONSE FORMAT:**
