@@ -1,5 +1,8 @@
 export type LLMProvider = 'anthropic' | 'openai' | 'google';
 
+// Default provider
+export const DEFAULT_PROVIDER: LLMProvider = 'google';
+
 export interface LLMConfig {
   provider: LLMProvider;
   model: string;
@@ -26,6 +29,35 @@ export interface ModelOption {
 
 // Popular models for quick selection
 export const POPULAR_MODELS: ModelOption[] = [
+  // Google (now default provider)
+  {
+    provider: 'google',
+    model: 'gemini-2.5-flash-preview-05-20',
+    displayName: 'Gemini 2.5 Flash',
+    description: 'Fast and capable with thinking (recommended)',
+    costTier: 'premium'
+  },
+  {
+    provider: 'google',
+    model: 'gemini-2.5-pro-preview-06-05',
+    displayName: 'Gemini 2.5 Pro',
+    description: 'State-of-the-art reasoning',
+    costTier: 'enterprise'
+  },
+  {
+    provider: 'google',
+    model: 'gemini-2.0-flash',
+    displayName: 'Gemini 2.0 Flash',
+    description: 'Balanced multimodal model',
+    costTier: 'budget'
+  },
+  {
+    provider: 'google',
+    model: 'gemini-2.5-flash-lite-preview-06-17',
+    displayName: 'Gemini 2.5 Flash Lite',
+    description: 'Most cost-effective option',
+    costTier: 'free'
+  },
   // Anthropic
   {
     provider: 'anthropic',
@@ -69,35 +101,6 @@ export const POPULAR_MODELS: ModelOption[] = [
     displayName: 'o3-mini',
     description: 'Advanced reasoning capabilities',
     costTier: 'premium'
-  },
-  // Google
-  {
-    provider: 'google',
-    model: 'gemini-2.5-pro-preview-06-05',
-    displayName: 'Gemini 2.5 Pro',
-    description: 'State-of-the-art reasoning',
-    costTier: 'enterprise'
-  },
-  {
-    provider: 'google',
-    model: 'gemini-2.5-flash-preview-05-20',
-    displayName: 'Gemini 2.5 Flash',
-    description: 'Fast and capable with thinking',
-    costTier: 'premium'
-  },
-  {
-    provider: 'google',
-    model: 'gemini-2.0-flash',
-    displayName: 'Gemini 2.0 Flash',
-    description: 'Balanced multimodal model',
-    costTier: 'budget'
-  },
-  {
-    provider: 'google',
-    model: 'gemini-2.5-flash-lite-preview-06-17',
-    displayName: 'Gemini 2.5 Flash Lite',
-    description: 'Most cost-effective option',
-    costTier: 'free'
   }
 ];
 
