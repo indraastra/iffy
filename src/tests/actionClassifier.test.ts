@@ -56,7 +56,7 @@ describe('ActionClassifier', () => {
       const prompt = promptCall[0];
 
       // Check for main sections
-      expect(prompt).toContain('**TASK:** Evaluate player action');
+      expect(prompt).toContain('**TASK:** Evaluate the player\'s action');
       expect(prompt).toContain('**SCENE STATE:**');
       expect(prompt).toContain('room'); // Scene sketch content
       
