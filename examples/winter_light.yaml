@@ -2,12 +2,36 @@ title: "Winter Light"
 author: "Iffy Engine Team"
 blurb: "A chess prodigy confronts the silence between moves in post-war Germany"
 version: "1.0"
-context: "December 1947, Munich. Klaus Zimmermann, 19, sits alone in the ruins of the Café Schwarzer König, preparing for tomorrow's match that could secure his future—or reveal the emptiness beneath his calculated perfection."
+context: "December 1947, Munich. Klaus Zimmermann, 19, sits alone in the ruins of the Café Schwarzer
+  König, preparing for tomorrow's match that could secure his future—or reveal the emptiness beneath
+  his calculated perfection."
 
 narrative:
   voice: "Sparse, contemplative, finding profound meaning in simple gestures and silences"
   tone: "Existential weight beneath surface calm, like Bergman's camera lingering on faces"
-  themes: ["the silence between moves", "calculated perfection vs human authenticity", "post-war spiritual emptiness", "the burden of exceptional talent"]
+  themes:
+    [
+      "the silence between moves",
+      "calculated perfection vs human authenticity",
+      "post-war spiritual emptiness",
+      "the burden of exceptional talent"
+    ]
+
+guidance: |
+  BERGMAN TONE: Focus on internal contemplation, pregnant silences, and the weight of unspoken thoughts. 
+  Let philosophical questions emerge naturally from simple actions.
+
+  MINIMAL FLOW: Keep transitions simple but rich in possibility. Players can examine objects, 
+  interact with Herr Mueller, or engage in deep self-reflection.
+
+  CHESS METAPHOR: Use chess as a lens for examining life's calculated vs. authentic choices.
+
+  EXISTENTIAL UNDERTONE: Every action should carry subtle weight about purpose, meaning, and authenticity.
+  
+  LANGUAGE ADAPTATION: If the player uses German in their input, the director should respond entirely in German, 
+  maintaining the same philosophical depth and Bergman-esque tone. This creates an authentic linguistic immersion 
+  that honors the 1947 Munich setting. All characters (Klaus, Herr Mueller, Maria) should speak German when 
+  the player chooses German, preserving the story's contemplative and existential weight.
 
 world:
   characters:
@@ -16,7 +40,7 @@ world:
       sketch: "A chess prodigy whose precision masks a growing void—gifted yet increasingly hollow"
       voice: "Internal monologue marked by mathematical clarity disrupted by moments of profound doubt"
       arc: "confident master → questioner of purpose → confronter of emptiness → seeker of meaning"
-    
+
     herr_mueller:
       name: "Herr Mueller"
       sketch: "The old café owner who survived the war but lost his capacity for joy"
@@ -33,28 +57,39 @@ world:
     cafe_interior:
       name: "Café Schwarzer König"
       sketch: "Half-destroyed café where chess tables sit among rubble like monuments to a different time"
-      atmosphere: ["winter light through broken glass", "cold air mixing with steam", "silence punctuated by chess clocks"]
-      contains: ["solitary chess table", "broken mirrors reflecting fractured light", "photographs of missing players"]
-      
+      atmosphere:
+        [
+          "winter light through broken glass",
+          "cold air mixing with steam",
+          "silence punctuated by chess clocks"
+        ]
+      contains:
+        [
+          "solitary chess table",
+          "broken mirrors reflecting fractured light",
+          "photographs of missing players"
+        ]
+
     snow_covered_street:
       name: "Leopoldstraße"
       sketch: "Snow-covered street where footsteps disappear and the war's scars hide beneath white"
-      atmosphere: ["muffled city sounds", "breath visible in cold air", "long shadows"]
-      contains: ["war memorial", "closed shop windows", "single streetlamp"]
+      atmosphere: [ "muffled city sounds", "breath visible in cold air", "long shadows" ]
+      contains: [ "war memorial", "closed shop windows", "single streetlamp" ]
 
   items:
     chess_set:
       name: "Father's Chess Set"
-      sketch: "Carved wooden pieces, some replacement pawns—the set that taught him to see patterns in chaos"
+      sketch: "Carved wooden pieces, some replacement pawns—the set that taught him to see patterns in
+        chaos"
       found_in: "cafe_interior"
       reveals: "Each piece carries the weight of lessons learned and certainties that no longer comfort"
-      
+
     tournament_invitation:
       name: "Munich Championship Invitation"
       sketch: "Official invitation that promises recognition but feels increasingly hollow"
       found_in: "cafe_interior"
       reveals: "Tomorrow's match: victory means everything, yet increasingly feels like nothing"
-      
+
     philosophy_book:
       name: "Kierkegaard's 'Either/Or'"
       sketch: "Dog-eared book left behind by Maria, opened to passages about choice and authenticity"
@@ -64,36 +99,30 @@ world:
 scenes:
   winter_contemplation:
     location: "cafe_interior"
+    process_sketch: false
     sketch: |
       The café sleeps in December cold. Through broken windows, winter light falls across 
       your chess board like judgment—harsh, clarifying, merciless.
-      
+
       You sit as you have every evening this week, preparing for tomorrow's championship. 
       The moves unfold in your mind with mathematical precision: Queen's Gambit, Sicilian 
       Defense, endgame calculations stretching forty moves ahead.
-      
+
       Yet tonight, between the certainty of tactics and the inevitability of strategy, 
       a question surfaces like breath in cold air:
-      
+
       *What if winning changes nothing?*
-      
+
       Herr Mueller arranges cups behind the counter, moving with the careful economy of 
       the war-weary. He has watched you prepare here all week, saying nothing, seeing everything.
-      
+
       The chess pieces wait. The tournament invitation lies beside your father's board. 
       Tomorrow will arrive whether you are ready or not.
-    
+
     guidance: |
-      BERGMAN TONE: Focus on internal contemplation, pregnant silences, and the weight of unspoken thoughts. 
-      Let philosophical questions emerge naturally from simple actions.
-      
-      MINIMAL FLOW: Keep transitions simple but rich in possibility. Players can examine objects, 
-      interact with Herr Mueller, or engage in deep self-reflection.
-      
-      CHESS METAPHOR: Use chess as a lens for examining life's calculated vs. authentic choices.
-      
-      EXISTENTIAL UNDERTONE: Every action should carry subtle weight about purpose, meaning, and authenticity.
-    
+      This is the opening scene. Set the contemplative mood and establish Klaus's internal conflict. 
+      Let the player choose how to engage with this moment of preparation and doubt.
+
     leads_to:
       chess_study: "player examines the chess position"
       mueller_conversation: "player speaks with Herr Mueller"
@@ -104,25 +133,25 @@ scenes:
     sketch: |
       You lean forward to study the position you've arranged—a problem from last month's 
       tournament where your opponent found the one move you hadn't calculated.
-      
+
       The pieces cast long shadows in the winter light. Each one a small decision, part 
       of an inexorable logic that leads to victory or defeat. You have built your life 
       on seeing these patterns, on calculating outcomes with precision.
-      
+
       But studying the board now, you notice something else: the spaces between pieces. 
       The territory that belongs to neither player. The silence between moves.
-      
+
       *In that silence, what am I becoming?*
-      
+
       Your father's replacement pawns stand among the original pieces—imperfect but 
       necessary, like all the compromises that survival demands.
-    
+
     guidance: |
       Focus on the metaphorical weight of chess positions. Let the player contemplate 
       the relationship between calculated perfection and authentic living.
-      
+
       Chess study can reveal Klaus's mastery but also his growing sense of emptiness.
-    
+
     leads_to:
       winter_contemplation: "player returns to general contemplation"
       mueller_conversation: "Herr Mueller approaches to comment on the position"
@@ -132,26 +161,26 @@ scenes:
     sketch: |
       Herr Mueller sets down his cloth and walks over, his footsteps careful on the 
       uneven floor. He has the manner of a man who has learned when words matter.
-      
+
       "Every evening you come," he says simply, settling into the chair across from you. 
       "Always the same preparation. Always alone."
-      
+
       His eyes, gray as winter sky, study not the chess board but your face. "In the war, 
       I watched many young men prepare for things that would change them forever. There 
       is a look they get—the look of someone who knows they are very good at something 
       that may not matter."
-      
+
       The old man's words hang in the cold air between you like chess pieces waiting to 
       be moved.
-    
+
     guidance: |
       Herr Mueller serves as a wise but weary observer. His dialogue should be sparse but 
       profound, carrying the weight of experience and loss.
-      
+
       He can offer philosophical insights about talent, purpose, and the cost of perfection.
-      
+
       Let conversations develop naturally around themes of meaning and authenticity.
-    
+
     leads_to:
       winter_contemplation: "the conversation concludes naturally"
       deeper_discussion: "player engages more deeply with Mueller's wisdom"
@@ -160,24 +189,24 @@ scenes:
     location: "cafe_interior"
     sketch: |
       "You speak as if skill is a burden," you say, surprising yourself with the admission.
-      
+
       Mueller nods slowly. "Skill is a gift. But gifts can become prisons if we forget 
       why we were given them." He gestures at the chess board. "You play like a machine 
       now—perfect, calculating, empty. Your father would have been proud of your technique."
-      
+
       A pause that feels like winter itself.
-      
+
       "But would he recognize the boy who used to laugh when he discovered a new pattern?"
-      
+
       Through the broken window, snow begins to fall—each flake following its own path 
       to the same inevitable ground.
-    
+
     guidance: |
       This scene deepens the existential questioning. Mueller acts as a philosophical 
       catalyst, helping Klaus confront the emptiness beneath his perfection.
-      
+
       Focus on the tension between mastery and joy, calculation and authenticity.
-    
+
     leads_to:
       winter_contemplation: "player reflects on Mueller's words"
       street_walk: "player needs air to process the conversation"
@@ -188,28 +217,28 @@ scenes:
       Outside, the snow muffles Munich's wounded sounds. Your breath forms clouds that 
       dissipate quickly in the cold air—present one moment, gone the next, like thoughts 
       you've been afraid to think.
-      
+
       The street is empty except for your footsteps and the long shadows cast by a single 
       streetlamp. In the distance, the war memorial stands patient under snow, marking 
       losses that cannot be calculated.
-      
+
       Tomorrow's match feels both inevitable and meaningless. Victory will bring recognition, 
       perhaps a scholarship, certainly validation of years spent perfecting your craft.
-      
+
       But standing here in the snow, surrounded by the silence of a city still healing, 
       you wonder: *What does it mean to win at something you no longer love?*
-      
+
       The chess problems in your mind feel distant now, replaced by a different kind of 
       calculation—one without clear solutions.
-    
+
     guidance: |
       The street walk provides space for pure contemplation. Focus on the relationship 
       between internal and external landscapes.
-      
+
       Let the war-damaged city serve as metaphor for Klaus's internal state.
-      
+
       This can be a moment of crisis or clarity, depending on player choices.
-    
+
     leads_to:
       cafe_return: "player returns to the warmth of the café"
       memorial_reflection: "player approaches the war memorial"
@@ -220,26 +249,26 @@ scenes:
       You approach the memorial—a simple stone carved with names of the missing. Snow 
       has gathered in the carved letters, making some names illegible, as if the city 
       itself is forgetting.
-      
+
       Among them, you recognize surnames from your father's chess club. Men who debated 
       openings and endgames with the passion of true believers, who saw in chess a 
       perfect world of logic and consequence.
-      
+
       They are gone. Their games unfinished. Their strategies meaningless against the 
       chaos that consumed everything they calculated.
-      
+
       Standing here, you realize that perfection itself might be an act of forgetting—
       a way to avoid confronting the fundamental uncertainty of being alive.
-      
+
       The tournament invitation in your pocket feels heavier now, not with promise but 
       with the weight of choosing what kind of person you will become.
-    
+
     guidance: |
       This is a moment of profound reckoning. The memorial serves as a reminder of 
       mortality and the limits of calculated perfection.
-      
+
       Let Klaus confront the relationship between his talent and his humanity.
-    
+
     leads_to:
       cafe_return: "player returns changed by the encounter"
       snow_contemplation: "player remains in the cold to think"
@@ -250,64 +279,64 @@ scenes:
       You return to find the café unchanged—the chess position waiting exactly as you 
       left it, Herr Mueller arranging chairs with methodical care. But something in you 
       has shifted, like a piece moved to a square you hadn't considered.
-      
+
       The winter light has faded to gray, and the café's warmth feels both comforting 
       and insufficient. You sit before your father's chess set and realize that tomorrow's 
       match is not really about chess at all.
-      
+
       It is about choosing between the perfection you have achieved and the authenticity 
       you have abandoned. Between the safety of calculation and the risk of genuine feeling.
-      
+
       The pieces wait. The choice, as always, is yours.
-    
+
     guidance: |
       This scene can serve as resolution or transition, depending on how deeply the 
       player has engaged with the philosophical questions.
-      
+
       Focus on the internal transformation rather than external action.
-    
+
     leads_to:
       final_contemplation: "player prepares for tomorrow's choice"
 
 endings:
   when:
-    - "player has fully confronted the existential questions"
-    - "player makes peace with uncertainty or chooses authentic path"
-    
+  - "player has fully confronted the existential questions"
+  - "player makes peace with uncertainty or chooses authentic path"
+
   variations:
-    - id: "calculated_emptiness"
-      when: "player chooses perfection over authenticity"
-      sketch: |
-        You arrange the pieces for tomorrow's opening. Everything is prepared, calculated, 
-        perfect. The moves unfold in your mind with mathematical certainty.
-        
-        Yet as you walk home through the snow, you carry the knowledge that you have 
-        chosen skill over soul, technique over truth. You will win tomorrow—and perhaps 
-        lose something you cannot name.
-        
-        The silence between moves has become the silence within yourself.
-        
-    - id: "authentic_uncertainty"
-      when: "player chooses authenticity despite uncertainty"
-      sketch: |
-        You close the chess book and look at your reflection in the broken café mirror—
-        fractured but still whole, imperfect but real.
-        
-        Tomorrow's match will come. You will play not as a machine but as a person who 
-        has chosen to feel again, to risk imperfection in pursuit of something more 
-        valuable than victory.
-        
-        The winter light fades, but you are no longer afraid of the darkness between moves.
-        
-    - id: "embracing_questions"
-      when: "player accepts that some questions have no answers"
-      sketch: |
-        You sit in the gathering dusk, no longer seeking solutions but learning to live 
-        within the questions themselves. Chess remains beautiful not because it offers 
-        certainty but because it mirrors the complexity of being human.
-        
-        Tomorrow will bring what it brings. Tonight, you have found something more 
-        valuable than perfect play: the courage to remain uncertain, to stay human 
-        in a world that rewards those who pretend otherwise.
-        
-        In the silence between moves, you have found your voice.
+  - id: "calculated_emptiness"
+    when: "player chooses perfection over authenticity"
+    sketch: |
+      You arrange the pieces for tomorrow's opening. Everything is prepared, calculated, 
+      perfect. The moves unfold in your mind with mathematical certainty.
+
+      Yet as you walk home through the snow, you carry the knowledge that you have 
+      chosen skill over soul, technique over truth. You will win tomorrow—and perhaps 
+      lose something you cannot name.
+
+      The silence between moves has become the silence within yourself.
+
+  - id: "authentic_uncertainty"
+    when: "player chooses authenticity despite uncertainty"
+    sketch: |
+      You close the chess book and look at your reflection in the broken café mirror—
+      fractured but still whole, imperfect but real.
+
+      Tomorrow's match will come. You will play not as a machine but as a person who 
+      has chosen to feel again, to risk imperfection in pursuit of something more 
+      valuable than victory.
+
+      The winter light fades, but you are no longer afraid of the darkness between moves.
+
+  - id: "embracing_questions"
+    when: "player accepts that some questions have no answers"
+    sketch: |
+      You sit in the gathering dusk, no longer seeking solutions but learning to live 
+      within the questions themselves. Chess remains beautiful not because it offers 
+      certainty but because it mirrors the complexity of being human.
+
+      Tomorrow will bring what it brings. Tonight, you have found something more 
+      valuable than perfect play: the courage to remain uncertain, to stay human 
+      in a world that rewards those who pretend otherwise.
+
+      In the silence between moves, you have found your voice.
