@@ -105,7 +105,9 @@ export class LangChainDirector {
 
     // Convert structured data to DirectorResponse
     const response: DirectorResponse = {
-      narrative: result.data.narrative,
+      narrative: Array.isArray(result.data.narrative) 
+        ? result.data.narrative.join('\n\n')  // Join paragraphs with double newlines
+        : result.data.narrative,
       memories: result.data.memories || [],
       importance: result.data.importance || defaultImportance,
       signals: result.data.signals || {}
