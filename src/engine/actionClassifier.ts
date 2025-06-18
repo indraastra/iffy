@@ -11,11 +11,13 @@ import { z } from 'zod';
 export interface SceneTransition {
   id: string;
   condition: string;
+  sketch?: string;
 }
 
 export interface EndingVariation {
   id: string;
   conditions: string[]; // AND logic - all must be true
+  sketch?: string;
 }
 
 export interface ClassificationContext {
@@ -195,13 +197,13 @@ export class ActionClassifier {
     
     // STATIC PREFIX - Content that remains stable throughout a scene
     // This organization benefits Gemini's automatic context caching and Anthropic's prompt caching
-    let prompt = `**TASK:** Evaluate the player's action against the current state to determine the next step. Your primary function is to be a strict, logical gatekeeper.
+    let prompt = `**TASK:** Evaluate player action against current scene state and determine next step. Your primary function is to be a strict, logical gatekeeper.
 
 **EVALUATION RULES:**
-1. **MANDATORY CONDITIONS FIRST:** You MUST check if ALL conditions of a transition are explicitly met in the current action and state.
-2. **STRICT LOGIC:** A transition is triggered ONLY if ALL of its conditions are explicitly satisfied by what actually happened.
-3. **NO PARTIAL CREDIT:** Partial or implied satisfaction is an immediate failure. A character thinking about something is not the same as doing it.
-4. **DEFAULT TO CONTINUE:** If no single transition has ALL conditions met, your only valid response is "continue". Do not attempt to find a "best fit".
+1. **MANDATORY PREREQUISITES FIRST:** You MUST check if the hard PREREQUISITES of a transition are met. If these are not met, you must ignore the DESCRIPTION entirely.
+2. **STRICT LOGIC:** A transition is triggered ONLY if ALL of its PREREQUISITES are explicitly satisfied.
+3. **NO PARTIAL CREDIT:** Partial or implied satisfaction is an immediate failure. A character thinking about leaving is not a match for \`location_change: true\`.
+4. **DEFAULT TO CONTINUE:** If no single transition has all PREREQUISITES met, your only valid response is "continue". Do not attempt to find a "best fit".
 
 **RESPONSE FORMAT:**
 \`\`\`json
@@ -211,34 +213,37 @@ export class ActionClassifier {
 }
 \`\`\`
 
+**SCENE:**
+${context.currentState.sceneSketch}
+
+**TRANSITIONS:**
+
+${transitions}
+
 **EXAMPLES OF CORRECT EVALUATION:**
 
-1. **INPUT:** Player examines a door but doesn't open it
-   **TRANSITION:** "when player opens door"
+1. **ACTION:** \`Player examines the locked door but doesn't open it.\`
+   **SCENE:** A room with a locked door requiring a key.
+   **TRANSITION T0 PREREQUISITES:** \`door_opened: true AND has_key: true\`
    **CORRECT RESPONSE:**
    \`\`\`json
    {
      "result": "continue",
-     "reasoning": "Player examined but did not open the door. The transition requires opening, not examining."
+     "reasoning": "Prerequisites not met: door was examined but not opened, and door_opened: true is required."
    }
    \`\`\`
 
-2. **INPUT:** Player opens a door after finding the key
-   **TRANSITION:** "when player opens door AND has key"
+2. **ACTION:** \`Use the rusty key to unlock and open the door.\`
+   **SCENE:** A room with a locked door. Player has the key.
+   **TRANSITION T0 PREREQUISITES:** \`door_opened: true AND has_key: true\`
    **MEMORIES:** "Player has rusty key"
    **CORRECT RESPONSE:**
    \`\`\`json
    {
      "result": "T0",
-     "reasoning": "All conditions met: player opened door and has key from memories."
+     "reasoning": "All prerequisites met: door_opened: true (player opened door) and has_key: true (from memories)."
    }
-   \`\`\`
-
-**SCENE STATE:**
-${context.currentState.sceneSketch}
-
-**TRANSITIONS:**
-${transitions}`;
+   \`\`\``;
 
     // DYNAMIC CONTENT - Changes during the scene
     // Memories and conversation history are dynamic and should not be cached
@@ -253,8 +258,8 @@ ${transitions}`;
     }
 
     // Player input - always dynamic
-    prompt += `\n\n**INPUT:**
-Action: \`${context.playerAction}\`
+    prompt += `\n\n**ACTION:**
+\`${context.playerAction}\`
 
 EVALUATE NOW.`;
 
@@ -381,12 +386,17 @@ EVALUATE NOW.`;
   }
 
   private buildTransitionsSection(context: ClassificationContext): string {
-    const allTransitions: Array<{ id: string; condition: string; type: 'scene' | 'ending' }> = [];
+    const allTransitions: Array<{ id: string; condition: string; sketch?: string; type: 'scene' | 'ending' }> = [];
     
     // Add scene transitions
     if (context.currentSceneTransitions) {
       context.currentSceneTransitions.forEach(t => {
-        allTransitions.push({ id: t.id, condition: t.condition, type: 'scene' });
+        allTransitions.push({ 
+          id: t.id, 
+          condition: t.condition, 
+          sketch: t.sketch,
+          type: 'scene' 
+        });
       });
     }
     
@@ -397,18 +407,25 @@ EVALUATE NOW.`;
         allTransitions.push({ 
           id: e.id, 
           condition: conditions.join(' AND '), 
+          sketch: e.sketch,
           type: 'ending' 
         });
       });
     }
     
     if (allTransitions.length === 0) {
-      return '- None';
+      return '**T0:** None available';
     }
     
     return allTransitions
-      .map((t, index) => `- T${index}: ${t.condition}`)
-      .join('\n');
+      .map((t, index) => {
+        let section = `**T${index}:**\n* **PREREQUISITES:**\n    * \`${t.condition}\``;
+        if (t.sketch) {
+          section += `\n* **DESCRIPTION:** ${t.sketch}`;
+        }
+        return section;
+      })
+      .join('\n\n');
   }
 
 

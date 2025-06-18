@@ -152,7 +152,8 @@ export class LangChainDirector {
       for (const [sceneId, data] of Object.entries(context.currentTransitions)) {
         sceneTransitions.push({
           id: sceneId,
-          condition: data.condition
+          condition: data.condition,
+          sketch: data.sketch
         });
       }
     }
@@ -168,7 +169,8 @@ export class LangChainDirector {
         globalConditions: globalConditions.filter(c => c.trim() !== ''),
         variations: context.availableEndings.variations.map(ending => ({
           id: ending.id,
-          conditions: Array.isArray(ending.when) ? ending.when : [ending.when || '']
+          conditions: Array.isArray(ending.when) ? ending.when : [ending.when || ''],
+          sketch: ending.sketch
         }))
       };
     }
