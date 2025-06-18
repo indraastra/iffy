@@ -308,17 +308,17 @@ export class LangChainPrompts {
   }
 
   /**
-   * Generate instructions for action processing (no classification logic)
-   * Organized for optimal caching with static content first
+   * Generate static instructions for action processing (no classification logic)
+   * Returns only the static content that should be cached
    */
-  static buildActionInstructions(playerInput: string, context: DirectorContext): string {
+  static buildActionInstructions(context: DirectorContext): string {
     // STATIC PREFIX - Core response guidelines that remain constant
     let instructions = `${this.getCoreResponseGuidelines()}
 
 ${this.getStructuredResponseInstructions()}`;
     
-    // DYNAMIC CONTENT - Changes based on story state and player input
-    // Post-ending context if story is complete (dynamic - only appears when story ends)
+    // SEMI-DYNAMIC CONTENT - Changes based on story state (but not per action)
+    // Post-ending context if story is complete (only appears when story ends)
     if (context.storyComplete) {
       instructions = `**STORY COMPLETION CONTEXT:**
 This story has ended and the player is now reflecting, asking questions, or exploring what happened.
@@ -328,11 +328,6 @@ Since the story is complete, do NOT use any transition signals.
 
 ${instructions}`;
     }
-
-    // Player input - always dynamic
-    instructions = `**PLAYER ACTION:** "${playerInput}"
-
-${instructions}`;
 
     return instructions;
   }
