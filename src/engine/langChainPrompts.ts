@@ -10,21 +10,24 @@ export class LangChainPrompts {
 
   /**
    * Build context preamble for action processing (excludes transitions/endings)
+   * Reorganized for optimal caching with static content first
    */
   static buildActionContextPreamble(context: DirectorContext): string {
+    // STATIC/SEMI-STATIC PREFIX - Content that remains stable for the story/scene duration
+    // This organization benefits Gemini's automatic context caching and Anthropic's prompt caching
     let prompt = `**ROLE:** You are the **Game Director** for an interactive text-based story. Your primary goal is to **narrate the story** based on player actions.\n\n`;
 
-    // Story context
+    // Story context (static for story duration)
     if (context.storyContext) {
       prompt += `**STORY CONTEXT:**\n${context.storyContext}\n\n`;
     }
 
-    // Global guidance
+    // Global guidance (static for story duration)
     if (context.guidance) {
       prompt += `**GLOBAL STORY GUIDANCE:**\n${context.guidance}\n\n`;
     }
 
-    // Narrative Style
+    // Narrative Style (static for story duration)
     if (context.narrative) {
       const parts = [];
       if (context.narrative.voice) parts.push(`* Voice: ${context.narrative.voice}`);
@@ -38,7 +41,7 @@ export class LangChainPrompts {
       }
     }
 
-    // World Elements
+    // World Elements (relatively static)
     const worldParts = [];
 
     // Characters with full details - separate player character from NPCs
@@ -72,7 +75,7 @@ export class LangChainPrompts {
       worldParts.push(...characterSections);
     }
 
-    // Location context
+    // Location context (static for scene duration)
     if (context.location) {
       let locationContext = `  * ${context.location.name}`;
       if (context.location.sketch) {
@@ -90,7 +93,7 @@ export class LangChainPrompts {
       worldParts.push(`**LOCATIONS:**\n${locationContext}`);
     }
 
-    // Items with full details and descriptions
+    // Items with full details and descriptions (static for story duration)
     if (context.discoverableItems && context.discoverableItems.length > 0) {
       const itemDetails = context.discoverableItems.map(item => {
         let itemInfo = `  * ${item.name}`;
@@ -105,17 +108,18 @@ export class LangChainPrompts {
       prompt += `**WORLD ELEMENTS:**\n${worldParts.join('\n\n')}\n\n`;
     }
 
-    // Current scene
+    // Current scene (semi-static - stable for scene duration)
     if (context.currentSketch) {
       prompt += `**CURRENT SCENE DESCRIPTION:**\n${context.currentSketch}\n\n`;
     }
 
-    // Scene-specific guidance
+    // Scene-specific guidance (semi-static - stable for scene duration)
     if (context.sceneGuidance) {
       prompt += `**CURRENT SCENE DIRECTIVES:**\n${context.sceneGuidance}\n\n`;
     }
 
-    // Recent interactions
+    // DYNAMIC CONTENT - Changes frequently during gameplay
+    // Recent interactions (dynamic - changes with every player action)
     if (context.recentInteractions && context.recentInteractions.length > 0) {
       const recentDialogue = context.recentInteractions
         .slice(-5)
@@ -127,7 +131,7 @@ export class LangChainPrompts {
       prompt += `**RECENT DIALOGUE:**\n${recentDialogue.join('\n')}\n\n`;
     }
 
-    // Recent memory
+    // Recent memory (dynamic - changes during gameplay)
     if (context.activeMemory && context.activeMemory.length > 0) {
       prompt += `**KEY MEMORIES:**\n${context.activeMemory.join('\n')}\n\n`;
     }
@@ -137,21 +141,24 @@ export class LangChainPrompts {
 
   /**
    * Build comprehensive context preamble for transition/ending scenarios
+   * Reorganized for optimal caching with static content first
    */
   static buildContextPreamble(context: DirectorContext): string {
+    // STATIC/SEMI-STATIC PREFIX - Content that remains stable for the story/scene duration
+    // This organization benefits Gemini's automatic context caching and Anthropic's prompt caching
     let prompt = `**ROLE:** You are the **Game Director** for an interactive text-based story. Your primary goal is to **narrate the story and manage its progression** based on player actions and predefined game logic.\n\n`;
 
-    // Story context
+    // Story context (static for story duration)
     if (context.storyContext) {
       prompt += `**STORY CONTEXT:**\n${context.storyContext}\n\n`;
     }
 
-    // Global guidance
+    // Global guidance (static for story duration)
     if (context.guidance) {
       prompt += `**GLOBAL STORY GUIDANCE:**\n${context.guidance}\n\n`;
     }
 
-    // Narrative Style
+    // Narrative Style (static for story duration)
     if (context.narrative) {
       const parts = [];
       if (context.narrative.voice) parts.push(`* Voice: ${context.narrative.voice}`);
@@ -242,7 +249,7 @@ export class LangChainPrompts {
       prompt += `**CURRENT SCENE DIRECTIVES:**\n${context.sceneGuidance}\n\n`;
     }
 
-    // Available transitions
+    // Available transitions (semi-static - stable for scene duration)
     if (context.currentTransitions && Object.keys(context.currentTransitions).length > 0) {
       prompt += `**SCENE TRANSITION RULES:**\n`;
       Object.entries(context.currentTransitions).forEach(([sceneId, data]) => {
@@ -251,24 +258,7 @@ export class LangChainPrompts {
       prompt += '\n';
     }
 
-    // Recent interactions
-    if (context.recentInteractions && context.recentInteractions.length > 0) {
-      const recentDialogue = context.recentInteractions
-        .slice(-5) // Limit for action processing
-        .flatMap(interaction => [
-          `Player: ${interaction.playerInput}`,
-          `Response: ${interaction.llmResponse}`
-        ]);
-
-      prompt += `**RECENT DIALOGUE:**\n${recentDialogue.join('\n')}\n\n`;
-    }
-
-    // Recent memory
-    if (context.activeMemory && context.activeMemory.length > 0) {
-      prompt += `**KEY MEMORIES:**\n${context.activeMemory.join('\n')}\n\n`;
-    }
-
-    // ENDING LOGIC (critical for story completion)
+    // ENDING LOGIC (semi-static - stable for story duration)
     if (context.availableEndings && context.availableEndings.variations.length > 0) {
       if (context.availableEndings.when) {
         const globalConditions = Array.isArray(context.availableEndings.when)
@@ -293,7 +283,25 @@ export class LangChainPrompts {
         }
         prompt += `* ${ending.id}: REQUIRES ${conditionText}\n`;
       });
+      prompt += '\n';
+    }
 
+    // DYNAMIC CONTENT - Changes frequently during gameplay
+    // Recent interactions (dynamic - changes with every player action)
+    if (context.recentInteractions && context.recentInteractions.length > 0) {
+      const recentDialogue = context.recentInteractions
+        .slice(-5) // Limit for action processing
+        .flatMap(interaction => [
+          `Player: ${interaction.playerInput}`,
+          `Response: ${interaction.llmResponse}`
+        ]);
+
+      prompt += `**RECENT DIALOGUE:**\n${recentDialogue.join('\n')}\n\n`;
+    }
+
+    // Recent memory (dynamic - changes during gameplay)
+    if (context.activeMemory && context.activeMemory.length > 0) {
+      prompt += `**KEY MEMORIES:**\n${context.activeMemory.join('\n')}\n\n`;
     }
 
     return prompt;
@@ -301,44 +309,41 @@ export class LangChainPrompts {
 
   /**
    * Generate instructions for action processing (no classification logic)
+   * Organized for optimal caching with static content first
    */
   static buildActionInstructions(playerInput: string, context: DirectorContext): string {
-    let instructions = '';
+    // STATIC PREFIX - Core response guidelines that remain constant
+    let instructions = `${this.getCoreResponseGuidelines()}
 
-    // Post-ending context if story is complete
+${this.getStructuredResponseInstructions()}`;
+    
+    // DYNAMIC CONTENT - Changes based on story state and player input
+    // Post-ending context if story is complete (dynamic - only appears when story ends)
     if (context.storyComplete) {
-      instructions += `**STORY COMPLETION CONTEXT:**
+      instructions = `**STORY COMPLETION CONTEXT:**
 This story has ended and the player is now reflecting, asking questions, or exploring what happened.
 Respond thoughtfully to help them understand, reflect on, or explore the story they experienced.
 You can answer questions, provide insights, discuss themes, explore "what if" scenarios, or clarify plot points.
 Since the story is complete, do NOT use any transition signals.
 
-`;
+${instructions}`;
     }
 
-    instructions += `**PLAYER ACTION:** "${playerInput}"
+    // Player input - always dynamic
+    instructions = `**PLAYER ACTION:** "${playerInput}"
 
-${this.getCoreResponseGuidelines()}
-
-${this.getStructuredResponseInstructions()}`;
+${instructions}`;
 
     return instructions;
   }
 
   /**
    * Generate mode-specific instructions for scene transitions
+   * Organized for optimal caching with static content first
    */
   static buildTransitionInstructions(targetSceneId: string, sceneSketch: string, playerAction: string): string {
-    return `**SCENE TRANSITION IN PROGRESS**
-
-You are transitioning to scene: ${targetSceneId}
-
-**PLAYER ACTION THAT TRIGGERED THIS TRANSITION:** "${playerAction}"
-
-**TARGET SCENE DESCRIPTION** (use as foundation):
-${sceneSketch}
-
-**SCENE TRANSITION DIRECTIVES:**
+    // STATIC PREFIX - Transition directives that remain constant
+    let instructions = `**SCENE TRANSITION DIRECTIVES:**
 * Incorporate the player's action into the transition narrative
 * Show how the player's action leads to or causes the scene change
 * Use the scene description as your foundation - expand it with rich atmospheric details
@@ -350,22 +355,27 @@ ${sceneSketch}
 * Rate the importance of this transition (typically 6-8 for scene changes)
 
 ${this.getStructuredResponseInstructions()}`;
+    
+    // DYNAMIC CONTENT - Changes per transition
+    return `**SCENE TRANSITION IN PROGRESS**
+
+You are transitioning to scene: ${targetSceneId}
+
+**PLAYER ACTION THAT TRIGGERED THIS TRANSITION:** "${playerAction}"
+
+**TARGET SCENE DESCRIPTION** (use as foundation):
+${sceneSketch}
+
+${instructions}`;
   }
 
   /**
    * Generate mode-specific instructions for ending transitions
+   * Organized for optimal caching with static content first
    */
   static buildEndingInstructions(endingId: string, endingSketch: string, playerAction: string): string {
-    return `**STORY ENDING IN PROGRESS**
-
-You are concluding the story with ending: ${endingId}
-
-**PLAYER ACTION THAT TRIGGERED THIS ENDING:** "${playerAction}"
-
-**ENDING DESCRIPTION** (use as foundation):
-${endingSketch}
-
-**STORY ENDING DIRECTIVES:**
+    // STATIC PREFIX - Ending directives that remain constant
+    let instructions = `**STORY ENDING DIRECTIVES:**
 * Incorporate the player's action into the ending narrative
 * Show how the player's action leads to or reveals this ending
 * Use the ending description as your foundation - expand it with rich, conclusive details
@@ -379,20 +389,27 @@ ${endingSketch}
 * Include ending signal in your response
 
 ${this.getStructuredResponseInstructions()}`;
+    
+    // DYNAMIC CONTENT - Changes per ending
+    return `**STORY ENDING IN PROGRESS**
+
+You are concluding the story with ending: ${endingId}
+
+**PLAYER ACTION THAT TRIGGERED THIS ENDING:** "${playerAction}"
+
+**ENDING DESCRIPTION** (use as foundation):
+${endingSketch}
+
+${instructions}`;
   }
 
   /**
    * Generate mode-specific instructions for initial scene establishment
+   * Organized for optimal caching with static content first
    */
   static buildInitialSceneInstructions(sceneId: string, sceneSketch: string): string {
-    return `**INITIAL SCENE ESTABLISHMENT**
-
-You are establishing the opening scene of the story: ${sceneId}
-
-**SCENE DESCRIPTION** (use as foundation):
-${sceneSketch}
-
-**INITIAL SCENE DIRECTIVES:**
+    // STATIC PREFIX - Initial scene directives that remain constant
+    let instructions = `**INITIAL SCENE DIRECTIVES:**
 * Use the scene description as your foundation - expand it with rich atmospheric details
 * Establish the setting, mood, and any characters present for the story opening
 * Create an engaging, immersive introduction that draws the reader in
@@ -405,6 +422,16 @@ ${sceneSketch}
 * Rate the importance of this opening (typically 7-8 for initial scenes)
 
 ${this.getStructuredResponseInstructions()}`;
+    
+    // DYNAMIC CONTENT - Changes per scene
+    return `**INITIAL SCENE ESTABLISHMENT**
+
+You are establishing the opening scene of the story: ${sceneId}
+
+**SCENE DESCRIPTION** (use as foundation):
+${sceneSketch}
+
+${instructions}`;
   }
 
   /**
@@ -424,6 +451,7 @@ ${this.getStructuredResponseInstructions()}`;
 
   /**
    * Core response guidelines for action processing
+   * These are static and benefit from caching
    */
   static getCoreResponseGuidelines(): string {
     return `**TASK:**
@@ -450,6 +478,7 @@ ${this.getStructuredResponseInstructions()}`;
 
   /**
    * Instructions for structured response (used with Zod schema)
+   * These are static and benefit from caching
    */
   static getStructuredResponseInstructions(): string {
     return `

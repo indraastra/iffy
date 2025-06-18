@@ -195,13 +195,13 @@ export class ActionClassifier {
     
     // STATIC PREFIX - Content that remains stable throughout a scene
     // This organization benefits Gemini's automatic context caching and Anthropic's prompt caching
-    let prompt = `**TASK:** Evaluate player action against current state and determine next step.
+    let prompt = `**TASK:** Evaluate the player's action against the current state to determine the next step. Your primary function is to be a strict, logical gatekeeper.
 
 **EVALUATION RULES:**
-1. Check each transition condition against the current action and state
-2. A condition is met ONLY if ALL requirements are explicitly satisfied
-3. Partial or implied satisfaction = NOT MET
-4. If no conditions are met, return "continue"
+1. **MANDATORY CONDITIONS FIRST:** You MUST check if ALL conditions of a transition are explicitly met in the current action and state.
+2. **STRICT LOGIC:** A transition is triggered ONLY if ALL of its conditions are explicitly satisfied by what actually happened.
+3. **NO PARTIAL CREDIT:** Partial or implied satisfaction is an immediate failure. A character thinking about something is not the same as doing it.
+4. **DEFAULT TO CONTINUE:** If no single transition has ALL conditions met, your only valid response is "continue". Do not attempt to find a "best fit".
 
 **RESPONSE FORMAT:**
 \`\`\`json
@@ -210,6 +210,29 @@ export class ActionClassifier {
   "reasoning": "Brief explanation (1-2 sentences max)"
 }
 \`\`\`
+
+**EXAMPLES OF CORRECT EVALUATION:**
+
+1. **INPUT:** Player examines a door but doesn't open it
+   **TRANSITION:** "when player opens door"
+   **CORRECT RESPONSE:**
+   \`\`\`json
+   {
+     "result": "continue",
+     "reasoning": "Player examined but did not open the door. The transition requires opening, not examining."
+   }
+   \`\`\`
+
+2. **INPUT:** Player opens a door after finding the key
+   **TRANSITION:** "when player opens door AND has key"
+   **MEMORIES:** "Player has rusty key"
+   **CORRECT RESPONSE:**
+   \`\`\`json
+   {
+     "result": "T0",
+     "reasoning": "All conditions met: player opened door and has key from memories."
+   }
+   \`\`\`
 
 **SCENE STATE:**
 ${context.currentState.sceneSketch}

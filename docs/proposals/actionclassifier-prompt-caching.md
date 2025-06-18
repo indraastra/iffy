@@ -102,13 +102,24 @@ EVALUATE NOW.`;
 ```
 
 This reorganization ensures that:
-- **Gemini 2.0 Flash** automatically caches the semi-static prefix (Task, Rules, Scene State, Transitions)
+- **Gemini 2.0 Flash** automatically caches the semi-static prefix (Task, Rules, Examples, Scene State, Transitions)
 - **Semi-static content** (Scene State, Transitions) remains stable for the duration of a scene
 - **Dynamic content** (memories, conversations, retry notes) is not cached since it changes during the scene
 - **All models** process the most important static context first
+- **Improved reliability** through stricter evaluation rules and concrete examples
 - **Minimal changes** to existing code
 
 Note: The cache boundary is effectively at the end of the Transitions section, not at the INPUT section, since memories and conversation history change during gameplay.
+
+#### 1.1.1 Prompt Reliability Improvements
+
+The prompt has been enhanced with three key improvements based on performance analysis:
+
+1. **Stricter Rule Definition**: More explicit and commanding evaluation rules that force the model to act as a "strict gatekeeper" rather than making thematic interpretations.
+
+2. **Concrete Examples**: Game-agnostic examples showing correct evaluation logic, particularly demonstrating how to handle cases where prerequisites are not fully met.
+
+3. **Emphatic Language**: Use of bold formatting and direct commands (e.g., "You MUST check", "ONLY if ALL conditions") to reinforce logical evaluation over narrative interpretation.
 
 #### Phase 2: Anthropic-Specific Enhancements
 
