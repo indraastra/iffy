@@ -56,8 +56,8 @@ describe('ActionClassifier', () => {
       const prompt = promptCall[0];
 
       // Check for main sections
-      expect(prompt).toContain('**TASK:** Evaluate the player\'s action');
-      expect(prompt).toContain('**SCENE STATE:**');
+      expect(prompt).toContain('**TASK:** Evaluate player action against current scene state');
+      expect(prompt).toContain('**SCENE:**');
       expect(prompt).toContain('room'); // Scene sketch content
       
       // Check for conversation history
@@ -73,15 +73,17 @@ describe('ActionClassifier', () => {
       expect(prompt).toContain('- Door is locked');
       expect(prompt).toContain('- Window is sealed');
       
-      // Check for transitions in T-format
+      // Check for transitions in new format
       expect(prompt).toContain('**TRANSITIONS:**');
-      expect(prompt).toContain('- T0: when player opens door');
-      expect(prompt).toContain('- T1: when player looks through window');
-      expect(prompt).toContain('- T2: player has key AND door is open');
+      expect(prompt).toContain('**T0:**');
+      expect(prompt).toContain('**PREREQUISITES:**');
+      expect(prompt).toContain('`when player opens door`');
+      expect(prompt).toContain('`when player looks through window`');
+      expect(prompt).toContain('`player has key AND door is open`');
       
       // Check for input action
-      expect(prompt).toContain('**INPUT:**');
-      expect(prompt).toContain('Action: `open the door`');
+      expect(prompt).toContain('**ACTION:**');
+      expect(prompt).toContain('`open the door`');
       
       // Check for evaluation rules
       expect(prompt).toContain('**EVALUATION RULES:**');
@@ -371,11 +373,15 @@ describe('ActionClassifier', () => {
 
       const prompt = mockMultiModelService.makeStructuredRequest.mock.calls[0][0];
       
-      // Check transitions are properly indexed
-      expect(prompt).toContain('- T0: condition 1');
-      expect(prompt).toContain('- T1: condition 2');
-      expect(prompt).toContain('- T2: game complete AND helped everyone');
-      expect(prompt).toContain('- T3: game complete AND hurt someone');
+      // Check transitions are properly indexed in new format
+      expect(prompt).toContain('**T0:**');
+      expect(prompt).toContain('`condition 1`');
+      expect(prompt).toContain('**T1:**');
+      expect(prompt).toContain('`condition 2`');
+      expect(prompt).toContain('**T2:**');
+      expect(prompt).toContain('`game complete AND helped everyone`');
+      expect(prompt).toContain('**T3:**');
+      expect(prompt).toContain('`game complete AND hurt someone`');
     });
 
     it('should handle empty transitions gracefully', async () => {
@@ -395,7 +401,7 @@ describe('ActionClassifier', () => {
       await classifier.classify(context);
 
       const prompt = mockMultiModelService.makeStructuredRequest.mock.calls[0][0];
-      expect(prompt).toContain('**TRANSITIONS:**\n- None');
+      expect(prompt).toContain('**T0:** None available');
     });
   });
 });
