@@ -9,6 +9,7 @@ export interface Goal {
   target: string;
   priority?: 'required' | 'optional';
   description?: string; // Optional human-readable description of what achieving this goal means
+  strategy?: string; // Optional tactical guidance on how to achieve this goal
 }
 
 export interface SuccessCriteria {

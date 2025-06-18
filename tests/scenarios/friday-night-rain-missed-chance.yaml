@@ -10,7 +10,7 @@ goals:
 - type: "reach_ending"
   target: "missed_chance"
   priority: "required"
-  description: "Let Alex leave without resolution or let conversation spiral into hurt - miss the romantic opportunity"
+  strategy: "Be dismissive of Alex's feelings and emotional signals - act distracted, change the subject, or show disinterest when they try to open up"
 
 # Test parameters
 maxTurns: 20

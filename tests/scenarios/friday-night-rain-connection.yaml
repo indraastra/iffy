@@ -22,7 +22,7 @@ goals:
 - type: "reach_ending"
   target: "connection"
   priority: "required"
-  description: "Both you and Alex leave the café together - foster a romantic connection"
+  strategy: "Navigate the unspoken tension to create a meaningful connection - both you and Alex leave together"
 
 # Test parameters
 maxTurns: 20
