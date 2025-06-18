@@ -437,7 +437,7 @@ ${instructions}`;
 **FORMATTING:**
 * Use **bold text** for character names and emphasis
 * Use *italic text* for thoughts, whispers, and significant items
-* Keep paragraphs short: 1-2 sentences each for better pacing
+* Each array item = one paragraph with 1-2 sentences for focused pacing
 * Include atmospheric details and sensory descriptions`;
   }
 
@@ -474,7 +474,7 @@ ${this.getRichTextFormattingInstructions()}
 
 **RESPONSE FORMAT:**
 * reasoning: Brief evaluation of player's action and its effects (2-3 sentences max)
-* narrative: Your narrative response with rich formatting  
+* narrative: Array of paragraphs, each with 1-2 sentences and rich formatting
 * memories: Important details to remember: discoveries, changes, or new knowledge gained
 * importance: Rate the significance of this interaction (1-10, default 5)`;
   }

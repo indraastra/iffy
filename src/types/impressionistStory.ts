@@ -147,7 +147,7 @@ export interface DirectorContext {
 
 // LLM response with clear signals
 export interface DirectorResponse {
-  narrative: string  // The actual response text
+  narrative: string | string[]  // The actual response text (string for compatibility, string[] for new format)
   signals?: DirectorSignals  // Optional engine commands
   importance?: number  // 1-10 scale for interaction importance (optional, LLM-assigned)
   memories?: string[]  // Specific memories to store from this interaction
