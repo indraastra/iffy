@@ -91,16 +91,16 @@ ${context.gameHistory.length === 0 ?
   'This is the opening moment of the story. You should respond to the situation presented above.' : 
   ''}
 
-${context.turnsRemaining ? `TURNS REMAINING: ${context.turnsRemaining}` : ''}
-
 IMPORTANT: Respond like a normal person would. Use simple, direct language. For example:
 - Say "I look at Alex" instead of "I study Alex's countenance with careful attention"
 - Say "Hey, what's wrong?" instead of "I inquire about the source of your apparent distress"
 - Say "I press the red button" instead of "I deliberately engage with the crimson activation mechanism"
 
-Be concise and human. Keep your goals in mind but act naturally.
+Be concise and human. Keep your goals in mind but act naturally to work toward achieving them.
 
-Respond with what you would naturally say or do in this situation. You can express dialogue, actions, or thoughts - whatever feels most appropriate for the moment.`;
+${context.turnsRemaining ? `TURNS REMAINING: ${context.turnsRemaining}` : ''}
+
+Respond with what you would naturally say or do in this situation to advance toward your goals. You can express dialogue, actions, or thoughts - whatever feels most appropriate for the moment.`;
 
     return prompt;
   }
@@ -123,8 +123,9 @@ Respond with what you would naturally say or do in this situation. You can expre
       }
     })();
     
-    const description = goal.description ? ` (${goal.description})` : '';
-    return `${priority} ${baseDescription}${description}`;
+    const guidance = goal.strategy ? ` - Strategy: ${goal.strategy}` : 
+                    goal.description ? ` (${goal.description})` : '';
+    return `${priority} ${baseDescription}${guidance}`;
   }
 
   private formatGameHistory(history: Array<{ action: string; response: string }>): string {

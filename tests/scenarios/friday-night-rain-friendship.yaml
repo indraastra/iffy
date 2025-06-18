@@ -10,7 +10,7 @@ goals:
 - type: "reach_ending"
   target: "friendship_preserved"
   priority: "required"
-  description: "Acknowledge the moment but choose friendship - preserve the existing relationship without romance"
+  strategy: "Encourage Alex to open up and confess their feelings, but then gently turn them down while emphasizing how much you value the friendship"
 
 # Test parameters
 maxTurns: 20

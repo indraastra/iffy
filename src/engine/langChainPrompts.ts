@@ -41,7 +41,7 @@ export class LangChainPrompts {
       }
     }
 
-    // World Elements (relatively static)
+    // World Elements (static for story duration)
     const worldParts = [];
 
     // Characters with full details - separate player character from NPCs
@@ -56,7 +56,14 @@ export class LangChainPrompts {
         let playerInfo = `  * ${playerCharacter.name} (PLAYER CHARACTER)`;
         if (playerCharacter.sketch) playerInfo += ` - ${playerCharacter.sketch}`;
         if (playerCharacter.voice) playerInfo += `\n    * Voice: ${playerCharacter.voice}`;
-        if (playerCharacter.arc) playerInfo += `\n    * Arc: ${playerCharacter.arc}`;
+        if (playerCharacter.arc) {
+          // Handle multiline arc content by indenting continuation lines
+          const arcLines = playerCharacter.arc.split('\n');
+          const formattedArc = arcLines.map((line, index) => 
+            index === 0 ? line : `      ${line}`
+          ).join('\n');
+          playerInfo += `\n    * Arc: ${formattedArc}`;
+        }
         characterSections.push(`**PLAYER CHARACTER:**\n${playerInfo}`);
       }
       
@@ -66,7 +73,14 @@ export class LangChainPrompts {
           let charInfo = `  * ${c.name} (NPC)`;
           if (c.sketch) charInfo += ` - ${c.sketch}`;
           if (c.voice) charInfo += `\n    * Voice: ${c.voice}`;
-          if (c.arc) charInfo += `\n    * Arc: ${c.arc}`;
+          if (c.arc) {
+            // Handle multiline arc content by indenting continuation lines
+            const arcLines = c.arc.split('\n');
+            const formattedArc = arcLines.map((line, index) => 
+              index === 0 ? line : `      ${line}`
+            ).join('\n');
+            charInfo += `\n    * Arc: ${formattedArc}`;
+          }
           return charInfo;
         }).join('\n');
         characterSections.push(`**NON-PLAYER CHARACTERS (NPCs):**\n${npcDetails}`);
@@ -187,7 +201,14 @@ export class LangChainPrompts {
         let playerInfo = `  * ${playerCharacter.name} (PLAYER CHARACTER)`;
         if (playerCharacter.sketch) playerInfo += ` - ${playerCharacter.sketch}`;
         if (playerCharacter.voice) playerInfo += `\n    * Voice: ${playerCharacter.voice}`;
-        if (playerCharacter.arc) playerInfo += `\n    * Arc: ${playerCharacter.arc}`;
+        if (playerCharacter.arc) {
+          // Handle multiline arc content by indenting continuation lines
+          const arcLines = playerCharacter.arc.split('\n');
+          const formattedArc = arcLines.map((line, index) => 
+            index === 0 ? line : `      ${line}`
+          ).join('\n');
+          playerInfo += `\n    * Arc: ${formattedArc}`;
+        }
         characterSections.push(`**PLAYER CHARACTER:**\n${playerInfo}`);
       }
       
@@ -197,7 +218,14 @@ export class LangChainPrompts {
           let charInfo = `  * ${c.name} (NPC)`;
           if (c.sketch) charInfo += ` - ${c.sketch}`;
           if (c.voice) charInfo += `\n    * Voice: ${c.voice}`;
-          if (c.arc) charInfo += `\n    * Arc: ${c.arc}`;
+          if (c.arc) {
+            // Handle multiline arc content by indenting continuation lines
+            const arcLines = c.arc.split('\n');
+            const formattedArc = arcLines.map((line, index) => 
+              index === 0 ? line : `      ${line}`
+            ).join('\n');
+            charInfo += `\n    * Arc: ${formattedArc}`;
+          }
           return charInfo;
         }).join('\n');
         characterSections.push(`**NON-PLAYER CHARACTERS (NPCs):**\n${npcDetails}`);
