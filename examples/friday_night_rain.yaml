@@ -21,7 +21,9 @@ world:
   locations:
     grounded_cafe:
       name: "Grounded Café"
-      sketch: "Modern urban café with corner booths, large windows, and soft jazz playing through speakers"
+      sketch: "Amber light pools beneath pendant lamps. Rain streaks the windows like tears on film. The
+        same corner booth, the same worn leather, the same jazz filtering through speakers - a loop
+        of Friday evenings bleeding into one eternal moment"
       atmosphere: [ "intimate", "contemplative", "rain-soaked" ]
       guidance: "This is the player and Alex's regular Friday evening spot - familiar yet charged with
         unspoken feelings"
@@ -40,7 +42,7 @@ scenes:
       You've been here before. You'll be here again. But tonight feels different, 
       like a film running at the wrong speed, frames dropping into silence.
 
-      [The city lights blur. Time stops.]
+      [What crosses your mind as you study Alex in the half-light?]
 
 endings:
   when:
@@ -84,5 +86,3 @@ guidance: |
   - Relief when player creates safe space
   - Retreat if player seems dismissive
   - Joy if feelings are reciprocated
-
-  Time moves differently here. The same booth, the same rain, but something has shifted. What isn't said carries more weight than words.

@@ -18,6 +18,13 @@ import { LangChainDirector } from './langChainDirector';
 import { MetricsCollector } from './metricsCollector';
 import { ImpressionistMemoryManager } from './impressionistMemoryManager';
 
+/**
+ * Convert narrative from string[] to string for backward compatibility
+ */
+function normalizeNarrative(narrative: string | string[]): string {
+  return Array.isArray(narrative) ? narrative.join('\n\n') : narrative;
+}
+
 export interface PlayerAction {
   input: string;
 }
@@ -167,14 +174,14 @@ export class ImpressionistEngine {
       );
       
       // Track this initial scene processing in memory
-      this.trackInteraction('<BEGIN STORY>', response.narrative, {
+      this.trackInteraction('<BEGIN STORY>', normalizeNarrative(response.narrative), {
         initialScene: true,
         llmImportance: response.importance,
         memories: response.memories
       });
 
       return {
-        text: response.narrative,
+        text: normalizeNarrative(response.narrative),
         gameState: { ...this.gameState },
         error: response.signals?.error
       };
@@ -224,7 +231,7 @@ export class ImpressionistEngine {
           
           // For post-ending, still update UI immediately for consistency
           if (this.uiAddMessageCallback) {
-            this.uiAddMessageCallback(response.narrative, 'story');
+            this.uiAddMessageCallback(normalizeNarrative(response.narrative), 'story');
           }
         }
         
@@ -233,14 +240,14 @@ export class ImpressionistEngine {
         }
         
         // Track this post-ending interaction
-        this.trackInteraction(action.input, finalResponse.narrative, {
+        this.trackInteraction(action.input, normalizeNarrative(finalResponse.narrative), {
           postEnding: true,
           llmImportance: finalResponse.importance,
           memories: finalResponse.memories
         });
         
         return {
-          text: finalResponse.narrative,
+          text: normalizeNarrative(finalResponse.narrative),
           gameState: { ...this.gameState },
           error: finalResponse.signals?.error
         };
@@ -276,7 +283,7 @@ export class ImpressionistEngine {
 
       for await (const partialResponse of responseGenerator) {
         partCount++;
-        console.log(`📝 Response part ${partCount} ready:`, partialResponse.narrative);
+        console.log(`📝 Response part ${partCount} ready:`, normalizeNarrative(partialResponse.narrative));
         
         // Collect each response for separate tracking
         allResponses.push(partialResponse);
@@ -290,7 +297,7 @@ export class ImpressionistEngine {
             }
             
             // First part - display immediately
-            this.uiAddMessageCallback(partialResponse.narrative, 'story');
+            this.uiAddMessageCallback(normalizeNarrative(partialResponse.narrative), 'story');
             hasDisplayedFirstPart = true;
             
             // If there will be more parts (i.e., a scene or ending transition), show new loading indicator
@@ -306,7 +313,7 @@ export class ImpressionistEngine {
               this.uiHideTypingCallback();
             }
             // Subsequent parts - display
-            this.uiAddMessageCallback(partialResponse.narrative, 'story');
+            this.uiAddMessageCallback(normalizeNarrative(partialResponse.narrative), 'story');
           }
         }
         
@@ -357,7 +364,7 @@ export class ImpressionistEngine {
           }
         }
         
-        this.trackInteraction(interactionInput, response.narrative, {
+        this.trackInteraction(interactionInput, normalizeNarrative(response.narrative), {
           usage: (response as any).usage,
           latencyMs: (response as any).latencyMs,
           signals: response.signals,
@@ -369,7 +376,7 @@ export class ImpressionistEngine {
 
       // Return empty text since streaming callback handled the display
       return {
-        text: hasDisplayedFirstPart ? '' : finalResponse.narrative, // Fallback if no callback set
+        text: hasDisplayedFirstPart ? '' : normalizeNarrative(finalResponse.narrative), // Fallback if no callback set
         gameState: { ...this.gameState },
         error: finalResponse.signals?.error,
         endingTriggered: isEndingTriggered
