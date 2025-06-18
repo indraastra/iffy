@@ -39,7 +39,7 @@ describe('ActionClassifier', () => {
         ],
         activeMemory: ['Has rusty key', 'Door is locked', 'Window is sealed'],
         currentState: {
-          sceneId: 'room',
+          sceneSketch: 'room',
           isEnded: false
         }
       };
@@ -57,8 +57,8 @@ describe('ActionClassifier', () => {
 
       // Check for main sections
       expect(prompt).toContain('**TASK:** Evaluate player action');
-      expect(prompt).toContain('**STATE:**');
-      expect(prompt).toContain('Scene: room');
+      expect(prompt).toContain('**SCENE STATE:**');
+      expect(prompt).toContain('room'); // Scene sketch content
       
       // Check for conversation history
       expect(prompt).toContain('**Recent Dialogue:**');
@@ -85,7 +85,7 @@ describe('ActionClassifier', () => {
       
       // Check for evaluation rules
       expect(prompt).toContain('**EVALUATION RULES:**');
-      expect(prompt).toContain('**RESPONSE:**');
+      expect(prompt).toContain('**RESPONSE FORMAT:**');
     });
 
     it('should handle missing recentInteractions gracefully', async () => {
@@ -95,7 +95,7 @@ describe('ActionClassifier', () => {
         recentMemories: ['In a room'],
         // No recentInteractions or activeMemory
         currentState: {
-          sceneId: 'room',
+          sceneSketch: 'room',
           isEnded: false
         }
       };
@@ -121,7 +121,7 @@ describe('ActionClassifier', () => {
         currentSceneTransitions: [],
         recentMemories: [],
         currentState: {
-          sceneId: 'intro',
+          sceneSketch: 'intro',
           isEnded: false
         }
       };
@@ -144,7 +144,7 @@ describe('ActionClassifier', () => {
         playerAction: 'look at painting',
         currentSceneTransitions: [{ id: 'next', condition: 'when door opens' }],
         recentMemories: [],
-        currentState: { sceneId: 'gallery', isEnded: false }
+        currentState: { sceneSketch: 'gallery', isEnded: false }
       };
 
       mockMultiModelService.makeStructuredRequest.mockResolvedValueOnce({
@@ -168,7 +168,7 @@ describe('ActionClassifier', () => {
           { id: 'cellar', condition: 'trapdoor opens' }
         ],
         recentMemories: [],
-        currentState: { sceneId: 'room', isEnded: false }
+        currentState: { sceneSketch: 'room', isEnded: false }
       };
 
       mockMultiModelService.makeStructuredRequest.mockResolvedValueOnce({
@@ -197,7 +197,7 @@ describe('ActionClassifier', () => {
           ]
         },
         recentMemories: ['Has key'],
-        currentState: { sceneId: 'room', isEnded: false }
+        currentState: { sceneSketch: 'room', isEnded: false }
       };
 
       mockMultiModelService.makeStructuredRequest.mockResolvedValueOnce({
@@ -212,24 +212,30 @@ describe('ActionClassifier', () => {
       expect(result.reasoning).toBe('Escaped to freedom');
     });
 
-    it('should handle invalid T-index gracefully', async () => {
+    it('should handle invalid T-index gracefully with retries', async () => {
       const context: ClassificationContext = {
         playerAction: 'do something',
         currentSceneTransitions: [{ id: 'only', condition: 'condition' }],
         recentMemories: [],
-        currentState: { sceneId: 'room', isEnded: false }
+        currentState: { sceneSketch: 'room', isEnded: false }
       };
 
-      mockMultiModelService.makeStructuredRequest.mockResolvedValueOnce({
-        data: { result: 'T5', reasoning: 'Invalid index' },
-        usage: { input_tokens: 40, output_tokens: 10 }
-      });
+      // First attempt fails with invalid index
+      mockMultiModelService.makeStructuredRequest
+        .mockResolvedValueOnce({
+          data: { result: 'T5', reasoning: 'Invalid index' },
+          usage: { input_tokens: 40, output_tokens: 10 }
+        })
+        .mockResolvedValueOnce({
+          data: { result: 'continue', reasoning: 'Corrected response' },
+          usage: { input_tokens: 50, output_tokens: 12 }
+        });
 
       const result = await classifier.classify(context);
 
+      expect(mockMultiModelService.makeStructuredRequest).toHaveBeenCalledTimes(2);
       expect(result.mode).toBe('action');
-      expect(result.reasoning).toContain('Invalid result format "T5"');
-      expect(result.confidence).toBe(0.1);
+      expect(result.reasoning).toBe('Corrected response');
     });
   });
 
@@ -242,20 +248,19 @@ describe('ActionClassifier', () => {
           { id: 'east', condition: 'go east' }
         ],
         recentMemories: [],
-        currentState: { sceneId: 'crossroads', isEnded: false }
+        currentState: { sceneSketch: 'crossroads', isEnded: false }
       };
 
       // First attempt returns invalid transition
-      mockMultiModelService.makeStructuredRequest.mockResolvedValueOnce({
-        data: { result: 'T2', reasoning: 'Going north (invalid)' },
-        usage: { input_tokens: 60, output_tokens: 10 }
-      });
-
-      // Retry succeeds with continue
-      mockMultiModelService.makeStructuredRequest.mockResolvedValueOnce({
-        data: { result: 'continue', reasoning: 'No north exit' },
-        usage: { input_tokens: 80, output_tokens: 12 }
-      });
+      mockMultiModelService.makeStructuredRequest
+        .mockResolvedValueOnce({
+          data: { result: 'T2', reasoning: 'Going north (invalid)' },
+          usage: { input_tokens: 60, output_tokens: 10 }
+        })
+        .mockResolvedValueOnce({
+          data: { result: 'continue', reasoning: 'No north exit' },
+          usage: { input_tokens: 80, output_tokens: 12 }
+        });
 
       const result = await classifier.classify(context);
 
@@ -273,7 +278,7 @@ describe('ActionClassifier', () => {
         playerAction: 'use magic',
         currentSceneTransitions: [{ id: 'portal', condition: 'cast spell' }],
         recentMemories: [],
-        currentState: { sceneId: 'chamber', isEnded: false }
+        currentState: { sceneSketch: 'chamber', isEnded: false }
       };
 
       // All attempts fail
@@ -301,7 +306,7 @@ describe('ActionClassifier', () => {
         playerAction: 'test',
         currentSceneTransitions: [],
         recentMemories: [],
-        currentState: { sceneId: 'test', isEnded: false }
+        currentState: { sceneSketch: 'test', isEnded: false }
       };
 
       const result = await classifier.classify(context);
@@ -317,7 +322,7 @@ describe('ActionClassifier', () => {
         playerAction: 'move forward',
         currentSceneTransitions: [],
         recentMemories: [],
-        currentState: { sceneId: 'path', isEnded: false }
+        currentState: { sceneSketch: 'path', isEnded: false }
       };
 
       // First attempt throws error
@@ -354,7 +359,7 @@ describe('ActionClassifier', () => {
           ]
         },
         recentMemories: [],
-        currentState: { sceneId: 'final', isEnded: false }
+        currentState: { sceneSketch: 'final', isEnded: false }
       };
 
       mockMultiModelService.makeStructuredRequest.mockResolvedValueOnce({
@@ -379,7 +384,7 @@ describe('ActionClassifier', () => {
         currentSceneTransitions: [],
         availableEndings: undefined,
         recentMemories: [],
-        currentState: { sceneId: 'void', isEnded: false }
+        currentState: { sceneSketch: 'void', isEnded: false }
       };
 
       mockMultiModelService.makeStructuredRequest.mockResolvedValueOnce({

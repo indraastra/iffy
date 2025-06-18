@@ -73,15 +73,17 @@ private buildClassifierPrompt(context: ClassificationContext, previousErrors: Va
 }
 \`\`\`
 
-**STATE:**
-Scene: ${context.currentState.sceneId}
+**SCENE STATE:**
+${context.currentState.sceneSketch}
 
 **TRANSITIONS:**
-${transitions}
+${transitions}`;
 
-${memoriesSection}`;
+  // DYNAMIC CONTENT - Changes during the scene
+  // Memories and conversation history are dynamic and should not be cached
+  prompt += `\n\n${memoriesSection}`;
 
-  // Add retry context if needed (semi-static)
+  // Add retry context if needed (dynamic - only appears on retries)
   if (previousErrors.length > 0) {
     prompt += `\n\n**RETRY NOTES:**`;
     previousErrors.forEach(error => {
@@ -89,7 +91,7 @@ ${memoriesSection}`;
     });
   }
 
-  // DYNAMIC SUFFIX (changes every request)
+  // Player input - always dynamic
   prompt += `\n\n**INPUT:**
 Action: \`${context.playerAction}\`
 
@@ -100,9 +102,13 @@ EVALUATE NOW.`;
 ```
 
 This reorganization ensures that:
-- **Gemini 2.0 Flash** automatically caches everything before `**INPUT:**`
-- **All models** process the most important context first
+- **Gemini 2.0 Flash** automatically caches the semi-static prefix (Task, Rules, Scene State, Transitions)
+- **Semi-static content** (Scene State, Transitions) remains stable for the duration of a scene
+- **Dynamic content** (memories, conversations, retry notes) is not cached since it changes during the scene
+- **All models** process the most important static context first
 - **Minimal changes** to existing code
+
+Note: The cache boundary is effectively at the end of the Transitions section, not at the INPUT section, since memories and conversation history change during gameplay.
 
 #### Phase 2: Anthropic-Specific Enhancements
 

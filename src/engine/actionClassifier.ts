@@ -32,7 +32,7 @@ export interface ClassificationContext {
   }>;
   activeMemory?: string[];
   currentState: {
-    sceneId: string;
+    sceneSketch: string;
     isEnded?: boolean;
   };
 }
@@ -81,6 +81,7 @@ export class ActionClassifier {
   ): Promise<ClassificationResult> {
     const startTime = performance.now();
     
+    
     // Check if MultiModelService is configured
     if (!this.multiModelService.isConfigured()) {
       return {
@@ -105,18 +106,20 @@ export class ActionClassifier {
       // Convert the new format to the existing ClassificationResult format
       const result = this.convertToLegacyFormat(rawResult.data, context);
 
-      // Log the complete classification input and output
-      console.log(`🎯 ActionClassifier Request (useCostModel: true, should be temperature 0.1):`);
-      console.log('─'.repeat(80));
-      console.log(prompt);
-      console.log('─'.repeat(80));
-      console.log(`🎯 ActionClassifier Raw Output:`);
-      console.log(`   Result: ${rawResult.data.result}`);
-      console.log(`   Reasoning: ${rawResult.data.reasoning}`);
-      console.log(`🎯 ActionClassifier Converted Result:`);
-      console.log(`   Mode: ${result.mode}${result.targetId ? ` → ${result.targetId}` : ''}`);
-      console.log(`   Confidence: ${(result.confidence * 100).toFixed(0)}%`);
-      console.log(`   Reasoning: ${result.reasoning}`);
+      // Log the complete classification input and output  
+      if (this.debugPane) {
+        console.log(`🎯 ActionClassifier Request (useCostModel: true, should be temperature 0.1):`);
+        console.log('─'.repeat(80));
+        console.log(prompt);
+        console.log('─'.repeat(80));
+        console.log(`🎯 ActionClassifier Raw Output:`);
+        console.log(`   Result: ${rawResult.data.result}`);
+        console.log(`   Reasoning: ${rawResult.data.reasoning}`);
+        console.log(`🎯 ActionClassifier Converted Result:`);
+        console.log(`   Mode: ${result.mode}${result.targetId ? ` → ${result.targetId}` : ''}`);
+        console.log(`   Confidence: ${(result.confidence * 100).toFixed(0)}%`);
+        console.log(`   Reasoning: ${result.reasoning}`);
+      }
 
       // Track metrics for classifier calls
       if ((rawResult as any).usage) {
@@ -139,7 +142,7 @@ export class ActionClassifier {
               importance: Math.round(result.confidence * 10) // Convert confidence to importance scale
             },
             context: {
-              scene: context.currentState.sceneId,
+              scene: context.currentState.sceneSketch,
               memories: context.recentMemories.length,
               transitions: context.currentSceneTransitions.length,
               classifier: true // Flag to identify classifier calls
@@ -150,6 +153,7 @@ export class ActionClassifier {
 
       // Validate the converted classification result
       const validationIssues = this.validateClassificationResult(result, context);
+      
       
       if (validationIssues.length > 0) {
         if (attemptNumber < ActionClassifier.MAX_RETRIES - 1) {
@@ -189,18 +193,9 @@ export class ActionClassifier {
     const transitions = this.buildTransitionsSection(context);
     const memoriesSection = this.buildMemoriesSection(context);
     
+    // STATIC PREFIX - Content that remains stable throughout a scene
+    // This organization benefits Gemini's automatic context caching and Anthropic's prompt caching
     let prompt = `**TASK:** Evaluate player action against current state and determine next step.
-
-**STATE:**
-Scene: ${context.currentState.sceneId}
-
-${memoriesSection}
-
-**TRANSITIONS:**
-${transitions}
-
-**INPUT:**
-Action: \`${context.playerAction}\`
 
 **EVALUATION RULES:**
 1. Check each transition condition against the current action and state
@@ -208,21 +203,37 @@ Action: \`${context.playerAction}\`
 3. Partial or implied satisfaction = NOT MET
 4. If no conditions are met, return "continue"
 
-**RESPONSE:**
+**RESPONSE FORMAT:**
 \`\`\`json
 {
   "result": "continue" | "T0" | "T1" | "T2" ...,
   "reasoning": "Brief explanation (1-2 sentences max)"
 }
-\`\`\``;
+\`\`\`
 
-    // Add retry context if this is a retry attempt
+**SCENE STATE:**
+${context.currentState.sceneSketch}
+
+**TRANSITIONS:**
+${transitions}`;
+
+    // DYNAMIC CONTENT - Changes during the scene
+    // Memories and conversation history are dynamic and should not be cached
+    prompt += `\n\n${memoriesSection}`;
+
+    // Add retry context if this is a retry attempt (dynamic - only appears on retries)
     if (previousErrors.length > 0) {
       prompt += `\n\n**RETRY NOTES:**`;
       previousErrors.forEach(error => {
         prompt += `\n- ${error.message}`;
       });
     }
+
+    // Player input - always dynamic
+    prompt += `\n\n**INPUT:**
+Action: \`${context.playerAction}\`
+
+EVALUATE NOW.`;
 
     return prompt;
   }
@@ -301,10 +312,43 @@ Action: \`${context.playerAction}\`
           reasoning: rawResult.reasoning,
           confidence: 0.95
         };
+      } else {
+        // Index out of bounds - return invalid transition that will be caught by validation
+        // This allows retry logic to work properly
+        
+        // Determine if this would be a scene transition or ending based on the combined list
+        const sceneTransitionCount = context.currentSceneTransitions.length;
+        const totalTransitions = allTransitions.length;
+        
+        if (transitionIndex < sceneTransitionCount) {
+          // Should be a scene transition but index is somehow invalid
+          return {
+            mode: 'sceneTransition',
+            targetId: `invalid_T${transitionIndex}`,
+            reasoning: rawResult.reasoning,
+            confidence: 0.95
+          };
+        } else if (context.availableEndings && transitionIndex < totalTransitions) {
+          // Would be an ending but index is invalid
+          return {
+            mode: 'ending', 
+            targetId: `invalid_T${transitionIndex}`,
+            reasoning: rawResult.reasoning,
+            confidence: 0.95
+          };
+        } else {
+          // Completely out of bounds - default to scene transition for retry logic
+          return {
+            mode: 'sceneTransition',
+            targetId: `invalid_T${transitionIndex}`,
+            reasoning: rawResult.reasoning,
+            confidence: 0.95
+          };
+        }
       }
     }
     
-    // Fallback for invalid format
+    // Fallback for completely invalid format (not T<number>)
     console.warn(`ActionClassifier: Invalid result format "${rawResult.result}", falling back to action mode`);
     return {
       mode: 'action',
@@ -347,6 +391,7 @@ Action: \`${context.playerAction}\`
 
   private validateClassificationResult(result: ClassificationResult, context: ClassificationContext): ValidationIssue[] {
     const issues: ValidationIssue[] = [];
+    
 
     // Check if targetId is required but missing
     if ((result.mode === 'sceneTransition' || result.mode === 'ending') && !result.targetId) {
