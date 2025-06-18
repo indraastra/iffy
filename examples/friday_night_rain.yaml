@@ -8,7 +8,7 @@ narrative:
   voice: "Intimate, present tense, focused on emotional nuance"
   setting: "Modern urban café, rainy Friday evening"
   tone: "Tender, emotionally charged, hopeful"
-  themes: ["change", "vulnerability", "things left unsaid"]
+  themes: [ "change", "vulnerability", "things left unsaid" ]
 
 world:
   characters:
@@ -17,13 +17,14 @@ world:
       sketch: "Your Friday night companion, unusually restless and fidgeting with mug of cold coffee"
       arc: "searching for words, wrestling with change"
       voice: "Measured speech with hidden currents"
-  
+
   locations:
     grounded_cafe:
       name: "Grounded Café"
       sketch: "Modern urban café with corner booths, large windows, and soft jazz playing through speakers"
-      atmosphere: ["intimate", "contemplative", "rain-soaked"]
-      guidance: "This is the player and Alex's regular Friday evening spot - familiar yet charged with unspoken feelings"
+      atmosphere: [ "intimate", "contemplative", "rain-soaked" ]
+      guidance: "This is the player and Alex's regular Friday evening spot - familiar yet charged with
+        unspoken feelings"
 
 scenes:
   opening:
@@ -33,52 +34,51 @@ scenes:
       Rain streaks the café window, fracturing the neon outside into pink and blue. 
       You're in your usual corner booth at Grounded, where Chet Baker loops endlessly 
       through the speakers.
-      
+
       Alex sits across from you, half-lit by the window's glow, fingers tracing circles 
       on a cold coffee mug. In the glass, your reflections overlap with the city lights - two 
       ghosts watching each other.
-      
+
       You've shared a hundred Friday evenings here, but tonight the silence between you 
       has weight. Something unspoken hums in the amber air.
-      
+
       [What crosses your mind as you study Alex in the half-light?]
 
 endings:
   when:
-    - "conversation has concluded"
-    - "the player and/or Alex leaves the cafe"
-  
+  - "the player or Alex exit the cafe"
+
   variations:
-    - id: "connection"
-      when: "player and Alex leave the café together"
-      sketch: "Alex's hand finds yours as you leave the café. 'Thank you for not giving up on me.'"
-      
-    - id: "missed_chance"
-      when: ["player lets Alex leave without resolution", "conversation spirals into hurt"]
-      sketch: |
-        You watch Alex disappear into the rain. The barista starts
-        stacking chairs. Another chance lost to fear.
-        
-    - id: "friendship_preserved"
-      when: "player acknowledges the moment but chooses friendship"
-      sketch: |
-        Alex smiles - genuine but careful. "We're good, right?"
-        Some things are worth more than the risk.
+  - id: "connection"
+    when: "player and Alex leave the café together"
+    sketch: "Alex's hand finds yours as you leave the café. 'Thank you for not giving up on me.'"
+
+  - id: "missed_chance"
+    when: [ "player lets Alex leave without resolution", "player hurts Alex" ]
+    sketch: |
+      You watch Alex disappear into the rain. The barista starts
+      stacking chairs. Another chance lost to fear.
+
+  - id: "friendship_preserved"
+    when: "player acknowledges the moment but chooses friendship"
+    sketch: |
+      Alex smiles - genuine but careful. "We're good, right?"
+      Some things are worth more than the risk.
 
 guidance: |
   Alex has been in love with the player for months and tonight plans to confess.
   The player should discover this gradually through Alex's behavior and dialogue.
-  
+
   PRONOUN HANDLING:
   1. Always start with they/them for Alex
   2. Listen for player cues: if they say "She's nervous" or "He seems quiet", immediately adopt those pronouns
   3. Once established, maintain consistency - this should feel natural, not forced
   4. Example: Player says "She looks sad" → Use she/her for Alex from that point forward
-  
+
   Track Alex's emotional state:
   - Nervous energy when player shows interest
   - Relief when player creates safe space
   - Retreat if player seems dismissive
   - Joy if feelings are reciprocated
-  
+
   Small gestures matter. Silences speak volumes. Let the rain and music mirror the emotional weather.

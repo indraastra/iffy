@@ -200,9 +200,12 @@ export class LangChainDirector {
   private async processAction(input: string, context: DirectorContext): Promise<DirectorResponse> {
     return this.makeLLMRequest(
       () => {
+        // OPTIMAL CACHING ORDER: Static first, semi-static next, dynamic last
+        const staticInstructions = LangChainPrompts.buildActionInstructions(context);
         const contextPreamble = LangChainPrompts.buildActionContextPreamble(context);
-        const modeSpecificInstructions = LangChainPrompts.buildActionInstructions(input, context);
-        return `${contextPreamble}\n\n${modeSpecificInstructions}`;
+        const playerAction = `**PLAYER ACTION:** "${input}"`;
+        
+        return `${staticInstructions}\n\n${contextPreamble}\n\n${playerAction}`;
       },
       `Player: ${input}`,
       {
@@ -383,9 +386,12 @@ export class LangChainDirector {
     try {
       return await this.makeLLMRequest(
         () => {
+          // OPTIMAL CACHING ORDER: Static first, semi-static next, dynamic last  
+          const staticInstructions = LangChainPrompts.buildActionInstructions(context);
           const contextPreamble = LangChainPrompts.buildContextPreamble(context);
-          const modeSpecificInstructions = LangChainPrompts.buildActionInstructions(input, context);
-          return `${contextPreamble}\n\n${modeSpecificInstructions}`;
+          const playerAction = `**PLAYER ACTION:** "${input}"`;
+          
+          return `${staticInstructions}\n\n${contextPreamble}\n\n${playerAction}`;
         },
         `Post-ending: ${input}`,
         {

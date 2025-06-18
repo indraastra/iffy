@@ -222,26 +222,25 @@ ${transitions}
 
 **EXAMPLES OF CORRECT EVALUATION:**
 
-1. **ACTION:** \`Player examines the locked door but doesn't open it.\`
-   **SCENE:** A room with a locked door requiring a key.
-   **TRANSITION T0 PREREQUISITES:** \`door_opened: true AND has_key: true\`
+1. **ACTION:** \`Player examines the locked door carefully.\`
+   **SCENE:** A small room with a heavy wooden door.
+   **TRANSITION T0 PREREQUISITES:** \`player opens the door\`
    **CORRECT RESPONSE:**
    \`\`\`json
    {
      "result": "continue",
-     "reasoning": "Prerequisites not met: door was examined but not opened, and door_opened: true is required."
+     "reasoning": "Prerequisites not met: player examined the door but did not open it."
    }
    \`\`\`
 
-2. **ACTION:** \`Use the rusty key to unlock and open the door.\`
-   **SCENE:** A room with a locked door. Player has the key.
-   **TRANSITION T0 PREREQUISITES:** \`door_opened: true AND has_key: true\`
-   **MEMORIES:** "Player has rusty key"
+2. **ACTION:** \`Push open the heavy wooden door and step through.\`
+   **SCENE:** A small room with a heavy wooden door.
+   **TRANSITION T0 PREREQUISITES:** \`player opens the door\`
    **CORRECT RESPONSE:**
    \`\`\`json
    {
      "result": "T0",
-     "reasoning": "All prerequisites met: door_opened: true (player opened door) and has_key: true (from memories)."
+     "reasoning": "Prerequisites met: player opened the door by pushing it open."
    }
    \`\`\``;
 
@@ -403,10 +402,24 @@ EVALUATE NOW.`;
     // Add ending transitions
     if (context.availableEndings) {
       context.availableEndings.variations.forEach(e => {
-        const conditions = [...context.availableEndings!.globalConditions, ...e.conditions];
+        const globalConditions = context.availableEndings!.globalConditions;
+        const endingConditions = e.conditions;
+        
+        // Global conditions must be met AND at least one ending condition must be met
+        let combinedCondition;
+        if (globalConditions.length > 0 && endingConditions.length > 0) {
+          const globalPart = globalConditions.length > 1 ? `(${globalConditions.join(' AND ')})` : globalConditions[0];
+          const endingPart = endingConditions.length > 1 ? `(${endingConditions.join(' OR ')})` : endingConditions[0];
+          combinedCondition = `${globalPart} AND ${endingPart}`;
+        } else if (globalConditions.length > 0) {
+          combinedCondition = globalConditions.length > 1 ? globalConditions.join(' AND ') : globalConditions[0];
+        } else {
+          combinedCondition = endingConditions.length > 1 ? endingConditions.join(' OR ') : endingConditions[0];
+        }
+        
         allTransitions.push({ 
           id: e.id, 
-          condition: conditions.join(' AND '), 
+          condition: combinedCondition,
           sketch: e.sketch,
           type: 'ending' 
         });
