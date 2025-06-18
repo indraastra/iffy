@@ -96,7 +96,7 @@ scenes:
       - Explore different sections of your sanctuary  
       - **Pull the lever** when ready to open for your expected visitor
     leads_to:
-      aquinas_encounter: "when the player pulls the lever of the Lumina Press"
+      aquinas_encounter: "player pulls the lever of the Lumina Press"
 
   # First Customer - Always Aquinas themed
   aquinas_encounter:
@@ -117,7 +117,7 @@ scenes:
       someone whose very bearing speaks of scholarly pursuit and the marriage of faith and 
       reason. This is how the underground works: careful preparation for those who dare to seek.
     leads_to:
-      shop_cycle: "when the encounter ends OR customer leaves OR day concludes"
+      shop_cycle: "encounter ends OR customer leaves OR day concludes"
 
   # Main Game Loop - Daily Operations
   shop_cycle:
@@ -147,7 +147,7 @@ scenes:
       - Explore hidden sections of your sanctuary
       - **Open the shop** when ready for today's unknown visitor
     leads_to:
-      customer_encounter: "when the player explicitly opens the shop OR pulls the lever OR says open"
+      customer_encounter: "player explicitly opens the shop OR pulls the lever OR says open"
 
   # Customer Encounters - All visitors handled here
   customer_encounter:
@@ -167,7 +167,7 @@ scenes:
       activities have summoned. Their bearing, their first words, their very presence 
       reveals what forbidden author calls to them.
     leads_to:
-      shop_cycle: "when the encounter ends OR customer leaves OR day concludes"
+      shop_cycle: "encounter ends OR customer leaves OR day concludes"
 
 endings:
   when:

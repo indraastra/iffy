@@ -106,8 +106,8 @@ scenes:
       The pen hovers expectantly above the paper, its brass gears whirring softly in 
       the gaslit silence.
     leads_to:
-      partnership_begins: "accepting the quill's help"
-      skeptical_investigation: "dismissing the talking pen"
+      partnership_begins: "player accepts the quill's help"
+      skeptical_investigation: "player dismisses the talking pen"
       
   partnership_begins:
     location: "study"
@@ -115,7 +115,7 @@ scenes:
       The quill writes with mechanical precision: "Observe the positioning
       of the deceased. Note the angle of the teacup. Most illuminating."
     leads_to:
-      evidence_gathering: "systematically examining clues"
+      evidence_gathering: "player systematically examines clues"
       
   skeptical_investigation:
     location: "study"
@@ -123,8 +123,8 @@ scenes:
       You ignore the pen's scratching. It continues anyway:
       "Your skepticism is noted, Inspector, but logic cares not for belief."
     leads_to:
-      forced_partnership: "the quill proves useful"
-      solo_investigation: "working without mechanical aid"
+      forced_partnership: "quill proves useful to player"
+      solo_investigation: "player works without mechanical aid"
       
   evidence_gathering:
     guidance: "Show the quill's analytical abilities. Gradually build trust between Inspector and quill."
@@ -132,8 +132,8 @@ scenes:
       The quill provides running commentary as you investigate:
       "Fascinating! The chemical residue suggests almonds. Prussic acid, perhaps?"
     leads_to:
-      breakthrough: "sufficient evidence gathered"
-      red_herring: "following false leads"
+      breakthrough: "player gathers sufficient evidence"
+      red_herring: "player follows false leads"
       
   breakthrough:
     location: "library"
@@ -141,7 +141,7 @@ scenes:
       The pieces align. The quill writes rapidly: "Elementary, my dear Inspector!
       The railway investments, the threatening correspondence, the timing..."
     leads_to:
-      confrontation: "ready to face the killer"
+      confrontation: "player is ready to face the killer"
       
   confrontation:
     location: "drawing_room"

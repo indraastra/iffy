@@ -85,17 +85,24 @@ Players can type anything they want — "examine the keyhole," "break down the d
 
 ## Known Issues
 
-### Action Classification Reliability
+### Action Classification Updates
 
-The **ActionClassifier** component, which determines when to transition between scenes or trigger story endings, has some limitations:
+The **ActionClassifier** component has been significantly improved with stricter prerequisite evaluation:
 
-- **Model Dependency**: Classification accuracy varies significantly across AI models. Some models are more reliable at understanding transition conditions than others.
-- **Complex Conditions**: Stories with intricate logical conditions (like specific button sequences or multi-step puzzles) may not always trigger reliably.
-- **Robustness**: The classifier can occasionally misinterpret player actions or fail to recognize when transition conditions are met.
+- **Improved Reliability**: Recent updates enforce strict PREREQUISITES checking before considering DESCRIPTION content, reducing false positive transitions.
+- **Natural Language Conditions**: Transitions now use natural language conditions instead of artificial flags, making stories more readable and maintainable.
+- **Model Recommendations**: 
+  - **Gemini 2.5 Flash** provides an excellent balance of speed and quality for most use cases
+  - **Gemini 2.5 Flash Lite** offers the fastest response times but may occasionally make incorrect classifications
+  - **Claude models** remain the most accurate but slower for classification tasks
+- **Temperature Optimization**: The classifier now uses temperature 0.1 for more consistent, deterministic results.
 
-**Current Status**: We're actively working on improving classification reliability through better prompt engineering and testing across different model configurations. See our [testing framework](docs/DEVELOPMENT.md#running-tests) for ongoing reliability assessments.
+**Remaining Limitations**:
+- Complex multi-condition logic may still challenge some models
+- Gemini 2.5 Flash Lite, while fast, can occasionally misinterpret nuanced conditions
+- Very abstract or metaphorical conditions work best with higher-tier models
 
-**Workaround**: When authoring stories, prefer simpler, more explicit transition conditions over complex logical requirements. Test your stories across multiple AI models to ensure consistent behavior.
+**Authoring Tips**: Write clear, concrete transition conditions. Test critical story branches with your target model. Use the debug-classifier script to validate complex transitions.
 
 ## Get Started Today
 

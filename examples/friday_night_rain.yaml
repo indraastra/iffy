@@ -16,20 +16,21 @@ world:
       name: "Alex"
       sketch: "Your Friday night companion, unusually restless and fidgeting with mug of cold coffee"
       arc: |
-        Searching for words, wrestling with change - moves from guarded restraint to vulnerable openness based on player's empathy.
-        
+        Initially contemplative and defensive, gradually shifting to vulnerability and openness based
+        on player's empathy.
+
         EMOTIONAL PROGRESSION: Defensive → Conflicted → Vulnerable → Open
-        
+
         RESPONSE PATTERNS:
         - Patient, empathetic responses help Alex feel safe to share
         - Pushy or judgmental responses make Alex shut down
-        
+
         EMOTIONAL STATES TO TRACK:
         - Nervous energy when player shows interest
         - Relief when player creates safe space  
         - Retreat if player seems dismissive
         - Joy if feelings are reciprocated
-      voice: "Measured speech with hidden currents"
+      voice: "Soft and full of hidden currents"
 
   locations:
     grounded_cafe:
@@ -86,11 +87,10 @@ guidance: |
   - Write like a Wong Kar-wai film: oblique, restrained, poetic without being overwrought
   - Focus on surfaces, reflections, fragments - what's seen rather than felt
   - Use repetition and temporal dislocation ("You've done this before", "This feels familiar")
-  - Dialogue should carry subtext and hesitation, not be absent
+  - Narration should carry subtext
 
   PRONOUN HANDLING:
   1. Always start with they/them for Alex
   2. Listen for player cues: if they say "She's nervous" or "He seems quiet", immediately adopt those pronouns
   3. Once established, maintain consistency - this should feel natural, not forced
   4. Example: Player says "She looks sad" → Use she/her for Alex from that point forward
-

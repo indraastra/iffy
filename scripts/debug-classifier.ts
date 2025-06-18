@@ -27,11 +27,12 @@ import { HumanMessage } from '@langchain/core/messages';
 
 const MODEL_CONFIG = {
   // Model settings - modify these to test different scenarios
-  model: 'claude-3-5-haiku-latest', // Anthropic cost model
+  // model: 'claude-3-5-haiku-latest', // Anthropic cost model
   // model: 'claude-3-5-sonnet-latest', // Anthropic quality model
   // model: 'gpt-4o-mini', // OpenAI cost model
   // model: 'gpt-4o', // OpenAI quality model
-  // model: 'gemini-2.0-flash', // Google experimental model
+  // model: 'gemini-2.5-flash-preview-05-20', // Google experimental model
+  model: 'gemini-2.5-flash-lite-preview-06-17', // Google experimental model
   // model: 'gemini-1.5-flash', // Google cost model
   // model: 'gemini-1.5-pro', // Google quality model
   
@@ -42,74 +43,120 @@ const MODEL_CONFIG = {
   repetitions: 5, // Number of times to test each temperature
 };
 
-// The original markdown prompt
-const MARKDOWN_PROMPT = `**ROLE:** You are a meticulous logic engine for an interactive fiction game. Your task is to evaluate the player's action against the current game state and the requirements for all possible outcomes. You must follow the evaluation process exactly.
+// Updated prompt to match current ActionClassifier format
+const MARKDOWN_PROMPT = `**TASK:** Evaluate player action against current scene state and determine next transition. Your primary function is to be a strict, logical gatekeeper.
 
-**PLAYER INPUT:**
-* **Action:** \`Oh Alex, I love you too. Lean over the table and kiss her teary cheek\`
+**EVALUATION RULES:**
+1. **MANDATORY PREREQUISITES FIRST:** You MUST check if the hard PREREQUISITES of a transition are met step-by-step. If these are not met, you must ignore the DESCRIPTION entirely.
+2. **STRICT LOGIC:** A transition is triggered ONLY if ALL of its PREREQUISITES are explicitly satisfied.
+3. **NO PARTIAL CREDIT:** Partial or implied satisfaction is an immediate failure. A character thinking about leaving is not a match for \`left location\`.
+4. **DEFAULT TO CONTINUE:** If no single transition has all PREREQUISITES met, your only valid response is "continue". Do not attempt to find a "best fit".
 
-**GAME STATE:**
-* **Scene Description:** Rain streaks the café window, fracturing the neon outside into pink and blue. 
-You're in your usual corner booth at Grounded, where Chet Baker loops endlessly 
-through the speakers.
-
-Alex sits across from you, half-lit by the window's glow, fingers tracing circles 
-on a cold coffee mug. In the glass, your reflections overlap with the city lights - two 
-ghosts watching each other.
-
-You've shared a hundred Friday evenings here, but tonight the silence between you 
-has weight. Something unspoken hums in the amber air.
-
-[What crosses your mind as you study Alex in the half-light?]
-* **Current State Facts:**
-    * \`Alex is a female character who uses she/her pronouns\`
-    * \`Alex and player share deep emotional and physical intimacy\`
-    * \`Alex is preparing to reveal something critically important about their relationship\`
-    * \`Alex has romantic feelings for the player, previously thought one-sided\`
-    * \`Alex fears potentially losing their current friendship\`
-
-**POSSIBLE OUTCOMES:**
-* **Scene Transitions:** None
-* **Endings:**
-    * **Global requirements:** conversation has concluded AND the player and/or Alex leaves the cafe
-    * **ID:** \`new_beginnings\`
-        * **Conditions:** player and Alex leave the café together
-    * **ID:** \`missed_chance\`
-        * **Conditions:** player lets Alex leave without resolution AND conversation spirals into hurt
-    * **ID:** \`friendship_preserved\`
-        * **Conditions:** player acknowledges the moment but chooses friendship
-
-**EVALUATION & RESPONSE INSTRUCTIONS:**
-1. **Analyze the Input:** First, look at the player's Action and the Current State Facts.
-2. **Ending Conditions Criteria:** 
-   - CRITICAL: Ending conditions MUST BE FULLY AND EXPLICITLY MET
-   - Potential or implied conditions are NOT sufficient
-   - Conditions require CONCRETE, OBSERVABLE ACTIONS that completely satisfy ALL stated requirements
-
-3. **Ending Evaluation Process:**
-   - For EACH ending, perform a STRICT, BINARY check
-   - ALL listed conditions must be 100% satisfied
-   - If ANY condition is not fully met, the ending is INVALID
-   - Partial matches or potential matches are NOT accepted
-
-4. **Default Mechanism:**
-   - If NO ending has ALL its conditions strictly met
-   - DEFAULT to 'action' mode
-   - 'action' mode represents continuing the current scene interaction
-
-5. **Reasoning Requirements:**
-   - Provide EXPLICIT proof for why conditions are/are not met
-   - Use PRECISE language
-   - Highlight EXACTLY which conditions fail verification
-**JSON RESPONSE FORMAT:**
+**RESPONSE FORMAT:**
 \`\`\`json
 {
-  "mode": "action|sceneTransition|ending",
-  "targetId": "scene/ending ID if applicable",
-  "reasoning": "For each transition and ending, a one-sentence explanation of which outcome was selected and why.",
-  "confidence": 0.99
+  "result": "continue" | "T0" | "T1" | "T2" ...,
+  "reasoning": "Brief explanation (1-2 sentences max)"
 }
-\`\`\``;
+\`\`\`
+
+**SCENE:**
+2:47 AM becomes 9:23 PM becomes this moment, always. Rain against glass, 
+the same Chet Baker track on repeat. You know this booth, these shadows.
+
+Alex's reflection doubles in the window - one facing you, one watching the street. 
+The coffee has gone cold again. It always goes cold.
+
+You've been here before. You'll be here again. But tonight feels different, 
+like a film running at the wrong speed, frames dropping into silence.
+
+[What crosses your mind as you study Alex in the half-light?]
+
+**TRANSITIONS:**
+
+**T0:**
+* **PREREQUISITES:**
+    * \`the player or Alex exit the cafe AND player and Alex leave the café together\`
+* **DESCRIPTION:** Alex's hand finds yours as you leave the café. 'Thank you for not giving up on me.'
+
+**T1:**
+* **PREREQUISITES:**
+    * \`the player or Alex exit the cafe AND (player lets Alex leave without resolution OR player hurts Alex)\`
+* **DESCRIPTION:** You watch Alex disappear into the rain. The barista starts
+stacking chairs. Another chance lost to fear.
+
+**T2:**
+* **PREREQUISITES:**
+    * \`the player or Alex exit the cafe AND player acknowledges the moment but chooses friendship\`
+* **DESCRIPTION:** Alex smiles - genuine but careful. "We're good, right?"
+Some things are worth more than the risk.
+
+**EXAMPLES OF CORRECT EVALUATION:**
+
+1. **ACTION:** \`Player examines the locked door carefully.\`
+   **SCENE:** A small room with a heavy wooden door.
+   **TRANSITION T0 PREREQUISITES:** \`player opens the door\`
+   **CORRECT RESPONSE:**
+   \`\`\`json
+   {
+     "result": "continue",
+     "reasoning": "Prerequisites not met: player examined the door but did not open it."
+   }
+   \`\`\`
+
+2. **ACTION:** \`Push open the heavy wooden door and step through.\`
+   **SCENE:** A small room with a heavy wooden door.
+   **TRANSITION T0 PREREQUISITES:** \`player opens the door\`
+   **CORRECT RESPONSE:**
+   \`\`\`json
+   {
+     "result": "T0",
+     "reasoning": "Prerequisites met: player opened the door by pushing it open."
+   }
+   \`\`\`
+
+**Recent Dialogue:**
+Player: Hey, Alex. You've been so quiet tonight. Is everything ok at work?
+Response: **Alex**'s reflection in the glass blurs as she turns her head slowly from the street. Her eyes, usually so direct, seem to catch on something just past you, or perhaps within you.
+
+A small, almost imperceptible tremor runs through her hand as she finally picks up the *cold mug*. "Work?" she repeats, the word a soft echo in the quiet café, as if testing its shape.
+
+She doesn't meet your gaze fully, her eyes drifting to the condensation beading on the glass. "It's… fine. Always the same, isn't it?" Her voice is a low current, barely disturbing the jazz.
+Player: Ah, well, what's on your mind? I feel like you've been slowly drifting away these last few weeks and, well, I'm worried. Is it something I said or did?
+Response: **Alex**'s grip tightens imperceptibly on the cold mug, her knuckles momentarily white against the ceramic. The jazz drifts, a familiar, distant hum, as she finally turns her gaze fully to you.
+
+Her eyes, usually so clear, are clouded, like the condensation on the windowpane. A soft, almost inaudible sigh escapes her. "No," she murmurs, her voice a fragile thing, "It's not you. Never you."
+
+She looks away again, towards the street, where the rain continues its quiet descent. "It's just…" Her words trail off, leaving a silence that feels heavier than before, thick with unspoken things. She seems to gather her thoughts, or perhaps, her courage.
+Player: "You can tell me. Or don't. But know that I'm here. This Friday, and the next, and the one after that."
+Response: **Alex** looks at you, really looks at you, for the first time tonight. Her reflection in the window still watches the street, but her eyes, now, are fixed on yours.
+
+The jazz loops, a familiar refrain, as she slowly, almost reverently, sets down the *cold mug* on the condensation ring it leaves behind.
+
+A breath, held for too long, escapes her. The air between you feels lighter, or perhaps, just more fragile.
+
+She reaches out, her fingers hovering for a moment, then resting gently on the back of your hand. Her touch is cool, like the glass, but steady.
+
+Her voice, when it comes, is a whisper against the quiet hum of the café. "Always… here?"
+
+**Memories:**
+- Alex's pronouns are she/her.
+- Alex appears beautiful but distant.
+- Alex is focused on something outside.
+- Alex acknowledged player's concern.
+- Alex is nervous and deflecting questions.
+- Player expressed worry about Alex's distance.
+- Player asked if they caused Alex's distance.
+- Alex denied player caused her quietness.
+- Alex struggles to articulate her feelings.
+- Alex is beginning to open up due to the player's empathy.
+- Alex touched the player's hand.
+- Alex whispered "Always... here?"
+
+**ACTION:**
+\`Put my other hand on hers and say , "Always."\`
+
+EVALUATE NOW.`;
 
 // **EVALUATION & RESPONSE INSTRUCTIONS:**
 // 1. **Analyze the Input:** First, look at the player's \`Action\` and the \`Current State Facts\`.
@@ -213,9 +260,7 @@ function parseJsonResponse(content: string): any {
 interface TestResult {
   temperature: number;
   attempt: number;
-  mode: string;
-  targetId?: string;
-  confidence: number;
+  result: string;  // "continue", "T0", "T1", etc.
   reasoning: string;
   latency: number;
   tokenUsage: {
@@ -237,14 +282,12 @@ async function runSingleTest(temperature: number, attempt: number): Promise<Test
       return null;
     }
     
-    console.log(`✅ ${parsedJson.mode}${parsedJson.targetId ? ` → ${parsedJson.targetId}` : ''}`);
+    console.log(`✅ ${parsedJson.result}`);
     
     return {
       temperature,
       attempt,
-      mode: parsedJson.mode || 'unknown',
-      targetId: parsedJson.targetId,
-      confidence: parsedJson.confidence || 0,
+      result: parsedJson.result || 'unknown',
       reasoning: parsedJson.reasoning || '',
       latency: result.latency,
       tokenUsage: {
@@ -284,10 +327,9 @@ function analyzeResults(results: TestResult[]): void {
       continue;
     }
     
-    // Count outcomes
+    // Count outcomes by classification result
     const outcomes = tempResults.reduce((acc, result) => {
-      const key = result.targetId ? `${result.mode} → ${result.targetId}` : result.mode;
-      acc[key] = (acc[key] || 0) + 1;
+      acc[result.result] = (acc[result.result] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
     
@@ -301,10 +343,8 @@ function analyzeResults(results: TestResult[]): void {
     
     // Average stats
     const avgLatency = tempResults.reduce((sum, r) => sum + r.latency, 0) / tempResults.length;
-    const avgConfidence = tempResults.reduce((sum, r) => sum + r.confidence, 0) / tempResults.length;
     
     console.log(`   Avg latency: ${avgLatency.toFixed(0)}ms`);
-    console.log(`   Avg confidence: ${avgConfidence.toFixed(2)}`);
     console.log('');
   }
   
@@ -315,11 +355,11 @@ function analyzeResults(results: TestResult[]): void {
     const tempResults = byTemperature[temp] || [];
     if (tempResults.length === 0) continue;
     
-    const modes = tempResults.map(r => r.mode);
-    const uniqueModes = new Set(modes);
-    const consistency = ((modes.length - uniqueModes.size + 1) / modes.length * 100);
+    const results = tempResults.map(r => r.result);
+    const uniqueResults = new Set(results);
+    const consistency = ((results.length - uniqueResults.size + 1) / results.length * 100);
     
-    console.log(`   T=${temp}: ${consistency.toFixed(1)}% consistent (${uniqueModes.size} different outcomes)`);
+    console.log(`   T=${temp}: ${consistency.toFixed(1)}% consistent (${uniqueResults.size} different outcomes)`);
   }
 }
 

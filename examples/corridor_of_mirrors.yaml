@@ -78,11 +78,11 @@ scenes:
       in all reflections simultaneously. "Each mirror leads to truth," they say,
       "but truth has many faces. Which reality calls to you?"
     leads_to:
-      enter_lab: "approaching the laboratory mirror"
-      enter_garden: "stepping toward the garden mirror"
-      enter_office: "choosing the noir office mirror"
-      enter_cottage: "selecting the fairy cottage mirror"
-      enter_void: "walking to the minimalist void mirror"
+      enter_lab: "player approaches the laboratory mirror"
+      enter_garden: "player steps toward the garden mirror"
+      enter_office: "player chooses the noir office mirror"
+      enter_cottage: "player selects the fairy cottage mirror"
+      enter_void: "player walks to the minimalist void mirror"
 
   enter_lab:
     location: "clinical_lab"
@@ -102,9 +102,9 @@ scenes:
       Available equipment: microscope, measurement tools, data tablets.
       Hypothesis: This room demands pure objectivity.
     leads_to:
-      lab_to_garden: "exiting through eastern mirror portal"
-      lab_analysis: "engaging with laboratory procedures"
-      return_corridor: "returning to central corridor"
+      lab_to_garden: "player exits through the eastern mirror portal"
+      lab_analysis: "player engages with laboratory procedures"
+      return_corridor: "player returns to the central corridor"
 
   enter_garden:
     location: "poet_garden"
@@ -126,9 +126,9 @@ scenes:
       
       What seeds will you plant in this sacred earth?
     leads_to:
-      garden_to_office: "following the shadow-path east"
-      garden_exploration: "wandering deeper into the metaphor-maze"
-      return_corridor: "returning to the mundane hallway"
+      garden_to_office: "player follows the shadow-path east"
+      garden_exploration: "player wanders deeper into the metaphor-maze"
+      return_corridor: "player returns to the mundane hallway"
 
   enter_office:
     location: "noir_office"
@@ -151,9 +151,9 @@ scenes:
       
       What's your angle, stranger?
     leads_to:
-      office_to_cottage: "stepping through the bright doorway"
-      noir_investigation: "diving deeper into the shadows"
-      return_corridor: "heading back to the gallery"
+      office_to_cottage: "player steps through the bright doorway"
+      noir_investigation: "player dives deeper into the shadows"
+      return_corridor: "player heads back to the gallery"
 
   enter_cottage:
     location: "fairy_cottage"
@@ -176,9 +176,9 @@ scenes:
       This is a place where dreams come true and everyone is always kind.
       Isn't that nice?
     leads_to:
-      cottage_to_void: "opening the quiet door"
-      fairy_tale_adventure: "exploring the magical cottage"
-      return_corridor: "going back to the big hallway"
+      cottage_to_void: "player opens the quiet door"
+      fairy_tale_adventure: "player explores the magical cottage"
+      return_corridor: "player goes back to the big hallway"
 
   enter_void:
     location: "minimalist_void"
@@ -201,9 +201,9 @@ scenes:
       
       Choose.
     leads_to:
-      void_to_lab: "entering the doorway marked 'data'"
-      void_contemplation: "remaining in the essential space"
-      return_corridor: "returning to complexity"
+      void_to_lab: "player enters the doorway marked 'data'"
+      void_contemplation: "player remains in the essential space"
+      return_corridor: "player returns to complexity"
 
   lab_to_garden:
     sketch: |
@@ -219,7 +219,7 @@ scenes:
       Oh! The cold calculations melt away like winter snow, and suddenly
       you're breathing in the perfume of possibility...
     leads_to:
-      garden_exploration: "embracing the poetic transformation"
+      garden_exploration: "player embraces the poetic transformation"
 
   garden_to_office:
     sketch: |
@@ -230,7 +230,7 @@ scenes:
       "Life ain't all roses, sweetheart," a voice growls from the gathering
       darkness. "Time you learned that."
     leads_to:
-      noir_investigation: "accepting the harsh truths"
+      noir_investigation: "player accepts the harsh truths"
 
   office_to_cottage:
     sketch: |
@@ -241,7 +241,7 @@ scenes:
       "Oh dear," says a gentle voice, "you look like you need a nice cup
       of tea and a hug!"
     leads_to:
-      fairy_tale_adventure: "letting wonder heal the cynicism"
+      fairy_tale_adventure: "player lets wonder heal the cynicism"
 
   cottage_to_void:
     sketch: |
@@ -252,7 +252,7 @@ scenes:
       
       What remains?
     leads_to:
-      void_contemplation: "confronting the essential"
+      void_contemplation: "player confronts the essential"
 
   void_to_lab:
     sketch: |
@@ -265,7 +265,7 @@ scenes:
       
       Beginning systematic analysis of experience data...
     leads_to:
-      lab_analysis: "returning to objective measurement"
+      lab_analysis: "player returns to objective measurement"
 
   return_to_understanding:
     location: "corridor"
