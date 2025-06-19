@@ -1,9 +1,11 @@
 import { defineConfig } from 'vite'
 import { resolve } from 'path'
+import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   base: process.env.NODE_ENV === 'production' ? '/iffy/' : '/',
   root: '.',
+  plugins: [vue()],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src')
