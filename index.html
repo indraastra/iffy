@@ -4,41 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iffy - Interactive Fiction Engine</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&family=Source+Code+Pro:ital,wght@0,400;0,500;0,700;1,400&family=Cinzel:wght@400;500;600&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&family=Fira+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="/src/styles/main.css">
 </head>
 <body>
     <div id="app">
-        <main class="game-area">
-            <div id="themed-game-content" class="themed-game-content">
-                <header class="header">
-                    <h1 class="title">Iffy</h1>
-                    <div class="controls">
-                        <button id="save-btn" class="btn">Save</button>
-                        <button id="load-btn" class="btn">Load</button>
-                        <button id="settings-btn" class="btn">Settings</button>
-                    </div>
-                </header>
-                <div id="story-output" class="story-output">
-                </div>
-                
-                <div class="input-area">
-                    <div class="input-container">
-                        <span class="prompt">></span>
-                        <textarea 
-                            id="command-input" 
-                            class="command-input" 
-                            placeholder="Enter your command..."
-                            autocomplete="off"
-                            data-lpignore="true"
-                            data-1p-ignore="true"
-                            rows="1"
-                            resize="none"
-                        ></textarea>
-                    </div>
-                </div>
-            </div>
-        </main>
-
+        <!-- Vue will mount here -->
     </div>
 
     <script type="module" src="/src/main.ts"></script>

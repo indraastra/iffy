@@ -67,6 +67,12 @@ export interface ThemeTypography {
 }
 
 export interface InterfaceTheme {
+  header: {
+    background: string
+    border: string
+    text: string
+    shadow: string
+  }
   panels: {
     background: string
     border: string

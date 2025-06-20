@@ -1,5 +1,5 @@
 title: "Friday Night Rain"
-author: "Iffy Engine Team"
+author: "Iffy Collective"
 blurb: "Your weekly coffee ritual takes an unexpected turn."
 version: "2.0"
 context: "Your usual Friday evening at the café. Alex seems different tonight."
@@ -7,7 +7,7 @@ context: "Your usual Friday evening at the café. Alex seems different tonight."
 narrative:
   voice: "Detached intimacy, present tense, like observing through glass"
   setting: "Modern urban café, rainy Friday evening"
-  tone: "Melancholic restraint, understated longing, bittersweet"
+  tone: "Melancholy, understated longing, bittersweet"
   themes: [ "missed connections", "time slipping away", "unspoken desires", "urban solitude" ]
 
 world:
@@ -16,19 +16,20 @@ world:
       name: "Alex"
       sketch: "Your Friday night companion, unusually restless and fidgeting with mug of cold coffee"
       arc: |
-        Initially contemplative and defensive, gradually shifting to vulnerability and openness based
-        on player's empathy.
+        Initially contemplative and conflicted about sharing her developing feelings, gradually 
+        shifting to vulnerability and openness based on player's empathy.
 
-        EMOTIONAL PROGRESSION: Defensive → Conflicted → Vulnerable → Open
+        EMOTIONAL PROGRESSION: Contemplative → Vulnerable → Open
 
         RESPONSE PATTERNS:
-        - Patient, empathetic responses help Alex feel safe to share
-        - Pushy or judgmental responses make Alex shut down
+        - Alex should reply to the player when engaged in conversation
+        - Questions are met with hesitation initially
+        - Empathetic responses help Alex open up naturally
 
         EMOTIONAL STATES TO TRACK:
         - Nervous energy when player shows interest
         - Relief when player creates safe space  
-        - Retreat if player seems dismissive
+        - Warmth when player is understanding
         - Joy if feelings are reciprocated
       voice: "Soft and full of hidden currents"
 
@@ -83,10 +84,9 @@ guidance: |
   Alex has been in love with the player for months and tonight plans to confess.
   The player should discover this gradually through Alex's behavior and dialogue.
 
-  RESPONSE STYLE:
+  NARRATIVE STYLE:
   - Write like a Wong Kar-wai film: oblique, restrained, poetic without being overwrought
   - Focus on surfaces, reflections, fragments - what's seen rather than felt
-  - Use repetition and temporal dislocation ("You've done this before", "This feels familiar")
   - Narration should carry subtext
 
   PRONOUN HANDLING:

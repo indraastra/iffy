@@ -432,10 +432,8 @@ export class ImpressionistEngine {
       }
     }
 
-    // Available endings (~100 tokens)
-    if (this.story!.endings && this.story!.endings.variations.length > 0) {
-      context.availableEndings = this.story!.endings;
-    }
+    // Note: Ending detection is now handled automatically by ActionClassifier
+    // No need to pass ending conditions to the director
 
     // Narrative metadata (~50 tokens if defined)
     if (this.story!.narrative) {

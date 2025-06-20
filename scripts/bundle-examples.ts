@@ -1,5 +1,5 @@
 #!/usr/bin/env tsx
-import { readFileSync, writeFileSync, readdirSync } from 'fs';
+import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 'fs';
 import { resolve, join } from 'path';
 import { ImpressionistParser } from '../src/engine/impressionistParser';
 
@@ -11,29 +11,37 @@ interface ExampleStory {
   content: string;
 }
 
+interface StoryMetadata {
+  filename: string;
+  title: string;
+  author: string;
+  blurb: string;
+}
+
 /**
- * Build script to bundle impressionist example stories into the app for easy playtesting
- * Validates all stories and fails the build if any are invalid
+ * Build script to validate stories and generate metadata for the app
+ * Validates all stories in public/stories and generates metadata
  */
 function bundleExampleStories() {
-  const examplesDir = resolve(__dirname, '../examples');
-  const outputPath = resolve(__dirname, '../src/examples.ts');
+  const storiesDir = resolve(__dirname, '../public/stories');
+  const metadataOutputPath = resolve(__dirname, '../src/examples-metadata.ts');
   
   console.log('🔍 Discovering and validating example stories...');
   
-  // Read all YAML files from examples directory
-  const files = readdirSync(examplesDir).filter(file => file.endsWith('.yaml') || file.endsWith('.yml'));
+  // Read all YAML files from public/stories directory
+  const files = readdirSync(storiesDir).filter(file => file.endsWith('.yaml') || file.endsWith('.yml'));
   
   if (files.length === 0) {
-    console.warn('⚠️  No example story files found in examples/ directory');
+    console.warn('⚠️  No story files found in public/stories/ directory');
     return;
   }
   
   const stories: ExampleStory[] = [];
+  const metadata: StoryMetadata[] = [];
   let validationErrors = 0;
   
   for (const file of files) {
-    const filePath = join(examplesDir, file);
+    const filePath = join(storiesDir, file);
     
     try {
       console.log(`📖 Processing ${file}...`);
@@ -57,6 +65,7 @@ function bundleExampleStories() {
       // Use blurb if available, otherwise generate from title
       const blurb = story.blurb || title;
       
+      // Add to full stories array (for legacy compatibility)
       stories.push({
         filename: file,
         title,
@@ -64,6 +73,16 @@ function bundleExampleStories() {
         blurb,
         content
       });
+      
+      // Add to metadata array
+      metadata.push({
+        filename: file,
+        title,
+        author,
+        blurb
+      });
+      
+      // Stories are already in public/stories - no need to copy
       
       console.log(`✅ ${file} validated successfully`);
       
@@ -91,12 +110,19 @@ function bundleExampleStories() {
     process.exit(1);
   }
   
-  // Generate TypeScript module
-  const moduleContent = `/**
- * Bundled example stories for easy playtesting
+  // Generate metadata TypeScript module
+  const metadataModuleContent = `/**
+ * Story metadata for dynamic loading
  * Generated automatically by scripts/bundle-examples.ts
  * DO NOT EDIT MANUALLY - Regenerate with: npm run bundle-examples
  */
+
+export interface StoryMetadata {
+  filename: string;
+  title: string;
+  author: string;
+  blurb: string;
+}
 
 export interface BundledStory {
   filename: string;
@@ -106,7 +132,46 @@ export interface BundledStory {
   content: string;
 }
 
-export const BUNDLED_STORIES: BundledStory[] = ${JSON.stringify(stories, null, 2)};
+export const STORY_METADATA: StoryMetadata[] = ${JSON.stringify(metadata, null, 2)};
+
+/**
+ * Dynamically load a story's content from the public/stories directory
+ */
+export async function loadStoryContent(filename: string): Promise<string> {
+  const response = await fetch(\`/stories/\${filename}\`);
+  if (!response.ok) {
+    throw new Error(\`Failed to load story: \${filename}\`);
+  }
+  return response.text();
+}
+
+/**
+ * Load a complete story with content
+ */
+export async function loadStory(filename: string): Promise<BundledStory | undefined> {
+  const meta = STORY_METADATA.find(story => story.filename === filename);
+  if (!meta) {
+    return undefined;
+  }
+  
+  const content = await loadStoryContent(filename);
+  return {
+    ...meta,
+    content
+  };
+}
+
+export function getStoryMetadata(): StoryMetadata[] {
+  return STORY_METADATA;
+}
+
+export function getStoryMetadataByFilename(filename: string): StoryMetadata | undefined {
+  return STORY_METADATA.find(story => story.filename === filename);
+}
+
+// Legacy compatibility: bundled stories (for dev/testing)
+// Only include in development builds to avoid bundle bloat
+export const BUNDLED_STORIES: BundledStory[] = [];
 
 export function getBundledStory(filename: string): BundledStory | undefined {
   return BUNDLED_STORIES.find(story => story.filename === filename);
@@ -122,14 +187,15 @@ export function getBundledStoryTitles(): Array<{filename: string, title: string,
 }
 `;
 
-  writeFileSync(outputPath, moduleContent, 'utf-8');
+  writeFileSync(metadataOutputPath, metadataModuleContent, 'utf-8');
   
-  console.log(`\n🎉 Successfully bundled ${stories.length} example stories:`);
+  console.log(`\n🎉 Successfully validated ${stories.length} example stories:`);
   stories.forEach(story => {
     console.log(`   ✅ ${story.title} by ${story.author} (${story.filename})`);
   });
   
-  console.log(`\n📦 Bundle written to: ${outputPath}`);
+  console.log(`\n📦 Metadata written to: ${metadataOutputPath}`);
+  console.log(`📁 Story files available in: ${storiesDir}`);
 }
 
 // Run the script

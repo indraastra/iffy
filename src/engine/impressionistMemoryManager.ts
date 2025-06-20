@@ -360,6 +360,8 @@ Return an array of compacted memories. Each memory should have:
 - content: A clear, concise description of the current state or knowledge
 - importance: A number from 1-10 indicating how important this memory is
 
+**IMPORTANT**: Return memories in chronological order (oldest to newest). This preserves the natural flow of the story.
+
 Aim for around ${targetCount} memories. Prioritize current game state over historical actions.`;
   }
 

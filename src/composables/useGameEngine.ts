@@ -25,6 +25,9 @@ const gameState = reactive<GameState>({
   messages: []
 })
 
+// Message ID counter to ensure unique IDs
+let messageIdCounter = 0
+
 // Global services
 const multiModelService = new MultiModelService()
 const debugPane = new DebugPane()
@@ -35,6 +38,16 @@ const parser = new ImpressionistParser()
 multiModelService.setMetricsHandler((metrics) => {
   debugPane.addLangChainMetric(metrics)
 })
+
+// Export global services for other composables
+export function getGlobalServices() {
+  return {
+    multiModelService,
+    debugPane,
+    engine,
+    parser
+  }
+}
 
 export function useGameEngine() {
   const currentInput = ref('')
@@ -60,12 +73,28 @@ export function useGameEngine() {
         gameState.isLoaded = true
         gameState.currentStory = story
         
-        addMessage('Story loaded successfully', 'system')
+        // Display story header as single cohesive block
+        let storyHeader = `🎭 **${story.title}**`
+        if (story.author) {
+          storyHeader += `\n*by ${story.author}*`
+        }
+        if (story.blurb) {
+          storyHeader += `\n\n${story.blurb}`
+        }
+        storyHeader += '\n\n---'
+        addMessage(storyHeader, 'system')
         
-        // Process initial scene
-        const initialResponse = await engine.processInitialScene()
-        if (initialResponse.text) {
-          addMessage(initialResponse.text, 'story')
+        // Handle initial scene - check if it should be processed through LLM or displayed verbatim
+        const initialText = engine.getInitialText()
+        if (initialText === null) {
+          // Process initial scene through LLM (process_sketch: true or undefined)
+          const initialResponse = await engine.processInitialScene()
+          if (initialResponse.text) {
+            addMessage(initialResponse.text, 'story')
+          }
+        } else {
+          // Display initial text verbatim (process_sketch: false)
+          addMessage(initialText, 'story')
         }
       } else {
         addMessage(`Failed to load story: ${result.error}`, 'error')
@@ -112,7 +141,7 @@ export function useGameEngine() {
 
   function addMessage(content: string, type: GameState['messages'][0]['type']) {
     const message = {
-      id: Date.now().toString(),
+      id: `msg-${++messageIdCounter}`,
       content,
       type,
       timestamp: new Date()
@@ -122,20 +151,26 @@ export function useGameEngine() {
 
   function clearMessages() {
     gameState.messages = []
+    messageIdCounter = 0
   }
 
-  // Initialize welcome message
+  // Initialize welcome message - split into three blocks
   if (gameState.messages.length === 0) {
+    // Block 1: Big bold intro
     addMessage(`🎭 **Welcome to Iffy**
-*LLM-powered Interactive Fiction Engine*
 
-**✨ Features:**
+*LLM-powered Interactive Fiction Engine*`, 'system')
+    
+    // Block 2: Features
+    addMessage(`**✨ Features:**
+
 • 🎨 **Natural Language Interaction** - Speak as you would naturally
 • 🧠 **Smart Memory** - AI remembers what matters
 • 📊 **Performance Metrics** - Track token usage and efficiency  
-• 🌟 **Rich Stories** - Interactive fiction with dynamic narratives
-
-🚀 **Get Started:** Click the "Load" button to choose a story, or press Ctrl+D to open debug tools.`, 'system')
+• 🌟 **Rich Stories** - Interactive fiction with dynamic narratives`, 'system')
+    
+    // Block 3: Get Started
+    addMessage(`🚀 **Get Started:** Click the "Load" button to choose a story, or press Ctrl+D to open debug tools.`, 'system')
   }
 
   return {

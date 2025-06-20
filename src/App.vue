@@ -11,7 +11,8 @@ import { useTheme } from '@/composables/useTheme'
 import { useGameEngine } from '@/composables/useGameEngine'
 
 const { currentTheme } = useTheme()
-const { debugPane } = useGameEngine()
+const gameEngine = useGameEngine()
+const { debugPane } = gameEngine
 
 const themeClass = computed(() => {
   return currentTheme.value ? `theme-${currentTheme.value.id}` : ''
