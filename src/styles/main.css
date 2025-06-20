@@ -1,16 +1,24 @@
-/* CSS Custom Properties for theming */
+/* CSS Custom Properties are now managed by the theme system */
+/* Default fallbacks (Classic Retro theme) in case theme hasn't loaded yet */
 :root {
-  --primary-color: #1a1a2e;
-  --background-color: #0f0f23;
-  --text-color: #eee;
-  --header-bg: #0f0f23;
-  --footer-bg: #0f0f23;
-  --input-bg: #2a2a4e;
-  --border-color: #404060;
-  --button-bg: #3a3a6e;
-  --button-hover: #4a4a7e;
-  --modal-bg: #0f0f23;
-  --character-color: #64B5F6;
+  --color-primary: #1a1a2e;
+  --color-secondary: #16213e;
+  --color-accent: #64b5f6;
+  --color-background: #0f0f23;
+  --color-surface: #16213e;
+  --color-text-primary: #eeeeff;
+  --color-text-secondary: #a0a0cc;
+  --color-text-accent: #64b5f6;
+  --font-primary: "JetBrains Mono", "Source Code Pro", "Courier New", monospace;
+  
+  /* Interface fallbacks */
+  --interface-header-bg: #0f0f23;
+  --interface-header-border: 2px solid #404060;
+  --interface-header-text: #eeeeff;
+  --interface-header-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --interface-scrollbar-track: #1a1a2e;
+  --interface-scrollbar-thumb: #404060;
+  --interface-scrollbar-thumb-hover: #505080;
 }
 
 /* Reset and base styles */
@@ -21,9 +29,9 @@
 }
 
 body {
-  font-family: 'Courier New', monospace;
-  background-color: var(--background-color);
-  color: var(--text-color);
+  font-family: var(--font-primary, 'Courier New', monospace);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
   line-height: 1.6;
   height: 100vh;
   overflow: hidden;
@@ -33,6 +41,37 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+}
+
+/* Custom narrow scrollbars that adapt to theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--interface-scrollbar-track, var(--color-background));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--interface-scrollbar-thumb, var(--color-secondary));
+  border-radius: 4px;
+  transition: var(--transition-fast);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--interface-scrollbar-thumb-hover, var(--color-accent));
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--interface-scrollbar-track, var(--color-background));
+}
+
+/* Firefox scrollbar styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--interface-scrollbar-thumb, var(--color-secondary)) var(--interface-scrollbar-track, var(--color-background));
 }
 
 /* Header - now themed with game content */

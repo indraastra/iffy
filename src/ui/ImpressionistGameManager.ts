@@ -8,7 +8,7 @@ import { ImpressionistEngine } from '@/engine/impressionistEngine';
 import { ImpressionistParser } from '@/engine/impressionistParser';
 import { MultiModelService } from '@/services/multiModelService';
 import { DebugPane } from '@/ui/debugPane';
-import { getBundledStoryTitles, getBundledStory } from '@/examples';
+import { STORY_METADATA, loadStory } from '@/examples-metadata';
 
 export interface GameManagerConfig {
   storyOutput: HTMLElement;
@@ -186,13 +186,18 @@ export class ImpressionistGameManager {
    * Load example story by filename
    */
   async loadExampleStory(filename: string): Promise<boolean> {
-    const storyData = getBundledStory(filename);
-    if (!storyData) {
-      this.addMessage(`❌ Example story "${filename}" not found`, 'error');
+    try {
+      const storyData = await loadStory(filename);
+      if (!storyData) {
+        this.addMessage(`❌ Example story "${filename}" not found`, 'error');
+        return false;
+      }
+    
+      return await this.loadStory(storyData.content, filename);
+    } catch (error) {
+      this.addMessage(`❌ Error loading story: ${error}`, 'error');
       return false;
     }
-    
-    return await this.loadStory(storyData.content, filename);
   }
 
   /**
@@ -348,7 +353,7 @@ export class ImpressionistGameManager {
    * Create load menu
    */
   private createLoadMenu(): HTMLElement {
-    const exampleStories = getBundledStoryTitles();
+    const exampleStories = STORY_METADATA;
     
     const menu = document.createElement('div');
     menu.className = 'impressionist-load-menu';
@@ -368,7 +373,7 @@ export class ImpressionistGameManager {
           <div class="examples-section">
             <h4>📚 Example Stories</h4>
             <div class="examples-grid">
-              ${exampleStories.map(story => `
+              ${exampleStories.map((story: any) => `
                 <button class="example-story" data-filename="${story.filename}">
                   <div class="story-header">
                     <h5>${story.title}</h5>

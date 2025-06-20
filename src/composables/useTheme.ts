@@ -4,67 +4,67 @@ import type { GameTheme } from '@/types/theme'
 // Built-in themes
 const BUILT_IN_THEMES: Record<string, GameTheme> = {
   classic: {
-    name: 'Classic',
+    name: 'Classic Retro',
     id: 'classic',
     colors: {
-      primary: '#2563eb',
-      secondary: '#64748b',
-      accent: '#f59e0b',
-      background: '#ffffff',
-      surface: '#f8fafc',
+      primary: '#1a1a2e',
+      secondary: '#16213e',
+      accent: '#64b5f6',
+      background: '#0f0f23',
+      surface: '#16213e',
       text: {
-        primary: '#1e293b',
-        secondary: '#64748b',
-        accent: '#f59e0b'
+        primary: '#eeeeff',
+        secondary: '#a0a0cc',
+        accent: '#64b5f6'
       },
       markup: {
         character: {
-          player: '#f59e0b',
-          npc: '#64748b',
-          hover: '#2563eb'
+          player: '#64b5f6',
+          npc: '#a0a0cc',
+          hover: '#81c784'
         },
         item: {
-          primary: '#8b5cf6',
-          interactive: '#7c3aed',
-          important: '#6d28d9',
-          hover: '#5b21b6'
+          primary: '#ba68c8',
+          interactive: '#9c27b0',
+          important: '#7b1fa2',
+          hover: '#ad85c6'
         },
         location: {
-          primary: '#059669',
-          current: '#047857',
-          accessible: '#065f46',
-          hover: '#064e3b'
+          primary: '#4db6ac',
+          current: '#26a69a',
+          accessible: '#00695c',
+          hover: '#4dd0e1'
         },
         alerts: {
           warning: {
-            bg: '#fef3c7',
-            border: '#f59e0b',
-            text: '#92400e'
+            bg: '#2e2a1a',
+            border: '#ffa726',
+            text: '#ffcc80'
           },
           discovery: {
-            bg: '#d1fae5',
-            border: '#10b981',
-            text: '#065f46'
+            bg: '#1a2e1a',
+            border: '#66bb6a',
+            text: '#a5d6a7'
           },
           danger: {
-            bg: '#fee2e2',
-            border: '#ef4444',
-            text: '#991b1b'
+            bg: '#2e1a1a',
+            border: '#f44336',
+            text: '#ffcdd2'
           }
         }
       }
     },
     typography: {
       fonts: {
-        primary: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        secondary: 'Georgia, "Times New Roman", serif',
-        monospace: '"Courier New", monospace'
+        primary: '"JetBrains Mono", "Source Code Pro", "Courier New", monospace',
+        secondary: '"JetBrains Mono", "Source Code Pro", "Courier New", monospace',
+        monospace: '"JetBrains Mono", "Source Code Pro", "Courier New", monospace'
       },
       sizes: {
         small: '0.875rem',
         normal: '1rem',
-        large: '1.25rem',
-        heading: '1.5rem'
+        large: '1.125rem',
+        heading: '1.375rem'
       },
       weights: {
         normal: '400',
@@ -73,31 +73,37 @@ const BUILT_IN_THEMES: Record<string, GameTheme> = {
       }
     },
     interface: {
+      header: {
+        background: '#0f0f23',
+        border: '2px solid #404060',
+        text: '#eeeeff',
+        shadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+      },
       panels: {
-        background: 'rgba(248, 250, 252, 0.95)',
-        border: '1px solid #e2e8f0',
-        borderRadius: '8px',
-        shadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+        background: '#16213e',
+        border: '1px solid #404060',
+        borderRadius: '4px',
+        shadow: '0 2px 8px rgba(0, 0, 0, 0.4)'
       },
       buttons: {
-        background: '#2563eb',
-        backgroundHover: '#1d4ed8',
-        border: '1px solid #2563eb',
+        background: '#3a3a6e',
+        backgroundHover: '#4a4a7e',
+        border: '1px solid #404060',
         borderRadius: '4px',
-        text: '#ffffff',
+        text: '#eeeeff',
         textHover: '#ffffff'
       },
       inputs: {
-        background: '#ffffff',
-        border: '1px solid #d1d5db',
-        borderFocus: '1px solid #2563eb',
-        text: '#1e293b',
-        placeholder: '#9ca3af'
+        background: '#2a2a4e',
+        border: '1px solid #404060',
+        borderFocus: '1px solid #64b5f6',
+        text: '#eeeeff',
+        placeholder: '#a0a0cc'
       },
       scrollbars: {
-        track: '#f1f5f9',
-        thumb: '#cbd5e1',
-        thumbHover: '#94a3b8'
+        track: '#1a1a2e',
+        thumb: '#404060',
+        thumbHover: '#505080'
       }
     },
     effects: {
@@ -172,9 +178,9 @@ const BUILT_IN_THEMES: Record<string, GameTheme> = {
     },
     typography: {
       fonts: {
-        primary: '"Crimson Text", "Times New Roman", serif',
-        secondary: '"Cinzel", Georgia, serif',
-        monospace: '"Courier New", monospace'
+        primary: '"Crimson Text", "EB Garamond", "Times New Roman", serif',
+        secondary: '"Cinzel", "Crimson Text", Georgia, serif',
+        monospace: '"JetBrains Mono", "Source Code Pro", "Courier New", monospace'
       },
       sizes: {
         small: '0.875rem',
@@ -189,6 +195,12 @@ const BUILT_IN_THEMES: Record<string, GameTheme> = {
       }
     },
     interface: {
+      header: {
+        background: '#1a1a1a',
+        border: '2px solid #8b0000',
+        text: '#e8e8e8',
+        shadow: '0 2px 8px rgba(139, 0, 0, 0.3)'
+      },
       panels: {
         background: 'rgba(45, 45, 45, 0.95)',
         border: '1px solid #555',
@@ -231,6 +243,128 @@ const BUILT_IN_THEMES: Record<string, GameTheme> = {
         subtle: '0 2px 4px rgba(0, 0, 0, 0.3)',
         medium: '0 4px 8px rgba(0, 0, 0, 0.5)',
         strong: '0 8px 16px rgba(0, 0, 0, 0.7)'
+      }
+    }
+  },
+  
+  modern: {
+    name: 'Modern Clean',
+    id: 'modern',
+    colors: {
+      primary: '#3b82f6',
+      secondary: '#6366f1',
+      accent: '#8b5cf6',
+      background: '#ffffff',
+      surface: '#f8fafc',
+      text: {
+        primary: '#1e293b',
+        secondary: '#64748b',
+        accent: '#3b82f6'
+      },
+      markup: {
+        character: {
+          player: '#3b82f6',
+          npc: '#64748b',
+          hover: '#2563eb'
+        },
+        item: {
+          primary: '#8b5cf6',
+          interactive: '#7c3aed',
+          important: '#6d28d9',
+          hover: '#5b21b6'
+        },
+        location: {
+          primary: '#059669',
+          current: '#047857',
+          accessible: '#065f46',
+          hover: '#064e3b'
+        },
+        alerts: {
+          warning: {
+            bg: '#fef3c7',
+            border: '#f59e0b',
+            text: '#92400e'
+          },
+          discovery: {
+            bg: '#dbeafe',
+            border: '#3b82f6',
+            text: '#1e40af'
+          },
+          danger: {
+            bg: '#fee2e2',
+            border: '#ef4444',
+            text: '#991b1b'
+          }
+        }
+      }
+    },
+    typography: {
+      fonts: {
+        primary: '"Inter", "Fira Sans", -apple-system, BlinkMacSystemFont, sans-serif',
+        secondary: '"Inter", "Fira Sans", -apple-system, BlinkMacSystemFont, sans-serif',
+        monospace: '"JetBrains Mono", "Source Code Pro", "Courier New", monospace'
+      },
+      sizes: {
+        small: '0.875rem',
+        normal: '1rem',
+        large: '1.125rem',
+        heading: '1.5rem'
+      },
+      weights: {
+        normal: '400',
+        medium: '500',
+        bold: '600'
+      }
+    },
+    interface: {
+      header: {
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        text: '#1e293b',
+        shadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+      },
+      panels: {
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '8px',
+        shadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
+      },
+      buttons: {
+        background: '#3b82f6',
+        backgroundHover: '#2563eb',
+        border: '1px solid #3b82f6',
+        borderRadius: '6px',
+        text: '#ffffff',
+        textHover: '#ffffff'
+      },
+      inputs: {
+        background: '#ffffff',
+        border: '1px solid #d1d5db',
+        borderFocus: '1px solid #3b82f6',
+        text: '#1e293b',
+        placeholder: '#9ca3af'
+      },
+      scrollbars: {
+        track: '#f1f5f9',
+        thumb: '#cbd5e1',
+        thumbHover: '#94a3b8'
+      }
+    },
+    effects: {
+      transitions: {
+        fast: '0.15s ease',
+        normal: '0.25s ease',
+        slow: '0.4s ease'
+      },
+      animations: {
+        fadeIn: 'fadeIn 0.3s ease',
+        slideIn: 'slideInUp 0.25s ease',
+        pulse: 'pulse 2s infinite'
+      },
+      shadows: {
+        subtle: '0 1px 3px rgba(0, 0, 0, 0.1)',
+        medium: '0 4px 6px rgba(0, 0, 0, 0.1)',
+        strong: '0 10px 15px rgba(0, 0, 0, 0.1)'
       }
     }
   }
@@ -390,7 +524,13 @@ function generateCSSVariables(theme: GameTheme): Record<string, string> {
     '--font-size-large': theme.typography.sizes.large,
     '--font-size-heading': theme.typography.sizes.heading,
 
-    // Interface
+    // Interface - Header
+    '--interface-header-bg': theme.interface.header.background,
+    '--interface-header-border': theme.interface.header.border,
+    '--interface-header-text': theme.interface.header.text,
+    '--interface-header-shadow': theme.interface.header.shadow,
+    
+    // Interface - Panels & Components
     '--interface-panel-bg': theme.interface.panels.background,
     '--interface-panel-border': theme.interface.panels.border,
     '--interface-button-bg': theme.interface.buttons.background,
@@ -399,6 +539,11 @@ function generateCSSVariables(theme: GameTheme): Record<string, string> {
     '--interface-input-bg': theme.interface.inputs.background,
     '--interface-input-border': theme.interface.inputs.border,
     '--interface-input-border-focus': theme.interface.inputs.borderFocus,
+    
+    // Interface - Scrollbars
+    '--interface-scrollbar-track': theme.interface.scrollbars.track,
+    '--interface-scrollbar-thumb': theme.interface.scrollbars.thumb,
+    '--interface-scrollbar-thumb-hover': theme.interface.scrollbars.thumbHover,
 
     // Effects
     '--transition-fast': theme.effects.transitions.fast,

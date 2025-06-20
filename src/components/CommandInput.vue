@@ -42,11 +42,14 @@ async function handleSubmit() {
   if (!currentInput.value.trim() || !isReady.value) return
   
   const command = currentInput.value.trim()
-  await processCommand(command)
   
-  // Reset textarea height after clearing input
+  // Clear input immediately before processing
+  currentInput.value = ''
   await nextTick()
   adjustHeight()
+  
+  // Process the command
+  await processCommand(command)
   
   // Keep focus on input
   inputElement.value?.focus()
@@ -65,6 +68,13 @@ function adjustHeight() {
   
   const newHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight)
   inputElement.value.style.height = `${newHeight}px`
+  
+  // If content exceeds max height, allow scrolling but only at max height
+  if (scrollHeight > maxHeight) {
+    inputElement.value.style.overflowY = 'auto'
+  } else {
+    inputElement.value.style.overflowY = 'hidden'
+  }
 }
 </script>
 
@@ -104,7 +114,7 @@ function adjustHeight() {
   font-size: var(--font-size-normal);
   color: var(--color-text-primary);
   resize: none;
-  overflow-y: auto;
+  overflow: hidden;
   transition: var(--transition-fast);
   min-height: 40px;
   max-height: 200px;

@@ -33,15 +33,20 @@ function handleSettings() {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background-color: var(--color-surface);
-  border-bottom: 2px solid var(--interface-panel-border);
+  background-color: var(--interface-header-bg);
+  border-bottom: var(--interface-header-border);
+  box-shadow: var(--interface-header-shadow);
+  position: relative;
+  z-index: 10;
 }
 
 .title {
   font-size: 2rem;
   font-weight: bold;
-  color: var(--color-text-primary);
+  color: var(--interface-header-text);
   margin: 0;
+  font-family: var(--font-primary);
+  letter-spacing: 0.05em;
 }
 
 .controls {
