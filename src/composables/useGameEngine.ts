@@ -1,8 +1,7 @@
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, shallowRef } from 'vue'
 import { ImpressionistEngine } from '@/engine/impressionistEngine'
 import { ImpressionistParser } from '@/engine/impressionistParser'
 import { MultiModelService } from '@/services/multiModelService'
-import { DebugPane } from '@/ui/debugPane'
 import type { ImpressionistStory } from '@/types/impressionistStory'
 
 interface GameState {
@@ -30,23 +29,33 @@ let messageIdCounter = 0
 
 // Global services
 const multiModelService = new MultiModelService()
-const debugPane = new DebugPane()
 const engine = new ImpressionistEngine(multiModelService)
 const parser = new ImpressionistParser()
+// Debug pane ref - will be set when Vue component is mounted
+const debugPaneRef = shallowRef<any>(null)
 
 // Set up metrics integration
 multiModelService.setMetricsHandler((metrics) => {
-  debugPane.addLangChainMetric(metrics)
+  if (debugPaneRef.value) {
+    debugPaneRef.value.addLangChainMetric(metrics)
+  }
 })
 
 // Export global services for other composables
 export function getGlobalServices() {
   return {
     multiModelService,
-    debugPane,
+    debugPane: debugPaneRef,
     engine,
     parser
   }
+}
+
+// Function to register the debug pane component instance
+export function registerDebugPane(debugPaneInstance: any) {
+  debugPaneRef.value = debugPaneInstance
+  // Set debug pane on the engine and related services
+  engine.setDebugPane(debugPaneInstance)
 }
 
 export function useGameEngine() {
@@ -177,7 +186,7 @@ export function useGameEngine() {
     gameState,
     engine,
     multiModelService,
-    debugPane,
+    debugPane: debugPaneRef,
     currentInput,
     isReady,
     loadStory,
