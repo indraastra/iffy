@@ -4,6 +4,9 @@ blurb: "Experience the EPIC DRAMA of making lunch - will you survive the kitchen
 version: "1.0"
 context: "Tuesday afternoon, 12:17 PM. Jennifer faces the MONUMENTAL task of making lunch. Everything is ridiculously over-the-top soap opera melodrama applied to mundane sandwich-making."
 
+ui:
+  loadingMessage: "DRAMATIC PAUSE..."
+
 narrative:
   voice: "Breathlessly dramatic soap opera narrator who treats every action like a life-or-death crisis"
   tone: "Ridiculously over-the-top soap opera melodrama"

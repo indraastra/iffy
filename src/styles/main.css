@@ -12,13 +12,21 @@
   --font-primary: "JetBrains Mono", "Source Code Pro", "Courier New", monospace;
   
   /* Interface fallbacks */
-  --interface-header-bg: #0f0f23;
-  --interface-header-border: 2px solid #404060;
-  --interface-header-text: #eeeeff;
-  --interface-header-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  --interface-scrollbar-track: #1a1a2e;
-  --interface-scrollbar-thumb: #404060;
-  --interface-scrollbar-thumb-hover: #505080;
+  --header-bg: #0f0f23;
+  --header-border: 2px solid #404060;
+  --header-text: #eeeeff;
+  --header-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --panel-bg: #16213e;
+  --panel-border: 1px solid #404060;
+  --button-bg: #3a3a6e;
+  --button-hover-bg: #4a4a7e;
+  --button-text: #eeeeff;
+  --input-bg: #2a2a4e;
+  --input-border: 1px solid #404060;
+  --input-border-focus: 1px solid #64b5f6;
+  --scrollbar-track: #1a1a2e;
+  --scrollbar-thumb: #404060;
+  --scrollbar-thumb-hover: #505080;
 }
 
 /* Reset and base styles */
@@ -50,73 +58,36 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--interface-scrollbar-track, var(--color-background));
+  background: var(--scrollbar-track, var(--color-background));
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--interface-scrollbar-thumb, var(--color-secondary));
+  background: var(--scrollbar-thumb, var(--color-secondary));
   border-radius: 4px;
   transition: var(--transition-fast);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--interface-scrollbar-thumb-hover, var(--color-accent));
+  background: var(--scrollbar-thumb-hover, var(--color-accent));
 }
 
 ::-webkit-scrollbar-corner {
-  background: var(--interface-scrollbar-track, var(--color-background));
+  background: var(--scrollbar-track, var(--color-background));
 }
 
 /* Firefox scrollbar styling */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--interface-scrollbar-thumb, var(--color-secondary)) var(--interface-scrollbar-track, var(--color-background));
+  scrollbar-color: var(--scrollbar-thumb, var(--color-secondary)) var(--scrollbar-track, var(--color-background));
 }
 
-/* Header - now themed with game content */
-.themed-game-content .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
-  background-color: var(--game-header-bg);
-  border-bottom: 2px solid var(--game-border-color);
-}
-
-.themed-game-content .title {
-  font-size: 2rem;
-  font-weight: bold;
-  color: var(--game-text-color);
-}
-
-.themed-game-content .controls {
-  display: flex;
-  gap: 1rem;
-}
-
-.themed-game-content .btn {
-  padding: 0.5rem 1rem;
-  background-color: var(--game-button-bg);
-  color: var(--game-button-text-color);
-  border: 1px solid var(--game-border-color);
-  border-radius: 4px;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.themed-game-content .btn:hover {
-  background-color: var(--game-button-hover);
-  color: var(--game-button-text-hover-color);
-}
-
-/* Fallback button styles for non-themed areas (modals, debug pane) */
+/* Global button styles */
 .btn {
   padding: 0.5rem 1rem;
   background-color: var(--button-bg);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
+  color: var(--button-text);
+  border: 1px solid var(--panel-border);
   border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
@@ -124,8 +95,8 @@ body {
 }
 
 .btn:hover {
-  background-color: var(--button-hover);
-  color: var(--text-color);
+  background-color: var(--button-hover-bg);
+  color: var(--button-text);
 }
 
 /* Main game area */
@@ -136,42 +107,24 @@ body {
   overflow: hidden;
 }
 
-/* Themed game content container - isolates story theme from UI */
-.themed-game-content {
+/* Main game content */
+.game-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* Default theme variables for game content */
-  --game-primary-color: var(--primary-color);
-  --game-background-color: var(--background-color);
-  --game-text-color: var(--text-color);
-  --game-header-bg: var(--header-bg);
-  --game-footer-bg: var(--footer-bg);
-  --game-input-bg: var(--input-bg);
-  --game-border-color: var(--border-color);
-  --game-button-bg: var(--button-bg);
-  --game-button-hover: var(--button-hover);
-  --game-button-text-color: var(--button-text-color, var(--text-color));
-  --game-button-text-hover-color: var(--button-text-hover-color, var(--text-color));
-  --game-modal-bg: var(--modal-bg);
-  --game-character-color: var(--character-color);
-  --game-item-color: var(--item-color);
-  --game-item-bg: var(--item-bg);
-  --game-item-bg-hover: var(--item-bg-hover);
-  --game-item-border: var(--item-border);
 }
 
 .story-output {
   flex: 1;
   padding: 2rem;
   overflow-y: auto;
-  background-color: var(--game-background-color);
-  color: var(--game-text-color);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
   position: relative;
   /* Hide scrollbar unless needed, then make it minimal */
   scrollbar-width: thin;
-  scrollbar-color: var(--game-border-color) transparent;
+  scrollbar-color: var(--panel-border) transparent;
 }
 
 .story-text {
@@ -202,7 +155,7 @@ body {
 }
 
 .message-story {
-  color: var(--game-text-color);
+  color: var(--color-text-primary);
 }
 
 .message-story p {
@@ -235,7 +188,7 @@ body {
 .message-title {
   font-size: 1.5rem;
   font-weight: bold;
-  color: var(--game-text-color);
+  color: var(--color-text-primary);
   margin-bottom: 0.5rem;
 }
 
@@ -254,8 +207,8 @@ body {
 /* Input area */
 .input-area {
   padding: 1rem 2rem;
-  background-color: var(--game-footer-bg);
-  border-top: 2px solid var(--game-border-color);
+  background-color: var(--input-bg);
+  border-top: 2px solid var(--color-accent);
 }
 
 .input-container {
@@ -267,15 +220,15 @@ body {
 .prompt {
   font-size: 1.2rem;
   font-weight: bold;
-  color: var(--game-text-color);
+  color: var(--color-text-primary);
 }
 
 .command-input {
   flex: 1;
   padding: 0.75rem;
-  background-color: var(--game-input-bg);
-  color: var(--game-text-color);
-  border: 1px solid var(--game-border-color);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  border: var(--input-border);
   border-radius: 4px;
   font-family: inherit;
   font-size: 1rem;
@@ -289,8 +242,8 @@ body {
 }
 
 .command-input:focus {
-  border-color: var(--game-button-hover);
-  box-shadow: 0 0 0 2px rgba(74, 74, 126, 0.3);
+  border: var(--input-border-focus);
+  box-shadow: 0 0 0 2px rgba(100, 181, 246, 0.3);
 }
 
 /* Settings Menu Styles - Following Load Menu Pattern */

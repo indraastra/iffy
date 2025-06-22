@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Pane Test</title>
+</head>
+<body>
+    <h1>Debug Pane Integration Test</h1>
+    <p>Open the browser console and check for the following:</p>
+    <ol>
+        <li>When App.vue mounts, check if debugPaneRef.value is available</li>
+        <li>Check if registerDebugPane is called with a valid component instance</li>
+        <li>Check if engine.setDebugPane is called</li>
+        <li>Check if metrics collectors receive the debug pane reference</li>
+        <li>During gameplay, check if updateSessionStats, logLlmCall, etc. are called</li>
+    </ol>
+    
+    <h2>Things to verify:</h2>
+    <ul>
+        <li>In App.vue onMounted, add console.log to verify debugPaneRef.value exists</li>
+        <li>In registerDebugPane, add console.log to verify the instance is received</li>
+        <li>In engine.setDebugPane, verify all sub-components receive the debug pane</li>
+        <li>When metrics are tracked, verify debugPane methods are called</li>
+    </ul>
+    
+    <h2>Potential issues found:</h2>
+    <ul>
+        <li>There might be a race condition where the DebugPane component isn't fully mounted when registerDebugPane is called</li>
+        <li>The debugPaneRef in useGameEngine.ts is a separate instance from the one in App.vue</li>
+        <li>Need to use nextTick() to ensure the component is fully mounted before registration</li>
+    </ul>
+</body>
+</html>

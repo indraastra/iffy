@@ -5,15 +5,19 @@ interface MarkupPatterns {
   bold: RegExp
   italic: RegExp
   alert: RegExp
+  heading: RegExp
+  subheading: RegExp
 }
 
 const markupPatterns: MarkupPatterns = {
-  character: /\[(.*?)\]\(character:(.*?)\)/g,
-  item: /\[(.*?)\]\(item:(.*?)\)/g,
-  location: /\[(.*?)\]\(location:(.*?)\)/g,
+  character: /\[([^\]]*)\]\(character:([^)]*)\)/g,
+  item: /\[([^\]]*)\]\(item:([^)]*)\)/g,
+  location: /\[([^\]]*)\]\(location:([^)]*)\)/g,
   bold: /\*\*(.*?)\*\*/g,
   italic: /\*(.*?)\*/g,
-  alert: /\[!(warning|discovery|danger)\]\s*(.*?)(?=\n\n|\n$|$)/g
+  alert: /\[!(warning|discovery|danger)\]\s*(.*?)(?=\n\n|\n$|$)/g,
+  heading: /^# (.+)$/gm,
+  subheading: /^### (.+)$/gm
 }
 
 export function useMarkupRenderer() {
@@ -43,6 +47,17 @@ export function useMarkupRenderer() {
   function processInlineMarkup(text: string): string {
     let processed = text
 
+    // Headings (process first before other formatting)
+    processed = processed.replace(markupPatterns.heading, (_match, text) => {
+      return `<h1 class="markup-heading">${escapeHtml(text)}</h1>`
+    })
+
+    // Subheadings for bylines
+    processed = processed.replace(markupPatterns.subheading, (_match, text) => {
+      return `<h3 class="markup-subheading">${escapeHtml(text)}</h3>`
+    })
+
+    // STEP 1: Process interactive elements FIRST (before text formatting)
     // Character references
     processed = processed.replace(markupPatterns.character, (_match, name, id) => {
       const characterType = id === 'player' ? 'player' : 'npc'
@@ -59,14 +74,15 @@ export function useMarkupRenderer() {
       return `<span class="markup-location" data-location-id="${escapeHtml(id)}" onclick="handleLocationClick('${escapeHtml(id)}')">${escapeHtml(text)}</span>`
     })
 
+    // STEP 2: Process text formatting LAST (so it can wrap around interactive elements)
     // Bold text (process before italic to avoid conflicts)
     processed = processed.replace(markupPatterns.bold, (_match, text) => {
-      return `<strong class="markup-bold">${escapeHtml(text)}</strong>`
+      return `<strong class="markup-bold">${text}</strong>` // Don't escape - may contain HTML spans
     })
 
     // Italic text
     processed = processed.replace(markupPatterns.italic, (_match, text) => {
-      return `<em class="markup-italic">${escapeHtml(text)}</em>`
+      return `<em class="markup-italic">${text}</em>` // Don't escape - may contain HTML spans
     })
 
     return processed
@@ -94,16 +110,16 @@ declare global {
 
 // Set up global click handlers
 window.handleCharacterClick = (id: string) => {
-  console.log('Character clicked:', id)
+  console.log('🎭 Character clicked:', id)
   // TODO: Show character details modal
 }
 
 window.handleItemClick = (id: string) => {
-  console.log('Item clicked:', id)
+  console.log('📦 Item clicked:', id)
   // TODO: Show item details modal or examine item
 }
 
 window.handleLocationClick = (id: string) => {
-  console.log('Location clicked:', id)
+  console.log('🗺️ Location clicked:', id)
   // TODO: Show location details or navigate
 }

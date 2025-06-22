@@ -1,22 +1,33 @@
-title: "The Sandwich Catastrophe"
+title: "The Great Sandwich Catastrophe"
 author: "Iffy Engine Team"
 blurb: "Jennifer's EPIC SANDWICH MASTERY faces its most DEVASTATING professional challenge!"
 version: "1.0"
-context: "Wednesday afternoon, 1:47 PM - LUNCH RUSH APOCALYPSE. Jennifer, survivor of the Great Sandwich Crisis, now faces the ULTIMATE TRIAL: making a PROFESSIONAL SANDWICH at Sandwich Supreme, where gourmet sandwich craft meets soap opera melodrama."
+context: "Wednesday afternoon, 1:47 PM - LUNCH RUSH APOCALYPSE. Jennifer, survivor of the Great
+  Sandwich Crisis, now faces the ULTIMATE TRIAL: making a PROFESSIONAL SANDWICH at Sandwich Supreme,
+  where gourmet sandwich craft meets soap opera melodrama."
 
 narrative:
-  voice: "Hyperventilating dramatic narrator treating every cooking disaster like the fall of civilization, now with PROFESSIONAL KITCHEN INTENSITY"
+  voice: "Hyperventilating dramatic narrator treating every cooking disaster like the fall of
+    civilization, now with PROFESSIONAL KITCHEN INTENSITY"
   tone: "Catastrophically over-the-top kitchen nightmare soap opera with restaurant chaos"
-  themes: ["The HELLISH reality of restaurant service", "Betrayal by kitchen equipment on an INDUSTRIAL SCALE", "The heroic struggle against GORDON RAMSAY-LEVEL expectations", "Professional kitchen appliances as instruments of PURE CHAOS"]
+  themes:
+    [
+      "The HELLISH reality of restaurant service",
+      "Betrayal by kitchen equipment on an INDUSTRIAL SCALE",
+      "The heroic struggle against GORDON RAMSAY-LEVEL expectations",
+      "Professional kitchen appliances as instruments of PURE CHAOS"
+    ]
 
 world:
   characters:
     player:
       name: "Jennifer"
       sketch: "The LEGENDARY survivor of the Great Sandwich Crisis, now facing her ULTIMATE CULINARY TRIAL"
-      voice: "Inner monologue permanently affected by dramatic experiences, but with NEW professional kitchen panic"
-      arc: "sandwich crisis survivor → promoted line cook → overwhelmed by restaurant chaos → culinary warrior"
-    
+      voice: "Inner monologue permanently affected by dramatic experiences, but with NEW professional
+        kitchen panic"
+      arc: "sandwich crisis survivor → promoted line cook → overwhelmed by restaurant chaos → culinary
+        warrior"
+
     chef_dominique:
       name: "Chef Dominique"
       sketch: "The HEAD CHEF whose very presence turns simple cooking into LIFE-OR-DEATH WARFARE"
@@ -32,44 +43,59 @@ world:
   locations:
     main_kitchen:
       name: "The Kitchen of INFINITE CHAOS"
-      sketch: "The EPICENTER of culinary WARFARE! Steam rises like the ghosts of burned meals past! Orders fly through the air like MISSILES OF HUNGER!"
-      atmosphere: ["industrial chaos", "steam-filled", "order-ticket blizzard", "gas-range inferno"]
-      contains: ["dragon breath gas range", "order ticket avalanche", "knife brigade arsenal", "Chef Dominique's judgment throne"]
-      
+      sketch: "The EPICENTER of culinary WARFARE! Steam rises like the ghosts of burned meals past! Orders
+        fly through the air like MISSILES OF HUNGER!"
+      atmosphere: [ "industrial chaos", "steam-filled", "order-ticket blizzard", "gas-range inferno" ]
+      contains:
+        [
+          "dragon breath gas range",
+          "order ticket avalanche",
+          "knife brigade arsenal",
+          "Chef Dominique's judgment throne"
+        ]
+
     prep_station:
       name: "The Station of IMPOSSIBLE PRECISION"
-      sketch: "Your domain! Your KINGDOM! But also your potential TOMB! Cutting boards stretch before you like altars of sacrifice!"
-      atmosphere: ["precision-demanding", "knife-gleaming", "mise-en-place warfare"]
-      contains: ["steel soldiers knife block", "sacred vessel containers", "cutting board altars"]
-      
+      sketch: "Your domain! Your KINGDOM! But also your potential TOMB! Cutting boards stretch before you
+        like altars of sacrifice!"
+      atmosphere: [ "precision-demanding", "knife-gleaming", "mise-en-place warfare" ]
+      contains: [ "steel soldiers knife block", "sacred vessel containers", "cutting board altars" ]
+
     walk_in_cooler:
       name: "The Frigid Vault of SECRETS"
-      sketch: "A polar WASTELAND where ingredients lie in wait! The temperature BITES at your soul as you search for components of DESTINY!"
-      atmosphere: ["arctic betrayal", "ingredient graveyard", "premium treasure vault"]
-      contains: ["altar of finest ingredients", "graveyard of broken dreams", "mystery leftover tombs"]
+      sketch: "A polar WASTELAND where ingredients lie in wait! The temperature BITES at your soul as you
+        search for components of DESTINY!"
+      atmosphere: [ "arctic betrayal", "ingredient graveyard", "premium treasure vault" ]
+      contains: [ "altar of finest ingredients", "graveyard of broken dreams", "mystery leftover tombs" ]
 
   items:
     lobster_tail:
       name: "Lobster Tail of SUPREME LUXURY"
-      sketch: "A magnificent crustacean tail that DEMANDS perfection - one overcook and you'll face Chef Dominique's WRATH!"
+      sketch: "A magnificent crustacean tail that DEMANDS perfection - one overcook and you'll face Chef
+        Dominique's WRATH!"
       found_in: "walk_in_cooler"
-      reveals: "This noble crustacean gave its life for CULINARY GREATNESS! But will you honor its sacrifice with perfect execution?"
-      
+      reveals: "This noble crustacean gave its life for CULINARY GREATNESS! But will you honor its
+        sacrifice with perfect execution?"
+
     risotto_rice:
       name: "Arborio Rice of INFINITE POTENTIAL"
       sketch: "Each grain holds the POWER to create creamy perfection... or gluey DISASTER!"
       found_in: "prep_station"
-      reveals: "These Italian grains whisper secrets of northern Italian cuisine! But they demand RESPECT and constant stirring!"
-      
+      reveals: "These Italian grains whisper secrets of northern Italian cuisine! But they demand RESPECT
+        and constant stirring!"
+
     truffle_oil:
       name: "Truffle Oil of QUESTIONABLE ORIGIN"
-      sketch: "A bottle of dark, aromatic oil that smells... SUSPICIOUSLY artificial. Like the essence of mushrooms mixed with industrial chemicals!"
+      sketch: "A bottle of dark, aromatic oil that smells... SUSPICIOUSLY artificial. Like the essence of
+        mushrooms mixed with industrial chemicals!"
       found_in: "prep_station"
-      reveals: "This bottle promises luxury but whispers of DECEPTION! Is this truly truffle... or merely mushroom-flavored BETRAYAL?"
-      
+      reveals: "This bottle promises luxury but whispers of DECEPTION! Is this truly truffle... or merely
+        mushroom-flavored BETRAYAL?"
+
     mystery_fish:
       name: "Unlabeled Fish Fillet"
-      sketch: "A piece of fish with NO LABEL and an OMINOUS sheen! It smells powerfully oceanic... like it's been plotting REVENGE from the depths!"
+      sketch: "A piece of fish with NO LABEL and an OMINOUS sheen! It smells powerfully oceanic... like
+        it's been plotting REVENGE from the depths!"
       found_in: "walk_in_cooler"
       reveals: "What species lurks beneath this unmarked flesh? What DARK SECRETS does this protein harbor?"
 
@@ -78,36 +104,36 @@ scenes:
     location: "main_kitchen"
     sketch: |
       *DRAMATIC ORCHESTRAL CRESCENDO*
-      
+
       IT'S **7:23 PM** ON A WEDNESDAY! The dinner rush EXPLODES around you like a 
       CULINARY ARMAGEDDON! Our HEROIC protagonist, **Jennifer**, survivor of 
       the LEGENDARY Sandwich Crisis, now faces her **ULTIMATE TRIAL**!
-      
+
       **PROMOTED TO LINE COOK!** But at what COST?! Chef Dominique stands at the pass 
       like a CULINARY DICTATOR, his chef's hat towering like a monument to IMPOSSIBLE STANDARDS!
-      
+
       **"JENNIFER!"** he BELLOWS across the kitchen chaos! **"Table seven orders zee 
       lobster risotto! YOU will make eet PERFECT... or you will make eet your LAST!"**
-      
+
       The order ticket flutters down like a DEATH SENTENCE! Your hands shake as you 
       realize the MAGNITUDE of this moment! One dish... ONE CHANCE... to prove you 
       belong in the PROFESSIONAL KITCHEN OF DESTINY!
-      
+
       *Thunder crashes from the gas range igniting*
-      
+
       This is... **THE RESTAURANT CATASTROPHE**!
-    
+
     guidance: |
       DRAMATIC TONE: EVEN MORE over-the-top than the sandwich crisis! This is professional kitchen CHAOS with soap opera melodrama. Use restaurant terminology, cooking stress, and French chef rage.
-      
+
       CHEF DOMINIQUE: Speaks with dramatic French accent and impossible standards. React to everything as if culinary reputation hangs in the balance.
-      
+
       NARRATOR CHARACTER: The Voice of Kitchen Destiny can be addressed directly and will respond with breathless restaurant commentary about professional cooking trials.
-      
+
       DISCOVERY: Let players find ingredients by examining kitchen areas. Make everything dramatically important to PROFESSIONAL SUCCESS!
-      
+
       COOKING DRAMA: Every cooking action should be treated as LIFE-OR-DEATH kitchen warfare. Use professional kitchen terminology mixed with soap opera intensity.
-    
+
     leads_to:
       prep_expedition: "player explores the prep station for ingredients"
       cooler_mission: "player ventures into the walk-in cooler"
@@ -118,20 +144,20 @@ scenes:
     sketch: |
       You enter the **STATION OF IMPOSSIBLE PRECISION**! Your domain! Your KINGDOM! 
       But also your potential TOMB of culinary failure!
-      
+
       Cutting boards stretch before you like altars of sacrifice! Knives gleam with 
       the PROMISE of perfection... or the THREAT of catastrophic failure! The mise 
       en place containers stand at attention like soldiers awaiting your command!
-      
+
       What **INGREDIENTS OF DESTINY** await your discovery? What tools will serve 
       in your epic battle against the clock?
-      
+
       *Dramatic pause as kitchen chaos continues around you*
-    
+
     guidance: |
       Players can discover "Arborio Rice of INFINITE POTENTIAL" and "Truffle Oil of QUESTIONABLE ORIGIN" here.
       Emphasize the professional pressure and timing. The truffle oil should seem suspicious!
-    
+
     leads_to:
       main_kitchen: "player returns to the main kitchen with newfound knowledge"
       cooler_mission: "player continues the quest to the walk-in cooler"
@@ -142,19 +168,19 @@ scenes:
       The **FRIGID VAULT OF SECRETS** envelops you in arctic MENACE! Cold air 
       whispers of expired inventory and forgotten proteins! Your breath forms 
       clouds as you search for the ingredients that will SAVE or DAMN your service!
-      
+
       Premium ingredients gleam on their shelves like treasures in a frozen tomb! 
       But beware - in this icy wasteland, not all proteins are what they seem!
-      
+
       The temperature BITES at your professional soul! Will you find salvation... 
       or only more refrigerated BETRAYAL?
-      
+
       *The cooler fan whirs ominously*
-    
+
     guidance: |
       Players can discover "Lobster Tail of SUPREME LUXURY" and "Unlabeled Fish Fillet" here.
       The lobster should be presented as the hero ingredient, the mystery fish as potentially dangerous!
-    
+
     leads_to:
       main_kitchen: "player returns with protein discoveries"
       cooking_showdown: "player has gathered enough ingredients for the final preparation"
@@ -164,22 +190,22 @@ scenes:
     sketch: |
       You call out to **CHEF DOMINIQUE** himself! The very kitchen TREMBLES as 
       the culinary tyrant prepares to bestow wisdom... or CRUSHING CRITICISM!
-      
+
       **"WHAT EET EES?!"** he thunders from the pass, his French accent WEAPONIZED 
       with professional intensity! **"You need guidance? In MY SANDWICH kitchen, you sink 
       or you SWIM! But... I tell you zees once..."**
-      
+
       Gordon Ramshack snorts from across the kitchen: **"Oh brilliant, asking for help 
       on a GRILLED CHEESE. What's next, instructions for buttering bread?"**
-      
+
       The entire kitchen staff holds their breath as Chef Dominique's dramatic 
       proclamations echo like the voice of SANDWICH FATE itself!
-    
+
     guidance: |
       When players address Chef Dominique directly, respond with over-the-top French chef commentary 
       about their cooking quest. Offer theatrical advice about technique, warn of culinary betrayals, 
       and build pressure about timing and perfection!
-    
+
     leads_to:
       main_kitchen: "Chef Dominique's wisdom guides you back to your cooking quest"
 
@@ -187,95 +213,95 @@ scenes:
     location: "main_kitchen"
     sketch: |
       **THIS IS IT!** The moment of *PROFESSIONAL TRUTH*! The **CLIMAX** of our epic tale!
-      
+
       All ingredients have been gathered! The gas range ROARS to life like a dragon 
       awaiting your command! Chef Dominique watches from the pass with eyes that 
       could MELT steel!
-      
+
       Will you create a dish of GLORY that elevates you to culinary greatness... 
       or will the kitchen's industrial betrayals prove too much to overcome?
-      
+
       The very **RESTAURANT** holds its breath as you approach the sacred range!
-      
+
       *Order tickets flutter down like snow in a blizzard of demand*
-    
+
     guidance: |
       This is the dramatic finale! Players should cook their ingredients and plate their dish.
       React dramatically to their choices and build to the climactic tasting by Chef Dominique!
-      
+
       COOKING TRANSFORMATIONS:
       - Lobster tail can be cooked → becomes perfectly cooked lobster
       - Risotto rice can be cooked → becomes perfect risotto
       - Emphasize technique, timing, and professional kitchen pressure
-    
+
     leads_to:
       disaster_ending: "player uses truffle oil or mystery fish"
       triumph_ending: "player creates perfect lobster risotto"
 
 endings:
   when:
-    - "Chef Dominique tastes the completed dish"
-    
+  - "Chef Dominique tastes the completed dish"
+
   variations:
-    - id: "truffle_oil_disaster"
-      when: "player uses fake truffle oil in dish"
-      sketch: |
-        **OH THE CULINARY HUBRIS! OH THE GASTRONOMIC HORROR!**
-        
-        Chef Dominique takes one bite of your truffle oil-laden creation and his face 
-        transforms into a mask of PURE CULINARY RAGE!
-        
-        **"WHAT IS ZEES?!"** he thunders, his French accent WEAPONIZED with disappointment!
-        **"ZEES IS NOT TRUFFLE! ZEES IS... CHEMICAL WARFARE!"**
-        
-        The fake truffle oil has **BETRAYED** you! Your carefully crafted dish 
-        now tastes like mushroom-flavored PETROLEUM!
-        
-        **"GET OUT OF MY KITCHEN!"** Chef Dominique roars, pointing dramatically toward the exit!
-        **"YOU HAVE COMMITTED ZE GREATEST SIN - FAKE TRUFFLE ON MY PASS!"**
-        
-        As you remove your apron in SHAME, you realize that some shortcuts lead not 
-        to success, but to CULINARY EXILE!
-        
-    - id: "mystery_fish_catastrophe"
-      when: "player uses mystery fish in dish"
-      sketch: |
-        **DISASTER OF BIBLICAL PROPORTIONS!**
-        
-        Chef Dominique takes one bite of your mystery fish creation and his eyes 
-        widen in ABSOLUTE HORROR!
-        
-        **"MON DIEU!"** he gasps, spitting dramatically! **"WHAT FISH IS ZEES?!"**
-        
-        The unlabeled fillet reveals its TRUE IDENTITY - it's TILAPIA! 
-        Three-day-old FARM-RAISED TILAPIA masquerading as premium seafood!
-        
-        **"ZEES FISH... EET IS OLDER THAN MY GRANDMOTHER'S RECIPES!"** Chef Dominique 
-        declares, his voice echoing through the kitchen like a CULINARY DEATH KNELL!
-        
-        Your career flashes before your eyes as the VENGEFUL SEAFOOD has claimed another victim!
-        
-    - id: "perfect_triumph"
-      when: "player serves perfectly cooked lobster and risotto"
-      sketch: |
-        **THE MOMENT OF ULTIMATE TRUTH!** The *CLIMAX* of culinary destiny!
-        
-        Chef Dominique approaches your creation - perfectly cooked lobster nestled 
-        atop divine risotto - with the skepticism of a man who has seen a THOUSAND 
-        kitchen dreams die!
-        
-        He takes one bite... then another... and then...
-        
-        **SILENCE.** The entire kitchen holds its breath as Chef Dominique's expression 
-        transforms from skepticism to... **AMAZEMENT**!
-        
-        **"C'est... c'est MAGNIFIQUE!"** he whispers, his voice trembling with emotion!
-        **"ZEE LOBSTER... EET IS PERFECT! ZEE RISOTTO... EET SINGS WITH CREAM!"**
-        
-        You have achieved the IMPOSSIBLE! Chef Dominique, the TYRANT of taste, 
-        the EMPEROR of expectations, has been **CONQUERED** by your culinary prowess!
-        
-        *Triumphant orchestral music swells as the entire kitchen erupts in applause*
-        
-        **THE END?** Will Jennifer conquer the breakfast shift with the same epic courage? 
-        Find out next time on... "*KITCHEN OF INFINITE CHAOS*!"
+  - id: "truffle_oil_disaster"
+    when: "player uses fake truffle oil in dish"
+    sketch: |
+      **OH THE CULINARY HUBRIS! OH THE GASTRONOMIC HORROR!**
+
+      Chef Dominique takes one bite of your truffle oil-laden creation and his face 
+      transforms into a mask of PURE CULINARY RAGE!
+
+      **"WHAT IS ZEES?!"** he thunders, his French accent WEAPONIZED with disappointment!
+      **"ZEES IS NOT TRUFFLE! ZEES IS... CHEMICAL WARFARE!"**
+
+      The fake truffle oil has **BETRAYED** you! Your carefully crafted dish 
+      now tastes like mushroom-flavored PETROLEUM!
+
+      **"GET OUT OF MY KITCHEN!"** Chef Dominique roars, pointing dramatically toward the exit!
+      **"YOU HAVE COMMITTED ZE GREATEST SIN - FAKE TRUFFLE ON MY PASS!"**
+
+      As you remove your apron in SHAME, you realize that some shortcuts lead not 
+      to success, but to CULINARY EXILE!
+
+  - id: "mystery_fish_catastrophe"
+    when: "player uses mystery fish in dish"
+    sketch: |
+      **DISASTER OF BIBLICAL PROPORTIONS!**
+
+      Chef Dominique takes one bite of your mystery fish creation and his eyes 
+      widen in ABSOLUTE HORROR!
+
+      **"MON DIEU!"** he gasps, spitting dramatically! **"WHAT FISH IS ZEES?!"**
+
+      The unlabeled fillet reveals its TRUE IDENTITY - it's TILAPIA! 
+      Three-day-old FARM-RAISED TILAPIA masquerading as premium seafood!
+
+      **"ZEES FISH... EET IS OLDER THAN MY GRANDMOTHER'S RECIPES!"** Chef Dominique 
+      declares, his voice echoing through the kitchen like a CULINARY DEATH KNELL!
+
+      Your career flashes before your eyes as the VENGEFUL SEAFOOD has claimed another victim!
+
+  - id: "perfect_triumph"
+    when: "player serves perfectly cooked lobster and risotto"
+    sketch: |
+      **THE MOMENT OF ULTIMATE TRUTH!** The *CLIMAX* of culinary destiny!
+
+      Chef Dominique approaches your creation - perfectly cooked lobster nestled 
+      atop divine risotto - with the skepticism of a man who has seen a THOUSAND 
+      kitchen dreams die!
+
+      He takes one bite... then another... and then...
+
+      **SILENCE.** The entire kitchen holds its breath as Chef Dominique's expression 
+      transforms from skepticism to... **AMAZEMENT**!
+
+      **"C'est... c'est MAGNIFIQUE!"** he whispers, his voice trembling with emotion!
+      **"ZEE LOBSTER... EET IS PERFECT! ZEE RISOTTO... EET SINGS WITH CREAM!"**
+
+      You have achieved the IMPOSSIBLE! Chef Dominique, the TYRANT of taste, 
+      the EMPEROR of expectations, has been **CONQUERED** by your culinary prowess!
+
+      *Triumphant orchestral music swells as the entire kitchen erupts in applause*
+
+      **THE END?** Will Jennifer conquer the breakfast shift with the same epic courage? 
+      Find out next time on... "*KITCHEN OF INFINITE CHAOS*!"

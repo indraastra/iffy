@@ -311,6 +311,7 @@ function hide() {
 }
 
 function updateSessionStats(stats: SessionStats) {
+  console.log('🐛 DebugPane.updateSessionStats called with:', stats)
   sessionStats.value = stats
   
   warnings.value = []
@@ -335,6 +336,7 @@ function updateMemoryContents(memories: { content: string; importance: number }[
 }
 
 function logLlmCall(interaction: Omit<LlmInteraction, 'timestamp'>) {
+  console.log('🐛 DebugPane.logLlmCall called with:', interaction)
   llmInteractions.value.push({
     ...interaction,
     timestamp: new Date()
@@ -346,6 +348,7 @@ function logLlmCall(interaction: Omit<LlmInteraction, 'timestamp'>) {
 }
 
 function addLangChainMetric(metric: LangChainMetrics) {
+  console.log('🐛 DebugPane.addLangChainMetric called with:', metric)
   langchainMetrics.value.push(metric)
   
   if (langchainMetrics.value.length > maxMetrics) {

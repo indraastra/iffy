@@ -74,10 +74,10 @@ const BUILT_IN_THEMES: Record<string, GameTheme> = {
     },
     interface: {
       header: {
-        background: '#0f0f23',
-        border: '2px solid #404060',
+        background: '#2a2a4e',
+        border: '2px solid #64b5f6',
         text: '#eeeeff',
-        shadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+        shadow: '0 2px 4px rgba(0, 0, 0, 0.4)'
       },
       panels: {
         background: '#16213e',
@@ -126,52 +126,52 @@ const BUILT_IN_THEMES: Record<string, GameTheme> = {
   },
   
   gothic: {
-    name: 'Gothic Horror',
+    name: 'Gothic Elegance',
     id: 'gothic',
     colors: {
-      primary: '#2c1810',
-      secondary: '#8b0000',
-      accent: '#c9b037',
-      background: '#1a1a1a',
-      surface: '#2d2d2d',
+      primary: '#2a1f3d',
+      secondary: '#4a3c5a',
+      accent: '#d4af37',
+      background: '#1c1a26',
+      surface: '#252231',
       text: {
-        primary: '#e8e8e8',
-        secondary: '#b8b8b8',
-        accent: '#c9b037'
+        primary: '#e8e6f3',
+        secondary: '#b8b5c8',
+        accent: '#d4af37'
       },
       markup: {
         character: {
-          player: '#c9b037',
-          npc: '#8b0000',
-          hover: '#ffd700'
+          player: '#d4af37',
+          npc: '#9b7ede',
+          hover: '#e8c547'
         },
         item: {
-          primary: '#800080',
-          interactive: '#9932cc',
-          important: '#8b008b',
-          hover: '#aa44aa'
+          primary: '#a967c4',
+          interactive: '#c785e0',
+          important: '#8e4fa3',
+          hover: '#b876d1'
         },
         location: {
-          primary: '#2f4f4f',
-          current: '#556b2f',
-          accessible: '#696969',
-          hover: '#1c1c1c'
+          primary: '#6b9dc0',
+          current: '#5a8aaa',
+          accessible: '#7ba8c7',
+          hover: '#8bb7d4'
         },
         alerts: {
           warning: {
-            bg: '#3d2914',
-            border: '#8b6914',
-            text: '#ffd700'
+            bg: '#3a2f1a',
+            border: '#d4af37',
+            text: '#f0e68c'
           },
           discovery: {
-            bg: '#1a3d1a',
-            border: '#4caf50',
-            text: '#90ee90'
+            bg: '#1f2a3a',
+            border: '#6b9dc0',
+            text: '#a8d4f0'
           },
           danger: {
-            bg: '#3d1414',
-            border: '#8b0000',
-            text: '#ff6b6b'
+            bg: '#3a1f2a',
+            border: '#c97b7b',
+            text: '#f0a8a8'
           }
         }
       }
@@ -196,36 +196,36 @@ const BUILT_IN_THEMES: Record<string, GameTheme> = {
     },
     interface: {
       header: {
-        background: '#1a1a1a',
-        border: '2px solid #8b0000',
-        text: '#e8e8e8',
-        shadow: '0 2px 8px rgba(139, 0, 0, 0.3)'
+        background: '#1c1a26',
+        border: '1px solid #4a3c5a',
+        text: '#e8e6f3',
+        shadow: '0 2px 12px rgba(212, 175, 55, 0.15)'
       },
       panels: {
-        background: 'rgba(45, 45, 45, 0.95)',
-        border: '1px solid #555',
+        background: 'rgba(37, 34, 49, 0.95)',
+        border: '1px solid #4a3c5a',
         borderRadius: '8px',
-        shadow: '0 4px 12px rgba(0, 0, 0, 0.5)'
+        shadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
       },
       buttons: {
-        background: '#2c1810',
-        backgroundHover: '#3d2414',
-        border: '1px solid #8b0000',
-        borderRadius: '4px',
-        text: '#e8e8e8',
-        textHover: '#c9b037'
+        background: '#2a1f3d',
+        backgroundHover: '#3d2e5a',
+        border: '1px solid #4a3c5a',
+        borderRadius: '6px',
+        text: '#e8e6f3',
+        textHover: '#d4af37'
       },
       inputs: {
-        background: '#1a1a1a',
-        border: '1px solid #555',
-        borderFocus: '1px solid #c9b037',
-        text: '#e8e8e8',
-        placeholder: '#888'
+        background: '#1c1a26',
+        border: '1px solid #4a3c5a',
+        borderFocus: '1px solid #d4af37',
+        text: '#e8e6f3',
+        placeholder: '#8a87a0'
       },
       scrollbars: {
-        track: '#2d2d2d',
-        thumb: '#555',
-        thumbHover: '#777'
+        track: '#252231',
+        thumb: '#4a3c5a',
+        thumbHover: '#5a4d6a'
       }
     },
     effects: {
@@ -240,9 +240,9 @@ const BUILT_IN_THEMES: Record<string, GameTheme> = {
         pulse: 'pulse 2s infinite'
       },
       shadows: {
-        subtle: '0 2px 4px rgba(0, 0, 0, 0.3)',
-        medium: '0 4px 8px rgba(0, 0, 0, 0.5)',
-        strong: '0 8px 16px rgba(0, 0, 0, 0.7)'
+        subtle: '0 2px 8px rgba(0, 0, 0, 0.2)',
+        medium: '0 4px 16px rgba(0, 0, 0, 0.3)',
+        strong: '0 8px 24px rgba(0, 0, 0, 0.4)'
       }
     }
   },
@@ -495,26 +495,6 @@ function generateCSSVariables(theme: GameTheme): Record<string, string> {
     '--color-text-secondary': theme.colors.text.secondary,
     '--color-text-accent': theme.colors.text.accent,
 
-    // Markup colors
-    '--markup-character-player': theme.colors.markup.character.player,
-    '--markup-character-npc': theme.colors.markup.character.npc,
-    '--markup-character-hover': theme.colors.markup.character.hover,
-    '--markup-item-primary': theme.colors.markup.item.primary,
-    '--markup-item-hover': theme.colors.markup.item.hover,
-    '--markup-location-primary': theme.colors.markup.location.primary,
-    '--markup-location-hover': theme.colors.markup.location.hover,
-    
-    // Alert colors
-    '--alert-warning-bg': theme.colors.markup.alerts.warning.bg,
-    '--alert-warning-border': theme.colors.markup.alerts.warning.border,
-    '--alert-warning-text': theme.colors.markup.alerts.warning.text,
-    '--alert-discovery-bg': theme.colors.markup.alerts.discovery.bg,
-    '--alert-discovery-border': theme.colors.markup.alerts.discovery.border,
-    '--alert-discovery-text': theme.colors.markup.alerts.discovery.text,
-    '--alert-danger-bg': theme.colors.markup.alerts.danger.bg,
-    '--alert-danger-border': theme.colors.markup.alerts.danger.border,
-    '--alert-danger-text': theme.colors.markup.alerts.danger.text,
-
     // Typography
     '--font-primary': theme.typography.fonts.primary,
     '--font-secondary': theme.typography.fonts.secondary,
@@ -524,32 +504,46 @@ function generateCSSVariables(theme: GameTheme): Record<string, string> {
     '--font-size-large': theme.typography.sizes.large,
     '--font-size-heading': theme.typography.sizes.heading,
 
-    // Interface - Header
-    '--interface-header-bg': theme.interface.header.background,
-    '--interface-header-border': theme.interface.header.border,
-    '--interface-header-text': theme.interface.header.text,
-    '--interface-header-shadow': theme.interface.header.shadow,
-    
-    // Interface - Panels & Components
-    '--interface-panel-bg': theme.interface.panels.background,
-    '--interface-panel-border': theme.interface.panels.border,
-    '--interface-button-bg': theme.interface.buttons.background,
-    '--interface-button-hover-bg': theme.interface.buttons.backgroundHover,
-    '--interface-button-text': theme.interface.buttons.text,
-    '--interface-input-bg': theme.interface.inputs.background,
-    '--interface-input-border': theme.interface.inputs.border,
-    '--interface-input-border-focus': theme.interface.inputs.borderFocus,
-    
-    // Interface - Scrollbars
-    '--interface-scrollbar-track': theme.interface.scrollbars.track,
-    '--interface-scrollbar-thumb': theme.interface.scrollbars.thumb,
-    '--interface-scrollbar-thumb-hover': theme.interface.scrollbars.thumbHover,
+    // Interface components (simplified names)
+    '--header-bg': theme.interface.header.background,
+    '--header-border': theme.interface.header.border,
+    '--header-text': theme.interface.header.text,
+    '--header-shadow': theme.interface.header.shadow,
+    '--panel-bg': theme.interface.panels.background,
+    '--panel-border': theme.interface.panels.border,
+    '--button-bg': theme.interface.buttons.background,
+    '--button-hover-bg': theme.interface.buttons.backgroundHover,
+    '--button-text': theme.interface.buttons.text,
+    '--input-bg': theme.interface.inputs.background,
+    '--input-border': theme.interface.inputs.border,
+    '--input-border-focus': theme.interface.inputs.borderFocus,
+    '--scrollbar-track': theme.interface.scrollbars.track,
+    '--scrollbar-thumb': theme.interface.scrollbars.thumb,
+    '--scrollbar-thumb-hover': theme.interface.scrollbars.thumbHover,
 
     // Effects
     '--transition-fast': theme.effects.transitions.fast,
     '--transition-normal': theme.effects.transitions.normal,
     '--shadow-subtle': theme.effects.shadows.subtle,
-    '--shadow-medium': theme.effects.shadows.medium
+    '--shadow-medium': theme.effects.shadows.medium,
+
+    // Markup colors
+    '--markup-character-player': theme.colors.markup.character.player,
+    '--markup-character-npc': theme.colors.markup.character.npc,
+    '--markup-character-hover': theme.colors.markup.character.hover,
+    '--markup-item-primary': theme.colors.markup.item.primary,
+    '--markup-item-hover': theme.colors.markup.item.hover,
+    '--markup-location-primary': theme.colors.markup.location.primary,
+    '--markup-location-hover': theme.colors.markup.location.hover,
+    '--alert-warning-bg': theme.colors.markup.alerts.warning.bg,
+    '--alert-warning-border': theme.colors.markup.alerts.warning.border,
+    '--alert-warning-text': theme.colors.markup.alerts.warning.text,
+    '--alert-discovery-bg': theme.colors.markup.alerts.discovery.bg,
+    '--alert-discovery-border': theme.colors.markup.alerts.discovery.border,
+    '--alert-discovery-text': theme.colors.markup.alerts.discovery.text,
+    '--alert-danger-bg': theme.colors.markup.alerts.danger.bg,
+    '--alert-danger-border': theme.colors.markup.alerts.danger.border,
+    '--alert-danger-text': theme.colors.markup.alerts.danger.text
   }
 }
 

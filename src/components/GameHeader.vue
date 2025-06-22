@@ -33,9 +33,9 @@ function handleSettings() {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background-color: var(--interface-header-bg);
-  border-bottom: var(--interface-header-border);
-  box-shadow: var(--interface-header-shadow);
+  background-color: var(--header-bg);
+  border-bottom: var(--header-border);
+  box-shadow: var(--header-shadow);
   position: relative;
   z-index: 10;
 }
@@ -43,7 +43,7 @@ function handleSettings() {
 .title {
   font-size: 2rem;
   font-weight: bold;
-  color: var(--interface-header-text);
+  color: var(--header-text);
   margin: 0;
   font-family: var(--font-primary);
   letter-spacing: 0.05em;
@@ -55,8 +55,8 @@ function handleSettings() {
 }
 
 .btn {
-  background: var(--interface-button-bg);
-  color: var(--interface-button-text);
+  background: var(--button-bg);
+  color: var(--button-text);
   border: none;
   border-radius: 4px;
   padding: 0.5rem 1rem;
@@ -66,7 +66,7 @@ function handleSettings() {
 }
 
 .btn:hover {
-  background: var(--interface-button-hover-bg);
-  color: var(--interface-button-text);
+  background: var(--button-hover-bg);
+  color: var(--button-text);
 }
 </style>

@@ -82,7 +82,7 @@ function adjustHeight() {
 .input-area {
   padding: 1rem 2rem;
   background-color: var(--color-surface);
-  border-top: 1px solid var(--interface-panel-border);
+  border-top: 1px solid var(--panel-border);
 }
 
 .input-container {
@@ -106,8 +106,8 @@ function adjustHeight() {
 
 .command-input {
   flex: 1;
-  background: var(--interface-input-bg);
-  border: 1px solid var(--interface-input-border);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: 4px;
   padding: 0.75rem;
   font-family: var(--font-primary);
@@ -132,6 +132,6 @@ function adjustHeight() {
 }
 
 .command-input::placeholder {
-  color: var(--interface-input-placeholder, #9ca3af);
+  color: var(--color-text-secondary);
 }
 </style>
