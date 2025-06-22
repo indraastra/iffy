@@ -710,12 +710,17 @@ defineExpose({
   padding: 1.5rem;
 }
 
+/* Tab content visibility handled by v-show directive */
 .debug-tab-content {
-  display: none;
+  height: 100%;
 }
 
-.debug-tab-content[style*="display: block"] {
-  display: block;
+/* Dashboard containers */
+.api-dashboard,
+.memory-dashboard,
+.llm-dashboard,
+.tools-dashboard {
+  min-height: 100%;
 }
 
 /* Warnings section */
