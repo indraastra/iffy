@@ -696,7 +696,7 @@ defineExpose({
 
 .debug-tab:hover {
   background: rgba(255, 255, 255, 0.05);
-  color: var(--text-color);
+  color: var(--color-text-primary);
 }
 
 .debug-tab.active {
@@ -708,6 +708,8 @@ defineExpose({
   flex: 1;
   overflow-y: auto;
   padding: 1.5rem;
+  background: var(--bg-primary);
+  min-height: 0; /* Important for flexbox overflow */
 }
 
 /* Tab content visibility handled by v-show directive */
@@ -751,7 +753,7 @@ defineExpose({
 /* Stats sections */
 .stats-section {
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--interface-panel-border);
   border-radius: 6px;
   padding: 1rem;
   margin-bottom: 1rem;
@@ -759,7 +761,7 @@ defineExpose({
 
 .stats-section h4 {
   margin: 0 0 1rem 0;
-  color: var(--text-color);
+  color: var(--color-text-primary, #fff);
 }
 
 .stats-table {
@@ -779,14 +781,14 @@ defineExpose({
 .stats-table td:last-child {
   text-align: right;
   font-weight: bold;
-  color: var(--text-color);
+  color: var(--color-text-primary);
 }
 
 /* No data message */
 .no-data {
   text-align: center;
   padding: 3rem;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary, #999);
 }
 
 /* Memory list */
@@ -818,7 +820,7 @@ defineExpose({
 
 .memory-content {
   flex: 1;
-  color: var(--text-color);
+  color: var(--color-text-primary);
 }
 
 /* LLM interactions */
@@ -826,7 +828,7 @@ defineExpose({
   margin: 1rem 0;
   padding: 1rem;
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--interface-panel-border);
   border-radius: 6px;
   transition: all 0.2s;
 }
@@ -871,19 +873,19 @@ defineExpose({
   margin: 1rem 0;
   padding: 1rem;
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--interface-panel-border);
   border-radius: 6px;
 }
 
 .tool-section h4 {
   margin: 0 0 1rem 0;
-  color: var(--text-color);
+  color: var(--color-text-primary, #fff);
 }
 
 .tool-btn {
   background: rgba(255, 255, 255, 0.06);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
+  color: var(--color-text-primary, #fff);
+  border: 1px solid var(--interface-panel-border, rgba(255, 255, 255, 0.2));
   padding: 0.75rem 1rem;
   border-radius: 6px;
   cursor: pointer;
@@ -891,6 +893,10 @@ defineExpose({
   transition: all 0.2s;
   width: 100%;
   margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .tool-btn:hover {
@@ -915,7 +921,7 @@ defineExpose({
   max-height: 200px;
   overflow-y: auto;
   background: rgba(0, 0, 0, 0.2);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--interface-panel-border);
   border-radius: 6px;
   padding: 0.75rem;
 }
@@ -937,7 +943,7 @@ defineExpose({
   margin: 1rem 0;
   padding: 1rem;
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--interface-panel-border);
   border-radius: 6px;
   transition: all 0.2s ease;
 }
@@ -961,7 +967,7 @@ defineExpose({
   gap: 1rem;
   margin-bottom: 0.75rem;
   font-size: 0.85rem;
-  color: var(--text-color);
+  color: var(--color-text-primary);
   opacity: 0.8;
 }
 
