@@ -131,7 +131,18 @@ export class ImpressionistEngine {
       return null; // Signal that LLM processing is required
     }
     
-    return firstScene.sketch;
+    // Normalize YAML content for browser display:
+    // - Preserve paragraph breaks (double newlines)  
+    // - Remove manual line breaks within paragraphs (single newlines)
+    // - Let browser handle text wrapping naturally
+    const normalizedSketch = firstScene.sketch
+      .replace(/\n\n+/g, '§PARAGRAPH_BREAK§') // Mark actual paragraph breaks (2+ newlines)
+      .replace(/\n/g, ' ') // Convert single newlines to spaces (within paragraphs)  
+      .replace(/§PARAGRAPH_BREAK§/g, '\n\n') // Restore paragraph breaks
+      .replace(/ +/g, ' ') // Normalize multiple spaces to single spaces (but preserve newlines)
+      .trim(); // Remove leading/trailing whitespace
+    
+    return normalizedSketch;
   }
 
   /**

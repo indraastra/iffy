@@ -417,7 +417,7 @@ describe('MultiModelService', () => {
     it('should get default models', () => {
       expect(MultiModelService.getDefaultModel('anthropic')).toBe('claude-3-5-sonnet-latest');
       expect(MultiModelService.getDefaultModel('openai')).toBe('gpt-4o');
-      expect(MultiModelService.getDefaultModel('google')).toBe('gemini-2.0-flash');
+      expect(MultiModelService.getDefaultModel('google')).toBe('gemini-2.5-flash-preview-05-20');
     });
   });
 
