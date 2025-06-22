@@ -635,49 +635,53 @@ defineExpose({
 }
 
 .debug-pane-container {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--interface-panel-border);
+  border-radius: 12px;
   width: 90%;
   max-width: 1200px;
   height: 80vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-strong);
 }
 
 .debug-pane-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--border-color);
+  padding: 1.5rem;
+  background: var(--color-primary);
+  color: var(--interface-button-text);
+  border-bottom: 1px solid var(--interface-panel-border);
 }
 
 .debug-pane-header h3 {
   margin: 0;
-  color: var(--text-color);
+  color: var(--interface-button-text);
+  font-size: 1.25rem;
 }
 
 .debug-close-btn {
   background: none;
   border: none;
   font-size: 1.5rem;
-  color: var(--text-secondary);
+  color: var(--interface-button-text);
   cursor: pointer;
   padding: 0.5rem;
-  transition: color 0.2s;
+  transition: opacity 0.2s;
 }
 
 .debug-close-btn:hover {
-  color: var(--text-color);
+  opacity: 0.7;
 }
 
 .debug-tabs {
   display: flex;
   gap: 1rem;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--interface-panel-border);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .debug-tab {
