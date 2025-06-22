@@ -708,13 +708,19 @@ defineExpose({
   flex: 1;
   overflow-y: auto;
   padding: 1.5rem;
-  background: var(--bg-primary);
   min-height: 0; /* Important for flexbox overflow */
 }
 
 /* Tab content visibility handled by v-show directive */
 .debug-tab-content {
   height: 100%;
+  display: block !important;
+}
+
+/* Override any hidden styles when v-show is true */
+.debug-tab-content:not([style*="display: none"]) {
+  display: block !important;
+  visibility: visible !important;
 }
 
 /* Dashboard containers */
@@ -872,9 +878,10 @@ defineExpose({
 .tool-section {
   margin: 1rem 0;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.1);
   border: 1px solid var(--interface-panel-border);
   border-radius: 6px;
+  min-height: 100px;
 }
 
 .tool-section h4 {
@@ -883,20 +890,22 @@ defineExpose({
 }
 
 .tool-btn {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--color-text-primary, #fff);
-  border: 1px solid var(--interface-panel-border, rgba(255, 255, 255, 0.2));
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--color-text-primary, #fff) !important;
+  border: 1px solid var(--interface-panel-border, rgba(255, 255, 255, 0.4));
   padding: 0.75rem 1rem;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 500;
   transition: all 0.2s;
   width: 100%;
   margin-bottom: 0.75rem;
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  min-height: 44px;
 }
 
 .tool-btn:hover {
@@ -911,9 +920,10 @@ defineExpose({
 
 .tool-description {
   font-size: 0.85rem;
-  opacity: 0.7;
+  color: var(--color-text-secondary, #aaa) !important;
   margin-top: 0.5rem;
   font-style: italic;
+  line-height: 1.4;
 }
 
 .tool-messages {
