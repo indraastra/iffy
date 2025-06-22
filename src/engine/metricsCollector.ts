@@ -72,7 +72,12 @@ export class MetricsCollector {
 
     // Update debug pane if available
     if (this.debugPane) {
-      this.debugPane.updateSessionStats(this.getSessionStats());
+      console.log('📊 Updating debug pane session stats');
+      const stats = this.getSessionStats();
+      console.log('📊 Session stats:', stats);
+      this.debugPane.updateSessionStats(stats);
+    } else {
+      console.log('⚠️ Debug pane not available in metrics collector');
     }
   }
 
@@ -204,7 +209,14 @@ export class MetricsCollector {
    * Set debug pane for real-time updates
    */
   setDebugPane(debugPane: any): void {
+    console.log('📊 MetricsCollector.setDebugPane called with:', debugPane);
     this.debugPane = debugPane;
+    
+    // Test immediate update
+    if (this.debugPane && this.debugPane.updateSessionStats) {
+      console.log('📊 Testing immediate session stats update');
+      this.debugPane.updateSessionStats(this.getSessionStats());
+    }
   }
 
   /**

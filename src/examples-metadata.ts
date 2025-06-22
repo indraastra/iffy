@@ -30,11 +30,11 @@ export const STORY_METADATA: StoryMetadata[] = [
     "filename": "friday_night_rain.yaml",
     "title": "Friday Night Rain",
     "author": "Iffy Collective",
-    "blurb": "Your weekly coffee ritual takes an unexpected turn."
+    "blurb": "The space between words grows heavier with each passing Friday."
   },
   {
     "filename": "restaurant_catastrophe.yaml",
-    "title": "The Sandwich Catastrophe",
+    "title": "The Great Sandwich Catastrophe",
     "author": "Iffy Engine Team",
     "blurb": "Jennifer's EPIC SANDWICH MASTERY faces its most DEVASTATING professional challenge!"
   },

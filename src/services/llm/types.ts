@@ -108,7 +108,7 @@ export const POPULAR_MODELS: ModelOption[] = [
 export const DEFAULT_MODELS: Record<LLMProvider, string> = {
   anthropic: 'claude-3-5-sonnet-latest',
   openai: 'gpt-4o',
-  google: 'gemini-2.0-flash'
+  google: 'gemini-2.5-flash-preview-05-20'
 };
 
 // Default cost models per provider (efficient options for cost-optimized operations)

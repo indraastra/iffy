@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, nextTick } from 'vue'
 import GameLayout from '@/components/GameLayout.vue'
 import DebugPane from '@/components/DebugPane.vue'
 import { useTheme } from '@/composables/useTheme'
@@ -26,11 +26,18 @@ function handleKeydown(event: KeyboardEvent) {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   document.addEventListener('keydown', handleKeydown)
+  
+  // Wait for next tick to ensure DebugPane component is fully mounted
+  await nextTick()
+  
   // Register the debug pane instance with the game engine
   if (debugPaneRef.value) {
+    console.log('🐛 Registering debug pane with game engine', debugPaneRef.value)
     registerDebugPane(debugPaneRef.value)
+  } else {
+    console.warn('⚠️ Debug pane ref not available after nextTick')
   }
 })
 

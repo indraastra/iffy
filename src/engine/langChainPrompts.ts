@@ -466,7 +466,23 @@ ${instructions}`;
 * Use **bold text** for character names and emphasis
 * Use *italic text* for thoughts, whispers, and significant items
 * Each array item = one paragraph with 1-2 sentences for focused pacing
-* Include atmospheric details and sensory descriptions`;
+* Include atmospheric details and sensory descriptions
+
+**INTERACTIVE MARKUP (use sparingly for important elements):**
+* Character references: [Character Name](character:character_id) - for clickable character mentions
+* Item references: [Item Name](item:item_id) - for important objects the player can examine
+* Location references: [Location Name](location:location_id) - for significant places
+* Alert boxes for discoveries: [!discovery] Found something important
+* Alert boxes for warnings: [!warning] Something dangerous or concerning
+* Alert boxes for danger: [!danger] Immediate threat or crisis
+
+**MARKUP USAGE GUIDELINES:**
+* Use markup ONLY when it adds meaningful interactivity or emphasis
+* Character markup: Only for significant NPCs, not for casual mentions
+* Item markup: Only for items the player might want to examine or interact with
+* Location markup: Only for places the player might visit or reference
+* Alerts: Use sparingly for truly significant moments (discoveries, warnings, dangers)
+* Regular **bold** and *italic* are preferred for most emphasis needs`;
   }
 
   /**
@@ -502,8 +518,11 @@ ${this.getRichTextFormattingInstructions()}
 
 **RESPONSE FORMAT:**
 * reasoning: Brief evaluation of player's action and its effects (2-3 sentences max)
-* narrative: Array of paragraphs, each with 1-2 sentences and rich formatting
+* narrative: MUST be an array of strings, each string is one paragraph with 1-2 sentences and rich formatting
 * memories: Important details to remember: discoveries, changes, or new knowledge gained
-* importance: Rate the significance of this interaction (1-10, default 5)`;
+* importance: Rate the significance of this interaction (1-10, default 5)
+
+**CRITICAL: narrative must be formatted as JSON array:**
+["First paragraph with 1-2 sentences.", "Second paragraph with 1-2 sentences.", "Third paragraph if needed."]`;
   }
 }

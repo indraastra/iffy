@@ -71,6 +71,27 @@ const renderedContent = computed(() => {
   color: var(--markup-location-hover);
 }
 
+/* Headings */
+.markup-content :deep(.markup-heading) {
+  font-size: var(--font-size-heading);
+  font-weight: bold;
+  color: var(--color-accent);
+  margin: 0 0 0.5rem 0;
+  text-align: center;
+  text-shadow: var(--shadow-subtle);
+  font-family: var(--font-secondary);
+}
+
+.markup-content :deep(.markup-subheading) {
+  font-size: var(--font-size-normal);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin: 0 0 1.5rem 0;
+  text-align: center;
+  font-style: italic;
+  font-family: var(--font-primary);
+}
+
 /* Text emphasis */
 .markup-content :deep(.markup-bold) {
   font-weight: bold;

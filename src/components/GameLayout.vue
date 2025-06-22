@@ -7,7 +7,7 @@
     </div>
     
     <!-- Modals -->
-    <LoadStoryModal />
+    <LoadModal />
     <SettingsModal />
   </main>
 </template>
@@ -16,7 +16,7 @@
 import GameHeader from '@/components/GameHeader.vue'
 import StoryOutput from '@/components/StoryOutput.vue'
 import CommandInput from '@/components/CommandInput.vue'
-import LoadStoryModal from '@/components/LoadStoryModal.vue'
+import LoadModal from '@/components/LoadModal.vue'
 import SettingsModal from '@/components/SettingsModal.vue'
 </script>
 

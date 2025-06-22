@@ -112,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useGameActions } from '@/composables/useGameActions'
 import { useTheme } from '@/composables/useTheme'
 import { useApiConfig } from '@/composables/useApiConfig'
@@ -131,12 +131,12 @@ const {
   apiKey,
   maskedApiKey,
   configStatus,
-  availableModels,
   providerDisplayName,
   apiKeyHelpLink,
   updateConfig,
   getDefaultModel,
-  getCheapestModelForProvider
+  getCheapestModelForProvider,
+  POPULAR_MODELS
 } = useApiConfig()
 
 const availableThemes = getAvailableThemes()
@@ -146,6 +146,11 @@ const selectedProvider = ref<LLMProvider>(provider.value)
 const selectedModel = ref(model.value)
 const selectedCostModel = ref(costModel.value)
 const selectedApiKey = ref(apiKey.value)
+
+// Available models for the currently selected provider (not config provider)
+const availableModels = computed(() => {
+  return POPULAR_MODELS.filter(m => m.provider === selectedProvider.value)
+})
 
 // Update form when provider changes
 function onProviderChange() {

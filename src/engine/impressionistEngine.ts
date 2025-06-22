@@ -173,6 +173,9 @@ export class ImpressionistEngine {
         context
       );
       
+      // Log the response for debugging (same as regular actions)
+      console.log('📝 Initial scene response ready:', normalizeNarrative(response.narrative));
+      
       // Track this initial scene processing in memory
       this.trackInteraction('<BEGIN STORY>', normalizeNarrative(response.narrative), {
         initialScene: true,
@@ -667,10 +670,19 @@ export class ImpressionistEngine {
   }
 
   setDebugPane(debugPane: any): void {
+    console.log('🐛 Engine.setDebugPane called with:', debugPane);
+    
+    console.log('🐛 Setting debug pane on director');
     this.director.setDebugPane(debugPane);
+    
+    console.log('🐛 Setting debug pane on metrics collector');
     this.metrics.setDebugPane(debugPane);
+    
+    console.log('🐛 Setting debug pane on memory manager');
     this.memoryManager.setDebugPane(debugPane);
+    
     // Also pass memory manager to debug pane for tools
+    console.log('🐛 Setting memory manager on debug pane');
     debugPane.setMemoryManager(this.memoryManager);
   }
 
@@ -709,11 +721,15 @@ export class ImpressionistEngine {
         ...this.gameState,
         interactions: this.gameState.interactions.map(interaction => ({
           ...interaction,
+          llmResponse: Array.isArray(interaction.llmResponse) 
+            ? interaction.llmResponse.join('\n\n') 
+            : interaction.llmResponse,
           timestamp: interaction.timestamp.toISOString()
         }))
       },
       memoryManagerState: this.memoryManager.exportState(),
       storyTitle: this.story?.title,
+      storyVersion: this.story?.version,
       saveTimestamp: new Date().toISOString()
     });
   }
@@ -753,6 +769,9 @@ export class ImpressionistEngine {
         ...data.gameState,
         interactions: data.gameState.interactions?.map((interaction: any) => ({
           ...interaction,
+          llmResponse: Array.isArray(interaction.llmResponse) 
+            ? interaction.llmResponse.join('\n\n') 
+            : interaction.llmResponse,
           timestamp: new Date(interaction.timestamp)
         })) || []
       };

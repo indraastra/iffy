@@ -22,6 +22,7 @@ export interface ImpressionistStory {
   // Optional enrichments
   narrative?: NarrativeMetadata
   world?: WorldDefinition
+  ui?: UIConfiguration
 }
 
 // Scene definition - impressionistic outlines
@@ -196,6 +197,11 @@ export interface ImpressionistResult<T = void> {
 }
 
 // Parser result
+// UI configuration for story presentation
+export interface UIConfiguration {
+  loadingMessage?: string  // Custom message during LLM processing
+}
+
 export interface ParseResult {
   story?: ImpressionistStory
   errors: string[]
