@@ -64,8 +64,8 @@ export function useGameActions() {
           if (story) {
             const result = await loadStory(story.content, story.filename)
             showLoadModal.value = false // Close modal immediately after story loads
-            if (result.success && result.needsInitialScene) {
-              await processInitialScene() // Process initial scene after modal closes
+            if (result.success) {
+              await processInitialScene() // Always process initial scene (handles both LLM and verbatim)
             }
             return
           }
@@ -78,8 +78,8 @@ export function useGameActions() {
           const story = BUNDLED_STORIES[storyIndex]
           const result = await loadStory(story.content, story.filename)
           showLoadModal.value = false // Close modal immediately after story loads
-          if (result.success && result.needsInitialScene) {
-            await processInitialScene() // Process initial scene after modal closes
+          if (result.success) {
+            await processInitialScene() // Always process initial scene (handles both LLM and verbatim)
           }
         } else {
           console.error(`Story not available: ${metadata.filename}`)

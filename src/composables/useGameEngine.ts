@@ -167,7 +167,7 @@ export function useGameEngine() {
         
         // Return success immediately after story is loaded and header is shown
         // Initial scene processing will happen separately
-        return { success: true, needsInitialScene: engine.getInitialText() === null }
+        return { success: true }
       } else {
         addMessage(`Failed to load story: ${result.error}`, 'error')
         return { success: false, error: result.error }
@@ -192,17 +192,13 @@ export function useGameEngine() {
         isAwaitingResponse.value = true
         await nextTick()
         
-        console.log('🎬 Processing initial scene through LLM...')
-        
         // Process initial scene through LLM (process_sketch: true or undefined)
         const initialResponse = await engine.processInitialScene()
         if (initialResponse.text) {
           addMessage(initialResponse.text, 'story')
-          console.log('🎬 Initial scene processed:', initialResponse.text.substring(0, 100) + '...')
         }
       } else {
         // Display initial text verbatim (process_sketch: false)
-        console.log('🎬 Displaying initial scene verbatim')
         addMessage(initialText, 'story')
       }
     } catch (error) {
