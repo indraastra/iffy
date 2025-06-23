@@ -78,33 +78,32 @@ scenes:
 
 endings:
   when:
-  - "conversation reaches natural conclusion"
-  - "someone makes moves to leave"
+  - "conversation reaches a natural conclusion"
 
   variations:
-  - id: "truth_spoken"
-    when: [ "alex reveals feelings", "full vulnerability achieved" ]
+  - id: "connection"
+    when: "alex confesses their feelings and player reciprocates"
     sketch: |
       "I've been trying to find the right words for weeks." [Alex](character:alex) finally 
       meets your eyes. "But maybe there aren't any right ones. Just true ones."
 
-      [!discovery] The rain has stopped. [Grounded Café](location:grounded_cafe) holds its breath.
+      The space between you dissolves. Rain stops. Something beautiful begins.
 
-  - id: "almost_there"
-    when: [ "partial opening", "alex admits struggle but not specifics" ]
+  - id: "friendship"
+    when: "alex confesses but player wants to remain friends"
     sketch: |
-      "I just... I need time." [Alex](character:alex)'s smile is fragile but real. 
-      "Can we walk? The rain's stopping."
+      [Alex](character:alex) nods slowly, understanding in their eyes. "I needed to say it. 
+      I'm glad I did." A gentle smile. "Friends?"
 
-      Some truths need movement, not stillness.
+      Sometimes honesty is its own gift, even when the answer isn't what we hoped.
 
-  - id: "walls_remain"
-    when: [ "distance maintained", "alex stays guarded" ]
+  - id: "missed_chance"
+    when: "alex doesn't confess their feelings"
     sketch: |
       [Alex](character:alex) checks the time - that universal gesture of escape. 
       "I should go. Early morning."
 
-      [!warning] Another Friday dissolved into careful nothing.
+      [!warning] Another Friday dissolved into careful nothing. The words remain unspoken.
 
 guidance: |
   Alex harbors romantic feelings that threaten to overflow. They've been 

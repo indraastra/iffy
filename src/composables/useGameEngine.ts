@@ -7,6 +7,7 @@ import type { ImpressionistStory } from '@/types/impressionistStory'
 interface GameState {
   isLoaded: boolean
   isProcessing: boolean
+  isEnded: boolean
   currentStory: ImpressionistStory | null
   messages: Array<{
     id: string
@@ -20,6 +21,7 @@ interface GameState {
 const gameState = reactive<GameState>({
   isLoaded: false,
   isProcessing: false,
+  isEnded: false,
   currentStory: null,
   messages: []
 })
@@ -98,6 +100,7 @@ export function useGameEngine() {
         // Update reactive game state
         gameState.isLoaded = true
         gameState.isProcessing = false
+        gameState.isEnded = engine.getGameState().isEnded || false
         gameState.currentStory = engine.getCurrentStory()
         
         // Clear and rebuild UI messages from engine interactions
@@ -145,8 +148,9 @@ export function useGameEngine() {
     try {
       gameState.isProcessing = true
       
-      // Clear previous messages
+      // Clear previous messages and reset state
       gameState.messages = []
+      gameState.isEnded = false
       
       // Parse story from YAML
       const story = parser.parseYaml(yamlContent)
@@ -234,6 +238,15 @@ export function useGameEngine() {
         addMessage(`Error: ${response.error}`, 'error')
       }
       
+      // Handle ending triggers
+      if (response.endingTriggered) {
+        console.log('🎭 Story ending detected, updating game state')
+        // Update reactive game state
+        gameState.isEnded = true
+        // Add a post-ending message
+        addMessage('🎭 **Story Complete**\n\nYou can continue to explore this moment, reflect on your choices, or ask questions about what happened.', 'system')
+      }
+      
       // Clear input
       currentInput.value = ''
       
@@ -286,6 +299,11 @@ export function useGameEngine() {
     addMessage(`🚀 **Get Started:** Click the "Load" button to choose a story, or press Ctrl+D to open debug tools.`, 'system')
   }
 
+  // Computed property for story ended state
+  const isStoryEnded = computed(() => {
+    return gameState.currentStory && gameState.isEnded
+  })
+
   return {
     gameState,
     engine,
@@ -294,6 +312,7 @@ export function useGameEngine() {
     currentInput,
     isReady,
     isAwaitingResponse,
+    isStoryEnded,
     loadingMessage,
     loadStory,
     processInitialScene,
