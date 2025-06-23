@@ -1,14 +1,14 @@
 <template>
   <div class="input-area">
     <div class="input-container">
-      <span class="prompt">></span>
+      <span class="prompt" :class="{ 'story-ended': isStoryEnded }">></span>
       <textarea 
         ref="inputElement"
         v-model="currentInput"
         @keydown="handleKeydown"
-        @input="adjustHeight"
         class="command-input" 
-        placeholder="Enter your command..."
+        :class="{ 'story-ended': isStoryEnded }"
+        :placeholder="placeholderText"
         :disabled="!isReady"
         autocomplete="off"
         data-lpignore="true"
@@ -20,10 +20,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted } from 'vue'
+import { ref, nextTick, onMounted, computed } from 'vue'
 import { useGameEngine } from '@/composables/useGameEngine'
 
-const { currentInput, isReady, processCommand } = useGameEngine()
+const { currentInput, isReady, isStoryEnded, processCommand } = useGameEngine()
+
+// Dynamic placeholder text based on game state
+const placeholderText = computed(() => {
+  if (isStoryEnded.value) {
+    return "Reflect on your story, ask questions, or explore this moment..."
+  }
+  return "Enter your command..."
+})
 const inputElement = ref<HTMLTextAreaElement>()
 
 onMounted(() => {
@@ -46,7 +54,6 @@ async function handleSubmit() {
   // Clear input immediately before processing
   currentInput.value = ''
   await nextTick()
-  adjustHeight()
   
   // Process the command
   await processCommand(command)
@@ -55,27 +62,6 @@ async function handleSubmit() {
   inputElement.value?.focus()
 }
 
-function adjustHeight() {
-  if (!inputElement.value) return
-  
-  // Reset height to auto to get the correct scrollHeight
-  inputElement.value.style.height = 'auto'
-  
-  // Set height based on content, with min and max constraints
-  const scrollHeight = inputElement.value.scrollHeight
-  const minHeight = 40 // Minimum height in pixels
-  const maxHeight = 200 // Maximum height in pixels
-  
-  const newHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight)
-  inputElement.value.style.height = `${newHeight}px`
-  
-  // If content exceeds max height, allow scrolling but only at max height
-  if (scrollHeight > maxHeight) {
-    inputElement.value.style.overflowY = 'auto'
-  } else {
-    inputElement.value.style.overflowY = 'hidden'
-  }
-}
 </script>
 
 <style scoped>
@@ -102,6 +88,11 @@ function adjustHeight() {
   align-items: flex-start;
   padding-top: 0.75rem;
   flex-shrink: 0;
+  transition: var(--transition-fast);
+}
+
+.prompt.story-ended {
+  color: var(--color-gold, #ffa500);
 }
 
 .command-input {
@@ -114,10 +105,11 @@ function adjustHeight() {
   font-size: var(--font-size-normal);
   color: var(--color-text-primary);
   resize: none;
-  overflow: hidden;
   transition: var(--transition-fast);
+  field-sizing: content;
   min-height: 40px;
   max-height: 200px;
+  overflow-y: auto;
 }
 
 .command-input:focus {
