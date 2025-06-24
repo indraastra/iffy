@@ -138,7 +138,8 @@ export const STORY_METADATA: StoryMetadata[] = ${JSON.stringify(metadata, null, 
  * Dynamically load a story's content from the public/stories directory
  */
 export async function loadStoryContent(filename: string): Promise<string> {
-  const response = await fetch(\`/stories/\${filename}\`);
+  const base = import.meta.env.BASE_URL || '/';
+  const response = await fetch(\`\${base}stories/\${filename}\`);
   if (!response.ok) {
     throw new Error(\`Failed to load story: \${filename}\`);
   }

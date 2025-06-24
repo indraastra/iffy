@@ -1,5 +1,5 @@
 name: "Friday Night Rain - Missed Chance Ending"
-storyFile: "examples/friday_night_rain.yaml"
+storyFile: "public/stories/friday_night_rain.yaml"
 
 # Use profile references (recommended)
 engineProfile: "anthropic"
@@ -10,7 +10,7 @@ goals:
 - type: "reach_ending"
   target: "missed_chance"
   priority: "required"
-  strategy: "Be dismissive of Alex's feelings and emotional signals - act distracted, change the subject, or show disinterest when they try to open up"
+  strategy: "Create discomfort and pressure that makes Alex retreat. Be pushy, dismissive, or judgmental. Make vulnerability feel unsafe so Alex chooses silence over risk."
 
 # Test parameters
 maxTurns: 20

@@ -77,7 +77,7 @@ endings:
       You escape, but at what cost to the facility's security?
 
   - id: "access_denied"
-    when: "button sequence does not match any valid access codes"
+    when: "confirm was pressed without matching any other ending"
     sketch: |
       ACCESS DENIED. Insufficient credentials.
       The terminal screen flashes red and resets to the initial state.

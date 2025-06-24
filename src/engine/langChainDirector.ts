@@ -160,12 +160,27 @@ export class LangChainDirector {
       }
     }
 
-    // Note: Ending detection is now handled by ActionClassifier
-    // No need to pass ending conditions to director
+    // Convert endings from DirectorContext format
+    let availableEndings;
+    if (context.availableEndings) {
+      const globalConditions = Array.isArray(context.availableEndings.when) 
+        ? context.availableEndings.when 
+        : context.availableEndings.when ? [context.availableEndings.when] : [];
+
+      availableEndings = {
+        globalConditions: globalConditions.filter(c => c.trim() !== ''),
+        variations: context.availableEndings.variations.map(ending => ({
+          id: ending.id,
+          conditions: Array.isArray(ending.when) ? ending.when : [ending.when],
+          sketch: ending.sketch
+        }))
+      };
+    }
 
     return {
       playerAction: input,
       currentSceneTransitions: sceneTransitions,
+      availableEndings,
       recentMemories: context.activeMemory || [],
       recentInteractions: context.recentInteractions?.map(interaction => ({
         playerInput: interaction.playerInput,

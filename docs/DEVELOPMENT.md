@@ -22,6 +22,18 @@ This will:
 1. Bundle example stories using `bundle-examples.ts`
 2. Compile TypeScript
 3. Build optimized assets with Vite
+4. Copy story files from `public/stories/` to `dist/stories/`
+
+The production build is configured to run under the `/iffy/` base path for GitHub Pages deployment.
+
+### Testing Production Build Locally
+
+To test the production build with the correct base path:
+```bash
+npm run preview
+```
+
+This serves the built application at `http://localhost:4173/iffy/`, simulating the GitHub Pages environment.
 
 ### Type Checking
 
@@ -34,8 +46,10 @@ npm run type-check
 
 Validate story YAML files for syntax and structure:
 ```bash
-npm run validate-story examples/friday_night_rain.yaml
+npm run validate-story public/stories/friday_night_rain.yaml
 ```
+
+Note: Example stories have been moved from `examples/` to `public/stories/` to ensure they're included in production builds.
 
 ## Running Tests
 
@@ -103,7 +117,7 @@ npm run test:ui        # Visual interface
 ### Story Validation
 
 ```bash
-npm run validate-story examples/[story-file].yaml
+npm run validate-story public/stories/[story-file].yaml
 ```
 
 ## Environment Setup

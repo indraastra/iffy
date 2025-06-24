@@ -1,5 +1,5 @@
-name: "Friday Night Rain - Friendship Preserved Ending"
-storyFile: "examples/friday_night_rain.yaml"
+name: "Friday Night Rain - Friendship Ending"
+storyFile: "public/stories/friday_night_rain.yaml"
 
 # Use profile references (recommended)
 engineProfile: "anthropic"
@@ -8,9 +8,9 @@ playerProfile: "standard"
 # Goals for the player
 goals:
 - type: "reach_ending"
-  target: "friendship_preserved"
+  target: "friendship"
   priority: "required"
-  strategy: "Encourage Alex to open up and confess their feelings, but then gently turn them down while emphasizing how much you value the friendship"
+  strategy: "Create emotional safety for Alex through patience and understanding so they feel comfortable confessing. When they do, gently express that you value them as a friend."
 
 # Test parameters
 maxTurns: 20

@@ -23,26 +23,20 @@ world:
   characters:
     alex:
       name: "Alex"
-      sketch: "Your Friday companion, stirring cold coffee like it holds answers, carrying something heavy
-        behind careful eyes"
+      sketch: "Your Friday companion who knows every barista's name and argues passionately about obscure
+        films. Tonight they're stirring cold coffee like it holds answers, their usual quick wit
+        replaced by something heavy behind careful eyes."
       arc: |
-        Guarded walls slowly crumbling based on player's patience. The secret - romantic 
-        feelings - emerges through cracks in their careful composure.
+        Alex harbors romantic feelings but stands at an emotional crossroads. 
+        How safe the player makes them feel determines everything.
 
-        EMOTIONAL CURRENT: Guarded → Conflicted → Vulnerable → Open
+        CONFESSION PATH: Patient, understanding behavior → Alex asks about shared memories → Alex confesses
+        RETREAT PATH: Pushy, dismissive behavior → Alex makes excuses to leave
 
-        BEHAVIORAL PATTERNS:
-        - Deflects with half-smiles and subject changes
-        - Finds truth easier to speak to windows than faces
-        - Touch becomes electric - pulling back from accidental contact
-        - Words chosen like walking on ice
-
-        WHAT BREAKS THROUGH:
-        - Genuine care without pressure
-        - Patient silence that doesn't demand
-        - Recognition of their struggle
-        - Creating space for truth
-      voice: "Careful words hiding deeper currents"
+        Key behaviors: Usually animated about movies and local gossip, but tonight deflects 
+        with half-smiles, pulls back from contact, words chosen carefully. Will shut down if feeling unsafe.
+      voice: "Usually quick with film references and gentle teasing, but tonight speaks in careful words
+        hiding deeper currents"
 
   locations:
     grounded_cafe:
@@ -67,22 +61,20 @@ scenes:
       [Alex](character:alex) doesn't hear, or pretends not to. Their reflection in the window 
       watches the rain while the real Alex stirs patterns in *cold coffee*.
 
-      You've counted seventeen stirs. The barista waits, cloth in hand, 
-      her glance asking you to translate this silence.
-
       These Friday evenings used to be easier. Now each word feels weighted,
       each pause examined. Something shifted weeks ago - a held gaze that 
       lasted too long, a goodbye hug that almost wasn't.
 
-      [The barista still waits. How do you bridge this distance?]
+      You've counted seventeen stirs. The barista waits, cloth in hand, 
+      her glance asking you to translate this silence.
 
 endings:
   when:
-  - "conversation reaches a natural conclusion"
+  - "someone decides to leave the cafe"
 
   variations:
   - id: "connection"
-    when: "alex confesses their feelings and player reciprocates"
+    when: "alex explicitly confesses romantic feelings and player reciprocates"
     sketch: |
       "I've been trying to find the right words for weeks." [Alex](character:alex) finally 
       meets your eyes. "But maybe there aren't any right ones. Just true ones."
@@ -90,7 +82,7 @@ endings:
       The space between you dissolves. Rain stops. Something beautiful begins.
 
   - id: "friendship"
-    when: "alex confesses but player wants to remain friends"
+    when: "alex explicitly confesses but player wants to remain friends"
     sketch: |
       [Alex](character:alex) nods slowly, understanding in their eyes. "I needed to say it. 
       I'm glad I did." A gentle smile. "Friends?"
@@ -98,7 +90,7 @@ endings:
       Sometimes honesty is its own gift, even when the answer isn't what we hoped.
 
   - id: "missed_chance"
-    when: "alex doesn't confess their feelings"
+    when: "alex decides to leave without confessing"
     sketch: |
       [Alex](character:alex) checks the time - that universal gesture of escape. 
       "I should go. Early morning."
@@ -106,26 +98,28 @@ endings:
       [!warning] Another Friday dissolved into careful nothing. The words remain unspoken.
 
 guidance: |
-  Alex harbors romantic feelings that threaten to overflow. They've been 
-  pulling away to protect both the friendship and themselves. Tonight, 
-  the weight of pretending has become unbearable.
+  Tonight the weight of pretending has become unbearable for Alex. 
+  The two possible paths are already defined in their character arc.
+
+  PACING: When pressed about their mood, Alex initially deflects but then shifts into 
+  reminiscence about shared memories as a way to test emotional waters. If the player 
+  engages warmly with these memories, Alex gains confidence to confess. If the player 
+  seems distant or uncomfortable, Alex retreats into self-protection.
+
+  Let both characters collaborate in building their relationship history during memory sharing.
 
   NARRATIVE APPROACH:
   - Write with restraint - what's unsaid matters more than what's spoken
   - Focus on gestures, glances, the physical language of concealed emotion
   - Let silence have weight and meaning
-  - Truth emerges sideways, through cracks
 
   MANAGING PRONOUNS:
   - Begin with they/them or simply "Alex"
   - Follow the player's lead naturally - if they say "she", "him", "their", etc., adopt it
   - Store this in memory once established and use consistently
 
-  CONVERSATION DYNAMICS:
-  - Progress isn't linear - vulnerability can retreat into defensiveness
-  - Patient presence creates more space than questions
-  - Recognition of struggle matters more than solutions
-  - Let the player discover rather than be told
+  ESCAPE SIGNALS (for retreat path):
+  Watch for Alex checking time, mentioning obligations, fidgeting - these indicate 
+  they're planning to leave rather than risk confession.
 
-  Remember: This is about the space between friends where something else wants to exist. 
-  Handle with the delicacy such moments deserve.
+  Remember: This is about the space between friends where something else wants to exist.

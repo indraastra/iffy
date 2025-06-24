@@ -34,7 +34,6 @@ onMounted(async () => {
   
   // Register the debug pane instance with the game engine
   if (debugPaneRef.value) {
-    console.log('🐛 Registering debug pane with game engine', debugPaneRef.value)
     registerDebugPane(debugPaneRef.value)
   } else {
     console.warn('⚠️ Debug pane ref not available after nextTick')

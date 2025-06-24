@@ -17,6 +17,7 @@ import { MultiModelService } from '@/services/multiModelService';
 import { LangChainDirector } from './langChainDirector';
 import { MetricsCollector } from './metricsCollector';
 import { ImpressionistMemoryManager } from './impressionistMemoryManager';
+import { normalizeYamlText } from '@/utils/textNormalization';
 
 /**
  * Convert narrative from string[] to string for backward compatibility
@@ -131,18 +132,8 @@ export class ImpressionistEngine {
       return null; // Signal that LLM processing is required
     }
     
-    // Normalize YAML content for browser display:
-    // - Preserve paragraph breaks (double newlines)  
-    // - Remove manual line breaks within paragraphs (single newlines)
-    // - Let browser handle text wrapping naturally
-    const normalizedSketch = firstScene.sketch
-      .replace(/\n\n+/g, '§PARAGRAPH_BREAK§') // Mark actual paragraph breaks (2+ newlines)
-      .replace(/\n/g, ' ') // Convert single newlines to spaces (within paragraphs)  
-      .replace(/§PARAGRAPH_BREAK§/g, '\n\n') // Restore paragraph breaks
-      .replace(/ +/g, ' ') // Normalize multiple spaces to single spaces (but preserve newlines)
-      .trim(); // Remove leading/trailing whitespace
-    
-    return normalizedSketch;
+    // Normalize YAML content for browser display
+    return normalizeYamlText(firstScene.sketch);
   }
 
   /**
@@ -446,8 +437,10 @@ export class ImpressionistEngine {
       }
     }
 
-    // Note: Ending detection is now handled automatically by ActionClassifier
-    // No need to pass ending conditions to the director
+    // Available endings (~100 tokens) - required for ActionClassifier
+    if (this.story!.endings) {
+      context.availableEndings = this.story!.endings;
+    }
 
     // Narrative metadata (~50 tokens if defined)
     if (this.story!.narrative) {
@@ -681,19 +674,11 @@ export class ImpressionistEngine {
   }
 
   setDebugPane(debugPane: any): void {
-    console.log('🐛 Engine.setDebugPane called with:', debugPane);
-    
-    console.log('🐛 Setting debug pane on director');
     this.director.setDebugPane(debugPane);
-    
-    console.log('🐛 Setting debug pane on metrics collector');
     this.metrics.setDebugPane(debugPane);
-    
-    console.log('🐛 Setting debug pane on memory manager');
     this.memoryManager.setDebugPane(debugPane);
     
     // Also pass memory manager to debug pane for tools
-    console.log('🐛 Setting memory manager on debug pane');
     debugPane.setMemoryManager(this.memoryManager);
   }
 

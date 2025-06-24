@@ -121,6 +121,33 @@ describe('ImpressionistEngine', () => {
       
       expect(text).toContain('No story loaded');
     });
+
+    it('should apply text normalization when process_sketch is false', () => {
+      const storyWithFormattedText = {
+        ...mockStory,
+        scenes: {
+          start: {
+            sketch: `Welcome to the game!
+
+Available options:
+- Look around
+- Take item
+
+This is a paragraph that spans
+multiple lines for readability.`,
+            process_sketch: false
+          }
+        }
+      };
+      
+      engine.loadStory(storyWithFormattedText);
+      const text = engine.getInitialText();
+      
+      // Should use the text normalization utility
+      expect(text).toContain('Welcome to the game!\n\n');
+      expect(text).toContain('- Look around\n');
+      expect(text).toContain('This is a paragraph that spans multiple lines for readability.');
+    });
   });
 
   describe('processAction', () => {

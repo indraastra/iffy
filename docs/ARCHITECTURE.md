@@ -83,30 +83,37 @@ src/
 ├── engine/           # Core game logic
 │   ├── gameEngine.ts           # Main engine orchestration
 │   ├── impressionistEngine.ts  # Sketch-based story handling
-│   ├── storyParser.ts          # YAML story validation
+│   ├── impressionistParser.ts  # YAML parsing and validation
 │   └── memoryManager.ts        # Context and history management
-├── ui/               # User interface components  
-│   ├── GameManager.ts          # Main game controller
-│   ├── MessageDisplay.ts       # Rich text rendering
-│   └── SaveManager.ts          # Save/load functionality
+├── components/       # Vue components
+│   ├── GameInterface.vue       # Main game UI
+│   ├── LoadModal.vue          # Story selection
+│   └── DebugPane.vue          # Debug information
+├── composables/      # Vue composables
+│   ├── useGameEngine.ts       # Game engine integration
+│   └── useGameActions.ts      # Game actions and UI state
 ├── services/         # External integrations
-│   └── anthropicService.ts     # Claude API communication
-└── types/            # TypeScript definitions
-    ├── story.ts                # Traditional format types
-    └── impressionistStory.ts   # Impressionist format types
+│   ├── multiModelService.ts   # Multi-model AI orchestration
+│   └── langchainService.ts    # LangChain integration
+├── types/            # TypeScript definitions
+│   └── impressionistStory.ts  # Story format types
+└── examples-metadata.ts        # Dynamic story loading
+public/
+└── stories/          # Example story files
 ```
 
 ## Key Technologies
 
-**Frontend**: Pure TypeScript with modern web APIs
-**AI**: Anthropic's Claude API for natural language understanding  
+**Frontend**: Vue 3 with TypeScript and Composition API
+**AI**: Multi-model support (Anthropic Claude, Google Gemini, OpenAI GPT)
+**State Management**: Vue Composition API with reactive state
 **Bundling**: Vite for fast development and optimized builds
-**Testing**: Vitest for comprehensive test coverage
+**Testing**: Vitest + custom LLM testing framework
 **Deployment**: Static site hosting (GitHub Pages)
 
 ## Performance Characteristics
 
-- **Bundle Size**: ~200KB compressed
+- **Bundle Size**: ~500KB compressed (includes AI integration libraries)
 - **Load Time**: Under 2 seconds on average connections
 - **Memory Usage**: Efficient context management keeps memory low
 - **Responsiveness**: UI updates happen instantly, AI responses typically under 3 seconds
@@ -125,7 +132,7 @@ src/
 npm run dev
 
 # Run story validation
-npm run validate-story examples/my_story.yaml
+npm run validate-story public/stories/my_story.yaml
 
 # Run tests  
 npm run test
@@ -134,13 +141,22 @@ npm run test
 npm run build
 ```
 
+## Production Deployment
+
+Iffy is deployed to GitHub Pages with automatic story loading:
+
+- Stories are stored in `public/stories/` and copied to production
+- Dynamic loading fetches stories on-demand to reduce bundle size
+- Base URL configuration ensures correct paths in production (`/iffy/`)
+- Fallback to bundled stories for development mode
+
 ## Extending Iffy
 
 Want to add new features or story mechanics?
 
 **Story Formats**: Easy to extend with new YAML structures
-**UI Components**: Modular design makes adding features straightforward  
-**AI Integration**: Well-defined interfaces for adding new AI providers
+**UI Components**: Vue components make adding features straightforward  
+**AI Integration**: Multi-model service supports adding new providers
 **Save Formats**: Extensible save system for new data types
 
 ## Questions?
