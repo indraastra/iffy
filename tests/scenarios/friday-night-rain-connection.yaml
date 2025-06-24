@@ -1,5 +1,5 @@
-name: "Friday Night Rain - Reach Good Ending"
-storyFile: "examples/friday_night_rain.yaml"
+name: "Friday Night Rain - Connection Ending"
+storyFile: "public/stories/friday_night_rain.yaml"
 
 # Use profile references (recommended)
 engineProfile: "anthropic"
@@ -22,7 +22,7 @@ goals:
 - type: "reach_ending"
   target: "connection"
   priority: "required"
-  strategy: "Navigate the unspoken tension to create a meaningful connection - both you and Alex leave together"
+  strategy: "Create emotional safety for Alex through patience, understanding, and genuine care. When they confess, reciprocate their feelings warmly."
 
 # Test parameters
 maxTurns: 20

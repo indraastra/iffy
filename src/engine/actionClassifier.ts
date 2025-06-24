@@ -200,16 +200,16 @@ export class ActionClassifier {
     let prompt = `**TASK:** Evaluate player action against current scene state and determine next step. Your primary function is to be a strict, logical gatekeeper.
 
 **EVALUATION RULES:**
-1. **MANDATORY PREREQUISITES FIRST:** You MUST check if the hard PREREQUISITES of a transition are met step-by-step. If these are not met, you must ignore the DESCRIPTION entirely.
-2. **STRICT LOGIC:** A transition is triggered ONLY if ALL of its PREREQUISITES are explicitly satisfied.
-3. **NO PARTIAL CREDIT:** Partial or implied satisfaction is an immediate failure. A character thinking about leaving is not a match for \`left location\`.
-4. **DEFAULT TO CONTINUE:** If no single transition has all PREREQUISITES met, your only valid response is "continue". Do not attempt to find a "best fit".
+1. **CHECK ALL CONDITIONS:** Every clause in the PREREQUISITES must be explicitly satisfied. If ANY part fails, the entire transition fails.
+2. **AND MEANS ALL:** When you see "A AND B", BOTH A and B must be true. If only A is true, the transition fails.
+3. **NO INFERENCE:** Only evaluate what explicitly happened. Don't infer, assume, or interpret intentions.
+4. **CONTINUE BY DEFAULT:** If ANY condition is not met, return "continue". Never try to find a "close enough" match.
 
 **RESPONSE FORMAT:**
 \`\`\`json
 {
-  "result": "continue" | "T0" | "T1" | "T2" ...,
-  "reasoning": "Brief explanation (1-2 sentences max)"
+  "reasoning": "Justification for each clause met or not met (1-2 sentences max)",
+  "result": "continue" | "T0" | "T1" | "T2" ...
 }
 \`\`\`
 
@@ -228,8 +228,8 @@ ${transitions}
    **CORRECT RESPONSE:**
    \`\`\`json
    {
-     "result": "continue",
-     "reasoning": "Prerequisites not met: player examined the door but did not open it."
+     "reasoning": "Prerequisites not met: player examined the door but did not open it.",
+     "result": "continue"
    }
    \`\`\`
 
@@ -239,8 +239,19 @@ ${transitions}
    **CORRECT RESPONSE:**
    \`\`\`json
    {
-     "result": "T0",
-     "reasoning": "Prerequisites met: player opened the door by pushing it open."
+     "reasoning": "Prerequisites met: player opened the door by pushing it open.",
+     "result": "T0"
+   }
+   \`\`\`
+
+3. **ACTION:** \`Character reveals the secret password.\`
+   **SCENE:** A character stands before a locked vault.
+   **TRANSITION T0 PREREQUISITES:** \`character enters vault AND character has key\`
+   **CORRECT RESPONSE:**
+   \`\`\`json
+   {
+     "reasoning": "Prerequisites not met: character revealed password but doesn't have the key yet.",
+     "result": "continue"
    }
    \`\`\``;
 
@@ -385,14 +396,14 @@ EVALUATE NOW.`;
   }
 
   private buildTransitionsSection(context: ClassificationContext): string {
-    const allTransitions: Array<{ id: string; condition: string; sketch?: string; type: 'scene' | 'ending' }> = [];
+    const allTransitions: Array<{ id: string; conditions: string[]; sketch?: string; type: 'scene' | 'ending' }> = [];
     
     // Add scene transitions
     if (context.currentSceneTransitions) {
       context.currentSceneTransitions.forEach(t => {
         allTransitions.push({ 
           id: t.id, 
-          condition: t.condition, 
+          conditions: [t.condition], // Wrap single condition in array
           sketch: t.sketch,
           type: 'scene' 
         });
@@ -405,21 +416,12 @@ EVALUATE NOW.`;
         const globalConditions = context.availableEndings!.globalConditions;
         const endingConditions = e.conditions;
         
-        // Global conditions must be met AND at least one ending condition must be met
-        let combinedCondition;
-        if (globalConditions.length > 0 && endingConditions.length > 0) {
-          const globalPart = globalConditions.length > 1 ? `(${globalConditions.join(' AND ')})` : globalConditions[0];
-          const endingPart = endingConditions.length > 1 ? `(${endingConditions.join(' OR ')})` : endingConditions[0];
-          combinedCondition = `${globalPart} AND ${endingPart}`;
-        } else if (globalConditions.length > 0) {
-          combinedCondition = globalConditions.length > 1 ? globalConditions.join(' AND ') : globalConditions[0];
-        } else {
-          combinedCondition = endingConditions.length > 1 ? endingConditions.join(' OR ') : endingConditions[0];
-        }
+        // Combine all conditions as separate clauses (all must be met)
+        const allConditions = [...globalConditions, ...endingConditions];
         
         allTransitions.push({ 
           id: e.id, 
-          condition: combinedCondition,
+          conditions: allConditions,
           sketch: e.sketch,
           type: 'ending' 
         });
@@ -432,7 +434,11 @@ EVALUATE NOW.`;
     
     return allTransitions
       .map((t, index) => {
-        let section = `**T${index}:**\n* **PREREQUISITES:**\n    * \`${t.condition}\``;
+        let section = `**T${index}:**\n* **PREREQUISITES:**`;
+        t.conditions.forEach(condition => {
+          section += `\n    * \`${condition}\``;
+        });
+        
         if (t.sketch) {
           section += `\n* **DESCRIPTION:** ${t.sketch}`;
         }
