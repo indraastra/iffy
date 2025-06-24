@@ -267,18 +267,8 @@ export function useGameEngine() {
 
   // LLM response loading state is now global (defined above)
 
-  // Set up UI callbacks for the engine
-  engine.setUIAddMessageCallback((text: string, type: string) => {
-    addMessage(text, type as GameState['messages'][0]['type'])
-  })
-
-  engine.setUIShowTypingCallback(() => {
-    isAwaitingResponse.value = true
-  })
-
-  engine.setUIHideTypingCallback(() => {
-    isAwaitingResponse.value = false
-  })
+  // Note: UI management is handled directly in this composable
+  // rather than through engine callbacks for consistency
 
   // Initialize welcome message - split into three blocks
   if (gameState.messages.length === 0) {

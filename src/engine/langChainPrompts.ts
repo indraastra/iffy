@@ -15,7 +15,7 @@ export class LangChainPrompts {
   static buildActionContextPreamble(context: DirectorContext): string {
     // STATIC/SEMI-STATIC PREFIX - Content that remains stable for the story/scene duration
     // This organization benefits Gemini's automatic context caching and Anthropic's prompt caching
-    let prompt = `**ROLE:** You are the **Game Director** for an interactive text-based story. Your primary goal is to **narrate the story** based on player actions.\n\n`;
+    let prompt = `**ROLE:** You are the **Story Director** for an interactive narrative. Your primary goal is to **craft immersive, compelling storytelling** that responds naturally to player actions while maintaining the world's voice and atmosphere.\n\n`;
 
     // Story context (static for story duration)
     if (context.storyContext) {
@@ -160,7 +160,7 @@ export class LangChainPrompts {
   static buildContextPreamble(context: DirectorContext): string {
     // STATIC/SEMI-STATIC PREFIX - Content that remains stable for the story/scene duration
     // This organization benefits Gemini's automatic context caching and Anthropic's prompt caching
-    let prompt = `**ROLE:** You are the **Game Director** for an interactive text-based story. Your primary goal is to **narrate the story and manage its progression** based on player actions and predefined game logic.\n\n`;
+    let prompt = `**ROLE:** You are the **Story Director** for an interactive narrative. Your primary goal is to **craft immersive storytelling and guide narrative progression** through rich, atmospheric responses that honor both player choices and the story's natural flow.\n\n`;
 
     // Story context (static for story duration)
     if (context.storyContext) {
@@ -348,10 +348,11 @@ ${this.getStructuredResponseInstructions()}`;
     // SEMI-DYNAMIC CONTENT - Changes based on story state (but not per action)
     // Post-ending context if story is complete (only appears when story ends)
     if (context.storyComplete) {
-      instructions = `**STORY COMPLETION CONTEXT:**
-This story has ended and the player is now reflecting, asking questions, or exploring what happened.
-Respond thoughtfully to help them understand, reflect on, or explore the story they experienced.
-You can answer questions, provide insights, discuss themes, explore "what if" scenarios, or clarify plot points.
+      instructions = `**POST-ENDING NARRATIVE MODE:**
+The story has reached its conclusion, but the narrative continues. Players may explore the aftermath, 
+revisit moments, or imagine extensions to the story. Continue as the story director, maintaining 
+the same narrative voice and immersive storytelling approach. Respond to player actions as if 
+they're exploring this world and these characters beyond the formal ending.
 Since the story is complete, do NOT use any transition signals.
 
 ${instructions}`;
@@ -366,16 +367,16 @@ ${instructions}`;
    */
   static buildTransitionInstructions(targetSceneId: string, sceneSketch: string, playerAction: string): string {
     // STATIC PREFIX - Transition directives that remain constant
-    let instructions = `**SCENE TRANSITION DIRECTIVES:**
-* Incorporate the player's action into the transition narrative
-* Show how the player's action leads to or causes the scene change
-* Use the scene description as your foundation - expand it with rich atmospheric details
-* Establish the new environment, mood, and any characters present
-* Focus on sensory details and atmosphere
-* Maintain the story's narrative voice and tone throughout
-* KEEP RESPONSE CONCISE: 100-200 words maximum, 2-4 paragraphs
-* Record important details about the new scene or transition as memories
-* Rate the importance of this transition (typically 6-8 for scene changes)
+    let instructions = `**SCENE TRANSITION STORYTELLING:**
+* Weave the player's action into a seamless narrative bridge between scenes
+* Show how their choice naturally unfolds into this new space and moment
+* Transform the scene description into vivid, lived-in storytelling with rich atmospheric detail
+* Bring the new environment to life - its mood, energy, and inhabitants
+* Paint the transition through sensory experiences and emotional resonance
+* Maintain the story's distinctive voice and atmospheric consistency
+* CRAFT FOCUSED NARRATIVE: 100-200 words maximum, 2-4 impactful paragraphs
+* Capture key atmospheric and story details as lasting memories
+* Rate the narrative significance of this transition (typically 6-8 for scene changes)
 
 ${this.getStructuredResponseInstructions()}`;
     
@@ -398,17 +399,17 @@ ${instructions}`;
    */
   static buildEndingInstructions(endingId: string, endingSketch: string, playerAction: string): string {
     // STATIC PREFIX - Ending directives that remain constant
-    let instructions = `**STORY ENDING DIRECTIVES:**
-* Incorporate the player's action into the ending narrative
-* Show how the player's action leads to or reveals this ending
-* Use the ending description as your foundation - expand it with rich, conclusive details
-* Provide emotional closure and resolution appropriate to the story's themes
-* Focus on the significance and meaning of this ending
-* This should feel like a natural progression from the player's action to story conclusion
-* Maintain the story's narrative voice and tone throughout
-* KEEP RESPONSE CONCISE: 150-250 words maximum, 2-4 paragraphs
-* Record key conclusion details or emotional beats as memories
-* Rate the importance of this ending (typically 8-10 for story endings)
+    let instructions = `**STORY CONCLUSION STORYTELLING:**
+* Weave the player's action into the story's natural culmination
+* Show how their choice brings this narrative journey to its destined resolution
+* Transform the ending description into a rich, emotionally resonant conclusion
+* Craft closure that honors the story's themes and the journey that led here
+* Focus on the emotional and thematic weight of this moment
+* Let the ending feel like the inevitable, satisfying result of all that came before
+* Maintain the story's distinctive voice and atmospheric consistency throughout
+* CRAFT POWERFUL CONCLUSION: 150-250 words maximum, 2-4 memorable paragraphs
+* Preserve key emotional beats and story conclusions as lasting memories
+* Rate the narrative impact of this conclusion (typically 8-10 for story endings)
 * Include ending signal in your response
 
 ${this.getStructuredResponseInstructions()}`;
@@ -432,17 +433,17 @@ ${instructions}`;
    */
   static buildInitialSceneInstructions(sceneId: string, sceneSketch: string): string {
     // STATIC PREFIX - Initial scene directives that remain constant
-    let instructions = `**INITIAL SCENE DIRECTIVES:**
-* Use the scene description as your foundation - expand it with rich atmospheric details
-* Establish the setting, mood, and any characters present for the story opening
-* Create an engaging, immersive introduction that draws the reader in
-* Focus on sensory details and atmosphere to set the tone
-* This should feel like a compelling story opening
-* Maintain the story's narrative voice and tone throughout
-* Do NOT include any player actions or responses - this is pure scene establishment
-* KEEP RESPONSE CONCISE: 100-250 words maximum, 1-3 paragraphs
-* Record key setting details or initial atmosphere as memories
-* Rate the importance of this opening (typically 7-8 for initial scenes)
+    let instructions = `**OPENING SCENE STORYTELLING:**
+* Transform the scene description into a vivid, atmospheric story opening
+* Establish the world, mood, and characters with immersive, sensory-rich detail
+* Create a compelling narrative hook that draws readers into this story world
+* Paint the opening through evocative atmosphere and emotional resonance
+* Craft an opening that feels like stepping into a living, breathing story
+* Maintain the story's distinctive voice and atmospheric identity from the first word
+* Focus purely on scene establishment - no player actions or responses yet
+* CRAFT ENGAGING OPENING: 100-250 words maximum, 1-3 impactful paragraphs
+* Capture essential world-building and atmospheric details as memories
+* Rate the narrative impact of this opening (typically 7-8 for initial scenes)
 
 ${this.getStructuredResponseInstructions()}`;
     
@@ -490,22 +491,22 @@ ${instructions}`;
    * These are static and benefit from caching
    */
   static getCoreResponseGuidelines(): string {
-    return `**TASK:**
-* Process ONLY the player's exact action - do not take additional actions on their behalf
-* Focus purely on narrative response - transitions/endings are handled separately
-* Incorporate the player's action naturally, showing its immediate effects
-* Adhere to the global and scene directives given by the story author
+    return `**STORYTELLING APPROACH:**
+* Respond to the player's exact action with vivid, atmospheric narrative
+* Show the immediate consequences and ripple effects through the story world
+* Weave the action seamlessly into the ongoing narrative flow
+* Honor the story's voice, tone, and established atmosphere
 
-**INTERACTIVE FICTION RULES:**
-* Player controls PLAYER CHARACTER exclusively - never make them speak or act beyond their input
-* You control all NPCs - let them respond naturally to player actions
-* Process only the player's exact action (e.g., "examine door" ≠ "open door")
+**NARRATIVE BOUNDARIES:**
+* Player controls their character exclusively - never make them speak or act beyond their input
+* You bring all NPCs, environments, and story elements to life
+* Respond to only what the player actually does (e.g., "examine door" ≠ "open door")
 
-**RESPONSE GUIDELINES:**
-* Advance the narrative based on how the scene, world, or characters react to the action
-* Create active moments: end when something is happening, someone is speaking, or a choice is implied
-* NEVER add questions like "What do you do?" or "What do you say?" - let the situation naturally invite action
-* Write in focused bursts: break longer thoughts into short paragraphs with 1-2 sentences each`;
+**IMMERSIVE STORYTELLING:**
+* Advance the narrative through vivid scene description and character reactions
+* Create moments that breathe with life - ongoing conversations, shifting atmospheres, emerging possibilities
+* Let the story world naturally invite the next player action without explicit prompting
+* Craft focused, impactful paragraphs with 1-2 sentences each for dynamic pacing`;
   }
 
   /**
