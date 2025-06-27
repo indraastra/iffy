@@ -190,7 +190,7 @@ describe('Memory Integration', () => {
         isConfigured: vi.fn().mockReturnValue(true),
         makeStructuredRequest: vi.fn().mockResolvedValue({
           data: {
-            narrative: 'You find yourself in a new area.',
+            narrativeParts: ['You find yourself in a new area.'],
             memories: ['Player entered new area'],
             importance: 7,
             signals: { scene: 'next' }

@@ -19,7 +19,7 @@ export const DirectorSignalsSchema = z.object({
  */
 export const DirectorResponseSchema = z.object({
   reasoning: z.string().describe('Your step-by-step reasoning for this response'),
-  narrativeParts: z.array(z.string()).describe('The narrative response as an array of paragraphs with rich text formatting'),
+  narrativeParts: z.union([z.array(z.string()), z.string()]).describe('Array of paragraph strings, each containing one narrative paragraph'),
   memories: z.array(z.string()).default([]).describe('Important details to remember: discoveries, changes to the world, or new knowledge the player has gained'),
   importance: z.number().min(1).max(10).default(5).describe('How important this interaction is (1-10)'),
   signals: DirectorSignalsSchema.optional().describe('Scene transitions and endings (handled automatically)')
