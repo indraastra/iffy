@@ -308,6 +308,9 @@ export class MultiModelService {
         }
       );
 
+      // Log raw LLM response before processing
+      console.log('🤖 Raw LLM Response (Streaming):', JSON.stringify(response, null, 2));
+
       return this.parseResponse(response);
     } catch (error: any) {
       if (error.name === 'AbortError') {
@@ -393,6 +396,9 @@ export class MultiModelService {
         invokeOptions
       );
 
+      // Log raw LLM response before processing
+      console.log('🤖 Raw LLM Response:', JSON.stringify(response, null, 2));
+
       // Use captured usage or fall back to estimation
       const usage = capturedUsage || {
         input_tokens: Math.ceil(prompt.length / 4),
@@ -450,6 +456,9 @@ export class MultiModelService {
         [new HumanMessage(prompt)],
         invokeOptions
       );
+
+      // Log raw LLM response before processing
+      console.log('🤖 Raw LLM Response:', JSON.stringify(response, null, 2));
 
       return this.parseResponse(response);
     } catch (error: any) {

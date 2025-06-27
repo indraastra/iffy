@@ -72,12 +72,8 @@ export class MetricsCollector {
 
     // Update debug pane if available
     if (this.debugPane) {
-      console.log('📊 Updating debug pane session stats');
       const stats = this.getSessionStats();
-      console.log('📊 Session stats:', stats);
       this.debugPane.updateSessionStats(stats);
-    } else {
-      console.log('⚠️ Debug pane not available in metrics collector');
     }
   }
 

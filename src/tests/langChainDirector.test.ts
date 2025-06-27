@@ -89,7 +89,7 @@ describe('LangChainDirector', () => {
 
     const defaultDirectorResponse = {
       data: {
-        narrative: "Mock response",
+        narrativeParts: ["Mock response"],
         memories: ["Mock memory"],
         importance: 5,
         signals: {}
@@ -176,7 +176,7 @@ describe('LangChainDirector', () => {
     it('should process action without transition', async () => {
       const mockDirectorResponse = {
         data: {
-          narrative: "You examine the room carefully.",
+          narrativeParts: ["You examine the room carefully."],
           memories: ["Player looked around"],
           importance: 5,
           signals: {}
@@ -218,7 +218,7 @@ describe('LangChainDirector', () => {
       // Mock single transition response (incorporates player action)
       const transitionResponse = {
         data: {
-          narrative: "You push open the heavy door and step through. Light floods in as you enter a bright hallway. The walls gleam with polished marble, and distant echoes suggest vast spaces ahead.",
+          narrativeParts: ["You push open the heavy door and step through. Light floods in as you enter a bright hallway.", "The walls gleam with polished marble, and distant echoes suggest vast spaces ahead."],
           memories: ["Player opened door", "Entered a bright marble hallway"],
           importance: 6,
           signals: {}
@@ -245,7 +245,7 @@ describe('LangChainDirector', () => {
     it('should gracefully ignore transition to unknown scene', async () => {
       const actionResponse = {
         data: {
-          narrative: "You try something.",
+          narrativeParts: ["You try something."],
           memories: [],
           importance: 5,
           signals: {
@@ -266,7 +266,7 @@ describe('LangChainDirector', () => {
     it('should gracefully ignore invalid ending signals', async () => {
       const actionResponse = {
         data: {
-          narrative: "You trigger something.",
+          narrativeParts: ["You trigger something."],
           memories: [],
           importance: 5,
           signals: {
@@ -287,7 +287,7 @@ describe('LangChainDirector', () => {
     it('should gracefully ignore "none" signals', async () => {
       const actionResponse = {
         data: {
-          narrative: "You do something else.",
+          narrativeParts: ["You do something else."],
           memories: [],
           importance: 5,
           signals: {
@@ -318,7 +318,7 @@ describe('LangChainDirector', () => {
 
       const mockResponse = {
         data: {
-          narrative: "Test response",
+          narrativeParts: ["Test response"],
           memories: [],
           importance: 5,
           signals: {}
@@ -380,7 +380,7 @@ describe('LangChainDirector', () => {
     it('should work with single-phase processing', async () => {
       const mockResponse = {
         data: {
-          narrative: "Single phase response",
+          narrativeParts: ["Single phase response"],
           memories: [],
           importance: 5,
           signals: {}
