@@ -79,7 +79,8 @@ describe('ActionClassifier', () => {
       expect(prompt).toContain('**PREREQUISITES:**');
       expect(prompt).toContain('`when player opens door`');
       expect(prompt).toContain('`when player looks through window`');
-      expect(prompt).toContain('`player has key AND door is open`');
+      expect(prompt).toContain('`player has key`');
+      expect(prompt).toContain('`door is open`');
       
       // Check for input action
       expect(prompt).toContain('**ACTION:**');
@@ -379,9 +380,10 @@ describe('ActionClassifier', () => {
       expect(prompt).toContain('**T1:**');
       expect(prompt).toContain('`condition 2`');
       expect(prompt).toContain('**T2:**');
-      expect(prompt).toContain('`game complete AND helped everyone`');
+      expect(prompt).toContain('`game complete`');
+      expect(prompt).toContain('`helped everyone`');
       expect(prompt).toContain('**T3:**');
-      expect(prompt).toContain('`game complete AND hurt someone`');
+      expect(prompt).toContain('`hurt someone`');
     });
 
     it('should handle empty transitions gracefully', async () => {

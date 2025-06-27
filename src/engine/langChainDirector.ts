@@ -103,9 +103,42 @@ export class LangChainDirector {
     
     console.log(`📝 ${logLabel} Response:`, result.data);
 
+    // Handle narrativeParts - check for double-encoded JSON
+    let narrativeArray: string[];
+    const rawNarrativeParts = result.data.narrativeParts;
+    
+    // If narrativeParts is a string that looks like a JSON array, try to parse it
+    if (typeof rawNarrativeParts === 'string' && 
+        rawNarrativeParts.trim().startsWith('[') && 
+        rawNarrativeParts.trim().endsWith(']')) {
+      try {
+        const parsed = JSON.parse(rawNarrativeParts);
+        if (Array.isArray(parsed)) {
+          console.log('📝 Detected double-encoded narrativeParts, parsing JSON array');
+          narrativeArray = parsed;
+        } else {
+          narrativeArray = [rawNarrativeParts];
+        }
+      } catch (e) {
+        // Not valid JSON, treat as single paragraph
+        console.log('📝 NarrativeParts looks like JSON but failed to parse, wrapping in array');
+        narrativeArray = [rawNarrativeParts];
+      }
+    } else if (typeof rawNarrativeParts === 'string') {
+      // Single string, wrap in array
+      narrativeArray = [rawNarrativeParts];
+    } else if (Array.isArray(rawNarrativeParts)) {
+      // Already an array
+      narrativeArray = rawNarrativeParts;
+    } else {
+      // Fallback - ensure we always have an array
+      console.warn('📝 Unexpected narrativeParts type, using fallback');
+      narrativeArray = ['An error occurred processing the narrative.'];
+    }
+
     // Convert structured data to DirectorResponse
     const response: DirectorResponse = {
-      narrative: result.data.narrativeParts.join('\n\n'),  // Join array of paragraphs
+      narrative: narrativeArray.join('\n\n'),  // Always join array of paragraphs
       memories: result.data.memories || [],
       importance: result.data.importance || defaultImportance,
       signals: result.data.signals || {}
