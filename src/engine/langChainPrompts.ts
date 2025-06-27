@@ -519,11 +519,8 @@ ${this.getRichTextFormattingInstructions()}
 
 **RESPONSE FORMAT:**
 * reasoning: Brief evaluation of player's action and its effects (2-3 sentences max)
-* narrative: MUST be an array of strings, each string is one paragraph with 1-2 sentences and rich formatting
+* narrativeParts: Array of strings, each string is one paragraph with 1-2 sentences and rich formatting
 * memories: Important details to remember: discoveries, changes, or new knowledge gained
-* importance: Rate the significance of this interaction (1-10, default 5)
-
-**CRITICAL: narrative must be formatted as JSON array:**
-["First paragraph with 1-2 sentences.", "Second paragraph with 1-2 sentences.", "Third paragraph if needed."]`;
+* importance: Rate the significance of this interaction (1-10, default 5)`;
   }
 }
