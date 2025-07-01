@@ -1,0 +1,457 @@
+title: "Away Message"
+author: "Iffy Collective"
+blurb: "One last Thursday night chat before the real world begins."
+version: "1.0"
+context: "Thursday, May 15, 2008, 10:47 PM. Tomorrow is graduation. Your regular AIM chat with the
+  only people who matter."
+
+ui:
+  loadingMessage: "Connecting to AIM..."
+  
+  # Theme-aware color palettes
+  colorPalette:
+    distinct: 4   # Four distinct colors for main characters
+    neutral: 1    # One neutral color for system messages
+  
+  # Character-specific formatting rules
+  formatters:
+    - name: "Danny Messages"
+      pattern: "DanTheManWithAPlan:\\s*(.+)$"
+      priority: 100
+      applyTo: "groups"
+      replacements:
+        - target: 1  # Message content
+          wrapWith: "span"
+          className: "chat-message chat-danny"
+          style: "color: var(--palette-distinct-1); font-weight: bold;"
+          
+    - name: "Sara Messages"
+      pattern: "saratoga_springs:\\s*(.+)$"
+      priority: 100
+      applyTo: "groups"
+      replacements:
+        - target: 1  # Message content
+          wrapWith: "span"
+          className: "chat-message chat-sara"
+          style: "color: var(--palette-distinct-2); font-weight: bold;"
+          
+    - name: "Marcus Messages"
+      pattern: "marcusaurelius86:\\s*(.+)$"
+      priority: 100
+      applyTo: "groups"
+      replacements:
+        - target: 1  # Message content
+          wrapWith: "span"
+          className: "chat-message chat-marcus"
+          style: "color: var(--palette-distinct-3); font-weight: bold;"
+          
+    - name: "Becca Messages"
+      pattern: "bexxter:\\s*(.+)$"
+      priority: 100
+      applyTo: "groups"
+      replacements:
+        - target: 1  # Message content
+          wrapWith: "span"
+          className: "chat-message chat-becca"
+          style: "color: var(--palette-distinct-4); font-weight: bold;"
+    
+    - name: "System Messages"
+      pattern: "\\[([^\\]]+)\\](?!\\()"
+      priority: 90
+      applyTo: "groups"
+      replacements:
+        - target: 1  # Bracket content
+          wrapWith: "span"
+          className: "chat-system"
+          style: "color: var(--palette-neutral-1); font-style: italic;"
+
+narrative:
+  voice: "Early 2000s internet speak mixed with genuine emotion"
+  setting: "thursdaynightcrew chatroom, dorm rooms across campus"
+  tone: "Nostalgic, bittersweet, trying to keep things light"
+  themes: [ "digital friendship", "transition anxiety", "things left unsaid", "the end of an era" ]
+
+world:
+  atmosphere:
+    tech: [ "chunky laptops", "dorm ethernet", "away message culture", "pre-smartphone era" ]
+
+  characters:
+    danny:
+      name: "DanTheManWithAPlan"
+      sketch: "Your roommate since sophomore year. Got into med school but deferred. Parents don't know."
+      voice: "Jokes to deflect, types in lowercase, overuses 'lol'"
+      traits: [ "responds to his name", "defends sara always", "quotes Superbad when nervous" ]
+
+    sara:
+      name: "saratoga_springs"
+      sketch: "Danny's girlfriend, secured a museum job back home. Worried about long distance."
+      voice: "Mix of enthusiasm and anxiety, emoji pioneer, changes away messages constantly"
+      traits: [ "mom friend energy", "sends photos", "corrects Danny publicly, supports privately" ]
+
+    marcus:
+      name: "marcusaurelius86"
+      sketch: "The quiet glue of the group. Moving home for family reasons he doesn't discuss."
+      voice: "Dry humor, perfect timing, says little but it matters"
+      traits: [ "responds during lulls", "deflects personal questions", "arcade fire lyrics in profile" ]
+
+    becca:
+      name: "bexxter"
+      sketch: "English major with no plan. Your study partner who became essential."
+      voice: "Sends links constantly, changes topics when anxious, pretends everything's fine"
+      traits: [ "link spammer", "responds to media references", "3am honesty only" ]
+
+scenes:
+  buddy_list:
+    process_sketch: false
+    sketch: |
+      [AIM Buddy List - Thursday 10:47 PM]
+
+      » Buddies (4/4)
+        DanTheManWithAPlan - Available
+        saratoga_springs - Away: packing :(
+        marcusaurelius86 - Available  
+        bexxter - Away: david after dentist LOLOLOL
+
+      » Recent Conversations
+        thursdaynightcrew - Last message: "who's here"
+
+      [DanTheManWithAPlan wants to directly connect!]
+
+        DanTheManWithAPlan: yoooooo
+        DanTheManWithAPlan: thursday night crew assemble
+        DanTheManWithAPlan: marcus is already in the chat
+        DanTheManWithAPlan: stop pretending to pack and get in here
+
+      [Accept invite to thursdaynightcrew?]
+
+    guidance: |
+      This is a brief intro scene that establishes the friend group before 
+      jumping into the chat. It shows who these people are through their 
+      screennames and away messages.
+
+    leads_to:
+      thursday_night: "when player accepts the chat invite"
+  thursday_night:
+    location: "thursdaynightcrew"
+    sketch: |
+      [Entering chat 'thursdaynightcrew']
+      [marcusaurelius86, DanTheManWithAPlan, saratoga_springs, bexxter are here]
+
+        DanTheManWithAPlan: FINALLY
+        DanTheManWithAPlan: we've been waiting for like 30 seconds
+        marcusaurelius86: devastating
+
+        saratoga_springs: how's packing going?
+        saratoga_springs: and don't say you're done because I can literally see your room danny
+        DanTheManWithAPlan: ...how can you see my room
+        saratoga_springs: because I know you
+        saratoga_springs: and I know there's a tower of pizza boxes where boxes SHOULD be
+        DanTheManWithAPlan: those ARE my boxes
+
+        bexxter: hey remember freshman year when we met
+        bexxter: danny tried to microwave easy mac without water  
+        DanTheManWithAPlan: ONCE
+        marcusaurelius86: twice
+        saratoga_springs: minimum three times
+        DanTheManWithAPlan: et tu marcus???
+
+        bexxter: and then the fire alarm went off
+        bexxter: at 3am
+        bexxter: and we all met outside in our pajamas
+        marcusaurelius86: "met" is generous
+        marcusaurelius86: more like stood there awkwardly
+        saratoga_springs: until becca started doing the napoleon dynamite dance
+        bexxter: I WAS NERVOUS
+
+        DanTheManWithAPlan: and now look at us
+        DanTheManWithAPlan: four years later
+        DanTheManWithAPlan: still talking about that stupid fire alarm
+
+        marcusaurelius86: anyone else's parents being weird about saturday?
+
+      [bexxter is typing...]
+      [saratoga_springs is typing...]
+
+    guidance: |
+      HYBRID GROUP CHAT APPROACH:
+
+      1. RESPONSE PATTERNS:
+      - 1-3 characters respond to any player message
+      - Use personality traits to determine who responds
+      - Some messages get buried if parallel conversations are active
+
+      2. CONVERSATION THREADING:
+      - Track 1-2 active topics at once
+      - Characters may ignore player to continue their thread
+      - Use [multiple people typing...] to show competing responses
+
+      3. NATURAL CHAOS:
+      - Typos and corrections
+      - People talking over each other
+      - Away messages contradicting presence
+      - Links that may or may not be relevant
+
+      4. STAGE DIRECTIONS:
+      - [username has gone away]
+      - [username has returned]
+      - [username is typing...]
+      - [long pause]
+
+      5. PLAYER COMMANDS:
+      - /away [message] - Sets away status
+      - /back - Returns from away
+      - /prof [text] - Updates profile quote
+      - /me [action] - Action text
+
+      CURRENT MOOD: Avoiding tomorrow through aggressive normalcy
+
+    leads_to:
+      private_messages: "when someone suggests talking privately or tension rises"
+      memory_lane: "when someone posts old photos or mentions freshman year"
+
+  private_messages:
+    sketch: |
+      [Private message windows start popping up]
+
+      [IM from DanTheManWithAPlan]:
+        DanTheManWithAPlan: hey
+        DanTheManWithAPlan: real talk for a sec
+        DanTheManWithAPlan: sara's freaking out about the distance thing
+        DanTheManWithAPlan: like more than she's saying in group
+        DanTheManWithAPlan: could you maybe talk to her?
+        DanTheManWithAPlan: you're better at this stuff than me
+
+      [IM from saratoga_springs]:
+        saratoga_springs: is danny on your case about med school too?
+        saratoga_springs: his parents keep calling MY parents
+        saratoga_springs: it's getting weird
+
+      [IM from marcusaurelius86]:
+        marcusaurelius86: hey can i ask you something
+        marcusaurelius86: actually nvm
+        marcusaurelius86: wait no
+        marcusaurelius86: do you have storage space this summer?
+        marcusaurelius86: just a few boxes
+
+    guidance: |
+      PRIVATE MESSAGE DYNAMICS:
+
+      - Multiple windows compete for attention
+      - Each character reveals what they won't say publicly
+      - Player must choose who to respond to first
+      - Ignoring someone has consequences
+      - Characters may comment if you're away but actively PMing
+
+      Let player navigate between windows naturally. Some conversations
+      may reference others ("did Danny ask you to talk to me?")
+
+    leads_to:
+      final_chat: "when private conversations resolve"
+
+  memory_lane:
+    sketch: |
+      [Back in thursdaynightcrew]
+
+        bexxter: OH MY GOD
+        bexxter: [link] picbucket.com/album/freshman_year_survivors
+        DanTheManWithAPlan: NO
+        saratoga_springs: BECCA WHY
+        marcusaurelius86: is that danny in a toga?
+        DanTheManWithAPlan: THAT WAS PRIVATE
+        bexxter: nothing is private in the internet age daniel
+
+        saratoga_springs: awwww look at baby us
+        saratoga_springs: back when danny had hair
+        DanTheManWithAPlan: i still have hair
+        DanTheManWithAPlan: it's just strategic
+        marcusaurelius86: strategically missing
+
+      [The photos keep coming - move-in day, late night pizza, that Death Cab concert]
+
+        bexxter: remember when we all thought we'd have jobs by now lololol
+
+      [long pause]
+
+        saratoga_springs: becca...
+        bexxter: sorry
+        bexxter: i mean
+        bexxter: [link] www.clipstream.com/watch?v=dramaticchipmunk
+
+    guidance: |
+      MEMORY LANE FLOW:
+
+      - Nostalgia temporarily overrides anxiety
+      - Each photo/memory sparks multiple responses
+      - Inside jokes need no explanation
+      - Someone always goes too real and kills the mood
+      - Recovery through memes and deflection
+
+      Track the emotional temperature - too much nostalgia leads to sadness
+
+    leads_to:
+      final_chat: "when the memories have been shared"
+
+  final_chat:
+    sketch: |
+      [thursdaynightcrew - 5 members online]
+
+        marcusaurelius86: so
+        bexxter: don't
+        marcusaurelius86: i wasn't going to
+        saratoga_springs: he was definitely going to
+
+        DanTheManWithAPlan: okay but like
+        DanTheManWithAPlan: we're still doing this next thursday right
+        DanTheManWithAPlan: and the thursday after
+        saratoga_springs: danny...
+        DanTheManWithAPlan: what? we all have aim
+
+        bexxter: I might be getting a new screenname
+        bexxter: fresh start and all
+        marcusaurelius86: you've been bexxter since freshman year
+        bexxter: exactly
+
+      [saratoga_springs has changed her away message: "same time next week?"]
+
+        DanTheManWithAPlan: sara don't you dare
+
+      [The cursor blinks. Everyone's typing and deleting.]
+
+endings:
+  when:
+  - "someone logs off for the last time"
+  - "player makes definitive statement about the future"
+
+  variations:
+  - id: "all_nighter"
+    when: "nobody wants to log off"
+    sketch: |
+      DanTheManWithAPlan: you know what
+
+      DanTheManWithAPlan: screw it
+
+      DanTheManWithAPlan: who wants to pull an all nighter
+
+      DanTheManWithAPlan: like freshman year
+
+      saratoga_springs: danny we have GRADUATION in the morning
+
+      DanTheManWithAPlan: exactly
+
+      DanTheManWithAPlan: when else are we gonna do this
+
+      marcusaurelius86: i'm in
+
+      bexxter: same
+
+      saratoga_springs: ...fine but I'm making coffee
+
+      [Away messages disappear one by one]
+
+      DanTheManWithAPlan: there we go
+
+      DanTheManWithAPlan: thursday night crew forever
+
+      bexxter: that was the cheesiest thing you've ever said
+
+      DanTheManWithAPlan: wait til 4am
+
+      [The chat continues into the dawn]
+
+  - id: "gradual_goodbye"
+    when: "people start logging off naturally"
+    sketch: |
+      marcusaurelius86: i should go
+
+      marcusaurelius86: early morning tomorrow
+
+      saratoga_springs: marcus wait
+
+      [marcusaurelius86 has logged off]
+
+      saratoga_springs: dammit
+
+      bexxter: he'll be back
+
+      DanTheManWithAPlan: he always comes back
+
+      [One by one, they leave]
+
+      bexxter: I can't do this
+
+      bexxter: see you all saturday?
+
+      DanTheManWithAPlan: bex come on
+
+      [bexxter has logged off]
+
+      saratoga_springs: danny...
+
+      DanTheManWithAPlan: don't you start
+
+      saratoga_springs: I love you
+
+      DanTheManWithAPlan: ...
+
+      DanTheManWithAPlan: love you too
+
+      [saratoga_springs has logged off]
+      [DanTheManWithAPlan has logged off]
+
+      [thursdaynightcrew - 1 member online]
+
+      Your cursor blinks in the empty chat.
+
+  - id: "honest_ending"
+    when: "player shares their real fears"
+    sketch: |
+      marcusaurelius86: wait really?
+
+      bexxter: oh
+
+      saratoga_springs: why didn't you say anything?
+
+      DanTheManWithAPlan: dude
+
+      bexxter: we're all scared
+
+      marcusaurelius86: yeah
+
+      saratoga_springs: I thought I was the only one freaking out
+
+      DanTheManWithAPlan: same
+
+      marcusaurelius86: my dad's sick
+
+      marcusaurelius86: that's why I'm going home
+
+      bexxter: marcus...
+
+      DanTheManWithAPlan: why didn't you tell us
+
+      marcusaurelius86: same reason none of us talk about the real stuff
+
+      marcusaurelius86: it makes it real
+
+      saratoga_springs: we're here for you
+
+      saratoga_springs: even after tomorrow
+
+      saratoga_springs: especially after tomorrow
+
+      [The chat becomes something deeper than it's ever been]
+
+guidance: |
+  This story captures a pivotal moment between college and adulthood through the lens
+  of AIM chat. Let the messiness of group dynamics tell the story - not everyone
+  needs to respond to everything. Some things get lost in the flow. That's real.
+
+  The player can influence the mood through:
+  - Their away messages
+  - Who they respond to in PMs
+  - Whether they engage with nostalgia or resist it
+  - How honest they're willing to be
+
+  Remember: It's 2008. Facebook exists but isn't dominant. Texting costs money.
+  YouTube is for random videos. Twitter is for weirdos. This chat matters because
+  it might be the last time they're all together like this.

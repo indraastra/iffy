@@ -21,9 +21,15 @@ export interface BundledStory {
 
 export const STORY_METADATA: StoryMetadata[] = [
   {
+    "filename": "away_message.yaml",
+    "title": "Away Message",
+    "author": "Iffy Collective",
+    "blurb": "One last Thursday night chat before the real world begins."
+  },
+  {
     "filename": "corridor_of_mirrors.yaml",
     "title": "The Corridor of Mirrors",
-    "author": "Iffy Engine Team",
+    "author": "Iffy Collective",
     "blurb": "Navigate five rooms where reality bends through different narrative lenses."
   },
   {
@@ -33,27 +39,33 @@ export const STORY_METADATA: StoryMetadata[] = [
     "blurb": "The space between words grows heavier with each passing Friday."
   },
   {
+    "filename": "friday_night_rain_reflected.yaml",
+    "title": "Friday Night Rain (Reflected)",
+    "author": "Iffy Collective",
+    "blurb": "Some words weigh too much to speak, even to those who wait patiently to hear them."
+  },
+  {
     "filename": "restaurant_catastrophe.yaml",
     "title": "The Great Sandwich Catastrophe",
-    "author": "Iffy Engine Team",
+    "author": "Iffy Collective",
     "blurb": "Jennifer's EPIC SANDWICH MASTERY faces its most DEVASTATING professional challenge!"
   },
   {
     "filename": "sandwich_crisis.yaml",
     "title": "The Great Sandwich Crisis",
-    "author": "Iffy Engine Team",
+    "author": "Iffy Collective",
     "blurb": "Experience the EPIC DRAMA of making lunch - will you survive the kitchen?"
   },
   {
     "filename": "sentient_quill.yaml",
     "title": "The Peculiar Case of the Sentient Quill",
-    "author": "Iffy Engine Team",
+    "author": "Iffy Collective",
     "blurb": "Solve a murder in gaslit London with an impossible AI companion."
   },
   {
     "filename": "test_conditions.yaml",
     "title": "Security Access Terminal",
-    "author": "Iffy Engine Team",
+    "author": "Iffy Collective",
     "blurb": "A test story designed to verify ending condition enforcement using a password system."
   },
   {
@@ -65,13 +77,13 @@ export const STORY_METADATA: StoryMetadata[] = [
   {
     "filename": "the_key.yaml",
     "title": "The Key",
-    "author": "Iffy Engine Team",
+    "author": "Iffy Collective",
     "blurb": "A simple puzzle about getting through a locked door."
   },
   {
     "filename": "winter_light.yaml",
     "title": "Winter Light",
-    "author": "Iffy Engine Team",
+    "author": "Iffy Collective",
     "blurb": "A chess prodigy confronts the silence between moves in post-war Germany"
   }
 ];

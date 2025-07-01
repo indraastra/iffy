@@ -16,7 +16,8 @@ import {
   ImpressionistCharacter,
   ImpressionistLocation,
   ImpressionistItem,
-  AtmosphereDefinition
+  AtmosphereDefinition,
+  UIConfiguration
 } from '@/types/impressionistStory';
 import * as YAML from 'js-yaml';
 
@@ -137,6 +138,10 @@ export class ImpressionistParser {
 
     if (data.world) {
       story.world = this.parseWorld(data.world, warnings);
+    }
+
+    if (data.ui) {
+      story.ui = this.parseUI(data.ui, warnings);
     }
 
     return story;
@@ -302,6 +307,80 @@ export class ImpressionistParser {
     }
 
     return world;
+  }
+
+  private parseUI(data: any, warnings: string[]): UIConfiguration {
+    if (!data || typeof data !== 'object') {
+      warnings.push('ui should be an object');
+      return {};
+    }
+
+    const ui: UIConfiguration = {};
+
+    if (data.loadingMessage) {
+      ui.loadingMessage = String(data.loadingMessage);
+    }
+
+    if (data.placeholderText) {
+      ui.placeholderText = String(data.placeholderText);
+    }
+
+    if (data.styles && typeof data.styles === 'object') {
+      ui.styles = data.styles;
+    }
+
+    if (data.formatters && Array.isArray(data.formatters)) {
+      ui.formatters = data.formatters.map((formatter: any) => {
+        if (!formatter || typeof formatter !== 'object') {
+          warnings.push('formatter should be an object');
+          return null;
+        }
+
+        const parsed: any = {
+          name: formatter.name || 'Unnamed formatter',
+          pattern: formatter.pattern || '',
+          priority: formatter.priority || 0,
+          applyTo: formatter.applyTo || 'groups'
+        };
+
+        if (formatter.replacements && Array.isArray(formatter.replacements)) {
+          parsed.replacements = formatter.replacements.map((replacement: any) => {
+            if (!replacement || typeof replacement !== 'object') {
+              warnings.push('formatter replacement should be an object');
+              return null;
+            }
+
+            return {
+              target: replacement.target,
+              wrapWith: replacement.wrapWith || 'span',
+              className: replacement.className,
+              style: replacement.style,
+              attributes: replacement.attributes || {}
+            };
+          }).filter(Boolean);
+        }
+
+        return parsed;
+      }).filter(Boolean);
+    }
+
+    if (data.colorPalette && typeof data.colorPalette === 'object') {
+      const colorPalette: Record<string, number> = {};
+      
+      for (const [paletteType, count] of Object.entries(data.colorPalette)) {
+        if (typeof count === 'number' && count > 0) {
+          colorPalette[paletteType] = count;
+        } else {
+          warnings.push(`colorPalette.${paletteType} should be a positive number, got: ${count}`);
+        }
+      }
+      
+      if (Object.keys(colorPalette).length > 0) {
+        ui.colorPalette = colorPalette;
+      }
+    }
+
+    return ui;
   }
 
   private parseCharacters(data: any, warnings: string[]): Record<string, ImpressionistCharacter> {

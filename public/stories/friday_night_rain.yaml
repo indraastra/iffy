@@ -53,24 +53,28 @@ world:
 
 scenes:
   opening:
-    location: "grounded_cafe"
     process_sketch: false
+    location: "grounded_cafe"
     sketch: |
-      The barista's voice cuts gentle through the quiet. "Should I warm that up?"
-
-      [Alex](character:alex) doesn't hear, or pretends not to. Their reflection in the window 
-      watches the rain while the real Alex stirs patterns in *cold coffee*.
+      Friday evening settles around your corner table like a familiar weight. The 
+      rain outside turns café windows into moving watercolors of city lights. 
+      Alex sits across from you, something unspoken weighing in the space between.
 
       These Friday evenings used to be easier. Now each word feels weighted,
       each pause examined. Something shifted weeks ago - a held gaze that 
       lasted too long, a goodbye hug that almost wasn't.
+
+      The barista's voice cuts gentle through the quiet. "Should I warm that up?"
+
+      [Alex](character:alex) doesn't hear, or pretends not to. Their reflection in the window 
+      watches the rain while the real Alex stirs patterns in *cold coffee*.
 
       You've counted seventeen stirs. The barista waits, cloth in hand, 
       her glance asking you to translate this silence.
 
 endings:
   when:
-  - "someone decides to leave the cafe"
+  - "player leaves the cafe"
 
   variations:
   - id: "connection"

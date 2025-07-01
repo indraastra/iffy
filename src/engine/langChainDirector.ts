@@ -80,7 +80,7 @@ export class LangChainDirector {
   ): Promise<DirectorResponse> {
     if (!this.isConfigured()) {
       return {
-        narrative: "🔑 API key required. Please configure your LLM provider in Settings to play.",
+        narrative: ["🔑 API key required. Please configure your LLM provider in Settings to play."],
         memories: [],
         importance: 1,
         signals: { error: "API key not configured" }
@@ -138,7 +138,7 @@ export class LangChainDirector {
 
     // Convert structured data to DirectorResponse
     const response: DirectorResponse = {
-      narrative: narrativeArray.join('\n\n'),  // Always join array of paragraphs
+      narrative: narrativeArray,  // Keep as array to support per-element formatter processing
       memories: result.data.memories || [],
       importance: result.data.importance || defaultImportance,
       signals: result.data.signals || {}
@@ -378,7 +378,7 @@ export class LangChainDirector {
     } catch (error) {
       console.error('LangChain Director streaming error:', error);
       yield {
-        narrative: 'Sorry, I had trouble processing that command. Try something else.',
+        narrative: ['Sorry, I had trouble processing that command. Try something else.'],
         signals: { error: error instanceof Error ? error.message : 'Unknown error' }
       };
     }
@@ -437,7 +437,7 @@ export class LangChainDirector {
     } catch (error) {
       console.error('LangChain Director post-ending error:', error);
       return {
-        narrative: "I'm having trouble understanding that right now. Please try rephrasing.",
+        narrative: ["I'm having trouble understanding that right now. Please try rephrasing."],
         signals: { error: error instanceof Error ? error.message : 'Unknown error' }
       };
     }

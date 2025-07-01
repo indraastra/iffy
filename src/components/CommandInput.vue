@@ -23,14 +23,15 @@
 import { ref, nextTick, onMounted, computed } from 'vue'
 import { useGameEngine } from '@/composables/useGameEngine'
 
-const { currentInput, isReady, isStoryEnded, processCommand } = useGameEngine()
+const { currentInput, isReady, isStoryEnded, processCommand, gameState } = useGameEngine()
 
 // Dynamic placeholder text based on game state
 const placeholderText = computed(() => {
+  const story = gameState.currentStory
   if (isStoryEnded.value) {
     return "Reflect on your story, ask questions, or explore this moment..."
   }
-  return "Enter your command..."
+  return story?.ui?.placeholderText || "Enter your command..."
 })
 const inputElement = ref<HTMLTextAreaElement>()
 

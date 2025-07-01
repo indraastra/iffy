@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { useMarkupRenderer } from '@/composables/useMarkupRenderer'
+import { useMarkdownRenderer } from '@/composables/useMarkdownRenderer'
 
-const { renderMarkup } = useMarkupRenderer()
+const { renderMarkup } = useMarkdownRenderer()
 
 describe('MarkupRenderer', () => {
   describe('Basic Markup', () => {

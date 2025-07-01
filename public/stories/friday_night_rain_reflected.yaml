@@ -1,0 +1,136 @@
+title: "Friday Night Rain (Reflected)"
+author: "Iffy Collective"
+blurb: "Some words weigh too much to speak, even to those who wait patiently to hear them."
+version: "1.0"
+context: "Another Friday at Grounded. But tonight you carry words that could change everything."
+
+ui:
+  placeholderText: "What's on your mind?"
+
+narrative:
+  voice: "The space between thought and action, where anxiety lives"
+  setting: "Corner café, closing time, city lights bleeding through wet windows"
+  tone: "Internal struggle made visible"
+  themes: [ "the gap between thinking and doing", "patience as gift", "courage through small steps" ]
+
+world:
+  characters:
+    jordan:
+      name: "Jordan"
+      sketch: "Your Friday companion who notices when you're quieter than usual. Tonight they brought a
+        book they thought you'd like, marking passages with careful post-its."
+      voice: "Gentle curiosity giving way to patient understanding"
+
+  locations:
+    grounded_cafe:
+      name: "Grounded Café"
+      sketch: "Your corner table by the window, where rain traces patterns on glass. The familiar wobble
+        of the table, the barista who knows your orders, the jazz that's just loud enough to hide
+        nervous silences."
+      atmosphere: [ "rain-washed windows", "end-of-day quiet", "familiar sanctuary" ]
+
+scenes:
+  opening:
+    process_sketch: false
+    sketch: |
+      Friday evening settles around your corner table like a familiar weight. The 
+      rain outside turns café windows into moving watercolors of city lights. 
+      Jordan sits across from you, something unspoken weighing in the space between.
+
+      These Friday evenings used to be easier. Now each silence feels examined, 
+      each glance measured. Something shifted weeks ago - words that wanted to be 
+      spoken but stayed trapped behind careful politeness.
+
+      [Jordan](character:jordan) slides a book across the table. "Found this at that 
+      place on Elm. All those parallel universe stories you mentioned last week."
+
+      The rain outside draws patterns. The barista starts the end-of-shift ritual. 
+      Your coffee has gone cold but your hands need something to hold. Jordan watches
+      with that particular stillness that means they're giving you space to exist.
+
+    guidance: |
+      CORE MECHANIC: The player provides thoughts. You convert these 
+      into actions - sometimes direct, often deflected through anxious behaviors.
+
+      JORDAN'S RESPONSES:
+      - Notices physical cues: "You okay? You're doing that thing with the sugar packets"
+      - Fills silence with gentle talk
+      - Shares their own vulnerabilities if seeing signs of opening up
+
+      CONFESSION HANDLING:
+      - If romantic feelings are expressed, let the conversation continue naturally
+      - Don't rush to ending - let both characters sit with the new reality
+      - Environmental cues (barista stacking chairs, lights dimming) signal when it's time to leave
+
+      PROGRESSION:
+      - Early thoughts tend toward anxious actions (fidgeting, looking away)
+      - As Jordan creates safety, thoughts might translate more directly
+      - Track comfort level through how directly thoughts become actions
+      - The closer to speaking truth, the more actions align with thoughts
+
+      ENVIRONMENTAL REACTIONS:
+      - Rain intensity might mirror internal state
+      - Barista's presence provides natural interruptions
+      - Coffee temperature marks time passing
+      - Background jazz ebbs and flows with emotional intensity
+
+endings:
+  when:
+  - "player leaves the cafe"
+
+  variations:
+  - id: "connection"
+    when: "romantic feelings have been mutually expressed and acknowledged"
+    sketch: |
+      "So," [Jordan](character:jordan) says eventually, their hand still holding 
+      yours across the table. "What happens now?"
+
+      The barista is stacking chairs. The rain has softened to mist. You both 
+      know it's time to leave, but neither moves first.
+
+      "Walk me home?" Jordan asks. "We can figure out the rest as we go."
+
+      You stand together, gathering books and coats. Everything has changed. 
+      Nothing has changed. Both things are beautifully true.
+
+      [!discovery] The bell chimes your exit into a world of new possibilities.
+
+  - id: "friendship"
+    when: "romantic feelings were expressed but friendship was chosen"
+    sketch: |
+      The conversation has found its landing place. Not where you hoped, but 
+      somewhere solid and true.
+
+      "Next Friday?" [Jordan](character:jordan) asks as you both prepare to leave. 
+      "Same time, same table?"
+
+      "Wouldn't miss it," you manage. And you mean it. Some friendships are 
+      worth more than the possibilities they close.
+
+      The rain has stopped. The walk to the door feels both heavy and light. 
+      Jordan hugs you at the threshold - careful, caring, exactly what you 
+      both need.
+
+  - id: "missed_chance"
+    when: "romantic feelings were never explicitly voiced"
+    sketch: |
+      "I should go," you say. The words come easier than the ones that matter.
+
+      [Jordan](character:jordan) nods, gathering their things. They slide the 
+      book across to you one more time. "Keep this. The chapter on parallel 
+      universes especially."
+
+      At the door, they pause. "Hey. Whatever you couldn't say tonight... 
+      I'll still be here next Friday. And the Friday after that."
+
+      The bell chimes your exit. Behind you, Jordan watches through the rain-
+      streaked glass. Some words need more time to find their way.
+
+guidance: |
+  CORE CONCEPT: The gap between thought and action IS the story. Jordan responds 
+  to behaviors, not thoughts (which only the player and narrator know).
+
+  MANAGING PRONOUNS:
+  - Begin with they/them or simply "Jordan"
+  - Follow the player's lead naturally - if they say "she", "him", "their", etc., adopt it
+  - Store this in memory once established and use consistently

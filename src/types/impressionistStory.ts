@@ -200,6 +200,28 @@ export interface ImpressionistResult<T = void> {
 // UI configuration for story presentation
 export interface UIConfiguration {
   loadingMessage?: string  // Custom message during LLM processing
+  placeholderText?: string  // Custom placeholder text for the input textarea
+  formatters?: FormatterRule[]  // Post-processing formatting rules
+  styles?: Record<string, string>  // Custom CSS styles by name (changed from CSSStyleDeclaration to string for YAML compatibility)
+  colorPalette?: Record<string, number>  // Theme-aware color palettes: { "distinct": 4, "warm": 2, etc. }
+}
+
+// Formatter rule for regex-based post-processing
+export interface FormatterRule {
+  name: string  // Human-readable name for the rule
+  pattern: string  // Regex pattern to match
+  priority?: number  // Processing order (higher = first, default: 0)
+  applyTo?: 'full' | 'groups'  // Apply styling to full match or capture groups (default: 'groups')
+  replacements?: FormatterReplacement[]  // How to style matched content
+}
+
+// Replacement configuration for formatter rules
+export interface FormatterReplacement {
+  target: 'match' | number  // 'match' for full match, number for capture group
+  wrapWith: string  // HTML tag to wrap with (e.g., 'span')
+  className?: string  // CSS class to apply
+  style?: string  // Inline CSS style
+  attributes?: Record<string, string>  // Additional HTML attributes
 }
 
 export interface ParseResult {

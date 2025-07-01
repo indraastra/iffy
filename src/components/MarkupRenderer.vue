@@ -4,18 +4,20 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useMarkupRenderer } from '@/composables/useMarkupRenderer'
+import { useMarkdownRenderer } from '@/composables/useMarkdownRenderer'
+import type { FormatterRule } from '@/types/impressionistStory'
 
 interface Props {
   content: string
+  formatters?: FormatterRule[]
 }
 
 const props = defineProps<Props>()
 
-const { renderMarkup } = useMarkupRenderer()
+const { renderMarkup } = useMarkdownRenderer()
 
 const renderedContent = computed(() => {
-  return renderMarkup(props.content)
+  return renderMarkup(props.content, props.formatters)
 })
 </script>
 
@@ -129,5 +131,40 @@ const renderedContent = computed(() => {
   background-color: var(--alert-danger-bg);
   border-color: var(--alert-danger-border);
   color: var(--alert-danger-text);
+}
+
+/* Automatic styling enhancements */
+.markup-content :deep(.markup-speech) {
+  color: var(--color-accent);
+  font-style: italic;
+}
+
+.markup-content :deep(.markup-emphasis) {
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  color: var(--color-text-primary);
+}
+
+.markup-content :deep(.markup-timestamp) {
+  color: var(--color-text-secondary);
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+/* Chat-specific styling */
+.markup-content :deep(.chat-username) {
+  font-weight: bold;
+  margin-right: 0.5em;
+}
+
+.markup-content :deep(.chat-message) {
+  color: var(--color-text-primary);
+}
+
+.markup-content :deep(.chat-system) {
+  font-style: italic;
+  text-align: center;
+  margin: 0.5em 0;
+  color: var(--color-text-secondary);
 }
 </style>

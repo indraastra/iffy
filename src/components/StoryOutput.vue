@@ -8,6 +8,7 @@
       <MarkupRenderer 
         v-if="message.type === 'story' || message.type === 'system'"
         :content="message.content"
+        :formatters="gameState.currentStory?.ui?.formatters"
       />
       <span v-else>{{ message.content }}</span>
     </div>
@@ -27,10 +28,20 @@
 <script setup lang="ts">
 import { ref, nextTick, watch } from 'vue'
 import { useGameEngine } from '@/composables/useGameEngine'
+import { useTheme } from '@/composables/useTheme'
+import { useStoryStyles } from '@/composables/useStoryStyles'
 import MarkupRenderer from '@/components/MarkupRenderer.vue'
 
 const { gameState, isAwaitingResponse, loadingMessage } = useGameEngine()
+const { currentTheme } = useTheme()
 const outputContainer = ref<HTMLElement>()
+
+// Set up reactive story styling that responds to story and theme changes
+watch([() => gameState.currentStory, currentTheme], ([newStory, newTheme]) => {
+  if (newStory) {
+    useStoryStyles(newStory, newTheme)
+  }
+}, { immediate: true })
 
 // Auto-scroll to bottom when new messages arrive
 watch(() => gameState.messages.length, async () => {
