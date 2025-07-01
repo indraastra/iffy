@@ -266,4 +266,124 @@ invalid: yaml: content: [
       }
     });
   });
+
+  describe('UI configuration parsing', () => {
+    it('should parse valid UI configuration', () => {
+      const yamlContent = `
+title: "Test Story"
+author: "Test Author"
+blurb: "A test story."
+version: "1.0"
+context: "A simple test context."
+
+ui:
+  loadingMessage: "Processing your thoughts..."
+  placeholderText: "What do you do?"
+
+scenes:
+  start:
+    sketch: "The beginning."
+
+endings:
+  - id: "end"
+    when: "story ends"
+    sketch: "The end."
+
+guidance: "Test guidance"
+`;
+
+      const result = parser.parseFromYaml(yamlContent);
+      
+      expect(result.errors).toHaveLength(0);
+      expect(result.story?.ui).toBeDefined();
+      expect(result.story?.ui?.loadingMessage).toBe("Processing your thoughts...");
+      expect(result.story?.ui?.placeholderText).toBe("What do you do?");
+    });
+
+    it('should handle partial UI configuration', () => {
+      const yamlContent = `
+title: "Test Story"
+author: "Test Author"
+blurb: "A test story."
+version: "1.0"
+context: "A simple test context."
+
+ui:
+  placeholderText: "Enter your action..."
+
+scenes:
+  start:
+    sketch: "The beginning."
+
+endings:
+  - id: "end"
+    when: "story ends"
+    sketch: "The end."
+
+guidance: "Test guidance"
+`;
+
+      const result = parser.parseFromYaml(yamlContent);
+      
+      expect(result.errors).toHaveLength(0);
+      expect(result.story?.ui).toBeDefined();
+      expect(result.story?.ui?.placeholderText).toBe("Enter your action...");
+      expect(result.story?.ui?.loadingMessage).toBeUndefined();
+    });
+
+    it('should handle missing UI configuration', () => {
+      const yamlContent = `
+title: "Test Story"
+author: "Test Author"
+blurb: "A test story."
+version: "1.0"
+context: "A simple test context."
+
+scenes:
+  start:
+    sketch: "The beginning."
+
+endings:
+  - id: "end"
+    when: "story ends"
+    sketch: "The end."
+
+guidance: "Test guidance"
+`;
+
+      const result = parser.parseFromYaml(yamlContent);
+      
+      expect(result.errors).toHaveLength(0);
+      expect(result.story?.ui).toBeUndefined();
+    });
+
+    it('should warn about invalid UI configuration', () => {
+      const yamlContent = `
+title: "Test Story"
+author: "Test Author"
+blurb: "A test story."
+version: "1.0"
+context: "A simple test context."
+
+ui: "invalid ui config"
+
+scenes:
+  start:
+    sketch: "The beginning."
+
+endings:
+  - id: "end"
+    when: "story ends"
+    sketch: "The end."
+
+guidance: "Test guidance"
+`;
+
+      const result = parser.parseFromYaml(yamlContent);
+      
+      expect(result.errors).toHaveLength(0);
+      expect(result.warnings.some(w => w.includes('ui should be an object'))).toBe(true);
+      expect(result.story?.ui).toEqual({});
+    });
+  });
 });

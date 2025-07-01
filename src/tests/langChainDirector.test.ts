@@ -167,7 +167,7 @@ describe('LangChainDirector', () => {
       
       const result = await collectStreamingResponses("test input", mockContext);
       
-      expect(result.narrative).toContain("API key required");
+      expect(Array.isArray(result.narrative) ? result.narrative.join(' ') : result.narrative).toContain("API key required");
       expect(result.signals?.error).toBe("API key not configured");
     });
   });
@@ -188,7 +188,7 @@ describe('LangChainDirector', () => {
 
       const result = await collectStreamingResponses("examine room", mockContext);
 
-      expect(result.narrative).toBe("You examine the room carefully.");
+      expect(result.narrative).toEqual(["You examine the room carefully."]);
       expect(result.memories).toEqual(["Player looked around"]);
       expect(result.importance).toBe(5);
       expect(result.signals).toEqual({});
@@ -200,7 +200,7 @@ describe('LangChainDirector', () => {
 
       const result = await collectStreamingResponses("test", mockContext);
 
-      expect(result.narrative).toBe("Sorry, I had trouble processing that command. Try something else.");
+      expect(result.narrative).toEqual(["Sorry, I had trouble processing that command. Try something else."]);
       expect(result.signals?.error).toBe("Schema validation failed");
     });
   });
@@ -232,8 +232,9 @@ describe('LangChainDirector', () => {
       const result = await collectStreamingResponses("open door", mockContext);
 
       // Verify single integrated response
-      expect(result.narrative).toContain("You push open the heavy door");
-      expect(result.narrative).toContain("Light floods in");
+      const narrativeText = Array.isArray(result.narrative) ? result.narrative.join(' ') : result.narrative;
+      expect(narrativeText).toContain("You push open the heavy door");
+      expect(narrativeText).toContain("Light floods in");
       expect(result.memories).toContain("Player opened door");
       expect(result.memories).toContain("Entered a bright marble hallway");
       expect(result.signals?.scene).toBe("next_room");
@@ -259,7 +260,7 @@ describe('LangChainDirector', () => {
 
       const result = await collectStreamingResponses("test", mockContext);
 
-      expect(result.narrative).toBe("You try something.");
+      expect(result.narrative).toEqual(["You try something."]);
       expect(result.signals).toEqual({});
     });
 
@@ -280,7 +281,7 @@ describe('LangChainDirector', () => {
 
       const result = await collectStreamingResponses("test", mockContext);
 
-      expect(result.narrative).toBe("You trigger something.");
+      expect(result.narrative).toEqual(["You trigger something."]);
       expect(result.signals).toEqual({});
     });
 
@@ -302,7 +303,7 @@ describe('LangChainDirector', () => {
 
       const result = await collectStreamingResponses("test", mockContext);
 
-      expect(result.narrative).toBe("You do something else.");
+      expect(result.narrative).toEqual(["You do something else."]);
       expect(result.signals).toEqual({});
     });
   });
@@ -352,7 +353,7 @@ describe('LangChainDirector', () => {
 
       const result = await collectStreamingResponses("test", mockContext);
 
-      expect(result.narrative).toBe("Sorry, I had trouble processing that command. Try something else.");
+      expect(result.narrative).toEqual(["Sorry, I had trouble processing that command. Try something else."]);
       expect(result.signals?.error).toBe("Network error");
     });
 
@@ -371,7 +372,7 @@ describe('LangChainDirector', () => {
 
       const result = await collectStreamingResponses("test", mockContext);
 
-      expect(result.narrative).toBe("Sorry, I had trouble processing that command. Try something else.");
+      expect(result.narrative).toEqual(["Sorry, I had trouble processing that command. Try something else."]);
       expect(result.signals?.error).toBe("Transition failed");
     });
   });
@@ -392,7 +393,7 @@ describe('LangChainDirector', () => {
 
       const result = await collectStreamingResponses("test", mockContext);
 
-      expect(result.narrative).toBe("Single phase response");
+      expect(result.narrative).toEqual(["Single phase response"]);
       expect(mockMultiModelService.makeStructuredRequest).toHaveBeenCalledTimes(1);
     });
   });

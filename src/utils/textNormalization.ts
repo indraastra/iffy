@@ -112,6 +112,7 @@ function isIndentedLine(line: string): boolean {
   return /^\s{2,}/.test(line) && line.trim().length > 0;
 }
 
+
 /**
  * Normalizes spaces within text, reducing multiple spaces to single spaces
  * while preserving indentation at the start of lines

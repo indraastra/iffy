@@ -11,19 +11,32 @@ import {
   ImpressionistResult,
   DirectorContext,
   DirectorResponse,
-  ImpressionistInteraction
+  ImpressionistInteraction,
+  FormatterRule
 } from '@/types/impressionistStory';
 import { MultiModelService } from '@/services/multiModelService';
 import { LangChainDirector } from './langChainDirector';
 import { MetricsCollector } from './metricsCollector';
 import { ImpressionistMemoryManager } from './impressionistMemoryManager';
 import { normalizeYamlText } from '@/utils/textNormalization';
+import { useMarkdownRenderer } from '@/composables/useMarkdownRenderer';
 
 /**
- * Convert narrative from string[] to string for backward compatibility
+ * Convert narrative from string[] to string, optionally applying formatters per-element
  */
-function normalizeNarrative(narrative: string | string[]): string {
-  return Array.isArray(narrative) ? narrative.join('\n\n') : narrative;
+function normalizeNarrative(narrative: string | string[], formatters?: FormatterRule[]): string {
+  if (!Array.isArray(narrative)) {
+    return narrative;
+  }
+  
+  // If formatters are provided, apply them to each element individually before joining
+  if (formatters && formatters.length > 0) {
+    const { renderMarkup } = useMarkdownRenderer();
+    return renderMarkup(narrative, formatters);
+  }
+  
+  // Otherwise, just join the array
+  return narrative.join('\n\n');
 }
 
 export interface PlayerAction {
@@ -236,7 +249,8 @@ export class ImpressionistEngine {
           
           // For post-ending, still update UI immediately for consistency
           if (this.uiAddMessageCallback) {
-            this.uiAddMessageCallback(normalizeNarrative(response.narrative), 'story');
+            const formatters = this.story?.ui?.formatters || [];
+            this.uiAddMessageCallback(normalizeNarrative(response.narrative, formatters), 'story');
           }
         }
         
@@ -302,7 +316,8 @@ export class ImpressionistEngine {
             }
             
             // First part - display immediately
-            this.uiAddMessageCallback(normalizeNarrative(partialResponse.narrative), 'story');
+            const formatters = this.story?.ui?.formatters || [];
+            this.uiAddMessageCallback(normalizeNarrative(partialResponse.narrative, formatters), 'story');
             hasDisplayedFirstPart = true;
             
             // If there will be more parts (i.e., a scene or ending transition), show new loading indicator
@@ -318,7 +333,8 @@ export class ImpressionistEngine {
               this.uiHideTypingCallback();
             }
             // Subsequent parts - display
-            this.uiAddMessageCallback(normalizeNarrative(partialResponse.narrative), 'story');
+            const formatters = this.story?.ui?.formatters || [];
+            this.uiAddMessageCallback(normalizeNarrative(partialResponse.narrative, formatters), 'story');
           }
         }
         
