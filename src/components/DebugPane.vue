@@ -32,24 +32,28 @@
               <div class="stats-card">
                 <h4>📊 Combined API Usage</h4>
                 <table>
-                  <tr><td>Total API Calls</td><td>{{ totalStats.totalCalls }}</td></tr>
-                  <tr><td>Story Calls</td><td>{{ sessionStats?.totalCalls || 0 }}</td></tr>
-                  <tr><td>Memory Calls</td><td>{{ memoryStats?.totalCalls || 0 }}</td></tr>
-                  <tr><td>Action Calls</td><td>{{ actionClassifierCalls }}</td></tr>
-                  <tr><td>Total Input Tokens</td><td>{{ totalStats.totalInputTokens.toLocaleString() }}</td></tr>
-                  <tr><td>Total Output Tokens</td><td>{{ totalStats.totalOutputTokens.toLocaleString() }}</td></tr>
-                  <tr><td>Total Session Cost</td><td>${{ totalStats.totalCost.toFixed(4) }}</td></tr>
+                  <tbody>
+                    <tr><td>Total API Calls</td><td>{{ totalStats.totalCalls }}</td></tr>
+                    <tr><td>Story Calls</td><td>{{ sessionStats?.totalCalls || 0 }}</td></tr>
+                    <tr><td>Memory Calls</td><td>{{ memoryStats?.totalCalls || 0 }}</td></tr>
+                    <tr><td>Flag Calls</td><td>{{ actionClassifierCalls }}</td></tr>
+                    <tr><td>Total Input Tokens</td><td>{{ totalStats.totalInputTokens.toLocaleString() }}</td></tr>
+                    <tr><td>Total Output Tokens</td><td>{{ totalStats.totalOutputTokens.toLocaleString() }}</td></tr>
+                    <tr><td>Total Session Cost</td><td>${{ totalStats.totalCost.toFixed(4) }}</td></tr>
+                  </tbody>
                 </table>
               </div>
               
               <div v-if="sessionStats" class="stats-card">
                 <h4>🎮 Quality Model Stats</h4>
                 <table>
-                  <tr><td>Total Calls</td><td>{{ sessionStats.totalCalls }}</td></tr>
-                  <tr><td>Success Rate</td><td>{{ sessionSuccessRate }}%</td></tr>
-                  <tr><td>Average Latency</td><td>{{ Math.round(sessionStats.avgLatency) }}ms</td></tr>
-                  <tr><td>Avg Input Tokens</td><td>{{ Math.round(sessionStats.avgInputTokens) }}</td></tr>
-                  <tr><td>Avg Output Tokens</td><td>{{ Math.round(sessionStats.avgOutputTokens) }}</td></tr>
+                  <tbody>
+                    <tr><td>Total Calls</td><td>{{ sessionStats.totalCalls }}</td></tr>
+                    <tr><td>Success Rate</td><td>{{ sessionSuccessRate }}%</td></tr>
+                    <tr><td>Average Latency</td><td>{{ Math.round(sessionStats.avgLatency) }}ms</td></tr>
+                    <tr><td>Avg Input Tokens</td><td>{{ Math.round(sessionStats.avgInputTokens) }}</td></tr>
+                    <tr><td>Avg Output Tokens</td><td>{{ Math.round(sessionStats.avgOutputTokens) }}</td></tr>
+                  </tbody>
                 </table>
               </div>
               
