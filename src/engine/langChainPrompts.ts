@@ -9,6 +9,23 @@ import { DirectorContext } from '@/types/impressionistStory';
 export class LangChainPrompts {
 
   /**
+   * Build context preamble with current flags
+   */
+  static buildContextWithFlags(context: DirectorContext, currentFlags: Record<string, any>): string {
+    let prompt = this.buildActionContextPreamble(context);
+    
+    // Add current flag state
+    if (currentFlags && Object.keys(currentFlags).length > 0) {
+      const flagList = Object.entries(currentFlags)
+        .map(([key, value]) => `  * ${key}: ${value}`)
+        .join('\n');
+      prompt += `**CURRENT STORY FLAGS:**\n${flagList}\n\n`;
+    }
+    
+    return prompt;
+  }
+
+  /**
    * Build context preamble for action processing (excludes transitions/endings)
    * Reorganized for optimal caching with static content first
    */
@@ -363,23 +380,9 @@ ${instructions}`;
 
   /**
    * Generate mode-specific instructions for scene transitions
-   * Organized for optimal caching with static content first
+   * Structured to let story-specific guidance override generic instructions
    */
   static buildTransitionInstructions(targetSceneId: string, sceneSketch: string, playerAction: string): string {
-    // STATIC PREFIX - Transition directives that remain constant
-    let instructions = `**SCENE TRANSITION STORYTELLING:**
-* Weave the player's action into a seamless narrative bridge between scenes
-* Show how their choice naturally unfolds into this new space and moment
-* Transform the scene description into vivid, lived-in storytelling with rich atmospheric detail
-* Bring the new environment to life - its mood, energy, and inhabitants
-* Paint the transition through sensory experiences and emotional resonance
-* Maintain the story's distinctive voice and atmospheric consistency
-* CRAFT FOCUSED NARRATIVE: 100-200 words maximum, 2-4 impactful paragraphs
-* Capture key atmospheric and story details as lasting memories
-* Rate the narrative significance of this transition (typically 6-8 for scene changes)
-
-${this.getStructuredResponseInstructions()}`;
-    
     // DYNAMIC CONTENT - Changes per transition
     return `**SCENE TRANSITION IN PROGRESS**
 
@@ -390,30 +393,23 @@ You are transitioning to scene: ${targetSceneId}
 **TARGET SCENE DESCRIPTION** (use as foundation):
 ${sceneSketch}
 
-${instructions}`;
+**SCENE TRANSITION STORYTELLING:**
+* Follow the GLOBAL STORY GUIDANCE above - it takes priority over any generic instructions
+* Weave the player's action into the scene transition
+* Present the scene content using the storytelling method specified in the story guidance
+* Honor the story's established narrative voice, tone, and format requirements
+* Add atmospheric context only when it enhances rather than replaces the core content
+* Maintain consistency with the story's distinctive storytelling approach
+* RESPECT THE STORY'S PRIMARY STORYTELLING METHOD established in the guidance above
+
+${this.getStructuredResponseInstructions()}`;
   }
 
   /**
    * Generate mode-specific instructions for ending transitions
-   * Organized for optimal caching with static content first
+   * Structured to let story-specific guidance override generic instructions
    */
   static buildEndingInstructions(endingId: string, endingSketch: string, playerAction: string): string {
-    // STATIC PREFIX - Ending directives that remain constant
-    let instructions = `**STORY CONCLUSION STORYTELLING:**
-* Weave the player's action into the story's natural culmination
-* Show how their choice brings this narrative journey to its destined resolution
-* Transform the ending description into a rich, emotionally resonant conclusion
-* Craft closure that honors the story's themes and the journey that led here
-* Focus on the emotional and thematic weight of this moment
-* Let the ending feel like the inevitable, satisfying result of all that came before
-* Maintain the story's distinctive voice and atmospheric consistency throughout
-* CRAFT POWERFUL CONCLUSION: 150-250 words maximum, 2-4 memorable paragraphs
-* Preserve key emotional beats and story conclusions as lasting memories
-* Rate the narrative impact of this conclusion (typically 8-10 for story endings)
-* Include ending signal in your response
-
-${this.getStructuredResponseInstructions()}`;
-    
     // DYNAMIC CONTENT - Changes per ending
     return `**STORY ENDING IN PROGRESS**
 
@@ -424,29 +420,24 @@ You are concluding the story with ending: ${endingId}
 **ENDING DESCRIPTION** (use as foundation):
 ${endingSketch}
 
-${instructions}`;
+**STORY CONCLUSION STORYTELLING:**
+* Follow the GLOBAL STORY GUIDANCE above - it takes priority over any generic instructions
+* Weave the player's action into the story's natural culmination
+* Present the ending content using the story's established storytelling method
+* Create closure that honors the story's themes and distinctive voice
+* Focus on the emotional and thematic weight of this conclusion
+* Maintain the story's narrative format and approach through to the ending
+* RESPECT THE STORY'S PRIMARY STORYTELLING METHOD throughout the ending
+* Include ending signal in your response
+
+${this.getStructuredResponseInstructions()}`;
   }
 
   /**
    * Generate mode-specific instructions for initial scene establishment
-   * Organized for optimal caching with static content first
+   * Structured to let story-specific guidance override generic instructions
    */
   static buildInitialSceneInstructions(sceneId: string, sceneSketch: string): string {
-    // STATIC PREFIX - Initial scene directives that remain constant
-    let instructions = `**OPENING SCENE STORYTELLING:**
-* Transform the scene description into a vivid, atmospheric story opening
-* Establish the world, mood, and characters with immersive, sensory-rich detail
-* Create a compelling narrative hook that draws readers into this story world
-* Paint the opening through evocative atmosphere and emotional resonance
-* Craft an opening that feels like stepping into a living, breathing story
-* Maintain the story's distinctive voice and atmospheric identity from the first word
-* Focus purely on scene establishment - no player actions or responses yet
-* CRAFT ENGAGING OPENING: 100-250 words maximum, 1-3 impactful paragraphs
-* Capture essential world-building and atmospheric details as memories
-* Rate the narrative impact of this opening (typically 7-8 for initial scenes)
-
-${this.getStructuredResponseInstructions()}`;
-    
     // DYNAMIC CONTENT - Changes per scene
     return `**INITIAL SCENE ESTABLISHMENT**
 
@@ -455,7 +446,16 @@ You are establishing the opening scene of the story: ${sceneId}
 **SCENE DESCRIPTION** (use as foundation):
 ${sceneSketch}
 
-${instructions}`;
+**OPENING SCENE STORYTELLING:**
+* Follow the GLOBAL STORY GUIDANCE above - it takes priority over any generic instructions
+* Present the opening scene using the story's established storytelling method
+* Establish the world, mood, and characters using the story's distinctive voice
+* Create an engaging opening that draws players into this story world
+* Honor the story's specified narrative format and approach from the beginning
+* Focus on scene establishment following the story's format and style requirements
+* RESPECT THE STORY'S PRIMARY STORYTELLING METHOD from the first response
+
+${this.getStructuredResponseInstructions()}`;
   }
 
   /**
@@ -521,6 +521,11 @@ ${this.getRichTextFormattingInstructions()}
 * reasoning: Brief evaluation of player's action and its effects (2-3 sentences max)
 * narrativeParts: Array of paragraph strings, each containing 1-2 sentences with rich formatting
 * memories: Important details to remember: discoveries, changes, or new knowledge gained
-* importance: Rate the significance of this interaction (1-10, default 5)`;
+* importance: Rate the significance of this interaction (1-10, default 5)
+
+**FLAG AWARENESS:**
+* Consider current flag states when crafting responses
+* Respect character behavior based on flags (e.g., if alex_withdrawing is true, show Alex retreating)
+* Maintain narrative consistency with established flag states`;
   }
 }

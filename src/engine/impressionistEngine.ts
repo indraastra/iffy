@@ -104,6 +104,9 @@ export class ImpressionistEngine {
 
       this.story = story;
       
+      // Initialize flag system with the story
+      this.director.initializeFlags(story);
+      
       // Set initial scene (first scene key is entry point)
       const sceneKeys = Object.keys(story.scenes);
       if (sceneKeys.length > 0) {

@@ -1,7 +1,7 @@
 title: "Friday Night Rain"
 author: "Iffy Collective"
 blurb: "The space between words grows heavier with each passing Friday."
-version: "2.1"
+version: "3.0"
 context: "Another Friday evening ritual. But tonight, the silence tastes different."
 
 ui:
@@ -19,6 +19,45 @@ narrative:
       "urban solitude together"
     ]
 
+# Predefined flags for story state
+flags:
+  # Core story events
+  alex_confessed: false
+  player_reciprocated: false
+  alex_preparing_to_leave: false
+  memories_shared: false
+  
+  # Observable states
+  coffee_cold: true  # Starts cold
+  barista_asked_about_coffee: false
+  
+  # Behavior patterns (LLM tracks these)
+  behavior_patterns:
+    player_supportive:
+      description: "Player shows kindness, understanding, patience"
+      examples:
+        - "asks about Alex's feelings"
+        - "offers physical comfort"
+        - "shares positive memories"
+        - "gives Alex time to speak"
+    player_dismissive:
+      description: "Player avoids emotional connection"
+      examples:
+        - "changes subject when Alex opens up"
+        - "rushes conversation"
+        - "shows impatience"
+        - "focuses on leaving"
+    alex_gaining_confidence:
+      description: "Alex feels safer to share"
+      triggers:
+        - "player_supportive is true"
+        - "memories_shared is true"
+    alex_withdrawing:
+      description: "Alex retreats emotionally"
+      triggers:
+        - "player_dismissive is true"
+        - "conversation feels unsafe"
+
 world:
   characters:
     alex:
@@ -28,13 +67,11 @@ world:
         replaced by something heavy behind careful eyes."
       arc: |
         Alex harbors romantic feelings but stands at an emotional crossroads. 
-        How safe the player makes them feel determines everything.
-
-        CONFESSION PATH: Patient, understanding behavior → Alex asks about shared memories → Alex confesses
-        RETREAT PATH: Pushy, dismissive behavior → Alex makes excuses to leave
-
-        Key behaviors: Usually animated about movies and local gossip, but tonight deflects 
-        with half-smiles, pulls back from contact, words chosen carefully. Will shut down if feeling unsafe.
+        Their behavior depends on flag states:
+        
+        IF alex_gaining_confidence: Opens up about feelings, tests waters with memories
+        IF alex_withdrawing: Makes excuses, checks time, prepares to leave
+        IF memories_shared AND player_supportive: Finds courage to confess
       voice: "Usually quick with film references and gentle teasing, but tonight speaks in careful words
         hiding deeper currents"
 
@@ -55,6 +92,9 @@ scenes:
   opening:
     process_sketch: false
     location: "grounded_cafe"
+    initial_flags:
+      coffee_cold: true
+      alex_stirring_count: 17  # Specific detail for narrative
     sketch: |
       Friday evening settles around your corner table like a familiar weight. The 
       rain outside turns café windows into moving watercolors of city lights. 
@@ -71,14 +111,37 @@ scenes:
 
       You've counted seventeen stirs. The barista waits, cloth in hand, 
       her glance asking you to translate this silence.
+    
+    # Flag triggers for this scene
+    flag_triggers:
+      - pattern: "player responds to barista about coffee"
+        set: "barista_asked_about_coffee"
+      - pattern: "player mentions shared memories or past experiences"
+        set: "memories_shared"
+      - pattern: "alex mentions leaving, checks time, or makes excuses"
+        set: "alex_preparing_to_leave"
+      - pattern: "alex reveals romantic feelings"
+        set: "alex_confessed"
+      - pattern: "player responds positively to confession"
+        set: "player_reciprocated"
+        requires: "alex_confessed"
 
 endings:
-  when:
-  - "player leaves the cafe"
+  # Can only end if we've left the cafe OR Alex is leaving
+  when: "player leaves the cafe"
+  requires:
+    any_of:
+      - "location != grounded_cafe"
+      - "alex_preparing_to_leave == true"
 
   variations:
   - id: "connection"
-    when: "alex explicitly confesses romantic feelings and player reciprocates"
+    when: "alex confesses and player reciprocates outside cafe"
+    requires:
+      all_of:
+        - "alex_confessed == true"
+        - "player_reciprocated == true"
+        - "location != grounded_cafe"
     sketch: |
       "I've been trying to find the right words for weeks." [Alex](character:alex) finally 
       meets your eyes. "But maybe there aren't any right ones. Just true ones."
@@ -86,7 +149,12 @@ endings:
       The space between you dissolves. Rain stops. Something beautiful begins.
 
   - id: "friendship"
-    when: "alex explicitly confesses but player wants to remain friends"
+    when: "alex confesses but player wants friendship outside cafe"
+    requires:
+      all_of:
+        - "alex_confessed == true"
+        - "player_reciprocated == false"
+        - "location != grounded_cafe"
     sketch: |
       [Alex](character:alex) nods slowly, understanding in their eyes. "I needed to say it. 
       I'm glad I did." A gentle smile. "Friends?"
@@ -95,6 +163,10 @@ endings:
 
   - id: "missed_chance"
     when: "alex decides to leave without confessing"
+    requires:
+      all_of:
+        - "alex_preparing_to_leave == true"
+        - "alex_confessed == false"
     sketch: |
       [Alex](character:alex) checks the time - that universal gesture of escape. 
       "I should go. Early morning."
@@ -102,16 +174,18 @@ endings:
       [!warning] Another Friday dissolved into careful nothing. The words remain unspoken.
 
 guidance: |
-  Tonight the weight of pretending has become unbearable for Alex. 
-  The two possible paths are already defined in their character arc.
-
-  PACING: When pressed about their mood, Alex initially deflects but then shifts into 
-  reminiscence about shared memories as a way to test emotional waters. If the player 
-  engages warmly with these memories, Alex gains confidence to confess. If the player 
-  seems distant or uncomfortable, Alex retreats into self-protection.
-
-  Let both characters collaborate in building their relationship history during memory sharing.
-
+  CRITICAL: Track flags based on narrative events. Set flags when their patterns occur.
+  
+  FLAG MANAGEMENT:
+  - Set behavior flags (player_supportive/dismissive) based on accumulated actions
+  - Set event flags (alex_confessed, memories_shared) when those events occur
+  - Check alex's emotional state flags to guide their responses
+  
+  PACING: 
+  - Use alex_gaining_confidence to have Alex open up gradually
+  - Use alex_withdrawing to show Alex retreating
+  - Only allow confession if sufficient emotional safety established
+  
   NARRATIVE APPROACH:
   - Write with restraint - what's unsaid matters more than what's spoken
   - Focus on gestures, glances, the physical language of concealed emotion
@@ -121,9 +195,5 @@ guidance: |
   - Begin with they/them or simply "Alex"
   - Follow the player's lead naturally - if they say "she", "him", "their", etc., adopt it
   - Store this in memory once established and use consistently
-
-  ESCAPE SIGNALS (for retreat path):
-  Watch for Alex checking time, mentioning obligations, fidgeting - these indicate 
-  they're planning to leave rather than risk confession.
 
   Remember: This is about the space between friends where something else wants to exist.
