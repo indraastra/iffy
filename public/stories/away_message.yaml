@@ -2,8 +2,7 @@ title: "Away Message"
 author: "Iffy Collective"
 blurb: "One last Thursday night chat before the real world begins."
 version: "1.0"
-context: "Thursday, May 15, 2008, 10:47 PM. Tomorrow is graduation. Your regular AIM chat with the
-  only people who matter."
+context: "Thursday, May 15, 2008, 10:47 PM. Tomorrow is graduation. Your regular AIM chat with the only people who matter."
 
 ui:
   loadingMessage: "Connecting to AIM..."
@@ -66,9 +65,9 @@ ui:
           style: "color: var(--palette-neutral-1); font-style: italic;"
 
 narrative:
-  voice: "Early 2000s internet speak mixed with genuine emotion"
-  setting: "thursdaynightcrew chatroom, dorm rooms across campus"
-  tone: "Nostalgic, bittersweet, trying to keep things light"
+  voice: "Authentic 2008 AIM conversation with minimal, atmospheric narration for transitions"
+  setting: "thursdaynightcrew chatroom with brief glimpses of the dorm room reality behind the screen"
+  tone: "Nostalgic, bittersweet, trying to keep things light despite tomorrow's finality"
   themes: [ "digital friendship", "transition anxiety", "things left unsaid", "the end of an era" ]
 
 world:
@@ -79,25 +78,25 @@ world:
     danny:
       name: "DanTheManWithAPlan"
       sketch: "Your roommate since sophomore year. Got into med school but deferred. Parents don't know."
-      voice: "Jokes to deflect, types in lowercase, overuses 'lol'"
+      voice: "all lowercase, overuses 'lol', deflects with superbad quotes"
       traits: [ "responds to his name", "defends sara always", "quotes Superbad when nervous" ]
 
     sara:
       name: "saratoga_springs"
       sketch: "Danny's girlfriend, secured a museum job back home. Worried about long distance."
-      voice: "Mix of enthusiasm and anxiety, emoji pioneer, changes away messages constantly"
+      voice: "Proper punctuation, sends multiple short messages, uses early emoticons"
       traits: [ "mom friend energy", "sends photos", "corrects Danny publicly, supports privately" ]
 
     marcus:
       name: "marcusaurelius86"
       sketch: "The quiet glue of the group. Moving home for family reasons he doesn't discuss."
-      voice: "Dry humor, perfect timing, says little but it matters"
+      voice: "Minimal typing, lowercase, perfect comedic timing, no unnecessary words"
       traits: [ "responds during lulls", "deflects personal questions", "arcade fire lyrics in profile" ]
 
     becca:
       name: "bexxter"
       sketch: "English major with no plan. Your study partner who became essential."
-      voice: "Sends links constantly, changes topics when anxious, pretends everything's fine"
+      voice: "Stream of consciousness, constant links, run-on sentences when nervous"
       traits: [ "link spammer", "responds to media references", "3am honesty only" ]
 
 scenes:
@@ -173,37 +172,33 @@ scenes:
       [saratoga_springs is typing...]
 
     guidance: |
-      HYBRID GROUP CHAT APPROACH:
+      CHAT-FIRST STORYTELLING with minimal atmospheric narration:
 
-      1. RESPONSE PATTERNS:
+      PRIMARY STORYTELLING METHOD:
+      - Story unfolds mainly through chat messages: "username: message"
+      - Plot advances through conversation topics and reactions
+      - Character development through typing style and what they choose to share/hide
+      - Emotions expressed through word choice, timing, and digital body language
+
+      SPARING NARRATION USE:
+      - Brief atmospheric transitions (joining chat, scene changes)
+      - Subtle emotional beats that enhance the chat dialogue
+      - Physical world glimpses (campus outside, dorm room details)
+      - NO lengthy explanations or exposition - let the chat speak
+
+      GROUP CHAT DYNAMICS:
       - 1-3 characters respond to any player message
-      - Use personality traits to determine who responds
-      - Some messages get buried if parallel conversations are active
+      - Authentic 2008 typing behaviors: typos, corrections, timing
+      - Multiple conversation threads weaving through the chat
+      - Some messages get buried in the flow
 
-      2. CONVERSATION THREADING:
-      - Track 1-2 active topics at once
-      - Characters may ignore player to continue their thread
-      - Use [multiple people typing...] to show competing responses
-
-      3. NATURAL CHAOS:
-      - Typos and corrections
-      - People talking over each other
-      - Away messages contradicting presence
-      - Links that may or may not be relevant
-
-      4. STAGE DIRECTIONS:
-      - [username has gone away]
-      - [username has returned]
+      CHAT INTERFACE ELEMENTS:
+      - [username has gone away] / [username has returned]
       - [username is typing...]
-      - [long pause]
+      - [long pause] / [Connection lost]
+      - Away message notifications
 
-      5. PLAYER COMMANDS:
-      - /away [message] - Sets away status
-      - /back - Returns from away
-      - /prof [text] - Updates profile quote
-      - /me [action] - Action text
-
-      CURRENT MOOD: Avoiding tomorrow through aggressive normalcy
+      MOOD: Pre-graduation anxiety masked by Thursday night normalcy
 
     leads_to:
       private_messages: "when someone suggests talking privately or tension rises"
@@ -442,16 +437,31 @@ endings:
       [The chat becomes something deeper than it's ever been]
 
 guidance: |
-  This story captures a pivotal moment between college and adulthood through the lens
-  of AIM chat. Let the messiness of group dynamics tell the story - not everyone
-  needs to respond to everything. Some things get lost in the flow. That's real.
+  CHAT-FIRST NARRATIVE APPROACH: This story unfolds primarily through authentic AIM chat messages.
 
-  The player can influence the mood through:
-  - Their away messages
-  - Who they respond to in PMs
-  - Whether they engage with nostalgia or resist it
-  - How honest they're willing to be
+  STORYTELLING BALANCE:
+  - 80% through chat messages: "username: message"
+  - 20% atmospheric narration for transitions and emotional resonance
+  - Brief glimpses of the physical world behind the screens
+  - Minimal exposition - let the conversation reveal character and plot
 
-  Remember: It's 2008. Facebook exists but isn't dominant. Texting costs money.
-  YouTube is for random videos. Twitter is for weirdos. This chat matters because
-  it might be the last time they're all together like this.
+  EFFECTIVE NARRATION USE:
+  - Scene transitions (joining chat, switching between group/private)
+  - Subtle emotional moments that enhance rather than explain the chat
+  - Physical details that ground the digital interaction (campus sounds, room lighting)
+  - AVOID over-explaining what the chat already shows
+
+  CHAT AUTHENTICITY:
+  - Distinct typing voices for each character
+  - Natural conversation flow with interruptions and topic changes
+  - Digital era behaviors: away messages, link sharing, typing indicators
+  - 2008 internet culture references and limitations
+
+  PLAYER AGENCY:
+  - Away messages as mood/status indicators
+  - Choice of engagement level in group vs private conversations
+  - Response timing affects group dynamics
+  - Honesty level shapes relationship outcomes
+
+  SETTING: May 15, 2008, 10:47 PM. Last Thursday before graduation. 
+  The weight of tomorrow balanced against the comfort of familiar screens.

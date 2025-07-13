@@ -19,6 +19,9 @@ export interface ImpressionistStory {
   endings: ImpressionistEndingCollection
   guidance: string  // LLM behavior hints
   
+  // Flag system for state management
+  flags?: Record<string, any>  // Story flags and behavior patterns
+  
   // Optional enrichments
   narrative?: NarrativeMetadata
   world?: WorldDefinition
@@ -32,19 +35,39 @@ export interface ImpressionistScene {
   guidance?: string  // Optional scene-specific guidance for LLM behavior
   process_sketch?: boolean  // If true, send sketch through LLM (default: true). Set false for verbatim display
   leads_to?: Record<string, string>  // scene_id: "when this happens"
+  
+  // Flag system support
+  initial_flags?: Record<string, any>  // Flags to set when scene starts
+  flag_triggers?: FlagTrigger[]  // Flag changes to watch for
+}
+
+// Flag trigger definition
+export interface FlagTrigger {
+  pattern: string  // Natural language pattern to match
+  set: string  // Flag to set when pattern matches
+  requires?: string  // Prerequisite flag condition
 }
 
 // Ending collection with optional global conditions
 export interface ImpressionistEndingCollection {
   when?: string | string[]  // Global conditions that must be met for ANY ending
+  requires?: FlagCondition  // Flag-based global conditions
   variations: ImpressionistEnding[]
 }
 
 // Natural language ending conditions
 export interface ImpressionistEnding {
   id: string
-  when: string | string[]  // Natural language condition(s)
+  when?: string | string[]  // Legacy natural language condition(s)
+  requires?: FlagCondition  // Flag-based conditions
   sketch: string  // How the story concludes
+}
+
+// Flag condition types
+export interface FlagCondition {
+  all_of?: string[]  // All conditions must be true
+  any_of?: string[]  // At least one condition must be true
+  none_of?: string[]  // None of these conditions can be true
 }
 
 // Narrative style and tone
@@ -156,6 +179,7 @@ export interface DirectorResponse {
 
 export interface DirectorSignals {
   scene?: string        // SCENE:next_scene_id
+  transition?: string   // TRANSITION:target_scene_id (flag-based)
   ending?: string       // ENDING:ending_id
   discover?: string     // DISCOVER:item_id
   error?: string        // Error message for debugging
