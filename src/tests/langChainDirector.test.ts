@@ -102,20 +102,23 @@ describe('LangChainDirector', () => {
       .mockResolvedValueOnce(directorResponse || defaultDirectorResponse);
   }
 
-  // Helper function to collect all responses from streaming method
+  // Helper function to get response from new flag-based method
   async function collectStreamingResponses(
     input: string, 
     context: DirectorContext
   ): Promise<DirectorResponse> {
-    const responses: DirectorResponse[] = [];
-    for await (const response of director.processInputStreaming(input, context)) {
-      responses.push(response);
-    }
+    // Initialize flag system for tests
+    const mockStory = {
+      title: 'Test Story',
+      flags: {
+        test_flag: false
+      }
+    };
+    director.initializeFlags(mockStory as any);
     
-    // For tests that expect a single combined response, merge them
-    if (responses.length === 0) {
-      throw new Error('No responses received');
-    }
+    // Call the new non-streaming method
+    const response = await director.processInputStreaming(context, input);
+    return response;
     
     if (responses.length === 1) {
       // For single responses that had an invalid scene transition or ending, clean up the signals

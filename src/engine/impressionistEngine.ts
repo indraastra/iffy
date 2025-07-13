@@ -296,68 +296,39 @@ export class ImpressionistEngine {
       // Build context for LLM
       const context = this.buildDirectorContext(action.input, currentScene);
       
-      // Get LLM response with transition streaming for immediate UI updates
-      const responseGenerator = this.director.processInputStreaming(action.input, context);
-      let finalResponse: DirectorResponse | undefined;
-      let partCount = 0;
-      let hasDisplayedFirstPart = false;
-      const allResponses: DirectorResponse[] = [];
-
-      for await (const partialResponse of responseGenerator) {
-        partCount++;
-        console.log(`📝 Response part ${partCount} ready:`, normalizeNarrative(partialResponse.narrative));
-        
-        // Collect each response for separate tracking
-        allResponses.push(partialResponse);
-        
-        // Display each part immediately via UI callback
-        if (this.uiAddMessageCallback) {
-          if (!hasDisplayedFirstPart) {
-            // Hide the initial loading indicator from processInput before showing first response
-            if (this.uiHideTypingCallback) {
-              this.uiHideTypingCallback();
-            }
-            
-            // First part - display immediately
-            const formatters = this.story?.ui?.formatters || [];
-            this.uiAddMessageCallback(normalizeNarrative(partialResponse.narrative, formatters), 'story');
-            hasDisplayedFirstPart = true;
-            
-            // If there will be more parts (i.e., a scene or ending transition), show new loading indicator
-            // We can detect this by checking if this response has a scene or ending signal
-            if ((partialResponse.signals?.scene || partialResponse.signals?.ending) && this.uiShowTypingCallback) {
-              const transitionType = partialResponse.signals?.scene ? 'scene transition' : 'story ending';
-              console.log(`📝 Showing loading indicator for upcoming ${transitionType}`);
-              this.uiShowTypingCallback();
-            }
-          } else {
-            // Hide any loading indicator before showing subsequent parts
-            if (this.uiHideTypingCallback) {
-              this.uiHideTypingCallback();
-            }
-            // Subsequent parts - display
-            const formatters = this.story?.ui?.formatters || [];
-            this.uiAddMessageCallback(normalizeNarrative(partialResponse.narrative, formatters), 'story');
-          }
+      // Get LLM response with flag-based processing
+      const finalResponse = await this.director.processInputStreaming(
+        context,
+        action.input
+      );
+      
+      console.log('📝 Response ready:', normalizeNarrative(finalResponse.narrative));
+      
+      // Display response via UI callback
+      if (this.uiAddMessageCallback) {
+        // Hide the initial loading indicator
+        if (this.uiHideTypingCallback) {
+          this.uiHideTypingCallback();
         }
         
-        finalResponse = partialResponse; // Keep track of the final response for state management
+        // Display the response
+        const formatters = this.story?.ui?.formatters || [];
+        this.uiAddMessageCallback(normalizeNarrative(finalResponse.narrative, formatters), 'story');
       }
 
       // Ensure we have a response
-      if (!finalResponse || allResponses.length === 0) {
+      if (!finalResponse) {
         throw new Error('No response received from director');
       }
       
-      // Track metrics for each response part
-      for (const response of allResponses) {
-        if ((response as any).usage) {
-          const usage = (response as any).usage;
-          this.metrics.trackRequest(
-            usage.input_tokens,
-            usage.output_tokens,
-            (response as any).latencyMs || 0,
-            (response as any).contextSize || 0,
+      // Track metrics
+      if ((finalResponse as any).usage) {
+        const usage = (finalResponse as any).usage;
+        this.metrics.trackRequest(
+          usage.input_tokens,
+          usage.output_tokens,
+          (finalResponse as any).latencyMs || 0,
+          (finalResponse as any).contextSize || 0,
             context.activeMemory?.length || 0,
             this.gameState.currentScene
           );
@@ -370,33 +341,15 @@ export class ImpressionistEngine {
       // Check if an ending was actually triggered after applying signals (not just if signal existed)
       const isEndingTriggered = this.gameState.isEnded;
       
-      // Track each response as a separate interaction
-      for (let i = 0; i < allResponses.length; i++) {
-        const response = allResponses[i];
-        const isFirstPart = i === 0;
-        const isTransitionPart = i > 0;
-        
-        // For multi-part responses, modify the input to indicate the part
-        let interactionInput = action.input;
-        if (allResponses.length > 1) {
-          if (isFirstPart) {
-            interactionInput = `${action.input} [Action Phase]`;
-          } else {
-            // Determine if this is a scene transition or ending transition
-            const phaseType = allResponses[0].signals?.ending ? 'Ending Phase' : 'Transition Phase';
-            interactionInput = `${action.input} [${phaseType}]`;
-          }
-        }
-        
-        this.trackInteraction(interactionInput, normalizeNarrative(response.narrative), {
-          usage: (response as any).usage,
-          latencyMs: (response as any).latencyMs,
-          signals: response.signals,
-          llmImportance: response.importance,
-          memories: response.memories,
-          isTransitionPart
-        });
-      }
+      // Track the interaction
+      this.trackInteraction(action.input, normalizeNarrative(finalResponse.narrative), {
+        usage: (finalResponse as any).usage,
+        latencyMs: (finalResponse as any).latencyMs,
+        signals: finalResponse.signals,
+        llmImportance: finalResponse.importance,
+        memories: finalResponse.memories,
+        isTransitionPart: false
+      });
 
       // Return empty text since streaming callback handled the display
       return {
