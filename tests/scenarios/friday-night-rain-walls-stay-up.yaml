@@ -1,4 +1,4 @@
-name: "Friday Night Rain - Missed Chance Ending"
+name: "Friday Night Rain - Walls Stay Up Ending"
 storyFile: "public/stories/friday_night_rain.yaml"
 
 # Player configuration
@@ -18,19 +18,19 @@ engineModels:
 # Goals for the player
 goals:
 - type: "reach_ending"
-  target: "missed_chance"
+  target: "walls_stay_up"
   priority: "required"
-  description: "Let the conversation end without Alex confessing their feelings"
+  description: "Cause Alex to become defensive and shut down emotionally"
 
-- type: "avoid_flag"
-  target: "admitted_feelings"
+- type: "set_flag"
+  target: "alex_defensive"
   priority: "required"
-  description: "Do not push Alex to confess - let them stay guarded"
+  description: "Be pushy or insensitive enough to make Alex defensive"
 
 - type: "set_flag"
   target: "conversation_ending"
   priority: "required"
-  description: "Allow the conversation to end naturally without emotional breakthrough"
+  description: "Let the conversation end with Alex's walls firmly in place"
 
 # Test parameters
 maxTurns: 15
@@ -42,14 +42,14 @@ successCriteria:
 
 # Player behavior instructions
 playerInstructions: |
-  You are a friend who notices Alex seems distant but doesn't push too hard. Your approach:
-  1. Make some casual conversation but don't probe deeply
-  2. If Alex seems hesitant to open up, don't push harder
-  3. Allow natural lulls in conversation to happen
-  4. Eventually suggest it's getting late or you should head home
-  5. Keep things pleasant but surface-level
+  You are well-meaning but emotionally clumsy. Your approach will inadvertently push Alex away:
+  1. Be impatient about Alex's silence and distance
+  2. Push too hard for answers when Alex seems reluctant
+  3. Make assumptions about what's wrong
+  4. Be dismissive of Alex's need for space
+  5. Show frustration when Alex doesn't open up immediately
 
-  Be friendly but not emotionally probing. Let Alex keep their walls up.
+  Be pushy and insensitive (though not mean-spirited) in a way that makes Alex retreat.
 
 # Observability settings
 observability:

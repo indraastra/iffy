@@ -15,8 +15,7 @@ import { DirectorContext, DirectorResponse } from '@/types/impressionistStory';
 import { LangChainPrompts } from './langChainPrompts';
 import { MultiModelService } from '@/services/multiModelService';
 import { DirectorResponseSchema } from '@/schemas/directorSchemas';
-import { FlagManager, FlagCondition } from './FlagManager';
-import { FlagExtractor } from './FlagExtractor';
+import { FlagManager, FlagChange } from './FlagManager';
 // StoryData type is now imported via FlagManager
 
 export interface TransitionCallbacks {
@@ -35,7 +34,6 @@ export class LangChainDirector {
   private options: LangChainDirectorOptions;
   private debugPane?: any;
   private flagManager?: FlagManager;
-  private flagExtractor?: FlagExtractor;
 
   constructor(
     multiModelService?: MultiModelService, 
@@ -58,11 +56,16 @@ export class LangChainDirector {
   /**
    * Initialize flag system with story data
    */
-  initializeFlags(story: ImpressionistStory): void {
+  initializeFlags(story: any): void {
     this.flagManager = new FlagManager(story);
-    const llm = this.multiModelService.getModel();
-    if (llm) {
-      this.flagExtractor = new FlagExtractor(llm);
+    
+    // Update debug pane with initial flag states
+    if (this.debugPane && this.debugPane.updateFlagStates) {
+      try {
+        this.debugPane.updateFlagStates(this.flagManager?.getAllFlags() || {});
+      } catch (error) {
+        console.log('Error updating debug pane flag states during initialization:', error);
+      }
     }
   }
 
@@ -71,6 +74,15 @@ export class LangChainDirector {
    */
   setDebugPane(debugPane: any): void {
     this.debugPane = debugPane;
+    
+    // Update debug pane with current flag states if flag manager exists
+    if (this.flagManager && this.debugPane && this.debugPane.updateFlagStates) {
+      try {
+        this.debugPane.updateFlagStates(this.flagManager?.getAllFlags() || {});
+      } catch (error) {
+        console.log('Error updating debug pane flag states when setting debug pane:', error);
+      }
+    }
   }
 
   /**
@@ -152,7 +164,11 @@ export class LangChainDirector {
       narrative: narrativeArray,  // Keep as array to support per-element formatter processing
       memories: result.data.memories || [],
       importance: result.data.importance || defaultImportance,
-      signals: result.data.signals || {}
+      signals: result.data.signals || {},
+      actualFlags: {
+        set: result.data.flagChanges?.set || [],
+        unset: result.data.flagChanges?.unset || []
+      }
     };
 
     // Extract usage information for logging and metadata
@@ -160,22 +176,54 @@ export class LangChainDirector {
 
     // Log to debug pane if available
     if (this.debugPane) {
-      this.debugPane.log(`=== ${logLabel} ===`);
-      this.debugPane.log(`Scene: ${contextInfo.scene}`);
-      this.debugPane.log(`Context: ${contextInfo.memories} memories, ${contextInfo.transitions} transitions`);
-      this.debugPane.log(`Latency: ${latencyMs.toFixed(0)}ms`);
-      if (usage) {
-        this.debugPane.log(`Usage: ${usage.input_tokens} prompt + ${usage.output_tokens} completion = ${usage.total_tokens} total`);
+      // General debug logging
+      if (this.debugPane.log) {
+        try {
+          this.debugPane.log(`=== ${logLabel} ===`);
+          this.debugPane.log(`Scene: ${contextInfo.scene}`);
+          this.debugPane.log(`Context: ${contextInfo.memories} memories, ${contextInfo.transitions} transitions`);
+          this.debugPane.log(`Latency: ${latencyMs.toFixed(0)}ms`);
+          if (usage) {
+            this.debugPane.log(`Usage: ${usage.input_tokens} prompt + ${usage.output_tokens} completion = ${usage.total_tokens} total`);
+          }
+          this.debugPane.log(`Narrative (${narrativeArray.length} parts):`);
+          this.debugPane.log(narrativeArray.join('\n\n'));
+          if (response.memories && response.memories.length > 0) {
+            this.debugPane.log(`Memories: ${response.memories.join(', ')}`);
+          }
+          if (response.signals && Object.keys(response.signals).length > 0) {
+            this.debugPane.log(`Signals: ${JSON.stringify(response.signals)}`);
+          }
+          this.debugPane.log('---');
+        } catch (error) {
+          console.log('Error calling debug pane log:', error);
+        }
       }
-      this.debugPane.log(`Narrative (${narrativeArray.length} parts):`);
-      this.debugPane.log(narrativeArray.join('\n\n'));
-      if (response.memories && response.memories.length > 0) {
-        this.debugPane.log(`Memories: ${response.memories.join(', ')}`);
+
+      // LLM interaction logging
+      if (this.debugPane.logLlmCall) {
+        try {
+          this.debugPane.logLlmCall({
+            prompt: { 
+              text: fullPrompt.length > 200 ? fullPrompt.substring(0, 200) + '...' : fullPrompt,
+              tokenCount: usage?.input_tokens || Math.ceil(fullPrompt.length / 4)
+            },
+            response: { 
+              narrative: narrativeArray.join(' '),
+              memories: response.memories,
+              importance: response.importance,
+              tokenCount: usage?.output_tokens || Math.ceil(narrativeArray.join(' ').length / 4)
+            },
+            context: { 
+              scene: contextInfo.scene,
+              memories: contextInfo.memories,
+              transitions: contextInfo.transitions
+            }
+          });
+        } catch (error) {
+          console.log('Error calling debug pane logLlmCall:', error);
+        }
       }
-      if (response.signals && Object.keys(response.signals).length > 0) {
-        this.debugPane.log(`Signals: ${JSON.stringify(response.signals)}`);
-      }
-      this.debugPane.log('---');
     }
 
     return response;
@@ -195,10 +243,7 @@ export class LangChainDirector {
 
     // Build the initial scene prompt
     const promptBuilder = () => {
-      const contextPreamble = LangChainPrompts.buildContextWithFlags(
-        context, 
-        this.flagManager!.getAllFlags()
-      );
+      const contextPreamble = LangChainPrompts.buildContextWithFlagManager(context, this.flagManager!);
       const instructions = LangChainPrompts.buildInitialSceneInstructions(sceneId, sceneSketch);
       return `${contextPreamble}\n\n${instructions}`;
     };
@@ -223,7 +268,7 @@ export class LangChainDirector {
     playerInput: string,
     callbacks?: TransitionCallbacks
   ): Promise<DirectorResponse> {
-    if (!this.flagManager || !this.flagExtractor) {
+    if (!this.flagManager) {
       throw new Error('Flag system not initialized. Call initializeFlags() first.');
     }
 
@@ -232,259 +277,245 @@ export class LangChainDirector {
       return this.processPostEndingInput(context, playerInput);
     }
 
-    // Phase 1: Process the action and generate narrative
-    const actionResponse = await this.processAction(context, playerInput);
-    callbacks?.onActionComplete?.(actionResponse);
+    // Single-phase processing: Generate narrative with flag changes
+    const response = await this.processAction(context, playerInput);
 
-    // Phase 2: Extract flag changes from the action and narrative
-    const flagChanges = await this.flagExtractor.extractFlags(
-      playerInput,
-      Array.isArray(actionResponse.narrative) ? actionResponse.narrative.join('\n') : actionResponse.narrative,
-      this.flagManager.getAllFlags(),
-      this.flagManager.getFlagTriggers(),
-      this.flagManager.getBehaviorPatterns()
-    );
-
-    // Apply flag changes
-    this.flagManager.applyChanges(flagChanges);
-
-    if (this.debugPane) {
-      this.debugPane.log(`=== Flag Changes ===`);
-      if (flagChanges.set.length > 0) {
-        this.debugPane.log(`Set: ${flagChanges.set.join(', ')}`);
+    // Apply flag changes from the narrative response
+    if (response.actualFlags && (response.actualFlags.set.length > 0 || response.actualFlags.unset.length > 0)) {
+      const flagChange: FlagChange = {
+        set: response.actualFlags.set,
+        clear: response.actualFlags.unset
+      };
+      this.flagManager?.applyChanges(flagChange);
+      
+      // Update debug pane with current flag states
+      if (this.debugPane && this.debugPane.updateFlagStates) {
+        try {
+          this.debugPane.updateFlagStates(this.flagManager?.getAllFlags() || {});
+        } catch (error) {
+          console.log('Error updating debug pane flag states:', error);
+        }
       }
-      if (flagChanges.clear.length > 0) {
-        this.debugPane.log(`Clear: ${flagChanges.clear.join(', ')}`);
-      }
-      if (flagChanges.behaviors_observed.length > 0) {
-        this.debugPane.log(`Behaviors: ${flagChanges.behaviors_observed.join(', ')}`);
-      }
-      this.debugPane.log(`Current flags: ${this.flagManager.getDebugString()}`);
-      this.debugPane.log('---');
     }
 
-    // Phase 3: Check for transitions based on flags
-    const transition = this.checkTransitions(context);
-    if (transition) {
-      callbacks?.onTransitionStart?.(transition.targetId);
+    // Check for transitions/endings after applying flags
+    const transitionTriggered = this.checkTransitions(context);
+    const endingTriggered = this.checkEndings(context);
+
+    // If transition or ending is triggered, handle two-phase processing
+    if (transitionTriggered) {
+      callbacks?.onTransitionStart?.(transitionTriggered.targetScene);
       
-      // Process the transition
-      const transitionResponse = await this.processSceneTransition(
+      // Generate transition narrative
+      const transitionResponse = await this.processTransitionAction(
         context,
-        transition.targetId,
-        transition.sketch,
-        playerInput
+        playerInput,
+        transitionTriggered
       );
       
+      // Transitions handled automatically by flag system
+      // No need to add transition signals
+      
+      // Return transition response with flag-based handling
       callbacks?.onTransitionComplete?.(transitionResponse);
       return transitionResponse;
     }
 
-    // Phase 4: Check for endings based on flags
-    const ending = this.checkEndings(context);
-    if (ending) {
-      return this.processEnding(context, ending.id, ending.sketch, playerInput);
+    if (endingTriggered) {
+      // Generate ending narrative
+      const endingResponse = await this.processEndingAction(
+        context,
+        playerInput,
+        endingTriggered
+      );
+      
+      // Endings handled automatically by flag system
+      // No need to add ending signals
+      
+      return endingResponse;
     }
 
-    return actionResponse;
+    // Debug logging
+    if (this.debugPane && this.debugPane.log) {
+      try {
+        this.debugPane.log(`=== Action Processing ===`);
+        this.debugPane.log(`Player: "${playerInput}"`);
+        
+        if (response.actualFlags?.set.length || response.actualFlags?.unset.length) {
+          this.debugPane.log(`Flag changes from narrative:`);
+          if (response.actualFlags?.set.length) {
+            this.debugPane.log(`  Set: ${response.actualFlags.set.join(', ')}`);
+          }
+          if (response.actualFlags?.unset.length) {
+            this.debugPane.log(`  Unset: ${response.actualFlags.unset.join(', ')}`);
+          }
+        }
+        
+        this.debugPane.log(`Current flags: ${this.flagManager?.getDebugString() || 'none'}`);
+        this.debugPane.log('---');
+      } catch (error) {
+        console.log('Error calling debug pane log:', error);
+      }
+    }
+
+    return response;
   }
 
   /**
-   * Phase 1: Process player action and generate narrative response
+   * Process a regular action with flag changes
    */
   private async processAction(
     context: DirectorContext,
     playerInput: string
   ): Promise<DirectorResponse> {
     const promptBuilder = () => {
-      const contextPreamble = LangChainPrompts.buildContextWithFlags(
-        context,
-        this.flagManager!.getAllFlags()
-      );
-      const instructions = LangChainPrompts.buildActionInstructions(context);
+      const contextPreamble = this.flagManager 
+        ? LangChainPrompts.buildContextWithFlagManager(context, this.flagManager)
+        : LangChainPrompts.buildActionContextPreamble(context, '');
+      const instructions = this.flagManager
+        ? LangChainPrompts.buildActionInstructionsWithFlagGuidance(context, this.flagManager)
+        : LangChainPrompts.buildActionInstructions(context);
       
       return `${contextPreamble}
 
 ${instructions}
 
-**PLAYER ACTION:** ${playerInput}
-
-Respond to this action with immersive narrative:`;
+**PLAYER ACTION:** ${playerInput}`;
     };
 
     return this.makeLLMRequest(
       promptBuilder,
-      'Action Processing',
+      'Action',
       {
-        scene: 'unknown', // TODO: get current scene from context
+        scene: context.currentSketch ? 'current_scene' : 'unknown',
         memories: context.activeMemory?.length || 0,
         transitions: Object.keys(context.currentTransitions || {}).length
-      }
+      },
+      5 // Standard importance
     );
   }
 
   /**
-   * Check if any transitions should trigger based on current flags
+   * Check if current flag state triggers any transitions
    */
-  private checkTransitions(context: DirectorContext): { targetId: string; sketch: string } | null {
-    if (!context.currentTransitions || !this.flagManager) {
-      return null;
-    }
+  private checkTransitions(context: DirectorContext): { targetScene: string; content: string } | undefined {
+    if (!context.currentTransitions || !this.flagManager) return undefined;
 
     for (const [sceneId, transitionData] of Object.entries(context.currentTransitions)) {
-      // Convert old condition format to flag condition
-      const condition = this.parseCondition(transitionData.condition);
-      if (this.flagManager.checkConditions(condition)) {
+      if (transitionData.condition && this.flagManager.checkConditions(transitionData.condition)) {
         return {
-          targetId: sceneId,
-          sketch: transitionData.sketch || ''
+          targetScene: sceneId,
+          content: transitionData.sketch || `Transition to ${sceneId}`
         };
       }
-    }
-
-    return null;
-  }
-
-  /**
-   * Check if any endings should trigger based on current flags
-   */
-  private checkEndings(context: DirectorContext): { id: string; sketch: string } | null {
-    if (!context.availableEndings || !this.flagManager) {
-      return null;
-    }
-
-    // First check global ending conditions
-    if (context.availableEndings.when) {
-      const globalCondition = this.parseCondition(context.availableEndings.when);
-      if (!this.flagManager.checkConditions(globalCondition)) {
-        return null; // Global conditions not met
-      }
-    }
-
-    // Check each ending variation
-    for (const ending of context.availableEndings.variations) {
-      const condition = this.parseCondition(ending.when);
-      if (this.flagManager.checkConditions(condition)) {
-        return {
-          id: ending.id,
-          sketch: ending.sketch || ''
-        };
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Parse legacy condition format to flag condition
-   * This allows backwards compatibility during migration
-   */
-  private parseCondition(condition: any): FlagCondition | undefined {
-    if (!condition) return undefined;
-
-    // Already in new format
-    if (condition.all_of || condition.any_of || condition.none_of) {
-      return condition as FlagCondition;
-    }
-
-    // Array format - treat as any_of
-    if (Array.isArray(condition)) {
-      return { any_of: condition };
-    }
-
-    // String format - single condition
-    if (typeof condition === 'string') {
-      return { all_of: [condition] };
     }
 
     return undefined;
   }
 
   /**
-   * Process a scene transition
+   * Check if current flag state triggers any endings
    */
-  private async processSceneTransition(
+  private checkEndings(context: DirectorContext): { id: string; content: string } | undefined {
+    if (!context.availableEndings || !this.flagManager) return undefined;
+
+    for (const ending of context.availableEndings.variations) {
+      if (ending.requires && this.flagManager.checkConditions(ending.requires)) {
+        return {
+          id: ending.id,
+          content: ending.sketch || `Ending: ${ending.id}`
+        };
+      }
+    }
+
+    return undefined;
+  }
+
+
+
+  /**
+   * Process an action that triggers a transition
+   */
+  private async processTransitionAction(
     context: DirectorContext,
-    targetSceneId: string,
-    sceneSketch: string,
-    playerAction: string
+    playerInput: string,
+    transitionInfo: { targetScene: string; content: string }
   ): Promise<DirectorResponse> {
     const promptBuilder = () => {
-      const contextPreamble = LangChainPrompts.buildContextWithFlags(
-        context,
-        this.flagManager!.getAllFlags()
-      );
+      const contextPreamble = this.flagManager 
+        ? LangChainPrompts.buildContextWithFlagManager(context, this.flagManager)
+        : LangChainPrompts.buildActionContextPreamble(context, '');
       const instructions = LangChainPrompts.buildTransitionInstructions(
-        targetSceneId,
-        sceneSketch,
-        playerAction
+        transitionInfo.targetScene,
+        transitionInfo.content,
+        playerInput
       );
       
-      return `${contextPreamble}\n\n${instructions}`;
+      return `${contextPreamble}
+
+${instructions}`;
     };
 
     const response = await this.makeLLMRequest(
       promptBuilder,
-      'Scene Transition',
+      'Transition',
       {
-        scene: targetSceneId,
+        scene: transitionInfo.targetScene,
         memories: context.activeMemory?.length || 0,
         transitions: Object.keys(context.currentTransitions || {}).length
       },
-      6 // Slightly higher importance for transitions
+      6 // Higher importance for transitions
     );
 
-    // Add transition signal
-    response.signals = {
-      ...response.signals,
-      transition: targetSceneId
-    };
+    // Transitions handled automatically by flag system
+    // No need to add transition signals
 
     return response;
   }
 
   /**
-   * Process an ending
+   * Process an action that triggers an ending
    */
-  private async processEnding(
+  private async processEndingAction(
     context: DirectorContext,
-    endingId: string,
-    endingSketch: string,
-    playerAction: string
+    playerInput: string,
+    endingInfo: { id: string; content: string }
   ): Promise<DirectorResponse> {
     const promptBuilder = () => {
-      const contextPreamble = LangChainPrompts.buildContextWithFlags(
-        context,
-        this.flagManager!.getAllFlags()
-      );
+      const contextPreamble = this.flagManager 
+        ? LangChainPrompts.buildContextWithFlagManager(context, this.flagManager)
+        : LangChainPrompts.buildActionContextPreamble(context, '');
       const instructions = LangChainPrompts.buildEndingInstructions(
-        endingId,
-        endingSketch,
-        playerAction
+        endingInfo.id,
+        endingInfo.content,
+        playerInput
       );
       
-      return `${contextPreamble}\n\n${instructions}`;
+      return `${contextPreamble}
+
+${instructions}`;
     };
 
     const response = await this.makeLLMRequest(
       promptBuilder,
-      'Story Ending',
+      'Ending',
       {
-        scene: 'ending',
+        scene: context.currentSketch ? 'current_scene' : 'unknown',
         memories: context.activeMemory?.length || 0,
-        transitions: 0
+        transitions: Object.keys(context.currentTransitions || {}).length
       },
-      8 // High importance for endings
+      8 // Highest importance for endings
     );
 
-    // Add ending signal
-    response.signals = {
-      ...response.signals,
-      ending: endingId
-    };
+    // Endings handled automatically by flag system
+    // No need to add ending signals
 
     return response;
   }
+
+
+
+
 
   /**
    * Handle post-ending input (exploration after story completes)
@@ -494,10 +525,9 @@ Respond to this action with immersive narrative:`;
     playerInput: string
   ): Promise<DirectorResponse> {
     const promptBuilder = () => {
-      const contextPreamble = LangChainPrompts.buildContextWithFlags(
-        context,
-        this.flagManager?.getAllFlags() || {}
-      );
+      const contextPreamble = this.flagManager 
+        ? LangChainPrompts.buildContextWithFlagManager(context, this.flagManager)
+        : LangChainPrompts.buildActionContextPreamble(context, '');
       const instructions = LangChainPrompts.buildActionInstructions(context);
       
       return `${contextPreamble}
@@ -526,5 +556,19 @@ Continue the narrative exploration:`;
    */
   getCurrentFlags(): Record<string, any> | undefined {
     return this.flagManager?.getAllFlags();
+  }
+
+  /**
+   * Set location flag (used by engine during scene transitions)
+   */
+  setLocationFlag(location: string): void {
+    this.flagManager?.setLocationFlag(location);
+  }
+
+  /**
+   * Reset flag manager state (called when loading new story)
+   */
+  resetFlags(): void {
+    this.flagManager = undefined;
   }
 }

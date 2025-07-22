@@ -5,7 +5,7 @@ export interface ModelConfig {
 }
 
 export interface Goal {
-  type: 'reach_ending' | 'collect_item' | 'visit_scene' | 'unlock_achievement';
+  type: 'reach_ending' | 'collect_item' | 'visit_scene' | 'unlock_achievement' | 'set_flag' | 'avoid_flag';
   target: string;
   priority?: 'required' | 'optional';
   description?: string; // Optional human-readable description of what achieving this goal means
@@ -26,6 +26,7 @@ export interface TestScenario {
   goals: Goal[];
   maxTurns?: number;
   successCriteria: SuccessCriteria;
+  playerInstructions?: string; // Instructions for AI player behavior
   observability?: {
     interactive?: boolean;
     showThinking?: boolean;

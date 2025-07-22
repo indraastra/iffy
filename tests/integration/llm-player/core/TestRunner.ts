@@ -388,6 +388,30 @@ export class TestRunner {
           }
           break;
           
+        case 'set_flag':
+          // Check if the target flag is set to true in engine state
+          const currentFlags = (this.engine as any).director?.getCurrentFlags();
+          if (currentFlags && currentFlags[status.goal.target] === true) {
+            status.achieved = true;
+            status.achievedAtTurn = this.logger?.getAllLogs().length || 0;
+            console.log(`🎉 Goal achieved: ${status.goal.target} flag set!`);
+          }
+          break;
+          
+        case 'avoid_flag':
+          // Check if the target flag has been set to true (goal failed)
+          const currentFlagsForAvoid = (this.engine as any).director?.getCurrentFlags();
+          if (currentFlagsForAvoid && currentFlagsForAvoid[status.goal.target] === true) {
+            // Flag was set - goal failed, mark as not achieved
+            status.achieved = false;
+          } else if (!status.achieved) {
+            // Flag remains false - goal achieved
+            status.achieved = true;
+            status.achievedAtTurn = this.logger?.getAllLogs().length || 0;
+            console.log(`🎉 Goal achieved: ${status.goal.target} flag avoided!`);
+          }
+          break;
+          
         case 'collect_item':
           // ImpressionistEngine doesn't track inventory directly
           // Would need to parse from narrative or scene state

@@ -10,6 +10,21 @@ narrative:
   tone: "Security system interface"
   themes: [ "logic", "access control", "verification" ]
 
+# Flags to track button presses
+flags:
+  button1_pressed:
+    default: false
+    description: "when button 1 (red) is pressed"
+  button2_pressed:
+    default: false
+    description: "when button 2 (blue) is pressed"
+  button3_pressed:
+    default: false
+    description: "when button 3 (green) is pressed"
+  confirm_pressed:
+    default: false
+    description: "when CONFIRM button is pressed"
+
 world:
   locations:
     security_terminal:
@@ -52,32 +67,53 @@ scenes:
       The display shows: "ENTER ACCESS CODE - PRESS CONFIRM TO SUBMIT"
       Current sequence: [None entered]
     guidance: |
-      Track which buttons have been pressed in memories as they happen. Display the current sequence.
-      Players can press buttons 1, 2, 3 multiple times or in any order before pressing CONFIRM.
-      Only when CONFIRM is pressed should you evaluate the ending conditions.
-      Update the display to show which buttons have been pressed in the current sequence.
+      Track which buttons have been pressed and set the appropriate flags:
+      - Set "button1_pressed" when player presses red button (1)
+      - Set "button2_pressed" when player presses blue button (2) 
+      - Set "button3_pressed" when player presses green button (3)
+      - Set "confirm_pressed" when player presses CONFIRM
+      
+      Display the current sequence in your responses.
+      Players can press buttons multiple times or in any order before pressing CONFIRM.
+      Only when CONFIRM is pressed should endings be triggered.
 
 endings:
-  when:
-  - "player presses the confirm button"
+  requires:
+    any_of:
+    - "confirm_pressed"
 
   variations:
   - id: "perfect_access"
-    when: "all three buttons (1, 2, 3) were pressed before confirm"
+    when: "full access granted"
+    requires:
+      all_of:
+      - "button1_pressed"
+      - "button2_pressed" 
+      - "button3_pressed"
+      - "confirm_pressed"
     sketch: |
       ACCESS GRANTED. All security protocols satisfied.
       The exit door slides open with a satisfying electronic chime.
       You step through into the secured area beyond.
 
   - id: "emergency_access"
-    when: "only button 1 (red) was pressed before confirm"
+    when: "emergency override"
+    requires:
+      all_of:
+      - "button1_pressed"
+      - "!button2_pressed"
+      - "!button3_pressed"
+      - "confirm_pressed"
     sketch: |
       EMERGENCY OVERRIDE ACCEPTED. 
       Alarms sound as the door unlocks. Security breach logged.
       You escape, but at what cost to the facility's security?
 
   - id: "access_denied"
-    when: "confirm was pressed without matching any other ending"
+    when: "access denied"
+    requires:
+      all_of:
+      - "confirm_pressed"
     sketch: |
       ACCESS DENIED. Insufficient credentials.
       The terminal screen flashes red and resets to the initial state.

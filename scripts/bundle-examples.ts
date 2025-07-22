@@ -2,6 +2,7 @@
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 'fs';
 import { resolve, join } from 'path';
 import { ImpressionistParser } from '../src/engine/impressionistParser';
+import { filenameToSlug } from '../src/utils/storySlug';
 
 interface ExampleStory {
   filename: string;
@@ -16,6 +17,7 @@ interface StoryMetadata {
   title: string;
   author: string;
   blurb: string;
+  slug: string;
 }
 
 /**
@@ -79,7 +81,8 @@ function bundleExampleStories() {
         filename: file,
         title,
         author,
-        blurb
+        blurb,
+        slug: filenameToSlug(file)
       });
       
       // Stories are already in public/stories - no need to copy
@@ -122,6 +125,7 @@ export interface StoryMetadata {
   title: string;
   author: string;
   blurb: string;
+  slug: string;
 }
 
 export interface BundledStory {
@@ -168,6 +172,23 @@ export function getStoryMetadata(): StoryMetadata[] {
 
 export function getStoryMetadataByFilename(filename: string): StoryMetadata | undefined {
   return STORY_METADATA.find(story => story.filename === filename);
+}
+
+export function getStoryMetadataBySlug(slug: string): StoryMetadata | undefined {
+  return STORY_METADATA.find(story => story.slug === slug);
+}
+
+export async function loadStoryBySlug(slug: string): Promise<BundledStory | undefined> {
+  const meta = getStoryMetadataBySlug(slug);
+  if (!meta) {
+    return undefined;
+  }
+  
+  const content = await loadStoryContent(meta.filename);
+  return {
+    ...meta,
+    content
+  };
 }
 
 // Legacy compatibility: bundled stories (for dev/testing)

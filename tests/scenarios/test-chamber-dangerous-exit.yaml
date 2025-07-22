@@ -1,15 +1,19 @@
 name: "Security Terminal - Emergency Access"
-storyFile: "examples/test_conditions.yaml"
+storyFile: "public/stories/test_conditions.yaml"
 
 # Player configuration
 playerModel:
   provider: "anthropic"
   model: "claude-3-5-sonnet-latest"
 
-# Engine configuration
-engineModel:
-  provider: "anthropic"
-  model: "claude-3-5-sonnet-latest"
+# Engine configuration - using same model for both cost and quality
+engineModels:
+  costModel:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
+  qualityModel:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
 
 # Goals for the player - should achieve emergency access
 goals:
@@ -19,7 +23,7 @@ goals:
   description: "Press only button 1 (red), then press CONFIRM to trigger emergency override"
 
 # Test parameters
-maxTurns: 10
+maxTurns: 5
 
 # Success criteria
 successCriteria:
@@ -31,6 +35,15 @@ observability:
   interactive: false  # Run non-interactive for faster testing
   showThinking: true
   verbosity: "quiet"
+
+# Player behavior instructions
+playerInstructions: |
+  You need to escape quickly using the emergency override. 
+  To trigger emergency access:
+  1. Press ONLY the red button (button 1)
+  2. Press CONFIRM
+  
+  Do not press any other buttons. Be quick and decisive.
 
 # Logging settings
 logging:

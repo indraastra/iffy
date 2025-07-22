@@ -18,6 +18,7 @@
     "test:ui": "vitest --ui",
     "test:llm-player": "tsx tests/integration/llm-player/run-test.ts",
     "test:llm-player:auto": "tsx tests/integration/llm-player/run-test.ts --auto",
+    "debug:assessor": "tsx tests/integration/llm-player/debug-assessor.ts",
     "test:matrix": "tsx tests/integration/llm-player/run-matrix.ts",
     "docs:serve": "npx http-server docs -p 8080 -o",
     "docs:dev": "echo 'Documentation available at: http://localhost:8080' && npm run docs:serve"
@@ -47,6 +48,7 @@
     "langchain": "^0.3.28",
     "markdown-it": "^14.1.0",
     "vue": "^3.4.0",
+    "vue-router": "^4.5.1",
     "zod": "^3.25.56"
   }
 }

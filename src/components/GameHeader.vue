@@ -4,6 +4,7 @@
     <div class="controls">
       <button @click="handleSave" class="btn">Save</button>
       <button @click="handleLoad" class="btn">Load</button>
+      <button @click="handleShare" class="btn" v-if="gameState.isLoaded">Share</button>
       <button @click="handleSettings" class="btn">Settings</button>
     </div>
   </header>
@@ -11,8 +12,10 @@
 
 <script setup lang="ts">
 import { useGameActions } from '@/composables/useGameActions'
+import { useGameEngine } from '@/composables/useGameEngine'
 
-const { saveGame, loadGame, showSettings } = useGameActions()
+const { saveGame, loadGame, showSettings, shareStory } = useGameActions()
+const { gameState } = useGameEngine()
 
 function handleSave() {
   saveGame()
@@ -20,6 +23,10 @@ function handleSave() {
 
 function handleLoad() {
   loadGame()
+}
+
+function handleShare() {
+  shareStory()
 }
 
 function handleSettings() {

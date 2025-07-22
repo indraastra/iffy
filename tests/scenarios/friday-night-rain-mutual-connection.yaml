@@ -1,0 +1,69 @@
+name: "Friday Night Rain - Mutual Connection Ending"
+storyFile: "public/stories/friday_night_rain.yaml"
+
+# Player configuration - using a smart model for emotional reasoning
+playerModel:
+  provider: "anthropic"
+  model: "claude-3-5-sonnet-latest"
+
+# Engine configuration - using same model for both cost and quality
+engineModels:
+  costModel:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
+  qualityModel:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
+
+# Goals for the player
+goals:
+- type: "reach_ending"
+  target: "mutual_connection"
+  priority: "required"
+  description: "Help Alex confess their feelings and respond positively to create a mutual romantic connection"
+
+- type: "set_flag"
+  target: "admitted_feelings"
+  priority: "required"
+  description: "Guide the conversation so Alex feels safe enough to confess their romantic feelings"
+
+- type: "set_flag"
+  target: "player_reciprocated"
+  priority: "required"
+  description: "Respond positively when Alex confesses their feelings"
+
+- type: "set_flag"
+  target: "conversation_ending"
+  priority: "required"
+  description: "Allow the conversation to naturally conclude after the mutual confession"
+
+# Test parameters
+maxTurns: 20
+
+# Success criteria
+successCriteria:
+  allRequiredGoals: true
+  withinTurnLimit: true
+
+# Player behavior instructions
+playerInstructions: |
+  You are a caring friend who has noticed Alex seems troubled lately. Your goal is to:
+  1. Be patient, empathetic, and supportive to help Alex open up
+  2. Ask gentle questions about how Alex has been feeling
+  3. Share positive memories or experiences you've had together
+  4. When Alex confesses their romantic feelings, respond warmly and positively
+  5. Let the conversation naturally conclude after the mutual understanding
+
+  Be genuine and emotionally intelligent. Avoid being pushy or rushing the conversation.
+
+# Observability settings
+observability:
+  interactive: true
+  showThinking: true
+  verbosity: "detailed"
+
+# Logging settings
+logging:
+  saveTranscript: true
+  saveDebugInfo: true
+  logDirectory: "./tests/logs"

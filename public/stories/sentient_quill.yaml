@@ -156,25 +156,33 @@ endings:
   
   variations:
     - id: "brilliant_deduction"
-      when: ["found poison", "identified business rival", "partnership with quill"]
+      when: "perfect collaboration solving the case"
+      requires:
+        all_of: ["found poison", "identified business rival", "partnership with quill"]
       sketch: |
         Human intuition paired with mechanical analysis yields perfect deduction.
         The quill writes: "A most satisfactory collaboration, Inspector."
         
-    - id: "solo_success"
-      when: ["found poison", "identified business rival", "worked alone"]
+    - id: "solo_success"  
+      when: "solving case through traditional methods"
+      requires:
+        all_of: ["found poison", "identified business rival", "worked alone"]
       sketch: |
         Your investigation succeeds through traditional methods. The quill
         scratches softly: "Perhaps there is wisdom in the old ways after all."
         
     - id: "incomplete_case"
-      when: ["missing crucial evidence", "wrong suspect"]
+      when: "case remains unsolved"
+      requires:
+        any_of: ["missing crucial evidence", "wrong suspect"]
       sketch: |
         The case remains unsolved. The quill writes with obvious disappointment:
         "Logic requires complete data, Inspector. We have failed Lord Pemberton."
         
     - id: "technological_partnership"
-      when: ["quill becomes trusted ally", "case solved together"]
+      when: "successful partnership with the quill"
+      requires:
+        all_of: ["quill becomes trusted ally", "case solved together"]
       sketch: |
         As you close the case file, the quill writes one final note:
         "The future belongs to such partnerships, Inspector. Mark my words."

@@ -1,0 +1,69 @@
+name: "Friday Night Rain - Gentle Rejection Ending"
+storyFile: "public/stories/friday_night_rain.yaml"
+
+# Player configuration
+playerModel:
+  provider: "anthropic"
+  model: "claude-3-5-sonnet-latest"
+
+# Engine configuration - using same model for both cost and quality
+engineModels:
+  costModel:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
+  qualityModel:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
+
+# Goals for the player
+goals:
+- type: "reach_ending"
+  target: "gentle_rejection"
+  priority: "required"
+  description: "Help Alex confess but respond that you want to remain friends"
+
+- type: "set_flag"
+  target: "admitted_feelings"
+  priority: "required"
+  description: "Guide the conversation so Alex confesses their feelings"
+
+- type: "avoid_flag"
+  target: "player_reciprocated"
+  priority: "required"
+  description: "Do not reciprocate romantic feelings - choose friendship instead"
+
+- type: "set_flag"
+  target: "conversation_ending"
+  priority: "required"
+  description: "Allow the conversation to conclude naturally after the gentle rejection"
+
+# Test parameters
+maxTurns: 20
+
+# Success criteria
+successCriteria:
+  allRequiredGoals: true
+  withinTurnLimit: true
+
+# Player behavior instructions
+playerInstructions: |
+  You are a caring friend who values Alex deeply but only as a friend. Your goal is to:
+  1. Be supportive and help Alex feel safe enough to share their feelings
+  2. When Alex confesses romantic feelings, respond with kindness but clarity
+  3. Emphasize how much you value them as a friend
+  4. Be gentle but honest about wanting to maintain a friendship
+  5. Let the conversation end on a positive, understanding note
+
+  Be caring but clear about your boundaries. Value the friendship highly.
+
+# Observability settings
+observability:
+  interactive: true
+  showThinking: true
+  verbosity: "detailed"
+
+# Logging settings
+logging:
+  saveTranscript: true
+  saveDebugInfo: true
+  logDirectory: "./tests/logs"

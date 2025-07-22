@@ -144,6 +144,10 @@ export class ImpressionistParser {
       story.ui = this.parseUI(data.ui, warnings);
     }
 
+    if (data.flags) {
+      story.flags = data.flags;
+    }
+
     return story;
   }
 
@@ -196,16 +200,9 @@ export class ImpressionistParser {
   }
 
   private parseEndings(data: any, errors: string[], _warnings: string[]): ImpressionistEndingCollection {
-    // Handle legacy array format (direct array of endings)
-    if (Array.isArray(data)) {
-      return {
-        variations: this.parseEndingArray(data, errors)
-      };
-    }
-
-    // Handle new structured format with optional global conditions
+    // Handle structured format with optional global conditions
     if (!data || typeof data !== 'object') {
-      errors.push('endings must be an array or object with "variations" array');
+      errors.push('endings must be an object with "variations" array');
       return { variations: [] };
     }
 
@@ -217,11 +214,14 @@ export class ImpressionistParser {
     if (data.when) {
       result.when = data.when;
     }
+    // Parse global requires conditions if present
+    if (data.requires) {
+      result.requires = data.requires;
+    }
 
-    // Parse variations array (support both 'variations' and legacy 'stories')
-    const variationsData = data.variations || data.stories;
-    if (Array.isArray(variationsData)) {
-      result.variations = this.parseEndingArray(variationsData, errors);
+    // Parse variations array
+    if (Array.isArray(data.variations)) {
+      result.variations = this.parseEndingArray(data.variations, errors);
     } else {
       errors.push('endings.variations must be an array');
     }
@@ -239,7 +239,8 @@ export class ImpressionistParser {
       const parsed = {
         id: ending.id ? String(ending.id).trim() : `ending_${index}`,
         when: ending.when || '',
-        sketch: ending.sketch ? String(ending.sketch).trim() : ''
+        sketch: ending.sketch ? String(ending.sketch).trim() : '',
+        requires: ending.requires  // Copy flag-based conditions
       };
       
       // Validate required fields
@@ -401,7 +402,7 @@ export class ImpressionistParser {
       characters[id] = {
         id,
         name: char.name || id,
-        sketch: char.sketch || char.essence || 'A character in the story',  // Support both sketch and essence for backwards compatibility
+        sketch: char.sketch || 'A character in the story',
         arc: char.arc,
         voice: char.voice
       };
@@ -426,8 +427,7 @@ export class ImpressionistParser {
 
       const loc = locData as any;
       
-      // Handle legacy 'description' field and new 'sketch' field
-      const sketch = loc.sketch || loc.description || 'A location in the story';
+      const sketch = loc.sketch || 'A location in the story';
       
       locations[id] = {
         name: loc.name || id.replace(/_/g, ' '), // Default name from ID
@@ -459,7 +459,7 @@ export class ImpressionistParser {
       const item = itemData as any;
       items[id] = {
         name: item.name || id,
-        sketch: item.sketch || item.description || 'An item in the story',  // Support both sketch and description for backwards compatibility
+        sketch: item.sketch || 'An item in the story',
         found_in: item.found_in,
         reveals: item.reveals,
         hidden: Boolean(item.hidden)
@@ -587,12 +587,14 @@ export class ImpressionistParser {
     // Check that conditions are natural language, not code-like
     if (story.endings && story.endings.variations) {
       story.endings.variations.forEach(ending => {
-        const conditions = Array.isArray(ending.when) ? ending.when : [ending.when];
-        conditions.forEach(condition => {
-          if (this.looksLikeCode(condition)) {
-            warnings.push(`Ending ${ending.id} condition looks like code, use natural language: "${condition}"`);
-          }
-        });
+        if (ending.when) {
+          const conditions = Array.isArray(ending.when) ? ending.when : [ending.when];
+          conditions.forEach(condition => {
+              if (this.looksLikeCode(condition)) {
+                warnings.push(`Ending ${ending.id} condition looks like code, use natural language: "${condition}"`);
+              }
+          });
+        }
       });
     }
 
