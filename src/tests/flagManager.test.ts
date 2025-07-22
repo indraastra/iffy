@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach } from 'vitest';
 import { FlagManager } from '../engine/FlagManager';
 import { ImpressionistStory } from '../types/impressionistStory';
 
