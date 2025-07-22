@@ -398,18 +398,9 @@ ${instructions}
   /**
    * Check if current flag state triggers any transitions
    */
-  private checkTransitions(context: DirectorContext): { targetScene: string; content: string } | undefined {
-    if (!context.currentTransitions || !this.flagManager) return undefined;
-
-    for (const [sceneId, transitionData] of Object.entries(context.currentTransitions)) {
-      if (transitionData.condition && this.flagManager.checkConditions(transitionData.condition)) {
-        return {
-          targetScene: sceneId,
-          content: transitionData.sketch || `Transition to ${sceneId}`
-        };
-      }
-    }
-
+  private checkTransitions(_context: DirectorContext): { targetScene: string; content: string } | undefined {
+    // Scene transitions are now handled by the LLM using flag system context
+    // rather than automatic transitions based on conditions
     return undefined;
   }
 

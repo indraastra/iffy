@@ -52,6 +52,7 @@ export interface FlagTrigger {
 export interface StructuredFlag {
   default: any  // Default value (boolean, string, number, etc.)
   description: string  // When/if condition for LLM guidance
+  requires?: FlagCondition  // Optional flag conditions for this flag to be settable
 }
 
 // Ending collection with optional global conditions

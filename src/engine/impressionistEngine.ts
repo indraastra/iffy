@@ -433,15 +433,6 @@ export class ImpressionistEngine {
   }
 
 
-  /**
-   * Check if a signal value is valid (not null, 'null', 'none', or empty)
-   */
-  private isValidSignal(signal: string | undefined | null): signal is string {
-    return signal != null && 
-           signal !== 'null' && 
-           signal !== 'none' && 
-           signal.trim() !== '';
-  }
 
   /**
    * Apply signals from LLM Director response (simplified to discovery and error only)
@@ -458,52 +449,8 @@ export class ImpressionistEngine {
     // No need to process them here
   }
 
-  /**
-   * Transition to a new scene
-   */
-  private transitionToScene(sceneId: string) {
-    if (!this.story) return;
-
-    const targetScene = this.story.scenes[sceneId];
-    if (targetScene) {
-      console.log(`Scene transition: ${this.gameState.currentScene} -> ${sceneId}`);
-      
-      // Track location changes for smart context
-      const currentScene = this.story.scenes[this.gameState.currentScene];
-      if (currentScene?.location !== targetScene.location) {
-        this.previousLocation = currentScene?.location;
-      }
-      
-      this.gameState.currentScene = sceneId;
-      
-      // Update location flags automatically
-      if (targetScene.location) {
-        this.director.setLocationFlag(targetScene.location);
-      }
-    } else {
-      console.warn(`Scene transition failed: scene ${sceneId} not found`);
-    }
-  }
 
 
-  /**
-   * Trigger a story ending without calling the callback (for deferred ending handling)
-   */
-  private triggerEnding(endingId: string) {
-    if (!this.story) return;
-
-    const ending = this.story.endings.variations.find(e => e.id === endingId);
-    if (ending) {
-      console.log(`Story ending triggered: ${endingId}`);
-      this.gameState.isEnded = true;
-      this.gameState.endingId = endingId;
-    } else {
-      // Handle impromptu/unexpected ending - LLM decided to end the story
-      console.log(`Impromptu ending triggered: ${endingId}`);
-      this.gameState.isEnded = true;
-      this.gameState.endingId = endingId;
-    }
-  }
 
   /**
    * Handle item discovery
