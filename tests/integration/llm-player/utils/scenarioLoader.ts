@@ -12,13 +12,17 @@ export async function loadScenario(filePath: string): Promise<TestScenario> {
     name: data.name || 'Unnamed Test',
     storyFile: data.storyFile,
     playerModel: data.playerModel ? enrichModelConfigWithApiKey(data.playerModel) : undefined,
-    engineModel: data.engineModel ? enrichModelConfigWithApiKey(data.engineModel) : undefined,
+    engineModels: data.engineModels ? {
+      costModel: data.engineModels.costModel ? enrichModelConfigWithApiKey(data.engineModels.costModel) : undefined,
+      qualityModel: data.engineModels.qualityModel ? enrichModelConfigWithApiKey(data.engineModels.qualityModel) : undefined
+    } : undefined,
     goals: data.goals || [],
     maxTurns: data.maxTurns,
     successCriteria: data.successCriteria || {
       allRequiredGoals: true,
       withinTurnLimit: true
     },
+    playerInstructions: data.playerInstructions,
     observability: data.observability,
     logging: data.logging
   };

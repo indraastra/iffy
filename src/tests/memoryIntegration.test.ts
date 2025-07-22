@@ -193,7 +193,7 @@ describe('Memory Integration', () => {
             narrativeParts: ['You find yourself in a new area.'],
             memories: ['Player entered new area'],
             importance: 7,
-            signals: { scene: 'next' }
+            signals: { discover: 'key' } // Changed to use discover signal instead of scene
           },
           usage: { input_tokens: 120, output_tokens: 60, total_tokens: 180 }
         })

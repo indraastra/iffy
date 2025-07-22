@@ -16,13 +16,17 @@ async function main() {
   const args = process.argv.slice(2);
   
   if (args.length === 0) {
-    console.log('Usage: npm run test:llm-player [--auto] <scenario-file>');
+    console.log('Usage: npm run test:llm-player <scenario-file>');
+    console.log('       npm run test:llm-player:auto <scenario-file>');
+    console.log('       npx tsx tests/integration/llm-player/run-test.ts --auto <scenario-file>');
+    console.log('');
     console.log('Options:');
     console.log('  --auto    Run in non-interactive mode (full auto)');
     console.log('');
     console.log('Examples:');
     console.log('  npm run test:llm-player tests/scenarios/friday-night-rain-connection.yaml');
-    console.log('  npm run test:llm-player --auto tests/scenarios/test-chamber-perfect-exit.yaml');
+    console.log('  npm run test:llm-player:auto tests/scenarios/friday-night-rain-connection.yaml');
+    console.log('  npx tsx tests/integration/llm-player/run-test.ts --auto tests/scenarios/friday-night-rain-connection.yaml');
     process.exit(1);
   }
 
@@ -71,6 +75,11 @@ async function main() {
     // Override interactive mode if --auto flag is used
     if (autoMode) {
       console.log('🤖 Running in auto mode (non-interactive)');
+      // Override scenario observability settings for auto mode
+      scenario.observability = {
+        ...scenario.observability,
+        interactive: false
+      };
     }
     
     // Create log directory with timestamp
@@ -101,8 +110,8 @@ async function main() {
     const runner = new TestRunner({
       scenario,
       observer,
-      autoMode, // Pass the auto mode flag directly
-      logger
+      logger,
+      autoMode
     });
 
     console.log(`🎮 Starting test: ${scenario.name}`);

@@ -1,12 +1,13 @@
 import { ref } from 'vue'
 import { useGameEngine } from '@/composables/useGameEngine'
-import { STORY_METADATA, loadStory as loadDynamicStory, BUNDLED_STORIES } from '@/examples-metadata'
+import { STORY_METADATA, getStoryMetadataByFilename } from '@/examples-metadata'
+import { getStoryUrl } from '@/utils/storySlug'
 
 const showSettingsModal = ref(false)
 const showLoadModal = ref(false)
 
 export function useGameActions() {
-  const { loadStory, processInitialScene, engine, addMessage } = useGameEngine()
+  const { engine, addMessage, navigateToStory, gameState } = useGameEngine()
 
   function saveGame() {
     try {
@@ -58,33 +59,9 @@ export function useGameActions() {
       if (storyIndex >= 0 && storyIndex < STORY_METADATA.length) {
         const metadata = STORY_METADATA[storyIndex]
         
-        try {
-          // Try dynamic loading first (production)
-          const story = await loadDynamicStory(metadata.filename)
-          if (story) {
-            const result = await loadStory(story.content, story.filename)
-            showLoadModal.value = false // Close modal immediately after story loads
-            if (result.success) {
-              await processInitialScene() // Always process initial scene (handles both LLM and verbatim)
-            }
-            return
-          }
-        } catch (error) {
-          console.warn('Dynamic loading failed, falling back to bundled stories:', error)
-        }
-        
-        // Fallback to bundled stories (development)
-        if (BUNDLED_STORIES.length > 0 && storyIndex < BUNDLED_STORIES.length) {
-          const story = BUNDLED_STORIES[storyIndex]
-          const result = await loadStory(story.content, story.filename)
-          showLoadModal.value = false // Close modal immediately after story loads
-          if (result.success) {
-            await processInitialScene() // Always process initial scene (handles both LLM and verbatim)
-          }
-        } else {
-          console.error(`Story not available: ${metadata.filename}`)
-          showLoadModal.value = false
-        }
+        // Close modal and navigate to story URL
+        showLoadModal.value = false
+        navigateToStory(metadata.slug)
       } else {
         console.error('Invalid story index:', storyIndex)
         showLoadModal.value = false
@@ -107,12 +84,62 @@ export function useGameActions() {
     showLoadModal.value = false
   }
 
+  async function shareStory() {
+    try {
+      const currentStory = gameState.currentStory
+      if (!currentStory) {
+        addMessage('No story loaded to share.', 'error')
+        return
+      }
+
+      // Find the story metadata to get the slug
+      const metadata = getStoryMetadataByFilename(currentStory.title.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase() + '.yaml')
+      if (!metadata) {
+        // Fallback: try to find by filename if we have it
+        // For now, just create a slug from the title
+        const fallbackSlug = currentStory.title.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+        const storyUrl = `${window.location.origin}${getStoryUrl(fallbackSlug)}`
+        
+        if (navigator.share) {
+          await navigator.share({
+            title: `${currentStory.title} - Iffy Interactive Fiction`,
+            text: currentStory.blurb || `Play "${currentStory.title}" on Iffy`,
+            url: storyUrl
+          })
+        } else {
+          await navigator.clipboard.writeText(storyUrl)
+          addMessage('Story URL copied to clipboard!', 'system')
+        }
+        return
+      }
+
+      const storyUrl = `${window.location.origin}${getStoryUrl(metadata.slug)}`
+      
+      if (navigator.share) {
+        await navigator.share({
+          title: `${currentStory.title} - Iffy Interactive Fiction`,
+          text: currentStory.blurb || `Play "${currentStory.title}" on Iffy`,
+          url: storyUrl
+        })
+      } else {
+        await navigator.clipboard.writeText(storyUrl)
+        addMessage('Story URL copied to clipboard!', 'system')
+      }
+    } catch (error) {
+      console.error('Error sharing story:', error)
+      if (error instanceof Error && error.name !== 'AbortError') {
+        addMessage('Failed to share story. Please try again.', 'error')
+      }
+    }
+  }
+
   return {
     saveGame,
     loadGame,
     loadSelectedStory,
     showSettings,
     hideSettings,
+    shareStory,
     showSettingsModal,
     showLoadModal,
     hideLoadModal,

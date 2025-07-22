@@ -99,6 +99,11 @@ npm run test:llm-player tests/scenarios/[scenario-file]
 npm run test:llm-player:auto tests/scenarios/[scenario-file]
 ```
 
+**Alternative auto mode syntax:**
+```bash
+npx tsx tests/integration/llm-player/run-test.ts --auto tests/scenarios/[scenario-file]
+```
+
 **Available scenarios:**
 - `tests/scenarios/friday-night-rain-connection.yaml` - Romance story connection ending
 - `tests/scenarios/friday-night-rain-missed-chance.yaml` - Romance story missed chance ending  

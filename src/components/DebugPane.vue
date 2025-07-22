@@ -87,8 +87,8 @@
             </div>
           </div>
           
-          <!-- Memory Tab -->
-          <div v-if="currentTab === 'memory'" class="tab-panel">
+          <!-- State Tab -->
+          <div v-if="currentTab === 'state'" class="tab-panel">
             <div v-if="memoryWarnings.length > 0" class="warning-box">
               <h4>⚠️ Memory System Warnings</h4>
               <ul>
@@ -96,6 +96,21 @@
               </ul>
             </div>
             
+            <!-- Flag State Section -->
+            <div v-if="Object.keys(currentFlags).length > 0" class="stats-card">
+              <h4>🏁 Current Flag States</h4>
+              <p class="subtitle">{{ Object.keys(currentFlags).length }} flags tracked</p>
+              <div class="flag-list">
+                <div v-for="[flagId, isSet] in Object.entries(currentFlags)" :key="flagId" class="flag-item">
+                  <span class="flag-name">{{ flagId }}</span>
+                  <span :class="['flag-status', isSet ? 'flag-set' : 'flag-unset']">
+                    {{ isSet ? '✅ SET' : '❌ UNSET' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Memory State Section -->
             <div v-if="currentMemories.length > 0" class="stats-card">
               <h4>🧠 Current Memory Contents</h4>
               <p class="subtitle">{{ currentMemories.length }} memories stored</p>
@@ -107,8 +122,9 @@
                 </div>
               </div>
             </div>
-            <div v-else class="empty-state">
-              <p>No memories stored yet. Memory contents will appear here once interactions begin.</p>
+            
+            <div v-if="Object.keys(currentFlags).length === 0 && currentMemories.length === 0" class="empty-state">
+              <p>No flags or memories stored yet. State information will appear here once interactions begin.</p>
             </div>
           </div>
           
@@ -232,11 +248,12 @@ const langchainMetrics = ref<LangChainMetrics[]>([])
 const maxMetrics = 50
 const memoryManager = ref<any>(null)
 const toolMessages = ref<string[]>([])
+const currentFlags = ref<Record<string, boolean>>({})
 
 // Tabs configuration
 const tabs = [
   { id: 'api', name: 'Usage', icon: '📊' },
-  { id: 'memory', name: 'Memory', icon: '🧠' },
+  { id: 'state', name: 'State', icon: '🧠' },
   { id: 'llm', name: 'Logs', icon: '🤖' },
   { id: 'tools', name: 'Tools', icon: '🛠️' }
 ]
@@ -372,6 +389,11 @@ function addToolMessage(message: string) {
   }
 }
 
+function updateFlagStates(flags: Record<string, boolean>) {
+  console.log('🐛 DebugPane.updateFlagStates called with:', flags)
+  currentFlags.value = { ...flags }
+}
+
 function forceMemoryCompaction() {
   if (memoryManager.value) {
     try {
@@ -428,6 +450,13 @@ function clearAllData() {
   }
 }
 
+// General purpose logging method
+function log(message: string) {
+  console.log('🐛 DebugPane.log called with:', message)
+  // For now, add to tool messages as a simple log
+  addToolMessage(message)
+}
+
 // Expose methods for external use
 defineExpose({
   toggle,
@@ -436,9 +465,11 @@ defineExpose({
   updateSessionStats,
   updateMemoryStats,
   updateMemoryContents,
+  updateFlagStates,
   logLlmCall,
   addLangChainMetric,
-  setMemoryManager
+  setMemoryManager,
+  log
 })
 </script>
 
@@ -477,6 +508,7 @@ defineExpose({
   background: var(--color-primary);
   color: var(--interface-button-text);
   border-bottom: 1px solid var(--interface-panel-border);
+  border-radius: 12px 12px 0 0; /* Match container's top border radius */
 }
 
 .debug-pane-header h3 {
@@ -514,7 +546,11 @@ defineExpose({
   cursor: pointer;
   padding: 0.5rem 1rem;
   border-radius: 4px;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s; /* Only transition properties that won't affect layout */
+  min-height: 2.5rem; /* Ensure consistent height */
+  display: flex;
+  align-items: center;
+  box-sizing: border-box; /* Include padding and border in height calculation */
 }
 
 .debug-tab:hover {
@@ -641,6 +677,46 @@ defineExpose({
 .memory-content {
   flex: 1;
   color: var(--color-text-primary);
+}
+
+.flag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.flag-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+
+.flag-name {
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.flag-status {
+  font-size: 0.85rem;
+  font-weight: bold;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  border: 1px solid;
+}
+
+.flag-set {
+  color: #4caf50;
+  background: rgba(76, 175, 80, 0.1);
+  border-color: rgba(76, 175, 80, 0.3);
+}
+
+.flag-unset {
+  color: #f44336;
+  background: rgba(244, 67, 54, 0.1);
+  border-color: rgba(244, 67, 54, 0.3);
 }
 
 .interactions-list {

@@ -1,7 +1,10 @@
-import { ref, reactive, computed, shallowRef, nextTick } from 'vue'
+import { ref, reactive, computed, shallowRef, nextTick, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ImpressionistEngine } from '@/engine/impressionistEngine'
 import { ImpressionistParser } from '@/engine/impressionistParser'
 import { MultiModelService } from '@/services/multiModelService'
+import { loadStoryBySlug } from '@/examples-metadata'
+import { getStoryUrl } from '@/utils/storySlug'
 import type { ImpressionistStory } from '@/types/impressionistStory'
 
 interface GameState {
@@ -73,6 +76,8 @@ export function registerDebugPane(debugPaneInstance: any) {
 
 export function useGameEngine() {
   const currentInput = ref('')
+  const router = useRouter()
+  const route = useRoute()
 
   const isReady = computed(() => {
     return gameState.isLoaded && !gameState.isProcessing
@@ -289,6 +294,56 @@ export function useGameEngine() {
     addMessage(`🚀 **Get Started:** Click the "Load" button to choose a story, or press Ctrl+D to open debug tools.`, 'system')
   }
 
+  // URL-aware story loading functions
+  async function loadStoryFromUrl() {
+    const storySlug = route.params.storySlug as string
+    if (!storySlug) return { success: true } // No story to load from URL
+    
+    try {
+      const story = await loadStoryBySlug(storySlug)
+      if (!story) {
+        // Handle in router beforeEnter guard
+        return { success: false, error: `Story not found: ${storySlug}` }
+      }
+      
+      const result = await loadStory(story.content, story.filename)
+      if (result.success) {
+        await processInitialScene()
+      }
+      return result
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      }
+    }
+  }
+
+  function navigateToStory(slug: string) {
+    router.push(getStoryUrl(slug))
+  }
+
+  function navigateToHome() {
+    router.push('/')
+  }
+
+  // Watch for route changes to load stories from URLs
+  watch(
+    () => route.params.storySlug,
+    async (newSlug, oldSlug) => {
+      // Only load if we're on a story route and the slug actually changed
+      if (route.name === 'story' && newSlug && newSlug !== oldSlug) {
+        try {
+          await loadStoryFromUrl()
+        } catch (error) {
+          console.error('Error loading story from URL:', error)
+          addMessage(`Error loading story: ${error}`, 'error')
+        }
+      }
+    },
+    { immediate: true } // Run immediately for the initial route
+  )
+
   // Computed property for story ended state
   const isStoryEnded = computed(() => {
     return gameState.currentStory && gameState.isEnded
@@ -309,6 +364,9 @@ export function useGameEngine() {
     processCommand,
     addMessage,
     clearMessages,
-    restoreGameFromSave
+    restoreGameFromSave,
+    loadStoryFromUrl,
+    navigateToStory,
+    navigateToHome
   }
 }

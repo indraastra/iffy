@@ -9,6 +9,7 @@ export interface StoryMetadata {
   title: string;
   author: string;
   blurb: string;
+  slug: string;
 }
 
 export interface BundledStory {
@@ -24,67 +25,78 @@ export const STORY_METADATA: StoryMetadata[] = [
     "filename": "away_message.yaml",
     "title": "Away Message",
     "author": "Iffy Collective",
-    "blurb": "One last Thursday night chat before the real world begins."
+    "blurb": "One last Thursday night chat before the real world begins.",
+    "slug": "away-message"
   },
   {
     "filename": "corridor_of_mirrors.yaml",
     "title": "The Corridor of Mirrors",
     "author": "Iffy Collective",
-    "blurb": "Navigate five rooms where reality bends through different narrative lenses."
+    "blurb": "Navigate five rooms where reality bends through different narrative lenses.",
+    "slug": "corridor-of-mirrors"
   },
   {
     "filename": "friday_night_rain.yaml",
     "title": "Friday Night Rain",
     "author": "Iffy Collective",
-    "blurb": "The space between words grows heavier with each passing Friday."
+    "blurb": "The space between words grows heavier with each passing Friday.",
+    "slug": "friday-night-rain"
   },
   {
     "filename": "friday_night_rain_reflected.yaml",
     "title": "Friday Night Rain (Reflected)",
     "author": "Iffy Collective",
-    "blurb": "Some words weigh too much to speak, even to those who wait patiently to hear them."
+    "blurb": "Some words weigh too much to speak, even to those who wait patiently to hear them.",
+    "slug": "friday-night-rain-reflected"
   },
   {
     "filename": "restaurant_catastrophe.yaml",
     "title": "The Great Sandwich Catastrophe",
     "author": "Iffy Collective",
-    "blurb": "Jennifer's EPIC SANDWICH MASTERY faces its most DEVASTATING professional challenge!"
+    "blurb": "Jennifer's EPIC SANDWICH MASTERY faces its most DEVASTATING professional challenge!",
+    "slug": "restaurant-catastrophe"
   },
   {
     "filename": "sandwich_crisis.yaml",
     "title": "The Great Sandwich Crisis",
     "author": "Iffy Collective",
-    "blurb": "Experience the EPIC DRAMA of making lunch - will you survive the kitchen?"
+    "blurb": "Experience the EPIC DRAMA of making lunch - will you survive the kitchen?",
+    "slug": "sandwich-crisis"
   },
   {
     "filename": "sentient_quill.yaml",
     "title": "The Peculiar Case of the Sentient Quill",
     "author": "Iffy Collective",
-    "blurb": "Solve a murder in gaslit London with an impossible AI companion."
+    "blurb": "Solve a murder in gaslit London with an impossible AI companion.",
+    "slug": "sentient-quill"
   },
   {
     "filename": "test_conditions.yaml",
     "title": "Security Access Terminal",
     "author": "Iffy Collective",
-    "blurb": "A test story designed to verify ending condition enforcement using a password system."
+    "blurb": "A test story designed to verify ending condition enforcement using a password system.",
+    "slug": "test-conditions"
   },
   {
     "filename": "the_final_word_v2.yaml",
     "title": "The Final Word v2",
     "author": "Iffy Collective",
-    "blurb": "Run an underground bookstore where literature lives dangerously"
+    "blurb": "Run an underground bookstore where literature lives dangerously",
+    "slug": "the-final-word-v2"
   },
   {
     "filename": "the_key.yaml",
     "title": "The Key",
     "author": "Iffy Collective",
-    "blurb": "A simple puzzle about getting through a locked door."
+    "blurb": "A simple puzzle about getting through a locked door.",
+    "slug": "the-key"
   },
   {
     "filename": "winter_light.yaml",
     "title": "Winter Light",
     "author": "Iffy Collective",
-    "blurb": "A chess prodigy confronts the silence between moves in post-war Germany"
+    "blurb": "A chess prodigy confronts the silence between moves in post-war Germany",
+    "slug": "winter-light"
   }
 ];
 
@@ -122,6 +134,23 @@ export function getStoryMetadata(): StoryMetadata[] {
 
 export function getStoryMetadataByFilename(filename: string): StoryMetadata | undefined {
   return STORY_METADATA.find(story => story.filename === filename);
+}
+
+export function getStoryMetadataBySlug(slug: string): StoryMetadata | undefined {
+  return STORY_METADATA.find(story => story.slug === slug);
+}
+
+export async function loadStoryBySlug(slug: string): Promise<BundledStory | undefined> {
+  const meta = getStoryMetadataBySlug(slug);
+  if (!meta) {
+    return undefined;
+  }
+  
+  const content = await loadStoryContent(meta.filename);
+  return {
+    ...meta,
+    content
+  };
 }
 
 // Legacy compatibility: bundled stories (for dev/testing)

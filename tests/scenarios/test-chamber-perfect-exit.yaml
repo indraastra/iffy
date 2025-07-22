@@ -1,15 +1,19 @@
 name: "Security Terminal - Perfect Access"
-storyFile: "examples/test_conditions.yaml"
+storyFile: "public/stories/test_conditions.yaml"
 
 # Player configuration - using a smart model for logical reasoning
 playerModel:
   provider: "anthropic"
   model: "claude-3-5-sonnet-latest"
 
-# Engine configuration - using same model for consistency
-engineModel:
-  provider: "anthropic"
-  model: "claude-3-5-sonnet-latest"
+# Engine configuration - using same model for both cost and quality
+engineModels:
+  costModel:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
+  qualityModel:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
 
 # Goals for the player
 goals:
@@ -19,7 +23,7 @@ goals:
   description: "Press all three buttons (1, 2, 3) and then press CONFIRM to gain full access"
 
 # Test parameters
-maxTurns: 15
+maxTurns: 6
 
 # Success criteria
 successCriteria:
@@ -31,6 +35,16 @@ observability:
   interactive: true
   showThinking: true
   verbosity: "quiet"
+
+# Player behavior instructions
+playerInstructions: |
+  You are testing a security system. Your goal is to gain full access by:
+  1. Press button 1 (red button)
+  2. Press button 2 (blue button)
+  3. Press button 3 (green button)
+  4. Press CONFIRM button
+  
+  Be systematic and clear in your actions. Press each button in order.
 
 # Logging settings
 logging:

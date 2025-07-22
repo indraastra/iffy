@@ -20,7 +20,7 @@ export interface ImpressionistStory {
   guidance: string  // LLM behavior hints
   
   // Flag system for state management
-  flags?: Record<string, any>  // Story flags and behavior patterns
+  flags?: Record<string, StructuredFlag>  // Story flags with descriptions for LLM guidance
   
   // Optional enrichments
   narrative?: NarrativeMetadata
@@ -46,6 +46,12 @@ export interface FlagTrigger {
   pattern: string  // Natural language pattern to match
   set: string  // Flag to set when pattern matches
   requires?: string  // Prerequisite flag condition
+}
+
+// Structured flag definition for LLM guidance generation
+export interface StructuredFlag {
+  default: any  // Default value (boolean, string, number, etc.)
+  description: string  // When/if condition for LLM guidance
 }
 
 // Ending collection with optional global conditions
@@ -169,12 +175,20 @@ export interface DirectorContext {
   endingId?: string       // ID of the ending that was triggered
 }
 
+// Flag changes for action classification and narrative generation
+export interface FlagChanges {
+  set: string[];
+  unset: string[];
+}
+
 // LLM response with clear signals
 export interface DirectorResponse {
   narrative: string | string[]  // The actual response text (string for compatibility, string[] for new format)
   signals?: DirectorSignals  // Optional engine commands
   importance?: number  // 1-10 scale for interaction importance (optional, LLM-assigned)
   memories?: string[]  // Specific memories to store from this interaction
+  predictedFlags?: FlagChanges  // Flags predicted by action classifier
+  actualFlags?: FlagChanges     // Flags actually set by narrative generation
 }
 
 export interface DirectorSignals {

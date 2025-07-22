@@ -24,9 +24,10 @@ scenes:
     sketch: "The beginning."
 
 endings:
-  - id: "end"
-    when: "story ends"
-    sketch: "The end."
+  variations:
+    - id: "end"
+      when: "story ends"
+      sketch: "The end."
 
 guidance: "Test guidance."
       `;
@@ -84,9 +85,10 @@ scenes:
       end: "when ready"
 
 endings:
-  - id: "end"
-    when: "story ends"
-    sketch: "The end."
+  variations:
+    - id: "end"
+      when: "story ends"
+      sketch: "The end."
 
 guidance: "Test guidance."
       `;
@@ -108,7 +110,8 @@ guidance: "Test guidance."
 title: "Test Story"
 # Missing author, blurb, version, context, guidance
 scenes: {}
-endings: []
+endings:
+  variations: []
       `;
 
       const parseResult = parser.parseFromYaml(yamlContent);
@@ -139,9 +142,10 @@ scenes:
       end: "has_item:key"
 
 endings:
-  - id: "end"
-    when: "flag:won == true"
-    sketch: "The end."
+  variations:
+    - id: "end"
+      when: "flag:won == true"
+      sketch: "The end."
 
 guidance: "Test guidance."
       `;
@@ -285,9 +289,10 @@ scenes:
     sketch: "The beginning."
 
 endings:
-  - id: "end"
-    when: "story ends"
-    sketch: "The end."
+  variations:
+    - id: "end"
+      when: "story ends"
+      sketch: "The end."
 
 guidance: "Test guidance"
 `;
@@ -316,9 +321,10 @@ scenes:
     sketch: "The beginning."
 
 endings:
-  - id: "end"
-    when: "story ends"
-    sketch: "The end."
+  variations:
+    - id: "end"
+      when: "story ends"
+      sketch: "The end."
 
 guidance: "Test guidance"
 `;
@@ -344,9 +350,10 @@ scenes:
     sketch: "The beginning."
 
 endings:
-  - id: "end"
-    when: "story ends"
-    sketch: "The end."
+  variations:
+    - id: "end"
+      when: "story ends"
+      sketch: "The end."
 
 guidance: "Test guidance"
 `;
@@ -372,9 +379,10 @@ scenes:
     sketch: "The beginning."
 
 endings:
-  - id: "end"
-    when: "story ends"
-    sketch: "The end."
+  variations:
+    - id: "end"
+      when: "story ends"
+      sketch: "The end."
 
 guidance: "Test guidance"
 `;

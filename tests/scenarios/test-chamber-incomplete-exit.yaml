@@ -1,15 +1,19 @@
 name: "Security Terminal - Access Denied"
-storyFile: "examples/test_conditions.yaml"
+storyFile: "public/stories/test_conditions.yaml"
 
 # Player configuration
 playerModel:
   provider: "anthropic"
   model: "claude-3-5-sonnet-latest"
 
-# Engine configuration
-engineModel:
-  provider: "anthropic"
-  model: "claude-3-5-sonnet-latest"
+# Engine configuration - using same model for both cost and quality
+engineModels:
+  costModel:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
+  qualityModel:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
 
 # Goals for the player - this should result in access denied
 goals:
@@ -19,7 +23,7 @@ goals:
   description: "Press some buttons but not the correct sequence (avoiding both perfect and emergency cases), then press CONFIRM (access should be denied)"
 
 # Test parameters
-maxTurns: 10
+maxTurns: 5
 
 # Success criteria
 successCriteria:
@@ -31,6 +35,16 @@ observability:
   interactive: false  # Run non-interactive for faster testing
   showThinking: true
   verbosity: "quiet"
+
+# Player behavior instructions
+playerInstructions: |
+  You are trying to access the system but don't know the correct code. 
+  To get access denied:
+  1. Press button 2 (blue button)
+  2. Press button 3 (green button)
+  3. Press CONFIRM
+  
+  This incomplete sequence should result in access being denied.
 
 # Logging settings
 logging:

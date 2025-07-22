@@ -1,13 +1,12 @@
 <template>
   <div id="app" :class="themeClass">
-    <GameLayout />
+    <router-view />
     <DebugPane ref="debugPaneRef" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, nextTick } from 'vue'
-import GameLayout from '@/components/GameLayout.vue'
 import DebugPane from '@/components/DebugPane.vue'
 import { useTheme } from '@/composables/useTheme'
 import { useGameEngine, registerDebugPane } from '@/composables/useGameEngine'

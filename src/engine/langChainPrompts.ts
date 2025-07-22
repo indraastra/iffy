@@ -5,31 +5,45 @@
  */
 
 import { DirectorContext } from '@/types/impressionistStory';
+import type { FlagManager } from './FlagManager';
 
 export class LangChainPrompts {
 
   /**
-   * Build context preamble with current flags
+   * Build context preamble with FlagManager (preferred method)
+   * Organized for optimal prefix caching: static content first, dynamic content last
    */
-  static buildContextWithFlags(context: DirectorContext, currentFlags: Record<string, any>): string {
-    let prompt = this.buildActionContextPreamble(context);
+  static buildContextWithFlagManager(context: DirectorContext, flagManager: FlagManager): string {
+    // Start with static preamble (cacheable)
+    const progressionGuidance = flagManager.generateFlagProgressionGuidance();
+    let prompt = this.buildActionContextPreamble(context, progressionGuidance);
     
-    // Add current flag state
-    if (currentFlags && Object.keys(currentFlags).length > 0) {
-      const flagList = Object.entries(currentFlags)
-        .map(([key, value]) => `  * ${key}: ${value}`)
-        .join('\n');
-      prompt += `**CURRENT STORY FLAGS:**\n${flagList}\n\n`;
-    }
+    // Add current flag state at the end (changes frequently - not cacheable)
+    prompt += flagManager.generateFlagStateSection();
     
     return prompt;
   }
 
   /**
+   * Build action instructions with detailed flag management guidance
+   */
+  static buildActionInstructionsWithFlagGuidance(context: DirectorContext, flagManager: FlagManager): string {
+    const baseInstructions = this.buildActionInstructions(context);
+    const flagInstructions = flagManager.generateFlagManagementInstructions();
+    
+    return `${baseInstructions}
+
+${flagInstructions}
+
+${this.getStructuredResponseInstructions()}`;
+  }
+
+
+  /**
    * Build context preamble for action processing (excludes transitions/endings)
    * Reorganized for optimal caching with static content first
    */
-  static buildActionContextPreamble(context: DirectorContext): string {
+  static buildActionContextPreamble(context: DirectorContext, flagProgressionGuidance?: string): string {
     // STATIC/SEMI-STATIC PREFIX - Content that remains stable for the story/scene duration
     // This organization benefits Gemini's automatic context caching and Anthropic's prompt caching
     let prompt = `**ROLE:** You are the **Story Director** for an interactive narrative. Your primary goal is to **craft immersive, compelling storytelling** that responds naturally to player actions while maintaining the world's voice and atmosphere.\n\n`;
@@ -42,6 +56,11 @@ export class LangChainPrompts {
     // Global guidance (static for story duration)
     if (context.guidance) {
       prompt += `**GLOBAL STORY GUIDANCE:**\n${context.guidance}\n\n`;
+    }
+
+    // Flag progression guidance (static for story duration)
+    if (flagProgressionGuidance) {
+      prompt += `**${flagProgressionGuidance}**\n\n`;
     }
 
     // Narrative Style (static for story duration)
@@ -370,7 +389,7 @@ The story has reached its conclusion, but the narrative continues. Players may e
 revisit moments, or imagine extensions to the story. Continue as the story director, maintaining 
 the same narrative voice and immersive storytelling approach. Respond to player actions as if 
 they're exploring this world and these characters beyond the formal ending.
-Since the story is complete, do NOT use any transition signals.
+Since the story is complete, transitions are handled automatically by the flag system.
 
 ${instructions}`;
     }
@@ -382,9 +401,13 @@ ${instructions}`;
    * Generate mode-specific instructions for scene transitions
    * Structured to let story-specific guidance override generic instructions
    */
-  static buildTransitionInstructions(targetSceneId: string, sceneSketch: string, playerAction: string): string {
+  static buildTransitionInstructions(
+    targetSceneId: string, 
+    sceneSketch: string, 
+    playerAction: string
+  ): string {
     // DYNAMIC CONTENT - Changes per transition
-    return `**SCENE TRANSITION IN PROGRESS**
+    let instructions = `**SCENE TRANSITION IN PROGRESS**
 
 You are transitioning to scene: ${targetSceneId}
 
@@ -392,6 +415,7 @@ You are transitioning to scene: ${targetSceneId}
 
 **TARGET SCENE DESCRIPTION** (use as foundation):
 ${sceneSketch}
+
 
 **SCENE TRANSITION STORYTELLING:**
 * Follow the GLOBAL STORY GUIDANCE above - it takes priority over any generic instructions
@@ -403,6 +427,8 @@ ${sceneSketch}
 * RESPECT THE STORY'S PRIMARY STORYTELLING METHOD established in the guidance above
 
 ${this.getStructuredResponseInstructions()}`;
+
+    return instructions;
   }
 
   /**
@@ -428,7 +454,7 @@ ${endingSketch}
 * Focus on the emotional and thematic weight of this conclusion
 * Maintain the story's narrative format and approach through to the ending
 * RESPECT THE STORY'S PRIMARY STORYTELLING METHOD throughout the ending
-* Include ending signal in your response
+* Endings are handled automatically by the flag system
 
 ${this.getStructuredResponseInstructions()}`;
   }
@@ -520,12 +546,16 @@ ${this.getRichTextFormattingInstructions()}
 **RESPONSE FORMAT:**
 * reasoning: Brief evaluation of player's action and its effects (2-3 sentences max)
 * narrativeParts: Array of paragraph strings, each containing 1-2 sentences with rich formatting
-* memories: Important details to remember: discoveries, changes, or new knowledge gained
+* memories: Array of strings with important details to remember: discoveries, changes, or new knowledge gained
 * importance: Rate the significance of this interaction (1-10, default 5)
+* flagChanges: Object with 'set' and 'unset' arrays listing flag IDs to change based on this interaction
 
-**FLAG AWARENESS:**
-* Consider current flag states when crafting responses
-* Respect character behavior based on flags (e.g., if alex_withdrawing is true, show Alex retreating)
-* Maintain narrative consistency with established flag states`;
+**CRITICAL FORMAT REQUIREMENTS:**
+* memories MUST be an array of strings, not a JSON-encoded string
+* flagChanges.set and flagChanges.unset MUST be arrays of flag IDs
+* Set flags conservatively - only when the action clearly warrants the change
+
+**FLAG MANAGEMENT:**
+Use the flag system to track story state changes and character developments. Set flags when significant events occur that affect the story world or character relationships.`;
   }
 }

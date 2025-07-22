@@ -68,7 +68,7 @@ export class ImpressionistEngine {
   private uiResetCallback?: () => void;
   private uiRestoreCallback?: (gameState: any, conversationHistory?: any[]) => void;
   private uiAddMessageCallback?: (text: string, type: string) => void;
-  private uiShowTypingCallback?: () => void;
+  // private uiShowTypingCallback?: () => void; // Removed for flag system
   private uiHideTypingCallback?: () => void;
 
   constructor(multiModelService?: MultiModelService) {
@@ -186,9 +186,9 @@ export class ImpressionistEngine {
       
       // Process initial scene as a transition/establishment rather than an action
       const response = await this.director.processInitialSceneEstablishment(
+        context,
         this.gameState.currentScene,
-        currentScene.sketch,
-        context
+        currentScene.sketch
       );
       
       // Log the response for debugging (same as regular actions)
@@ -243,22 +243,13 @@ export class ImpressionistEngine {
       context.storyComplete = true; // Signal that story has ended
       
       try {
-        // Use streaming even for post-ending, but consume all responses
-        const responseGenerator = this.director.processInputStreaming(action.input, context);
-        let finalResponse: DirectorResponse | undefined;
+        // Process post-ending input with flag system
+        const finalResponse = await this.director.processInputStreaming(context, action.input);
         
-        for await (const response of responseGenerator) {
-          finalResponse = response;
-          
-          // For post-ending, still update UI immediately for consistency
-          if (this.uiAddMessageCallback) {
-            const formatters = this.story?.ui?.formatters || [];
-            this.uiAddMessageCallback(normalizeNarrative(response.narrative, formatters), 'story');
-          }
-        }
-        
-        if (!finalResponse) {
-          throw new Error('No response received from director');
+        // For post-ending, still update UI immediately for consistency
+        if (this.uiAddMessageCallback) {
+          const formatters = this.story?.ui?.formatters || [];
+          this.uiAddMessageCallback(normalizeNarrative(finalResponse.narrative, formatters), 'story');
         }
         
         // Track this post-ending interaction
@@ -297,10 +288,7 @@ export class ImpressionistEngine {
       const context = this.buildDirectorContext(action.input, currentScene);
       
       // Get LLM response with flag-based processing
-      const finalResponse = await this.director.processInputStreaming(
-        context,
-        action.input
-      );
+      const finalResponse = await this.director.processInputStreaming(context, action.input);
       
       console.log('📝 Response ready:', normalizeNarrative(finalResponse.narrative));
       
@@ -329,10 +317,9 @@ export class ImpressionistEngine {
           usage.output_tokens,
           (finalResponse as any).latencyMs || 0,
           (finalResponse as any).contextSize || 0,
-            context.activeMemory?.length || 0,
-            this.gameState.currentScene
-          );
-        }
+          context.activeMemory?.length || 0,
+          this.gameState.currentScene
+        );
       }
       
       // Apply any signals from the final response (but don't trigger ending callback yet)
@@ -351,9 +338,9 @@ export class ImpressionistEngine {
         isTransitionPart: false
       });
 
-      // Return empty text since streaming callback handled the display
+      // Return empty text since UI callback handled the display
       return {
-        text: hasDisplayedFirstPart ? '' : normalizeNarrative(finalResponse.narrative), // Fallback if no callback set
+        text: this.uiAddMessageCallback ? '' : normalizeNarrative(finalResponse.narrative), // Fallback if no callback set
         gameState: { ...this.gameState },
         error: finalResponse.signals?.error,
         endingTriggered: isEndingTriggered
@@ -457,25 +444,18 @@ export class ImpressionistEngine {
   }
 
   /**
-   * Apply signals from LLM Director response without triggering ending callback
+   * Apply signals from LLM Director response (simplified to discovery and error only)
    */
   private applyDirectorSignals(response: DirectorResponse) {
     if (!response.signals) return;
-
-    // Scene transitions
-    if (this.isValidSignal(response.signals.scene)) {
-      this.transitionToScene(response.signals.scene);
-    }
-
-    // Ending triggers (but don't call callback)
-    if (this.isValidSignal(response.signals.ending)) {
-      this.triggerEnding(response.signals.ending);
-    }
 
     // Item discovery
     if (response.signals.discover) {
       this.handleItemDiscovery(response.signals.discover);
     }
+
+    // Scene transitions and endings are now handled automatically by flag system
+    // No need to process them here
   }
 
   /**
@@ -495,6 +475,11 @@ export class ImpressionistEngine {
       }
       
       this.gameState.currentScene = sceneId;
+      
+      // Update location flags automatically
+      if (targetScene.location) {
+        this.director.setLocationFlag(targetScene.location);
+      }
     } else {
       console.warn(`Scene transition failed: scene ${sceneId} not found`);
     }
@@ -604,6 +589,9 @@ export class ImpressionistEngine {
     this.gameState = this.createInitialState();
     this.memoryManager.reset();
     
+    // Clean up flag manager before loading new story
+    this.director.resetFlags();
+    
     if (this.uiResetCallback) {
       this.uiResetCallback();
     }
@@ -632,8 +620,8 @@ export class ImpressionistEngine {
     this.uiAddMessageCallback = callback;
   }
 
-  setUIShowTypingCallback(callback: () => void): void {
-    this.uiShowTypingCallback = callback;
+  setUIShowTypingCallback(_callback: () => void): void {
+    // No longer used in flag system
   }
 
   setUIHideTypingCallback(callback: () => void): void {
@@ -751,12 +739,7 @@ export class ImpressionistEngine {
 
       // Restore UI state
       if (this.uiRestoreCallback) {
-        // Convert interactions back to legacy dialogue format for UI compatibility
-        const recentDialogue = this.gameState.interactions.flatMap(interaction => [
-          `Player: ${interaction.playerInput}`,
-          `Response: ${interaction.llmResponse}`
-        ]);
-        this.uiRestoreCallback(this.gameState, recentDialogue);
+        this.uiRestoreCallback(this.gameState, []);
       }
 
       return {
