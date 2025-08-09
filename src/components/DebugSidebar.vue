@@ -862,13 +862,16 @@ watch(() => allEvents.value.length, (newLength, oldLength) => {
 .debug-toggle-btn {
   background: #dc3545 !important;
   border-color: #dc3545 !important;
+  color: #f0f0f0 !important;
   font-weight: 600;
-  min-width: 60px;
-  /* Ensure proper alignment with other action buttons */
-  align-self: stretch;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  /* Remove any positioning that might interfere */
+  position: static;
+  transform: none;
+  width: auto;
+  height: auto;
 }
 
 .debug-toggle-btn:hover {
