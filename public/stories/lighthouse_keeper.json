@@ -1,0 +1,73 @@
+{
+  "title": "The Lighthouse Keeper",
+  "summary": "You've kept the lighthouse alone for twenty years. Tonight, during a terrible storm, someone is knocking at the door. It's your child whom you haven't seen since they were young. They're injured and need shelter, but they don't recognize you.",
+  
+  "initial_state": {
+    "visitor_trust": 0,
+    "identity_revealed": false,
+    "storm_active": true,
+    "time_until_morning": 10
+  },
+  
+  "scenes": {
+    "door_knock": {
+      "purpose": "Someone arrives in the storm",
+      "available_when": "always"
+    },
+    "reveal_identity": {
+      "purpose": "Player considers revealing who they are",
+      "available_when": "visitor_trust >= 3"
+    },
+    "morning_arrives": {
+      "purpose": "The storm ends, decision time",
+      "available_when": "time_until_morning <= 0"
+    },
+    "building_trust": {
+      "purpose": "Getting to know the visitor through conversation",
+      "available_when": "visitor_trust > 0 && !identity_revealed"
+    },
+    "tending_wounds": {
+      "purpose": "Caring for the visitor's injuries",
+      "available_when": "visitor_trust >= 1 && storm_active"
+    },
+    "sharing_stories": {
+      "purpose": "Exchanging memories and experiences",
+      "available_when": "visitor_trust >= 2"
+    },
+    "moment_of_recognition": {
+      "purpose": "The visitor begins to remember something familiar",
+      "available_when": "visitor_trust >= 4 && !identity_revealed"
+    },
+    "storm_intensifies": {
+      "purpose": "The weather gets worse, creating urgency",
+      "available_when": "storm_active && time_until_morning > 5"
+    },
+    "dawn_approaches": {
+      "purpose": "The final moments before the visitor must leave",
+      "available_when": "time_until_morning <= 2 && time_until_morning > 0"
+    }
+  },
+  
+  "endings": {
+    "reconciliation": {
+      "condition": "identity_revealed && visitor_trust > 5",
+      "tone": "bittersweet but hopeful"
+    },
+    "secret_kept": {
+      "condition": "time_until_morning <= 0 && !identity_revealed",
+      "tone": "melancholic"
+    },
+    "rejected": {
+      "condition": "identity_revealed && visitor_trust <= 2",
+      "tone": "tragic"
+    },
+    "dawn_departure": {
+      "condition": "time_until_morning <= 0 && visitor_trust >= 3",
+      "tone": "wistful but warm"
+    },
+    "storm_refuge": {
+      "condition": "visitor_trust >= 6 && storm_active",
+      "tone": "protective and caring"
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import GameLayout from '@/components/GameLayout.vue'
+import ChoiceDrivenTest from '@/components/ChoiceDrivenTest.vue'
 import { getStoryMetadataBySlug } from '@/examples-metadata'
 import { isValidStorySlug } from '@/utils/storySlug'
 
@@ -12,6 +13,14 @@ const router = createRouter({
       component: GameLayout,
       meta: {
         title: 'Iffy - Interactive Fiction Engine'
+      }
+    },
+    {
+      path: '/choice-driven',
+      name: 'choice-driven',
+      component: ChoiceDrivenTest,
+      meta: {
+        title: 'Choice-Driven Engine MVP'
       }
     },
     {
