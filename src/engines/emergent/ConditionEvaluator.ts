@@ -1,4 +1,4 @@
-import { GameState, StateValue } from '../../types/choiceDrivenStory.js';
+import { GameState, StateValue } from '../../types/emergentStory.js';
 
 export class ConditionEvaluator {
   private state: GameState;
@@ -137,20 +137,5 @@ export class ConditionEvaluator {
     const aStr = String(a);
     const bStr = String(b);
     return aStr.localeCompare(bStr);
-  }
-
-  // Test method for validation
-  testCondition(condition: string, expectedResult: boolean): boolean {
-    try {
-      const result = this.evaluate(condition);
-      return result === expectedResult;
-    } catch {
-      return false;
-    }
-  }
-
-  // Debug method to get all available state keys
-  getAvailableKeys(): string[] {
-    return Object.keys(this.state);
   }
 }

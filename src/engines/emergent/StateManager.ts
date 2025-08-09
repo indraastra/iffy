@@ -1,4 +1,4 @@
-import { GameState, StateValue, StateOperation, StateEffects } from '../../types/choiceDrivenStory.js';
+import { GameState, StateValue, StateOperation, StateEffects } from '../../types/emergentStory.js';
 
 export class StateManager {
   private state: GameState;
@@ -17,7 +17,7 @@ export class StateManager {
     return this.state[key];
   }
 
-  // Apply state effects from a choice
+  // Apply state effects
   applyEffects(effects: StateEffects): void {
     for (const [key, operation] of Object.entries(effects)) {
       try {
@@ -68,27 +68,9 @@ export class StateManager {
     throw new Error(`Invalid operation type: ${typeof operation}`);
   }
 
-  // Create a new StateManager with the same state
-  clone(): StateManager {
-    return new StateManager(this.state);
-  }
-
   // Reset to initial state
   reset(initialState: GameState): void {
     this.state = { ...initialState };
-  }
-
-  // Validate that all required keys exist
-  validateKeys(requiredKeys: string[]): void {
-    const missing = requiredKeys.filter(key => !(key in this.state));
-    if (missing.length > 0) {
-      throw new Error(`Missing required state keys: ${missing.join(', ')}`);
-    }
-  }
-
-  // Get state as string for debugging
-  toString(): string {
-    return JSON.stringify(this.state, null, 2);
   }
 
   // Set a single value (for testing/debugging)

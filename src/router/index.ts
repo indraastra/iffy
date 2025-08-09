@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import GameLayout from '@/components/GameLayout.vue'
-import ChoiceDrivenTest from '@/components/ChoiceDrivenTest.vue'
+import EmergentInterface from '@/components/EmergentInterface.vue'
 import { getStoryMetadataBySlug } from '@/examples-metadata'
 import { isValidStorySlug } from '@/utils/storySlug'
 
@@ -16,11 +16,11 @@ const router = createRouter({
       }
     },
     {
-      path: '/choice-driven',
-      name: 'choice-driven',
-      component: ChoiceDrivenTest,
+      path: '/emergent',
+      name: 'emergent',
+      component: EmergentInterface,
       meta: {
-        title: 'Choice-Driven Engine MVP'
+        title: 'Emergent Narrative Engine'
       }
     },
     {
