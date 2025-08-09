@@ -120,6 +120,21 @@
           </div>
         </div>
 
+        <div class="structure-section" v-if="compiledStructure.guidelines">
+          <h4>🎨 Style Guidelines</h4>
+          <div class="guidelines-info">
+            <div v-if="compiledStructure.guidelines.narrative" class="guideline-item">
+              <strong>Narrative:</strong> {{ compiledStructure.guidelines.narrative }}
+            </div>
+            <div v-if="compiledStructure.guidelines.choices" class="guideline-item">
+              <strong>Choices:</strong> {{ compiledStructure.guidelines.choices }}
+            </div>
+            <div v-if="compiledStructure.guidelines.tone" class="guideline-item">
+              <strong>Tone:</strong> {{ compiledStructure.guidelines.tone }}
+            </div>
+          </div>
+        </div>
+
         <div class="structure-section">
           <h4>📊 Initial State</h4>
           <div class="state-variables">
@@ -722,6 +737,27 @@ watch(() => allEvents.value.length, (newLength, oldLength) => {
   color: #f0f0f0;
   font-size: 0.85rem;
   font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.guidelines-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.guideline-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  background: #333;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+}
+
+.guideline-item strong {
+  color: #4CAF50;
+  font-weight: 500;
+  font-size: 0.85rem;
 }
 
 /* Mobile Responsive Styles for Debug Sidebar */
