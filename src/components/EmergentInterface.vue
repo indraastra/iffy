@@ -32,14 +32,14 @@
           <div v-if="turn.choiceIndex !== -1" class="player-choice">
             <strong>You chose:</strong> {{ turn.content.choices[turn.choiceIndex].text }}
           </div>
-          <div v-if="turn.sceneIndex > 0" class="scene-transition">
+          <div v-if="showDebugInfo && turn.sceneIndex > 0" class="scene-transition">
             <span class="scene-badge">Scene {{ turn.sceneIndex + 1 }}</span>
           </div>
         </div>
 
         <!-- Current content or loading indicator -->
         <div v-if="currentContent" class="story-turn current">
-          <div class="scene-info" v-if="currentScene && !isLoading && !isComplete">
+          <div class="scene-info" v-if="showDebugInfo && currentScene && !isLoading && !isComplete">
             <span class="scene-badge">Scene {{ currentSceneIndex + 1 }} of {{ totalScenes }}</span>
             <span class="scene-goal">{{ currentScene.goal }}</span>
           </div>
@@ -80,7 +80,7 @@
             </div>
           </button>
         </div>
-        <div v-if="currentContent.scene_complete" class="scene-complete-notice">
+        <div v-if="showDebugInfo && currentContent.scene_complete" class="scene-complete-notice">
           <span class="complete-icon">✓</span>
           Scene goal achieved - story will advance after your choice
         </div>
