@@ -38,14 +38,14 @@
         </div>
 
         <!-- Current content or loading indicator -->
-        <div v-if="currentContent" class="story-turn current">
-          <div class="scene-info" v-if="showDebugInfo && currentScene && !isLoading && !isComplete">
+        <div v-if="currentContent || (isLoading && !isCompiling)" class="story-turn current">
+          <div class="scene-info" v-if="showDebugInfo && currentScene && !isLoading && !isComplete && currentContent">
             <span class="scene-badge">Scene {{ currentSceneIndex + 1 }} of {{ totalScenes }}</span>
             <span class="scene-goal">{{ currentScene.goal }}</span>
           </div>
           
-          <!-- Show loading indicator instead of content when loading -->
-          <div v-if="isLoading" class="thinking-indicator">
+          <!-- Show loading indicator when loading but not compiling -->
+          <div v-if="isLoading && !isCompiling" class="thinking-indicator">
             <div class="thinking-dots">
               <span></span>
               <span></span>
@@ -54,8 +54,8 @@
             <span class="thinking-text">{{ loadingMessage }}</span>
           </div>
           
-          <!-- Show actual content when not loading -->
-          <div v-else class="narrative-content">
+          <!-- Show actual content when not loading and content exists -->
+          <div v-else-if="currentContent" class="narrative-content">
             <MarkupRenderer :content="currentContent.narrative" />
           </div>
         </div>
@@ -86,8 +86,8 @@
         </div>
       </div>
 
-      <!-- Completion Actions (shown when game is complete) -->
-      <div v-if="isComplete" class="completion-section">
+      <!-- Completion Actions (shown when game is complete and not loading) -->
+      <div v-if="isComplete && !isLoading" class="completion-section">
         <h3>Story Complete</h3>
         <p v-if="endingId" class="ending-id">Ending: {{ endingId }}</p>
         <p class="completion-note">This was a unique playthrough generated just for you!</p>
@@ -408,6 +408,7 @@ async function handleFileSelect(event: Event) {
 
 .scene-info {
   display: flex;
+  align-items: center;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
   font-size: 0.85rem;
@@ -420,6 +421,11 @@ async function handleFileSelect(event: Event) {
   border-radius: 4px;
   font-weight: 500;
   font-size: 0.75rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  align-self: stretch;
 }
 
 .scene-goal {

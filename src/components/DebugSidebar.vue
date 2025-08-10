@@ -106,6 +106,33 @@
               <span class="scene-id">{{ scene.id }}</span>
             </div>
             <div class="scene-goal">{{ scene.goal }}</div>
+            
+            <!-- Scene Requirements -->
+            <div v-if="scene.requirements && scene.requirements.length > 0" class="scene-requirements">
+              <div class="requirements-header">📋 Requirements:</div>
+              <div v-for="req in scene.requirements" :key="req.stateKey" class="requirement-item">
+                <span class="requirement-key">{{ req.stateKey }}</span>
+                <span v-if="req.validValues" class="requirement-values">[{{ req.validValues.join(', ') }}]</span>
+                <div class="requirement-description">{{ req.description }}</div>
+              </div>
+            </div>
+            
+            <!-- Scene Environment -->
+            <div v-if="scene.environment" class="scene-environment">
+              <div class="environment-header">🌍 Environment:</div>
+              <div class="environment-setting">
+                <strong>Setting:</strong> {{ scene.environment.setting }}
+              </div>
+              <div class="environment-atmosphere">
+                <strong>Atmosphere:</strong> {{ scene.environment.atmosphere }}
+              </div>
+              <div v-if="scene.environment.timeOfDay" class="environment-time">
+                <strong>Time:</strong> {{ scene.environment.timeOfDay }}
+              </div>
+              <div v-if="scene.environment.details && scene.environment.details.length > 0" class="environment-details">
+                <strong>Details:</strong> {{ scene.environment.details.join(', ') }}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -667,6 +694,77 @@ watch(() => allEvents.value.length, (newLength, oldLength) => {
   color: #ccc;
   font-size: 0.8rem;
   font-style: italic;
+}
+
+.scene-requirements {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #444;
+  border-radius: 4px;
+  border-left: 3px solid #FF9800;
+}
+
+.requirements-header {
+  color: #FF9800;
+  font-weight: 500;
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.requirement-item {
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.requirement-key {
+  color: #4CAF50;
+  font-weight: 500;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.requirement-values {
+  color: #FFC107;
+  font-size: 0.7rem;
+  margin-left: 0.25rem;
+}
+
+.requirement-description {
+  color: #ccc;
+  font-size: 0.7rem;
+  margin-top: 0.125rem;
+  font-style: italic;
+}
+
+.scene-environment {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #444;
+  border-radius: 4px;
+  border-left: 3px solid #2196F3;
+}
+
+.environment-header {
+  color: #2196F3;
+  font-weight: 500;
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.environment-setting,
+.environment-atmosphere,
+.environment-time,
+.environment-details {
+  color: #ddd;
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.environment-setting strong,
+.environment-atmosphere strong,
+.environment-time strong,
+.environment-details strong {
+  color: #f0f0f0;
+  font-size: 0.7rem;
 }
 
 .ending-item {

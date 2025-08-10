@@ -68,6 +68,15 @@ Generate a JSON structure with exactly these components:
 2. **scene_sequence**: Create an ordered sequence of 3-5 scenes. Each scene should have:
    - "id": A unique identifier (lowercase, underscores)  
    - "goal": A clear narrative goal that explains what this scene accomplishes
+   - "requirements": (optional) Array of state variables that must be established in this scene. Each requirement should have:
+     * "stateKey": The state variable name (e.g., "relationship_type", "alliance_status")
+     * "validValues": (optional) Array of acceptable values for this state
+     * "description": Human-readable description of what this represents
+   - "environment": (optional) Environmental context to ground the scene atmosphere. Should have:
+     * "setting": Physical location and situation (e.g., "lighthouse keeper's quarters during storm")
+     * "atmosphere": Mood, weather, sensory details (e.g., "rain lashing windows, thunder rumbling")
+     * "timeOfDay": (optional) Time context if relevant (e.g., "late night", "approaching dawn")
+     * "details": (optional) Array of specific environmental elements (e.g., ["wind howling", "fire crackling"])
 
 3. **endings**: Based on the "Potential Endings" section, define 2-4 possible endings. Each should have:
    - "id": Unique identifier for this ending
@@ -96,10 +105,19 @@ The engine automatically provides these variables for ending conditions:
 - story_nearly_complete: True when approaching the end
 - current_scene_id: The ID of the current scene
 
-AVOID THESE PATTERNS:
-- Simple numeric thresholds: "score >= 3"
-- Single variable conditions: "happy"  
-- Conditions that could trigger early: "trust >= 1"
+SCENE REQUIREMENTS GUIDANCE:
+Add scene requirements when the narrative explicitly mentions state that must be established:
+- Look for phrases like "establish the relationship", "determine the alliance", "identify the threat"
+- Common first scene requirement: relationship/character establishment
+- Requirements should focus on critical story state, not minor details
+- Only add requirements when the narrative specifically emphasizes establishing certain information
+
+ENVIRONMENTAL CONTEXT GUIDANCE:
+Add environmental context to scenes when the narrative mentions specific settings, weather, or atmosphere:
+- Extract physical locations, weather conditions, time of day from the summary and key elements
+- Look for atmospheric details like "storm", "candlelit room", "dawn breaking", "bustling marketplace"
+- Include sensory details mentioned in the narrative (sounds, lighting, physical sensations)
+- Focus on elements that ground the scene and create immersion for the player
 
 STYLE GUIDELINES INTERPRETATION:
 If the narrative contains a "Style Guidelines" or "Style & Tone Guidelines" section, interpret it into a guidelines object:
@@ -121,7 +139,23 @@ RESPONSE FORMAT (JSON only):
     "string_variable": "value"
   },
   "scene_sequence": [
-    { "id": "scene_id", "goal": "What this scene accomplishes narratively" },
+    { 
+      "id": "scene_id", 
+      "goal": "What this scene accomplishes narratively",
+      "requirements": [
+        {
+          "stateKey": "relationship_type",
+          "validValues": ["child", "spouse", "partner"],
+          "description": "Player's relationship to the visitor"
+        }
+      ],
+      "environment": {
+        "setting": "lighthouse keeper's quarters during storm",
+        "atmosphere": "rain lashing windows, thunder rumbling, wind howling",
+        "timeOfDay": "late night",
+        "details": ["fire crackling", "lighthouse beam rotating", "visitor seeking shelter"]
+      }
+    },
     { "id": "next_scene", "goal": "Next narrative goal" }
   ],
   "endings": [

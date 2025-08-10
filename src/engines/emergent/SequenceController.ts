@@ -66,7 +66,21 @@ export class SequenceController {
 
   // Check if we should advance to next scene
   shouldAdvanceScene(content: GeneratedContent): boolean {
-    return content.scene_complete === true;
+    const llmWantsToAdvance = content.scene_complete === true;
+    
+    // If no requirements, use current behavior
+    const currentScene = this.getCurrentScene();
+    if (!currentScene?.requirements) {
+      return llmWantsToAdvance;
+    }
+    
+    // Check if all required state variables are established
+    const allRequiredFlagsSet = currentScene.requirements.every(req => {
+      const value = this.session.currentState[req.stateKey];
+      return value !== undefined && value !== null && value !== '';
+    });
+    
+    return llmWantsToAdvance && allRequiredFlagsSet;
   }
 
   // Advance to next scene in sequence

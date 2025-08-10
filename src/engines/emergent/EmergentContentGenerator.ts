@@ -108,6 +108,10 @@ ${endingContext}
 SCENE CONTEXT:
 ${isLastScene ? 'This is the FINAL SCENE - build toward resolution and ending conditions.' : 'This is a progression scene - develop the story toward the scene goal.'}
 
+${this.generateEnvironmentalContext(currentScene)}
+
+${this.generateRequirementsGuidance(currentScene, context.currentState)}
+
 INSTRUCTIONS:
 Generate a narrative beat (2-4 sentences) that:
 1. Advances the scene goal: "${currentScene.goal}"
@@ -147,6 +151,94 @@ RESPONSE FORMAT (JSON):
 }
 
 Generate content now:`;
+  }
+
+  // Generate guidance for scene requirements
+  private generateRequirementsGuidance(currentScene: any, currentState: any): string {
+    if (!currentScene.requirements || currentScene.requirements.length === 0) {
+      return '';
+    }
+
+    // Find unset requirements
+    const unsetRequirements = currentScene.requirements.filter((req: any) => {
+      const value = currentState[req.stateKey];
+      return value === undefined || value === null || value === '';
+    });
+
+    if (unsetRequirements.length === 0) {
+      return 'SCENE REQUIREMENTS: All required state variables have been established. Scene is ready to advance when narratively complete.';
+    }
+
+    // Generate diegetic guidance for unset requirements
+    const nextRequirement = unsetRequirements[0];
+    let guidance = `SCENE REQUIREMENTS - MISSING STATE:\n`;
+    guidance += `PRIORITY: Establish "${nextRequirement.stateKey}" (${nextRequirement.description})`;
+    
+    if (nextRequirement.validValues && nextRequirement.validValues.length > 0) {
+      guidance += `\nValid values: ${nextRequirement.validValues.join(', ')}`;
+      guidance += `\n\nDIEGETIC CHOICE GUIDANCE:`;
+      guidance += `\nCreate choices where the TEXT ITSELF establishes ${nextRequirement.stateKey} through pronouns, memories, and context.`;
+      
+      // Generate templated examples based on valid values
+      const examples = this.generateDiegeticExamples(nextRequirement.stateKey, nextRequirement.validValues);
+      if (examples.length > 0) {
+        guidance += `\nExamples: ${examples.join(', ')}`;
+      }
+    }
+    
+    guidance += `\nThe scene cannot advance until this state variable is established through player choice.`;
+    
+    if (unsetRequirements.length > 1) {
+      guidance += `\nRemaining requirements: ${unsetRequirements.slice(1).map((req: any) => req.stateKey).join(', ')}`;
+    }
+
+    return guidance;
+  }
+
+  // Generate environmental context for the scene
+  private generateEnvironmentalContext(currentScene: any): string {
+    if (!currentScene.environment) {
+      return '';
+    }
+
+    const env = currentScene.environment;
+    let context = 'ENVIRONMENTAL CONTEXT:\n';
+    
+    if (env.setting) {
+      context += `Setting: ${env.setting}\n`;
+    }
+    
+    if (env.atmosphere) {
+      context += `Atmosphere: ${env.atmosphere}\n`;
+    }
+    
+    if (env.timeOfDay) {
+      context += `Time: ${env.timeOfDay}\n`;
+    }
+    
+    if (env.details && env.details.length > 0) {
+      context += `Details: ${env.details.join(', ')}\n`;
+    }
+    
+    context += '\nWeave this environmental context into your narrative and ensure choices feel grounded in this setting.';
+    
+    return context;
+  }
+
+  // Generate templated diegetic choice examples
+  private generateDiegeticExamples(stateKey: string, validValues: string[]): string[] {
+    // Generic templated examples that work for any state variable
+    const examples: string[] = [];
+    
+    // Take first few values as examples
+    const exampleValues = validValues.slice(0, 3);
+    
+    // Generic diegetic patterns using the actual state key and values
+    exampleValues.forEach(value => {
+      examples.push(`'Remember when [specific memory related to ${value}]...' (sets ${stateKey}: "${value}")`);
+    });
+    
+    return examples;
   }
 
   // Parse LLM response into structured content

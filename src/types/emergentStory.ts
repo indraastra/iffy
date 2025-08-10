@@ -23,10 +23,27 @@ export interface CompiledStoryStructure {
   guidelines?: StyleGuidelines;
 }
 
+// Scene requirement for state validation
+export interface SceneRequirement {
+  stateKey: string;           // State variable that must be established
+  validValues?: string[];     // Optional valid values for the state
+  description: string;        // Human-readable description of what this represents
+}
+
+// Environmental context for scene atmosphere
+export interface SceneEnvironment {
+  setting: string;           // Physical location and situation
+  atmosphere: string;        // Mood, weather, sensory details
+  timeOfDay?: string;        // Time context if relevant
+  details?: string[];        // Specific environmental elements
+}
+
 // Linear scene definition
 export interface SceneDefinition {
   id: string;
   goal: string; // What this scene aims to accomplish narratively
+  requirements?: SceneRequirement[]; // State variables that must be established before advancing
+  environment?: SceneEnvironment; // Environmental context for atmospheric grounding
 }
 
 // Ending definition with condition
