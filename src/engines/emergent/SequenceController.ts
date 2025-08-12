@@ -1,268 +1,269 @@
 import { StateManager } from './StateManager.js';
 import { ConditionEvaluator } from './ConditionEvaluator.js';
 import { EffectApplicator } from './EffectApplicator.js';
+import { BlueprintGenerator } from './BlueprintGenerator.js';
+import { SceneGenerator } from './SceneGenerator.js';
+import { BeatGenerator } from './BeatGenerator.js';
 import { 
-  CompiledStoryStructure, 
-  EmergentGameSession, 
-  GeneratedContent, 
-  GameTurn,
-  ContentGenerationContext,
-  SceneDefinition,
-  NarrativeOutline
+  NarrativeOutline,
+  StoryScene,
+  StoryBeat,
+  Choice,
+  EmergentGameSession
 } from '../../types/emergentStory.js';
-import { DebugTracker } from './DebugTracker.js';
 
+// The main orchestrator for the emergent narrative engine.
 export class SequenceController {
-  private stateManager: StateManager;
-  private conditionEvaluator: ConditionEvaluator;
-  private effectApplicator: EffectApplicator;
-  private session: EmergentGameSession;
-  private debugTracker?: DebugTracker;
+  private stateManager?: StateManager;
+  private conditionEvaluator?: ConditionEvaluator;
+  private effectApplicator?: EffectApplicator;
+  private blueprintGenerator: BlueprintGenerator;
+  private sceneGenerator: SceneGenerator;
+  private beatGenerator: BeatGenerator;
+  
+  private session?: EmergentGameSession;
+  private loadedScene: StoryScene | null = null;
+  private fulfilledRequirements: string[] = [];
 
   constructor(
-    narrativeOutline: NarrativeOutline,
-    compiledStructure: CompiledStoryStructure,
-    debugTracker?: DebugTracker
+    blueprintGenerator: BlueprintGenerator,
+    sceneGenerator: SceneGenerator,
+    beatGenerator: BeatGenerator
   ) {
-    // Initialize state management
-    this.stateManager = new StateManager(compiledStructure.initial_state);
+    this.blueprintGenerator = blueprintGenerator;
+    this.sceneGenerator = sceneGenerator;
+    this.beatGenerator = beatGenerator;
+  }
+
+  /**
+   * Starts a new game session by generating a blueprint from a narrative outline.
+   */
+  async startNewGame(narrativeOutline: NarrativeOutline): Promise<void> {
+    console.log('SequenceController: startNewGame called');
+    const blueprint = await this.blueprintGenerator.generateBlueprint(narrativeOutline);
+    console.log('SequenceController: Blueprint generated', blueprint);
+    
+    this.stateManager = new StateManager({});
     this.conditionEvaluator = new ConditionEvaluator(this.stateManager.getState());
     this.effectApplicator = new EffectApplicator(this.stateManager);
-    this.debugTracker = debugTracker;
 
-    // Initialize game session
     this.session = {
-      narrativeOutline,
-      compiledStructure,
+      blueprint,
       currentState: this.stateManager.getState(),
-      currentSceneIndex: 0,
+      currentSceneId: blueprint.scene_sequence[0].id,
       history: [],
-      isComplete: false
+      isComplete: false,
     };
-    
-    // Add scene progression info to initial state
-    this.addSceneProgressionToState();
-    
-    // Track initial state
-    this.debugTracker?.trackStateChange(
-      'initialization',
-      {},
-      this.session.currentState
-    );
+    console.log('SequenceController: Session initialized', this.session);
+
+    await this.loadCurrentScene();
+    console.log('SequenceController: Initial scene loaded', this.loadedScene);
   }
 
-  // Get current game session
-  getSession(): EmergentGameSession {
-    return { ...this.session };
-  }
-
-  // Get current scene definition
-  getCurrentScene(): SceneDefinition | null {
-    if (this.session.currentSceneIndex >= this.session.compiledStructure.scene_sequence.length) {
+  /**
+   * Fetches the next playable story beat for the current scene.
+   */
+  async getNextBeat(): Promise<StoryBeat | null> {
+    console.log('SequenceController: getNextBeat called');
+    if (!this.session || this.session.isComplete || !this.loadedScene) {
+      console.log('SequenceController: getNextBeat returning null (session not ready or complete)');
       return null;
     }
-    return this.session.compiledStructure.scene_sequence[this.session.currentSceneIndex];
-  }
 
-  // Check if we should advance to next scene
-  shouldAdvanceScene(content: GeneratedContent): boolean {
-    const llmWantsToAdvance = content.scene_complete === true;
-    
-    // If no requirements, use current behavior
-    const currentScene = this.getCurrentScene();
-    if (!currentScene?.requirements) {
-      return llmWantsToAdvance;
-    }
-    
-    // Check if all required state variables are established
-    const allRequiredFlagsSet = currentScene.requirements.every(req => {
-      const value = this.session.currentState[req.stateKey];
-      return value !== undefined && value !== null && value !== '';
-    });
-    
-    return llmWantsToAdvance && allRequiredFlagsSet;
-  }
-
-  // Advance to next scene in sequence
-  advanceToNextScene(): boolean {
-    if (this.session.currentSceneIndex < this.session.compiledStructure.scene_sequence.length - 1) {
-      this.session.currentSceneIndex++;
-      // Update scene progression info in state
-      this.addSceneProgressionToState();
-      return true;
-    }
-    return false; // No more scenes
-  }
-
-  // Add scene progression information to the game state
-  private addSceneProgressionToState(): void {
-    const currentScene = this.getCurrentScene();
-    const totalScenes = this.session.compiledStructure.scene_sequence.length;
-    
-    // Add scene tracking variables that ending conditions can reference
-    this.stateManager.setValue('scene_count', this.session.currentSceneIndex + 1);
-    this.stateManager.setValue('scenes_completed', this.session.currentSceneIndex);
-    this.stateManager.setValue('total_scenes', totalScenes);
-    this.stateManager.setValue('current_scene_id', currentScene?.id || 'unknown');
-    
-    // Add boolean flags for major progression milestones
-    this.stateManager.setValue('in_opening_act', this.session.currentSceneIndex === 0);
-    this.stateManager.setValue('past_opening', this.session.currentSceneIndex > 0);
-    this.stateManager.setValue('in_middle_act', this.session.currentSceneIndex > 0 && this.session.currentSceneIndex < totalScenes - 1);
-    this.stateManager.setValue('in_final_act', this.session.currentSceneIndex === totalScenes - 1);
-    this.stateManager.setValue('story_nearly_complete', this.session.currentSceneIndex >= Math.max(1, totalScenes - 2));
-    
-    // Update session state reference
-    this.session.currentState = this.stateManager.getState();
-    this.conditionEvaluator.updateState(this.session.currentState);
-  }
-
-  // Apply choice effects and update state
-  applyChoice(choiceIndex: number, currentContent: GeneratedContent): { 
-    newState: any; 
-    sceneAdvanced: boolean; 
-    isComplete: boolean; 
-    endingTriggered?: string 
-  } {
-    if (this.session.isComplete) {
-      throw new Error('Game is already complete');
-    }
-
-    if (choiceIndex < 0 || choiceIndex >= currentContent.choices.length) {
-      throw new Error(`Invalid choice index: ${choiceIndex}`);
-    }
-
-    const choice = currentContent.choices[choiceIndex];
-    const previousState = this.session.currentState;
-
-    // Apply choice effects
-    const newState = this.effectApplicator.applyChoice(choice);
-    this.session.currentState = newState;
-    this.conditionEvaluator.updateState(newState);
-
-    // Track state change
-    this.debugTracker?.trackStateChange(
-      'choice',
-      previousState,
-      newState,
-      choice.effects,
-      choice.text
+    // Priority 1: Check for unfilled blanks
+    const unfilledBlanks = this.loadedScene.blanks.filter(
+      blank => !(blank in this.session.currentState)
     );
+    console.log('SequenceController: Scene blanks:', this.loadedScene.blanks);
+    console.log('SequenceController: Current state keys:', Object.keys(this.session.currentState));
+    console.log('SequenceController: unfilledBlanks', unfilledBlanks);
 
-    // Record turn in history
-    const currentScene = this.getCurrentScene();
-    const turn: GameTurn = {
-      sceneIndex: this.session.currentSceneIndex,
-      sceneId: currentScene?.id || 'unknown',
-      content: currentContent,
-      choiceIndex,
-      stateAfter: newState,
-      timestamp: new Date()
-    };
-    this.session.history.push(turn);
+    if (unfilledBlanks.length > 0) {
+      // Generate blank-filling beat
+      const blankToFill = unfilledBlanks[0];
+      console.log('SequenceController: Generating blank-filling beat for', blankToFill);
+      
+      const beat = await this.beatGenerator.generateBlankFillingBeat({
+        blueprint: this.session.blueprint,
+        scene: this.loadedScene,
+        blankToFill: blankToFill,
+        currentState: this.session.currentState,
+        sessionHistory: this.session.history
+      });
+      
+      console.log('SequenceController: Beat generated', beat);
+      return beat;
+    }
 
-    // Check for ending conditions
+    // Priority 2: Work on scene requirements after all blanks are filled
+    const nextRequirement = this.loadedScene.requirements.find(
+      req => !this.fulfilledRequirements.includes(req.key_to_update)
+    );
+    console.log('SequenceController: nextRequirement', nextRequirement);
+
+    if (!nextRequirement) {
+      console.log(`SequenceController: All requirements for scene ${this.session.currentSceneId} fulfilled.`);
+      return null; 
+    }
+
+    const beat = await this.beatGenerator.generateBeat({
+      blueprint: this.session.blueprint,
+      scene: this.loadedScene,
+      requirement: nextRequirement,
+      currentState: this.session.currentState,
+      sessionHistory: this.session.history
+    });
+    console.log('SequenceController: Beat generated', beat);
+
+    return beat;
+  }
+
+  /**
+   * Records a completed turn in the session history.
+   */
+  recordTurn(beat: StoryBeat, choice: Choice): void {
+    if (!this.session) {
+      throw new Error('Session not initialized. Cannot record turn.');
+    }
+    
+    this.session.history.push({
+      beat,
+      choice,
+      timestamp: new Date().toISOString()
+    });
+    console.log('SequenceController: Turn recorded', { beat: beat.narrative_text, choice: choice.text });
+  }
+
+  /**
+   * Processes a player's choice, updates the state, and checks for transitions.
+   * Returns the ID of the next scene if a transition occurs, otherwise null.
+   */
+  async applyChoice(choice: Choice | null): Promise<string | null> {
+    console.log('SequenceController: applyChoice called with', choice);
+    if (!this.session || !this.effectApplicator || !this.conditionEvaluator) {
+      throw new Error('Session not initialized. Call startNewGame first.');
+    }
+    if (this.session.isComplete) {
+      throw new Error('Game is already complete.');
+    }
+
+    if (choice) {
+      const newState = this.effectApplicator.applyChoice(choice);
+      this.session.currentState = newState;
+      this.conditionEvaluator.updateState(newState);
+      // Track requirement fulfillment separately from blank filling
+      const choiceKeys = Object.keys(choice.effects);
+      for (const key of choiceKeys) {
+        // Only track as fulfilled requirement if it matches a scene requirement
+        if (this.loadedScene?.requirements.some(req => req.key_to_update === key)) {
+          if (!this.fulfilledRequirements.includes(key)) {
+            this.fulfilledRequirements.push(key);
+          }
+        }
+        // Blanks are tracked automatically via game state existence check
+      }
+      console.log('SequenceController: State updated', this.session.currentState);
+      console.log('SequenceController: Fulfilled requirements', this.fulfilledRequirements);
+    }
+
     const endingId = this.checkEndingConditions();
     if (endingId) {
       this.session.isComplete = true;
       this.session.endingTriggered = endingId;
-      return { newState, sceneAdvanced: false, isComplete: true, endingTriggered: endingId };
+      console.log(`SequenceController: Ending triggered: ${endingId}`);
+      return null;
     }
 
-    // Check if scene should advance
-    let sceneAdvanced = false;
-    if (this.shouldAdvanceScene(currentContent)) {
-      sceneAdvanced = this.advanceToNextScene();
-      
-      // If no more scenes, force ending
-      if (!sceneAdvanced) {
+    const nextSceneId = this.checkSceneTransitions();
+    if (nextSceneId) {
+      // Check if the target is an ending
+      if (this.isEndingId(nextSceneId)) {
+        console.log(`SequenceController: Ending reached: ${nextSceneId}`);
         this.session.isComplete = true;
-        return { newState, sceneAdvanced: false, isComplete: true, endingTriggered: 'natural_conclusion' };
+        this.session.endingTriggered = nextSceneId;
+        return null; // No scene transition, game is complete
       }
+      
+      console.log(`SequenceController: Transitioning to scene: ${nextSceneId}`);
+      this.session.currentSceneId = nextSceneId;
+      await this.loadCurrentScene();
+      return nextSceneId;
     }
-
-    return { newState, sceneAdvanced, isComplete: false };
-  }
-
-  // Check if any ending conditions are met
-  private checkEndingConditions(): string | null {
-    for (const ending of this.session.compiledStructure.endings) {
-      try {
-        if (this.conditionEvaluator.evaluate(ending.condition)) {
-          return ending.id;
-        }
-      } catch (error) {
-        console.warn(`Error evaluating ending condition for ${ending.id}:`, error);
-      }
-    }
+    console.log('SequenceController: No transition, staying in current scene');
     return null;
   }
 
-  // Get content generation context for current scene
-  getContentGenerationContext(): ContentGenerationContext | null {
-    const currentScene = this.getCurrentScene();
-    if (!currentScene) return null;
+  private async loadCurrentScene(): Promise<void> {
+    console.log('SequenceController: loadCurrentScene called');
+    if (!this.session) {
+      throw new Error('Session not initialized. Cannot load current scene.');
+    }
 
-    return {
-      compiledStructure: this.session.compiledStructure,
-      currentScene,
-      currentState: this.session.currentState,
-      history: this.session.history,
-      sceneIndex: this.session.currentSceneIndex
-    };
-  }
-
-  // Restart with same compiled structure
-  restart(): void {
-    const previousState = this.session.currentState;
-    
-    this.stateManager.reset(this.session.compiledStructure.initial_state);
-    this.session.currentState = this.stateManager.getState();
-    this.conditionEvaluator.updateState(this.session.currentState);
-    this.session.currentSceneIndex = 0;
-    this.session.history = [];
-    this.session.isComplete = false;
-    this.session.endingTriggered = undefined;
-    
-    // Track restart state change
-    this.debugTracker?.trackStateChange(
-      'restart',
-      previousState,
-      this.session.currentState
+    const blueprintScene = this.session.blueprint.scene_sequence.find(
+      s => s.id === this.session!.currentSceneId
     );
+
+    if (!blueprintScene) {
+      this.session.isComplete = true;
+      console.error(`SequenceController: Scene not found in blueprint: ${this.session.currentSceneId}`);
+      return;
+    }
+
+    this.loadedScene = await this.sceneGenerator.generateScene({
+      blueprint: this.session.blueprint,
+      blueprintScene,
+      currentState: this.session.currentState,
+      sessionHistory: this.session.history
+    });
+    console.log('SequenceController: Scene generated', this.loadedScene);
+
+    this.fulfilledRequirements = [];
   }
 
-  // Get debug information
-  getDebugInfo(): {
-    currentState: any;
-    currentSceneIndex: number;
-    currentScene: SceneDefinition | null;
-    totalScenes: number;
-    endingConditions: { [key: string]: boolean };
-    compiledStructure: CompiledStoryStructure;
-  } {
-    const endingConditions: { [key: string]: boolean } = {};
-    
-    for (const ending of this.session.compiledStructure.endings) {
+  private checkEndingConditions(): string | null {
+    // Endings are handled via scene transitions to an ending ID.
+    return null; 
+  }
+
+  private checkSceneTransitions(): string | null {
+    console.log('SequenceController: checkSceneTransitions called');
+    if (!this.loadedScene || !this.conditionEvaluator) return null;
+
+    for (const transition of this.loadedScene.transitions) {
+      console.log('SequenceController: Checking transition', transition);
+      if (transition.condition === 'continue') continue;
+
       try {
-        endingConditions[ending.id] = this.conditionEvaluator.evaluate(ending.condition);
-      } catch {
-        endingConditions[ending.id] = false;
+        if (this.conditionEvaluator.evaluate(transition.condition)) {
+          console.log(`SequenceController: Transition condition met: ${transition.condition}`);
+          return transition.target;
+        }
+      } catch (error) {
+        console.warn(`SequenceController: Error evaluating transition condition for ${transition.target}:`, error);
       }
     }
 
-    return {
-      currentState: this.session.currentState,
-      currentSceneIndex: this.session.currentSceneIndex,
-      currentScene: this.getCurrentScene(),
-      totalScenes: this.session.compiledStructure.scene_sequence.length,
-      endingConditions,
-      compiledStructure: this.session.compiledStructure
-    };
+    const allRequirementsMet = this.loadedScene.requirements.every(
+      req => this.fulfilledRequirements.includes(req.key_to_update)
+    );
+    console.log('SequenceController: All requirements met for default transition?', allRequirementsMet);
+
+    if (allRequirementsMet) {
+      const defaultTransition = this.loadedScene.transitions.find(t => t.condition === 'continue');
+      console.log('SequenceController: Default transition', defaultTransition);
+      return defaultTransition ? defaultTransition.target : null;
+    }
+
+    return null;
   }
 
-  // Check if game can continue
-  canContinue(): boolean {
-    return !this.session.isComplete && this.getCurrentScene() !== null;
+  private isEndingId(targetId: string): boolean {
+    if (!this.session) return false;
+    return this.session.blueprint.potential_endings.some(ending => ending.id === targetId);
+  }
+
+  
+  getSession(): EmergentGameSession | null {
+    return this.session ? { ...this.session } : null;
   }
 }

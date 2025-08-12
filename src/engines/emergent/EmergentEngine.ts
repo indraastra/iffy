@@ -1,241 +1,170 @@
 import { MultiModelService } from '../../services/multiModelService.js';
-import { StoryCompiler } from './StoryCompiler.js';
+import { BlueprintGenerator } from './BlueprintGenerator.js';
+import { SceneGenerator } from './SceneGenerator.js';
+import { BeatGenerator } from './BeatGenerator.js';
 import { SequenceController } from './SequenceController.js';
-import { EmergentContentGenerator } from './EmergentContentGenerator.js';
 import { DebugTracker } from './DebugTracker.js';
 import { 
   NarrativeOutline, 
-  CompiledStoryStructure,
+  StoryBeat,
+  Choice,
   EmergentGameSession, 
-  GeneratedContent 
 } from '../../types/emergentStory.js';
 
 export interface EmergentEngineEvents {
-  onCompilationStart?: () => void;
-  onCompilationComplete?: (structure: CompiledStoryStructure) => void;
-  onContentGenerated?: (content: GeneratedContent) => void;
-  onStateChange?: (state: any) => void;
-  onSceneAdvanced?: (sceneIndex: number, sceneName: string) => void;
-  onGameComplete?: (endingId: string) => void;
+  onBlueprintStart?: () => void;
+  onBlueprintComplete?: () => void;
+  onSceneStart?: () => void;
+  onSceneComplete?: () => void;
+  onBeatStart?: () => void;
+  onBeatReady?: (beat: StoryBeat) => void;
+  onGameComplete?: (endingId: string, session: EmergentGameSession) => void;
   onError?: (error: Error) => void;
 }
 
 export class EmergentEngine {
-  private storyCompiler: StoryCompiler;
-  private contentGenerator: EmergentContentGenerator;
-  private sequenceController: SequenceController | null = null;
-  private currentContent: GeneratedContent | null = null;
+  private sequenceController: SequenceController;
   private events: EmergentEngineEvents;
   private debugTracker: DebugTracker;
+  private llmService: MultiModelService;
+  private currentBeat: StoryBeat | null = null;
 
   constructor(llmService: MultiModelService, events: EmergentEngineEvents = {}) {
+    this.llmService = llmService;
     this.debugTracker = new DebugTracker();
-    this.storyCompiler = new StoryCompiler(llmService, this.debugTracker);
-    this.contentGenerator = new EmergentContentGenerator(llmService, this.debugTracker);
     this.events = events;
+
+    // Instantiate the generator and controller hierarchy
+    const blueprintGenerator = new BlueprintGenerator(this.llmService, this.debugTracker);
+    const sceneGenerator = new SceneGenerator(this.llmService, this.debugTracker);
+    const beatGenerator = new BeatGenerator(this.llmService, this.debugTracker);
+    
+    this.sequenceController = new SequenceController(
+      blueprintGenerator,
+      sceneGenerator,
+      beatGenerator
+    );
   }
 
-  // Load and compile a narrative outline into a playable game
-  async loadNarrative(narrativeOutline: NarrativeOutline): Promise<void> {
+  /**
+   * Starts a new game from a narrative outline.
+   * This will generate the blueprint and the first scene, and then generate the first beat.
+   */
+  async startNewGame(narrativeOutline: NarrativeOutline): Promise<void> {
+    console.log('EmergentEngine: startNewGame called');
     try {
-      // Phase 1: Compilation (LLM as Architect)
-      if (this.events.onCompilationStart) {
-        this.events.onCompilationStart();
+      // Stage 1: Blueprint Generation
+      if (this.events.onBlueprintStart) {
+        this.events.onBlueprintStart();
       }
-
-      const compiledStructure = await this.storyCompiler.compileStory(narrativeOutline);
       
-      if (this.events.onCompilationComplete) {
-        this.events.onCompilationComplete(compiledStructure);
+      await this.sequenceController.startNewGame(narrativeOutline);
+      
+      if (this.events.onBlueprintComplete) {
+        this.events.onBlueprintComplete();
+      }
+      
+      // Stage 2: Beat Generation
+      if (this.events.onBeatStart) {
+        this.events.onBeatStart();
+      }
+      
+      const firstBeat = await this.sequenceController.getNextBeat();
+      console.log('EmergentEngine: firstBeat received', firstBeat);
+      if (firstBeat) {
+        this.currentBeat = firstBeat;
+        if (this.events.onBeatReady) {
+          console.log('EmergentEngine: Emitting onBeatReady');
+          this.events.onBeatReady(firstBeat);
+        }
+      }
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  /**
+   * Processes a player's choice and prepares the next beat.
+   */
+  async makeChoice(choice: Choice): Promise<void> {
+    console.log('EmergentEngine: makeChoice called with', choice);
+    try {
+      // Record the completed turn before processing the choice
+      if (this.currentBeat) {
+        this.sequenceController.recordTurn(this.currentBeat, choice);
+        this.currentBeat = null;
+      }
+      
+      const nextSceneId = await this.sequenceController.applyChoice(choice);
+      const session = this.getSession();
+
+      if (session?.isComplete) {
+        console.log('EmergentEngine: Game is complete');
+        if (this.events.onGameComplete && session.endingTriggered) {
+          this.events.onGameComplete(session.endingTriggered, session);
+        }
+        return; // Game is over
       }
 
-      // Phase 2: Initialize Runtime (Engine as Executor)
-      this.sequenceController = new SequenceController(narrativeOutline, compiledStructure, this.debugTracker);
-
-      // Phase 3: Generate Initial Content (LLM as Narrator)
-      await this.generateCurrentSceneContent();
+      if (this.events.onBeatStart) {
+        this.events.onBeatStart();
+      }
+      
+      const nextBeat = await this.sequenceController.getNextBeat();
+      console.log('EmergentEngine: nextBeat received', nextBeat);
+      if (nextBeat) {
+        this.currentBeat = nextBeat;
+        if (this.events.onBeatReady) {
+          console.log('EmergentEngine: Emitting onBeatReady for next beat');
+          this.events.onBeatReady(nextBeat);
+        }
+      } else if (!nextBeat && nextSceneId) {
+        console.log('EmergentEngine: Scene transitioned, getting first beat of new scene');
+        // This can happen if a scene has no requirements and just transitions.
+        // We need to get the first beat of the *new* scene.
+        if (this.events.onBeatStart) {
+          this.events.onBeatStart();
+        }
+        const firstBeatOfNewScene = await this.sequenceController.getNextBeat();
+        console.log('EmergentEngine: firstBeatOfNewScene received', firstBeatOfNewScene);
+        if (firstBeatOfNewScene && this.events.onBeatReady) {
+          console.log('EmergentEngine: Emitting onBeatReady for first beat of new scene');
+          this.events.onBeatReady(firstBeatOfNewScene);
+        }
+      }
 
     } catch (error) {
-      const engineError = error instanceof Error ? error : new Error('Unknown error loading narrative');
-      if (this.events.onError) {
-        this.events.onError(engineError);
-      }
+      this.handleError(error);
+    }
+  }
+
+  private handleError(error: unknown): void {
+    const engineError = error instanceof Error ? error : new Error('Unknown engine error');
+    console.error('EmergentEngine ERROR:', engineError);
+    if (this.events.onError) {
+      this.events.onError(engineError);
+    } else {
+      // If no error handler is attached, re-throw to crash loudly
       throw engineError;
     }
   }
 
-  // Make a choice and advance the game
-  async makeChoice(choiceIndex: number): Promise<GeneratedContent | null> {
-    if (!this.sequenceController || !this.currentContent) {
-      throw new Error('No narrative loaded. Call loadNarrative() first.');
-    }
+  // ~~~ Public Accessors ~~~
 
-    try {
-      // Apply choice effects
-      const result = this.sequenceController.applyChoice(choiceIndex, this.currentContent);
-
-      // Emit state change
-      if (this.events.onStateChange) {
-        this.events.onStateChange(result.newState);
-      }
-
-      // Emit scene advancement
-      if (result.sceneAdvanced && this.events.onSceneAdvanced) {
-        const currentScene = this.sequenceController.getCurrentScene();
-        this.events.onSceneAdvanced(
-          this.sequenceController.getSession().currentSceneIndex, 
-          currentScene?.id || 'unknown'
-        );
-      }
-
-      // Handle game completion
-      if (result.isComplete) {
-        if (this.events.onGameComplete && result.endingTriggered) {
-          this.events.onGameComplete(result.endingTriggered);
-        }
-        
-        // Generate ending content
-        await this.generateEndingContent(result.endingTriggered);
-        if (this.events.onContentGenerated) {
-          this.events.onContentGenerated(this.currentContent);
-        }
-        
-        return this.currentContent;
-      }
-
-      // Generate next scene content if game continues
-      if (this.sequenceController.canContinue()) {
-        await this.generateCurrentSceneContent();
-      }
-
-      return this.currentContent;
-
-    } catch (error) {
-      const engineError = error instanceof Error ? error : new Error('Unknown error making choice');
-      if (this.events.onError) {
-        this.events.onError(engineError);
-      }
-      throw engineError;
-    }
-  }
-
-  // Generate content for current scene
-  private async generateCurrentSceneContent(): Promise<void> {
-    if (!this.sequenceController) return;
-
-    const context = this.sequenceController.getContentGenerationContext();
-    if (!context) {
-      // No more scenes - this shouldn't happen but handle gracefully
-      await this.generateEndingContent('natural_conclusion');
-      return;
-    }
-
-    this.currentContent = await this.contentGenerator.generateContent(context);
-    
-    if (this.events.onContentGenerated) {
-      this.events.onContentGenerated(this.currentContent);
-    }
-
-    if (this.events.onStateChange) {
-      this.events.onStateChange(this.sequenceController.getSession().currentState);
-    }
-  }
-
-  // Generate ending content
-  private async generateEndingContent(endingId?: string): Promise<void> {
-    const session = this.sequenceController?.getSession();
-    const ending = session?.compiledStructure.endings.find(e => e.id === endingId);
-    
-    if (!session || !ending) {
-      this.currentContent = {
-        narrative: 'The story has reached its conclusion.',
-        scene_complete: true,
-        choices: [
-          { text: "Play again with a new story structure", effects: {} },
-          { text: "Load a different narrative", effects: {} }
-        ]
-      };
-      return;
-    }
-
-    try {
-      // Generate proper ending narrative using the LLM
-      const context = this.sequenceController!.getContentGenerationContext();
-      if (!context) {
-        throw new Error('No content generation context available');
-      }
-
-      // Build ending-specific context
-      const endingContext = {
-        ...context,
-        isEnding: true,
-        triggeredEnding: ending,
-        finalState: session.currentState,
-        storyHistory: session.history
-      };
-
-      const endingContent = await this.contentGenerator.generateEndingContent(endingContext);
-      this.currentContent = endingContent;
-      
-    } catch (error) {
-      console.error('Failed to generate ending content:', error);
-      this.currentContent = {
-        narrative: `The story concludes with a ${ending.tone} ending. Though the details escape us now, your choices have led to this moment of resolution.`,
-        scene_complete: true,
-        choices: [
-          { text: "Play again with a new story structure", effects: {} },
-          { text: "Load a different narrative", effects: {} }
-        ]
-      };
-    }
-  }
-
-  // Get current content
-  getCurrentContent(): GeneratedContent | null {
-    return this.currentContent;
-  }
-
-  // Get current game session
   getSession(): EmergentGameSession | null {
-    return this.sequenceController?.getSession() || null;
+    return this.sequenceController.getSession();
   }
 
-  // Restart with same narrative (will recompile for new structure)
-  async restart(): Promise<void> {
-    const session = this.getSession();
-    if (!session) {
-      throw new Error('No narrative loaded. Call loadNarrative() first.');
-    }
-
-    // Recompile the same narrative for a new unique structure
-    await this.loadNarrative(session.narrativeOutline);
-  }
-
-  // Get debug information
-  getDebugInfo(): any {
-    return this.sequenceController?.getDebugInfo() || null;
-  }
-
-  // Get debug tracker for UI integration
   getDebugTracker(): DebugTracker {
     return this.debugTracker;
   }
 
-  // Test LLM connection
-  async testConnection(): Promise<boolean> {
-    try {
-      return await this.contentGenerator.testConnection();
-    } catch {
-      return false;
-    }
-  }
+  // ~~~ Static Helpers ~~~
 
-  // Parse narrative from Markdown string
   static parseMarkdown(markdown: string): NarrativeOutline {
-    return StoryCompiler.parseMarkdown(markdown);
+    return BlueprintGenerator.parseMarkdown(markdown);
   }
 
-  // Load narrative from file
   static async loadFromFile(file: File): Promise<NarrativeOutline> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -253,7 +182,6 @@ export class EmergentEngine {
     });
   }
 
-  // Load narrative from URL
   static async loadFromURL(url: string): Promise<NarrativeOutline> {
     try {
       const response = await fetch(url);

@@ -1,4 +1,4 @@
-import { GameState, StateValue, StateOperation, StateEffects } from '../../types/emergentStory.js';
+import { GameState, StateValue, StateEffects } from '../../types/emergentStory.js';
 
 export class StateManager {
   private state: GameState;
@@ -29,7 +29,7 @@ export class StateManager {
   }
 
   // Apply a single state operation
-  private applyOperation(key: string, operation: StateOperation): StateValue {
+  private applyOperation(key: string, operation: StateValue | string): StateValue {
     // Handle direct assignment (boolean, string, or number)
     if (typeof operation === 'boolean' || typeof operation === 'number') {
       return operation;
@@ -44,7 +44,8 @@ export class StateManager {
         }
         const currentValue = this.state[key];
         if (typeof currentValue !== 'number') {
-          throw new Error(`Cannot increment non-numeric value: ${key} is ${typeof currentValue}`);
+          // If the key doesn't exist or isn't a number, start from 0
+          return increment;
         }
         return currentValue + increment;
       }
@@ -56,7 +57,8 @@ export class StateManager {
         }
         const currentValue = this.state[key];
         if (typeof currentValue !== 'number') {
-          throw new Error(`Cannot decrement non-numeric value: ${key} is ${typeof currentValue}`);
+          // If the key doesn't exist or isn't a number, start from 0
+          return -decrement;
         }
         return currentValue - decrement;
       }

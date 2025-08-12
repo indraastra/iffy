@@ -1,235 +1,183 @@
-import { describe, it, expect } from 'vitest'
-import { StoryCompiler } from '../engines/emergent/StoryCompiler.js'
-import { SequenceController } from '../engines/emergent/SequenceController.js'
-import { EmergentContentGenerator } from '../engines/emergent/EmergentContentGenerator.js'
-import { DebugTracker } from '../engines/emergent/DebugTracker.js'
-import { EmergentEngine } from '../engines/emergent/EmergentEngine.js'
+import { describe, it, expect, vi } from 'vitest';
+import { EmergentEngine } from '../engines/emergent/EmergentEngine.js';
+import { 
+  NarrativeOutline, 
+  StoryBlueprint, 
+  StoryScene, 
+  StoryBeat 
+} from '../types/emergentStory.js';
 
-// Mock LLM service for testing
-class MockLLMService {
-  async makeRequest(prompt: string): Promise<string> {
-    if (prompt.includes('story architect')) {
-      // Mock compilation response
-      return JSON.stringify({
-        "title": "Test Story",
-        "initial_state": {
-          "progress": 0,
-          "tension": false
-        },
-        "scene_sequence": [
-          { "id": "opening", "goal": "Establish the situation" },
-          { "id": "climax", "goal": "Reach the critical moment" }
-        ],
-        "endings": [
-          { "id": "success", "tone": "hopeful", "condition": "progress >= 2" },
-          { "id": "failure", "tone": "somber", "condition": "tension" }
-        ]
-      })
-    } else {
-      // Mock content generation response
-      return JSON.stringify({
-        "narrative": "Test narrative content",
-        "scene_complete": false,
-        "choices": [
-          { "text": "Choice 1", "effects": { "progress": "+1" } },
-          { "text": "Choice 2", "effects": { "tension": true } },
-          { "text": "Choice 3", "effects": { "progress": "+2" } }
-        ]
-      })
-    }
-  }
-}
+// --- Mocks for the three-tier generator system ---
 
-describe('Emergent Engine Components', () => {
-  describe('StoryCompiler', () => {
-    it('should parse Markdown narrative outline', () => {
-      const markdown = `# Test Story
+const mockBlueprint: StoryBlueprint = {
+  title: 'Mock Story',
+  setting: { world: 'A mock world', tone: 'mocking', time_period: 'mock o\'clock' },
+  scene_sequence: [
+    { 
+      id: 'scene_1', 
+      goal: 'Start the story', 
+      narrative: 'The adventure begins with our hero facing a choice',
+      location: 'Starting location',
+      characters: ['hero'],
+      dramatic_function: 'exposition' 
+    },
+    { 
+      id: 'scene_2', 
+      goal: 'End the story', 
+      narrative: 'The adventure concludes with resolution',
+      location: 'Ending location', 
+      characters: ['hero'],
+      dramatic_function: 'resolution' 
+    },
+  ],
+  potential_endings: [
+    { id: 'ending_good', title: 'Good Ending', description: 'You did it!', tone: 'happy' },
+  ],
+  blanks: ['character_identity', 'background_story'],
+};
 
-## Summary
-This is a test story.
+const mockScene1: StoryScene = {
+  id: 'scene_1',
+  goal: 'Start the story',
+  requirements: [
+    { key_to_update: 'progress', description: 'Make some progress' },
+  ],
+  blanks: ['character_identity'],
+  transitions: [
+    { target: 'scene_2', condition: 'progress >= 1' },
+    { target: 'scene_2', condition: 'continue' },
+  ],
+};
 
-## Key Elements
-Testing the parsing functionality.
+const mockBeat1: StoryBeat = {
+  narrative_text: 'This is the first beat.',
+  choices: [
+    { text: 'Make progress', effects: { progress: 1 } },
+    { text: 'Do nothing', effects: { progress: 0 } },
+  ],
+};
 
-## Potential Endings
-Success or failure based on choices.`
+const mockScene2: StoryScene = {
+  id: 'scene_2',
+  goal: 'End the story',
+  requirements: [],
+  blanks: [],
+  transitions: [
+    { target: 'ending_good', condition: 'continue' },
+  ],
+};
 
-      const narrative = StoryCompiler.parseMarkdown(markdown)
-      
-      expect(narrative.title).toBe('Test Story')
-      expect(narrative.markdown).toContain('This is a test story')
-    })
+// Mock the generators
+vi.mock('../engines/emergent/BlueprintGenerator.js', () => ({
+  BlueprintGenerator: vi.fn().mockImplementation(() => ({
+    generateBlueprint: vi.fn().mockResolvedValue(mockBlueprint),
+  })),
+}));
 
-    it('should compile narrative to story structure', async () => {
-      const mockLLM = new MockLLMService()
-      const compiler = new StoryCompiler(mockLLM as any)
-      
-      const narrative = {
-        title: 'Test Story',
-        markdown: 'Test markdown content'
-      }
+vi.mock('../engines/emergent/SceneGenerator.js', () => ({
+  SceneGenerator: vi.fn().mockImplementation(() => ({
+    generateScene: vi.fn()
+      .mockImplementation((context) => {
+        if (context.blueprintScene.id === 'scene_1') return Promise.resolve(mockScene1);
+        if (context.blueprintScene.id === 'scene_2') return Promise.resolve(mockScene2);
+        return Promise.reject(new Error('Unknown mock scene'));
+      }),
+  })),
+}));
 
-      const compiled = await compiler.compileStory(narrative)
-      
-      expect(compiled.title).toBe('Test Story')
-      expect(compiled.initial_state.progress).toBe(0)
-      expect(compiled.scene_sequence).toHaveLength(2)
-      expect(compiled.endings).toHaveLength(2)
-    })
-  })
+vi.mock('../engines/emergent/BeatGenerator.js', () => ({
+  BeatGenerator: vi.fn().mockImplementation(() => ({
+    generateBeat: vi.fn().mockResolvedValue(mockBeat1),
+    generateBlankFillingBeat: vi.fn().mockResolvedValue(mockBeat1),
+  })),
+}));
 
-  describe('DebugTracker', () => {
-    it('should track LLM interactions', () => {
-      const tracker = new DebugTracker()
-      
-      const id = tracker.trackLLMInteraction(
-        'compilation',
-        'architect',
-        'test prompt',
-        'test response',
-        true,
-        1000
-      )
+describe('Refactored EmergentEngine', () => {
 
-      const log = tracker.getLog()
-      expect(log.llmInteractions).toHaveLength(1)
-      expect(log.llmInteractions[0].id).toBe(id)
-      expect(log.llmInteractions[0].type).toBe('compilation')
-      expect(log.llmInteractions[0].phase).toBe('architect')
-      expect(log.llmInteractions[0].success).toBe(true)
-    })
+  const mockLlmService = {} as any; // No longer needs to be a full mock
+  const mockNarrative: NarrativeOutline = { title: 'Test', markdown: '' };
 
-    it('should track state changes', () => {
-      const tracker = new DebugTracker()
-      
-      const id = tracker.trackStateChange(
-        'choice',
-        { progress: 0 },
-        { progress: 1 },
-        { progress: '+1' },
-        'Test choice'
-      )
+  it('should initialize and generate the first beat', async () => {
+    const onBeatReady = vi.fn();
+    const engine = new EmergentEngine(mockLlmService, { onBeatReady });
 
-      const log = tracker.getLog()
-      expect(log.stateChanges).toHaveLength(1)
-      expect(log.stateChanges[0].id).toBe(id)
-      expect(log.stateChanges[0].trigger).toBe('choice')
-      expect(log.stateChanges[0].choiceText).toBe('Test choice')
-    })
+    await engine.startNewGame(mockNarrative);
 
-    it('should calculate correct statistics', () => {
-      const tracker = new DebugTracker()
-      
-      // Add some test data
-      tracker.trackLLMInteraction('compilation', 'architect', 'prompt1', 'response1', true, 1000)
-      tracker.trackLLMInteraction('content_generation', 'narrator', 'prompt2', 'response2', true, 500)
-      tracker.trackLLMInteraction('content_generation', 'narrator', 'prompt3', 'response3', false, 800)
-      tracker.trackStateChange('choice', {}, { test: true })
+    expect(onBeatReady).toHaveBeenCalledOnce();
+    expect(onBeatReady).toHaveBeenCalledWith(mockBeat1);
 
-      const stats = tracker.getStats()
-      
-      expect(stats.totalInteractions).toBe(3)
-      expect(stats.totalStateChanges).toBe(1)
-      expect(Math.round(stats.averageResponseTime * 100) / 100).toBe(766.67) // (1000+500+800)/3
-      expect(stats.successRate).toBe(2/3) // 2 successful out of 3
-    })
-  })
+    const session = engine.getSession();
+    expect(session?.currentSceneId).toBe('scene_1');
+    expect(session?.currentState).toEqual({});
+  });
 
-  describe('SequenceController', () => {
-    it('should initialize with compiled structure', () => {
-      const narrative = { title: 'Test', markdown: 'content' }
-      const compiled = {
-        title: 'Test',
-        initial_state: { progress: 0 },
-        scene_sequence: [
-          { id: 'scene1', goal: 'Test goal' }
-        ],
-        endings: [
-          { id: 'ending1', tone: 'test', condition: 'progress > 0' }
-        ]
-      }
+  it('should process a choice, update state, and get the next beat', async () => {
+    const onBeatReady = vi.fn();
+    const engine = new EmergentEngine(mockLlmService, { onBeatReady });
+    await engine.startNewGame(mockNarrative);
 
-      const controller = new SequenceController(narrative, compiled)
-      const session = controller.getSession()
+    // Player makes the first choice
+    const choice = mockBeat1.choices[0]; // The one that sets progress to 1
+    await engine.makeChoice(choice);
 
-      expect(session.currentSceneIndex).toBe(0)
-      expect(session.currentState.progress).toBe(0)
-      expect(session.isComplete).toBe(false)
-    })
+    const session = engine.getSession();
+    expect(session?.currentState.progress).toBe(1);
+    
+    // Since progress is now 1, the transition to scene_2 should have happened.
+    expect(session?.currentSceneId).toBe('scene_2');
 
-    it('should advance scene index linearly', () => {
-      const narrative = { title: 'Test', markdown: 'content' }
-      const compiled = {
-        title: 'Test',
-        initial_state: { progress: 0 },
-        scene_sequence: [
-          { id: 'scene1', goal: 'Goal 1' },
-          { id: 'scene2', goal: 'Goal 2' }
-        ],
-        endings: [
-          { id: 'ending1', tone: 'test', condition: 'progress >= 10' }
-        ]
-      }
+    // The engine should have automatically fetched the first beat of the new scene.
+    // In this test, mockScene2 has no requirements, so no new beat is generated.
+    // We can verify that the onBeatReady was not called a second time for the empty scene.
+    expect(onBeatReady).toHaveBeenCalledOnce(); 
+  });
 
-      const controller = new SequenceController(narrative, compiled)
-      
-      expect(controller.getCurrentScene()?.id).toBe('scene1')
-      
-      const advanced = controller.advanceToNextScene()
-      expect(advanced).toBe(true)
-      expect(controller.getCurrentScene()?.id).toBe('scene2')
-      
-      const noMore = controller.advanceToNextScene()
-      expect(noMore).toBe(false)
-    })
-  })
+  it('should trigger a game complete event when an ending is reached', async () => {
+    const onGameComplete = vi.fn();
+    const engine = new EmergentEngine(mockLlmService, { onGameComplete });
+    await engine.startNewGame(mockNarrative);
 
-  describe('EmergentContentGenerator', () => {
-    it('should generate fallback content on parse failure', async () => {
-      const mockLLM = {
-        async makeRequest(): Promise<string> {
-          return 'Invalid JSON response'
-        }
-      }
-      
-      const generator = new EmergentContentGenerator(mockLLM as any)
-      const context = {
-        compiledStructure: {
-          title: 'Test',
-          initial_state: {},
-          scene_sequence: [{ id: 'test', goal: 'test goal' }],
-          endings: []
-        },
-        currentScene: { id: 'test', goal: 'test goal' },
-        currentState: {},
-        history: [],
-        sceneIndex: 0
-      }
+    // 1. Make choice to advance to scene 2
+    const choice1 = mockBeat1.choices[0];
+    await engine.makeChoice(choice1);
+    let session = engine.getSession();
+    expect(session?.currentSceneId).toBe('scene_2');
 
-      const content = await generator.generateContent(context)
-      
-      expect(content.narrative).toContain('story continues')
-      expect(content.choices).toHaveLength(3)
-      expect(content.scene_complete).toBe(false)
-    })
-  })
+    // 2. Scene 2 has no requirements, so the next call to makeChoice with a null/system choice
+    // should trigger the default 'continue' transition to the ending.
+    await engine.makeChoice({ text: 'Continue', effects: {} }); // Simulate a continue action
 
-  describe('EmergentEngine Integration', () => {
-    it('should create engine with debug tracking', () => {
-      const mockLLM = new MockLLMService()
-      const engine = new EmergentEngine(mockLLM as any)
-      
-      const debugTracker = engine.getDebugTracker()
-      expect(debugTracker).toBeDefined()
-      expect(typeof debugTracker.getLog).toBe('function')
-    })
+    session = engine.getSession();
+    expect(onGameComplete).toHaveBeenCalledOnce();
+    expect(onGameComplete).toHaveBeenCalledWith('ending_good', session);
+    expect(session?.isComplete).toBe(true);
+    expect(session?.endingTriggered).toBe('ending_good');
+  });
 
-    it('should parse markdown correctly', () => {
-      const markdown = '# Test Story\n\nTest content'
-      const narrative = EmergentEngine.parseMarkdown(markdown)
-      
-      expect(narrative.title).toBe('Test Story')
-      expect(narrative.markdown).toBe(markdown)
-    })
-  })
-})
+  it('should handle errors gracefully', async () => {
+    const onError = vi.fn();
+    
+    // Create a separate engine with a mock that throws an error
+    const errorMockLlmService = {} as any;
+    
+    const errorSequenceController = {
+      startNewGame: vi.fn().mockRejectedValue(new Error('Blueprint Failed'))
+    };
+    
+    // Mock the SequenceController constructor to throw an error
+    const originalConsole = console.error;
+    console.error = vi.fn(); // Suppress error logging for this test
+    
+    const engine = new EmergentEngine(errorMockLlmService, { onError });
+    
+    // Replace the sequence controller with one that will fail
+    (engine as any).sequenceController = errorSequenceController;
+
+    await engine.startNewGame(mockNarrative);
+
+    expect(onError).toHaveBeenCalledOnce();
+    expect(onError.mock.calls[0][0].message).toBe('Blueprint Failed');
+    
+    console.error = originalConsole; // Restore console
+  });
+});

@@ -1,10 +1,13 @@
 // Debug tracking system for LLM interactions and state changes
 
+export type LLMInteractionType = 'blueprint_generation' | 'scene_generation' | 'beat_generation' | 'classification' | 'compilation' | 'content_generation';
+export type LLMInteractionPhase = 'architect' | 'director' | 'writer' | 'narrator' | 'classifier';
+
 export interface LLMInteraction {
   id: string;
   timestamp: Date;
-  type: 'compilation' | 'content_generation';
-  phase: 'architect' | 'narrator';
+  type: LLMInteractionType;
+  phase: LLMInteractionPhase;
   prompt: string;
   response: string;
   success: boolean;
@@ -44,8 +47,8 @@ export class DebugTracker {
 
   // Track LLM interaction
   trackLLMInteraction(
-    type: 'compilation' | 'content_generation',
-    phase: 'architect' | 'narrator',
+    type: LLMInteractionType,
+    phase: LLMInteractionPhase,
     prompt: string,
     response: string,
     success: boolean,

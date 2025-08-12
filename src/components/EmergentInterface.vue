@@ -10,42 +10,41 @@
     </div>
 
     <!-- Compilation Status -->
-    <div v-if="isCompiling" class="compilation-status">
+    <div v-if="isLoading && gameHistory.length === 0" class="compilation-status">
       <div class="compilation-indicator">
         <div class="thinking-dots">
           <span></span>
           <span></span>
           <span></span>
         </div>
-        <span class="compilation-text">LLM Architect is generating your unique story structure...</span>
+        <span class="compilation-text">{{ loadingMessage }}</span>
       </div>
     </div>
 
     <!-- Story Content -->
     <div class="story-content">
+      <!-- Welcome message when no story loaded -->
+      <div v-if="!currentNarrative && !isLoading" class="welcome-message">
+        <h2>Welcome to the Emergent Story Engine</h2>
+        <p>Please select a story from the <strong>Load Narrative</strong> menu to begin your unique adventure.</p>
+      </div>
+
       <!-- Story Output -->
       <div class="story-messages">
         <div v-for="turn in gameHistory" :key="turn.timestamp" class="story-turn">
           <div class="narrative-content">
-            <MarkupRenderer :content="turn.content.narrative" />
+            <MarkupRenderer :content="turn.beat.narrative_text" />
           </div>
           <div v-if="turn.choiceIndex !== -1" class="player-choice">
-            <strong>You chose:</strong> {{ turn.content.choices[turn.choiceIndex].text }}
+            <strong>You chose:</strong> {{ turn.beat.choices[turn.choiceIndex].text }}
           </div>
-          <div v-if="showDebugInfo && turn.sceneIndex > 0" class="scene-transition">
-            <span class="scene-badge">Scene {{ turn.sceneIndex + 1 }}</span>
-          </div>
+          <!-- Scene transition info is now handled by the engine's internal state, not directly from turn.sceneIndex -->
         </div>
 
         <!-- Current content or loading indicator -->
-        <div v-if="currentContent || (isLoading && !isCompiling)" class="story-turn current">
-          <div class="scene-info" v-if="showDebugInfo && currentScene && !isLoading && !isComplete && currentContent">
-            <span class="scene-badge">Scene {{ currentSceneIndex + 1 }} of {{ totalScenes }}</span>
-            <span class="scene-goal">{{ currentScene.goal }}</span>
-          </div>
-          
-          <!-- Show loading indicator when loading but not compiling -->
-          <div v-if="isLoading && !isCompiling" class="thinking-indicator">
+        <div v-if="currentBeat || (isLoading && gameHistory.length > 0)" class="story-turn current">
+          <!-- Show loading indicator when loading next beat (not initial compilation) -->
+          <div v-if="isLoading && gameHistory.length > 0" class="thinking-indicator">
             <div class="thinking-dots">
               <span></span>
               <span></span>
@@ -55,20 +54,19 @@
           </div>
           
           <!-- Show actual content when not loading and content exists -->
-          <div v-else-if="currentContent" class="narrative-content">
-            <MarkupRenderer :content="currentContent.narrative" />
+          <div v-else-if="currentBeat" class="narrative-content">
+            <MarkupRenderer :content="currentBeat.narrative_text" />
           </div>
         </div>
       </div>
 
       <!-- Choice Selection -->
-      <div v-if="currentContent && !isComplete && !isLoading" class="choice-area">
-        <h3>What do you do?</h3>
+      <div v-if="currentBeat && !isComplete && !isLoading" class="choice-area">
         <div class="choices">
           <button
-            v-for="(choice, index) in currentContent.choices"
+            v-for="(choice, index) in currentBeat.choices"
             :key="index"
-            @click="makeChoice(index)"
+            @click="makeChoice(choice)"
             class="choice-button"
             :disabled="isLoading"
           >
@@ -79,10 +77,6 @@
               </span>
             </div>
           </button>
-        </div>
-        <div v-if="showDebugInfo && currentContent.scene_complete" class="scene-complete-notice">
-          <span class="complete-icon">✓</span>
-          Scene goal achieved - story will advance after your choice
         </div>
       </div>
 
@@ -101,7 +95,7 @@
     <!-- Debug Sidebar -->
     <DebugSidebar 
       :debug-tracker="debugTracker" 
-      :compiled-structure="compiledStructure" 
+      :compiled-structure="currentSession?.blueprint" 
       :debug-enabled="debugEnabled"
       @toggle-debug="toggleDebugMode"
     />
@@ -122,7 +116,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { EmergentEngine, EmergentEngineEvents } from '../engines/emergent/EmergentEngine.js'
 import { MultiModelService } from '../services/multiModelService.js'
-import { NarrativeOutline, GeneratedContent, GameTurn, CompiledStoryStructure, SceneDefinition } from '../types/emergentStory.js'
+import { NarrativeOutline, StoryBeat, GameTurn, Choice, EmergentGameSession } from '../types/emergentStory.js'
 import MarkupRenderer from './MarkupRenderer.vue'
 import DebugSidebar from './DebugSidebar.vue'
 
@@ -130,10 +124,8 @@ import DebugSidebar from './DebugSidebar.vue'
 const engine = ref<EmergentEngine | null>(null)
 const debugTracker = ref<any>(null)
 const currentNarrative = ref<NarrativeOutline | null>(null)
-const compiledStructure = ref<CompiledStoryStructure | null>(null)
-const currentContent = ref<GeneratedContent | null>(null)
+const currentBeat = ref<StoryBeat | null>(null)
 const gameHistory = ref<GameTurn[]>([])
-const isCompiling = ref(false)
 const isLoading = ref(false)
 const isComplete = ref(false)
 const endingId = ref<string | null>(null)
@@ -153,85 +145,86 @@ onMounted(() => {
 // Computed debug info visibility
 const showDebugInfo = computed(() => debugEnabled.value)
 
-// Toggle debug mode
-function toggleDebugMode() {
-  debugEnabled.value = !debugEnabled.value
-}
-
 // Computed properties
 const currentSession = computed(() => engine.value?.getSession())
-const currentScene = computed(() => currentSession.value?.compiledStructure.scene_sequence[currentSession.value.currentSceneIndex])
-const currentSceneIndex = computed(() => currentSession.value?.currentSceneIndex || 0)
-const totalScenes = computed(() => currentSession.value?.compiledStructure.scene_sequence.length || 0)
 
 // Initialize LLM service and engine
 onMounted(async () => {
   const llmService = new MultiModelService()
   
   const events: EmergentEngineEvents = {
-    onCompilationStart: () => {
-      isCompiling.value = true
-      isLoading.value = true
-      loadingMessage.value = 'LLM Architect is analyzing your story...'
+    onBlueprintStart: () => {
+      loadingMessage.value = 'Reading your story and planning the adventure...'
     },
-    onCompilationComplete: (structure: CompiledStoryStructure) => {
-      isCompiling.value = false
-      compiledStructure.value = structure
-      loadingMessage.value = 'LLM Narrator is creating your opening scene...'
+    onBlueprintComplete: () => {
+      loadingMessage.value = 'Creating the opening scene...'
     },
-    onContentGenerated: (content: GeneratedContent) => {
-      currentContent.value = content
+    onBeatStart: () => {
+      if (gameHistory.value.length === 0) {
+        loadingMessage.value = 'Writing the first moment of your story...'
+      } else {
+        loadingMessage.value = 'Continuing your adventure...'
+      }
+    },
+    onBeatReady: (beat: StoryBeat) => {
+      currentBeat.value = beat
       isLoading.value = false
+      loadingMessage.value = '' // Clear message once content is ready
     },
-    onStateChange: (state: any) => {
-      // State changes are tracked by debug system
-    },
-    onSceneAdvanced: (sceneIndex: number, sceneName: string) => {
-      console.log(`Advanced to scene ${sceneIndex + 1}: ${sceneName}`)
-    },
-    onGameComplete: (ending: string) => {
+    onGameComplete: (ending: string, session: EmergentGameSession) => {
       isComplete.value = true
       endingId.value = ending
+      isLoading.value = false
+      loadingMessage.value = ''
+      // Add final beat to history if it exists
+      if (currentBeat.value) {
+        gameHistory.value.push({
+          sceneId: session.currentSceneId,
+          beat: currentBeat.value,
+          choiceIndex: -1, // No choice made to end the game
+          stateAfter: session.currentState,
+          timestamp: new Date()
+        })
+      }
     },
     onError: (error: Error) => {
       console.error('Engine error:', error)
       alert(`Error: ${error.message}`)
       isLoading.value = false
-      isCompiling.value = false
+      loadingMessage.value = ''
     }
   }
 
   engine.value = new EmergentEngine(llmService, events)
   debugTracker.value = engine.value.getDebugTracker()
-
-  // Try to load the lighthouse keeper example
-  try {
-    const base = import.meta.env.BASE_URL || '/'
-    const storyUrl = `${base}stories/lighthouse_keeper.md`
-    const narrative = await EmergentEngine.loadFromURL(storyUrl)
-    await loadNarrativeData(narrative)
-  } catch (error) {
-    console.log('Could not auto-load lighthouse keeper narrative:', error)
-  }
 })
 
 // Story management functions
 async function loadNarrativeData(narrative: NarrativeOutline) {
-  if (!engine.value) return
+  console.log('EmergentInterface: loadNarrativeData called with narrative:', narrative)
+  if (!engine.value) {
+    console.error('EmergentInterface: No engine available')
+    return
+  }
 
   try {
+    console.log('EmergentInterface: Setting up state for new game')
     currentNarrative.value = narrative
     gameHistory.value = []
     isComplete.value = false
     endingId.value = null
-    compiledStructure.value = null
+    currentBeat.value = null
+    isLoading.value = true
+    // loadingMessage will be set by engine events
 
-    await engine.value.loadNarrative(narrative)
-    currentContent.value = engine.value.getCurrentContent()
+    console.log('EmergentInterface: Calling engine.startNewGame')
+    await engine.value.startNewGame(narrative) // Changed from loadNarrative
+    console.log('EmergentInterface: startNewGame completed successfully')
     
   } catch (error) {
-    console.error('Failed to load narrative:', error)
+    console.error('EmergentInterface: Failed to load narrative:', error)
     alert(`Failed to load narrative: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    isLoading.value = false
   }
 }
 
@@ -240,15 +233,15 @@ async function restartGame() {
 
   try {
     isLoading.value = true
-    loadingMessage.value = 'Generating new story structure...'
+    // loadingMessage will be set by engine events
     
     gameHistory.value = []
     isComplete.value = false
     endingId.value = null
+    currentBeat.value = null
 
-    await engine.value.restart()
-    currentContent.value = engine.value.getCurrentContent()
-    compiledStructure.value = engine.value.getSession()?.compiledStructure || null
+    // The engine's startNewGame will re-generate the blueprint and first scene/beat
+    await engine.value.startNewGame(currentNarrative.value)
     
   } catch (error) {
     console.error('Failed to restart:', error)
@@ -257,30 +250,27 @@ async function restartGame() {
 }
 
 // Choice handling
-async function makeChoice(choiceIndex: number) {
-  if (!engine.value || !currentContent.value || isLoading.value) return
+async function makeChoice(choice: Choice) { // Now accepts Choice object directly
+  if (!engine.value || !currentBeat.value || isLoading.value) return
 
   try {
     isLoading.value = true
-    loadingMessage.value = 'Processing your choice...'
+    // loadingMessage will be set by engine events
 
     // Store current turn in history before making choice
     const session = engine.value.getSession()
     if (session) {
       const turn: GameTurn = {
-        sceneIndex: session.currentSceneIndex,
-        sceneId: session.compiledStructure.scene_sequence[session.currentSceneIndex]?.id || 'unknown',
-        content: currentContent.value,
-        choiceIndex,
-        stateAfter: session.currentState,
+        sceneId: session.currentSceneId,
+        beat: currentBeat.value,
+        choiceIndex: currentBeat.value.choices.indexOf(choice), // Find index of chosen object
+        stateAfter: session.currentState, // This state will be updated by applyChoice
         timestamp: new Date()
       }
       gameHistory.value.push(turn)
     }
 
-    // Make the choice and get new content
-    const newContent = await engine.value.makeChoice(choiceIndex)
-    currentContent.value = newContent
+    await engine.value.makeChoice(choice) // Pass the choice object directly
 
   } catch (error) {
     console.error('Failed to make choice:', error)
@@ -292,21 +282,31 @@ async function makeChoice(choiceIndex: number) {
 
 // File handling
 function loadNarrative() {
+  console.log('EmergentInterface: loadNarrative clicked, opening file dialog')
   fileInput.value?.click()
 }
 
 async function handleFileSelect(event: Event) {
+  console.log('EmergentInterface: handleFileSelect called', event)
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
+  console.log('EmergentInterface: Selected file:', file)
   if (!file) return
 
   try {
+    console.log('EmergentInterface: Loading file via EmergentEngine.loadFromFile')
     const narrative = await EmergentEngine.loadFromFile(file)
+    console.log('EmergentInterface: File loaded, narrative:', narrative)
     await loadNarrativeData(narrative)
   } catch (error) {
     console.error('Failed to load narrative file:', error)
     alert(`Failed to load narrative: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
+}
+
+// Debug mode handling
+function toggleDebugMode() {
+  debugEnabled.value = !debugEnabled.value
 }
 
 
@@ -600,6 +600,27 @@ async function handleFileSelect(event: Event) {
 .structure-item {
   font-size: 0.85rem;
   color: #6c757d;
+}
+
+.welcome-message {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: #f8f9fa;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  margin: 2rem 0;
+}
+
+.welcome-message h2 {
+  color: #495057;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.welcome-message p {
+  color: #6c757d;
+  font-size: 1.1rem;
+  margin: 0;
 }
 
 .thinking-indicator {

@@ -64,6 +64,18 @@ export class ConditionEvaluator {
         const leftValue = this.getValue(left);
         const rightValue = this.parseValue(right);
 
+        // Handle undefined values gracefully - they make conditions false except for != undefined
+        if (leftValue === undefined || rightValue === undefined) {
+          switch (op) {
+            case '==':
+              return leftValue === rightValue; // undefined == undefined is true
+            case '!=':
+              return leftValue !== rightValue; // undefined != something is true
+            default:
+              return false; // All other operations with undefined are false
+          }
+        }
+
         switch (op) {
           case '>=':
             return this.compareValues(leftValue, rightValue) >= 0;
@@ -83,6 +95,12 @@ export class ConditionEvaluator {
 
     // Handle boolean variable reference (no comparison operator)
     const value = this.getValue(expr);
+    
+    // Undefined values are falsy
+    if (value === undefined) {
+      return false;
+    }
+    
     if (typeof value === 'boolean') {
       return value;
     }
@@ -108,9 +126,9 @@ export class ConditionEvaluator {
     if (key === 'true') return true;
     if (key === 'false') return false;
 
-    // Must be a state variable
+    // Must be a state variable - if not found, treat as undefined (emergent state)
     if (!(key in this.state)) {
-      throw new Error(`Unknown state variable: ${key}`);
+      return undefined;
     }
 
     return this.state[key];
