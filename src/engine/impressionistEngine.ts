@@ -12,7 +12,8 @@ import {
   DirectorContext,
   DirectorResponse,
   ImpressionistInteraction,
-  FormatterRule
+  FormatterRule,
+  ImpressionistCharacter
 } from '@/types/impressionistStory';
 import { MultiModelService } from '@/services/multiModelService';
 import { LangChainDirector } from './langChainDirector';
@@ -423,19 +424,49 @@ export class ImpressionistEngine {
           .filter(item => item.found_in === currentScene.location);
       }
 
-      // Add active characters
+      // Add active characters with evaluated behaviors
       if (this.story!.world.characters) {
-        context.activeCharacters = Object.values(this.story!.world.characters);
+        context.activeCharacters = Object.values(this.story!.world.characters)
+          .map(character => this.evaluateCharacterBehavior(character));
       }
     }
 
     return context;
   }
 
+  /**
+   * Evaluate character behavior based on current flag states
+   */
+  private evaluateCharacterBehavior(character: ImpressionistCharacter): ImpressionistCharacter {
+    const flagManager = this.director.getFlagManager();
+    if (!character.behaviors || !flagManager) {
+      return character;
+    }
+
+    // Start with base behavior
+    let currentBehavior = character.behaviors.base;
+    
+    // Evaluate conditional behaviors and layer them
+    if (character.behaviors.states) {
+      for (const behaviorState of character.behaviors.states) {
+        if (behaviorState.when && flagManager.checkConditions(behaviorState.when)) {
+          // Found an active behavior - use it (later behaviors override earlier ones)
+          currentBehavior = behaviorState.description;
+        }
+      }
+    }
+
+    // Return character with evaluated behavior as the sketch
+    return {
+      ...character,
+      sketch: currentBehavior
+    };
+  }
+
 
 
   /**
-   * Apply signals from LLM Director response (simplified to discovery and error only)
+   * Apply signals from LLM Director response
    */
   private applyDirectorSignals(response: DirectorResponse) {
     if (!response.signals) return;
@@ -445,8 +476,15 @@ export class ImpressionistEngine {
       this.handleItemDiscovery(response.signals.discover);
     }
 
-    // Scene transitions and endings are now handled automatically by flag system
-    // No need to process them here
+    // Story ending
+    if (response.signals.endStory) {
+      this.gameState.isEnded = true;
+      if (response.signals.endingId) {
+        this.gameState.endingId = response.signals.endingId;
+      }
+    }
+
+    // Scene transitions are handled automatically by flag system
   }
 
 
@@ -514,7 +552,10 @@ export class ImpressionistEngine {
       // Fallback: store full interaction as before when no specific memories provided
       const interactionMemory = `Player: ${playerInput}\nResponse: ${llmResponse}`;
       this.memoryManager.addMemory(interactionMemory, importance);
-      console.log(`💭 Stored full interaction as memory (importance: ${importance})`);
+      // Only log high-importance memory storage
+      if (importance >= 8) {
+        console.log(`💭 Stored high-importance interaction as memory (importance: ${importance})`);
+      }
     }
 
     const importanceSource = llmImportance ? 'LLM' : 'heuristic';

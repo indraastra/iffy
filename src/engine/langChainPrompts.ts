@@ -92,14 +92,6 @@ ${this.getStructuredResponseInstructions()}`;
         let playerInfo = `  * ${playerCharacter.name} (PLAYER CHARACTER)`;
         if (playerCharacter.sketch) playerInfo += ` - ${playerCharacter.sketch}`;
         if (playerCharacter.voice) playerInfo += `\n    * Voice: ${playerCharacter.voice}`;
-        if (playerCharacter.arc) {
-          // Handle multiline arc content by indenting continuation lines
-          const arcLines = playerCharacter.arc.split('\n');
-          const formattedArc = arcLines.map((line, index) => 
-            index === 0 ? line : `      ${line}`
-          ).join('\n');
-          playerInfo += `\n    * Arc: ${formattedArc}`;
-        }
         characterSections.push(`**PLAYER CHARACTER:**\n${playerInfo}`);
       }
       
@@ -109,14 +101,6 @@ ${this.getStructuredResponseInstructions()}`;
           let charInfo = `  * ${c.name} (NPC)`;
           if (c.sketch) charInfo += ` - ${c.sketch}`;
           if (c.voice) charInfo += `\n    * Voice: ${c.voice}`;
-          if (c.arc) {
-            // Handle multiline arc content by indenting continuation lines
-            const arcLines = c.arc.split('\n');
-            const formattedArc = arcLines.map((line, index) => 
-              index === 0 ? line : `      ${line}`
-            ).join('\n');
-            charInfo += `\n    * Arc: ${formattedArc}`;
-          }
           return charInfo;
         }).join('\n');
         characterSections.push(`**NON-PLAYER CHARACTERS (NPCs):**\n${npcDetails}`);
@@ -237,14 +221,6 @@ ${this.getStructuredResponseInstructions()}`;
         let playerInfo = `  * ${playerCharacter.name} (PLAYER CHARACTER)`;
         if (playerCharacter.sketch) playerInfo += ` - ${playerCharacter.sketch}`;
         if (playerCharacter.voice) playerInfo += `\n    * Voice: ${playerCharacter.voice}`;
-        if (playerCharacter.arc) {
-          // Handle multiline arc content by indenting continuation lines
-          const arcLines = playerCharacter.arc.split('\n');
-          const formattedArc = arcLines.map((line, index) => 
-            index === 0 ? line : `      ${line}`
-          ).join('\n');
-          playerInfo += `\n    * Arc: ${formattedArc}`;
-        }
         characterSections.push(`**PLAYER CHARACTER:**\n${playerInfo}`);
       }
       
@@ -254,14 +230,6 @@ ${this.getStructuredResponseInstructions()}`;
           let charInfo = `  * ${c.name} (NPC)`;
           if (c.sketch) charInfo += ` - ${c.sketch}`;
           if (c.voice) charInfo += `\n    * Voice: ${c.voice}`;
-          if (c.arc) {
-            // Handle multiline arc content by indenting continuation lines
-            const arcLines = c.arc.split('\n');
-            const formattedArc = arcLines.map((line, index) => 
-              index === 0 ? line : `      ${line}`
-            ).join('\n');
-            charInfo += `\n    * Arc: ${formattedArc}`;
-          }
           return charInfo;
         }).join('\n');
         characterSections.push(`**NON-PLAYER CHARACTERS (NPCs):**\n${npcDetails}`);
@@ -492,6 +460,7 @@ ${this.getStructuredResponseInstructions()}`;
 **FORMATTING:**
 * Use **bold text** for character names and emphasis
 * Use *italic text* for thoughts, whispers, and significant items
+* Use "double quotes" for all dialogue and spoken words
 * Each array item = one paragraph with 1-2 sentences for focused pacing
 * Include atmospheric details and sensory descriptions
 

@@ -201,15 +201,15 @@ RESPONSE FORMAT (JSON ONLY):
   "choices": [
     {
       "text": "Notice their striking green eyes and how silver threads through their dark hair",
-      "effects": { "${blankToFill}": "green_eyes_silver_hair" }
+      "effects": { "companion_appearance": "green_eyes_silver_hair" }
     },
     {
       "text": "Observe their weathered hands and the new scar across their left cheek",
-      "effects": { "${blankToFill}": "weathered_scarred" }
+      "effects": { "companion_appearance": "weathered_scarred" }
     },
     {
       "text": "Focus on their lean build and the way they favor their right leg slightly",
-      "effects": { "${blankToFill}": "lean_slight_limp" }
+      "effects": { "companion_appearance": "lean_slight_limp" }
     }
   ]
 }

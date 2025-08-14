@@ -64,7 +64,7 @@ export class LangChainDirector {
       try {
         this.debugPane.updateFlagStates(this.flagManager?.getAllFlags() || {});
       } catch (error) {
-        console.log('Error updating debug pane flag states during initialization:', error);
+        // Debug pane update failed - continue silently
       }
     }
   }
@@ -80,7 +80,7 @@ export class LangChainDirector {
       try {
         this.debugPane.updateFlagStates(this.flagManager?.getAllFlags() || {});
       } catch (error) {
-        console.log('Error updating debug pane flag states when setting debug pane:', error);
+        // Debug pane update failed - continue silently
       }
     }
   }
@@ -196,7 +196,7 @@ export class LangChainDirector {
           }
           this.debugPane.log('---');
         } catch (error) {
-          console.log('Error calling debug pane log:', error);
+          // Debug pane log failed - continue silently
         }
       }
 
@@ -221,7 +221,7 @@ export class LangChainDirector {
             }
           });
         } catch (error) {
-          console.log('Error calling debug pane logLlmCall:', error);
+          // Debug pane logLlmCall failed - continue silently
         }
       }
     }
@@ -293,7 +293,7 @@ export class LangChainDirector {
         try {
           this.debugPane.updateFlagStates(this.flagManager?.getAllFlags() || {});
         } catch (error) {
-          console.log('Error updating debug pane flag states:', error);
+          // Debug pane flag update failed - continue silently
         }
       }
     }
@@ -329,8 +329,12 @@ export class LangChainDirector {
         endingTriggered
       );
       
-      // Endings handled automatically by flag system
-      // No need to add ending signals
+      // Mark story as ended and include ending ID
+      endingResponse.signals = {
+        ...endingResponse.signals,
+        endStory: true,
+        endingId: endingTriggered.id
+      };
       
       return endingResponse;
     }
@@ -354,7 +358,7 @@ export class LangChainDirector {
         this.debugPane.log(`Current flags: ${this.flagManager?.getDebugString() || 'none'}`);
         this.debugPane.log('---');
       } catch (error) {
-        console.log('Error calling debug pane log:', error);
+        // Debug pane log failed - continue silently
       }
     }
 
@@ -547,6 +551,13 @@ Continue the narrative exploration:`;
    */
   getCurrentFlags(): Record<string, any> | undefined {
     return this.flagManager?.getAllFlags();
+  }
+
+  /**
+   * Get flag manager for condition evaluation
+   */
+  getFlagManager(): FlagManager | undefined {
+    return this.flagManager;
   }
 
   /**

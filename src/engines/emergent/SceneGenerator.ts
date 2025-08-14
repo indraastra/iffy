@@ -3,7 +3,8 @@ import {
   StoryBlueprint,
   BlueprintScene,
   StoryScene,
-  GameState
+  GameState,
+  GameTurn
 } from '../../types/emergentStory.js';
 import { DebugTracker } from './DebugTracker.js';
 
@@ -11,7 +12,7 @@ export interface SceneGeneratorContext {
   blueprint: StoryBlueprint;
   blueprintScene: BlueprintScene;
   currentState: GameState;
-  narrativeHistory: string[];
+  sessionHistory: GameTurn[];
 }
 
 export class SceneGenerator {
@@ -60,7 +61,7 @@ export class SceneGenerator {
   }
 
   private buildScenePrompt(context: SceneGeneratorContext): string {
-    const { blueprint, blueprintScene, currentState, narrativeHistory } = context;
+    const { blueprint, blueprintScene, currentState, sessionHistory } = context;
 
     return `You are an experienced dramatic director who specializes in translating broad story concepts into precise, playable moments. You've directed hundreds of interactive scenes, from intimate character studies to sweeping adventures, and you understand exactly how to balance narrative momentum with meaningful player agency.
 
@@ -83,7 +84,7 @@ ALL SCENES:
 ${blueprint.scene_sequence.map((scene, i) => `${i + 1}. ${scene.id}: ${scene.goal}`).join('\n')}
 
 STORY SO FAR:
-${narrativeHistory.length > 0 ? narrativeHistory.join('\n') : 'This is the first scene.'}
+${this.formatNarrativeHistory(sessionHistory)}
 
 CURRENT GAME STATE:
 ${JSON.stringify(currentState, null, 2)}
@@ -152,7 +153,7 @@ Generate the scene specification now:`;
     }
   }
 
-  private validateSceneStructure(parsed: any, context: SceneGeneratorContext): void {
+  private validateSceneStructure(parsed: any, _context: SceneGeneratorContext): void {
     if (!parsed.id || !parsed.goal || !parsed.requirements || !parsed.transitions) {
       throw new Error('Scene missing one or more root keys: id, goal, requirements, transitions');
     }
@@ -180,24 +181,24 @@ Generate the scene specification now:`;
           throw new Error(`Invalid transition condition: ${transition.condition}`);
         }
         // Unknown variables will be handled gracefully by ConditionEvaluator as undefined
+        // Blanks and requirements can be referenced before they're established
       }
     }
   }
 
-  private extractVariablesFromCondition(condition: string): string[] {
-    // Remove string literals first to avoid treating them as variables
-    const withoutStrings = condition.replace(/'[^']*'/g, '').replace(/"[^"]*"/g, '');
-    // Extract variable names from conditions like "trust_level == 'high'" or "danger_level > 0"
-    const matches = withoutStrings.match(/([a-zA-Z_][a-zA-Z0-9_]*)/g);
-    return matches ? matches.filter(match => !['AND', 'OR', 'true', 'false'].includes(match)) : [];
+
+  private formatNarrativeHistory(sessionHistory: GameTurn[]): string {
+    if (!sessionHistory || sessionHistory.length === 0) {
+      return "This is the first scene.";
+    }
+    
+    return sessionHistory.map((turn, index) => {
+      return `Beat ${index + 1}: ${turn.beat.narrative_text}\nPlayer choice: "${turn.choice.text}"`;
+    }).join('\n\n');
   }
 
   private getAvailableVariables(context: SceneGeneratorContext): string {
     const currentStateVars = Object.keys(context.currentState);
-    const sceneRequirements = context.blueprintScene ? [] : []; // Will be filled by scene generation
-    const sceneBlanks = context.blueprintScene ? [] : []; // Will be filled by scene generation
-    
-    const allVars = [...currentStateVars];
-    return allVars.length > 0 ? allVars.join(', ') : 'none (use only "continue" for default transition)';
+    return currentStateVars.length > 0 ? currentStateVars.join(', ') : 'none (use only "continue" for default transition)';
   }
 }

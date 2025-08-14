@@ -13,6 +13,18 @@
       <span v-else>{{ message.content }}</span>
     </div>
     
+    <!-- Story completion section -->
+    <div v-if="isStoryEnded && !isAwaitingResponse" class="completion-section">
+      <h3>📖 Story Complete</h3>
+      <p v-if="gameState.currentStory?.endingId" class="ending-id">
+        Ending: {{ gameState.currentStory.endingId }}
+      </p>
+      <p class="completion-note">
+        The story has reached its conclusion, but you can continue to explore this moment, 
+        reflect on your choices, or ask questions about what happened.
+      </p>
+    </div>
+    
     <!-- Loading indicator when awaiting LLM response -->
     <div v-if="isAwaitingResponse" class="thinking-indicator">
       <div class="thinking-dots">
@@ -26,22 +38,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, watch } from 'vue'
+import { ref, nextTick, watch, computed } from 'vue'
 import { useGameEngine } from '@/composables/useGameEngine'
 import { useTheme } from '@/composables/useTheme'
 import { useStoryStyles } from '@/composables/useStoryStyles'
 import MarkupRenderer from '@/components/MarkupRenderer.vue'
 
-const { gameState, isAwaitingResponse, loadingMessage } = useGameEngine()
+const { gameState, isAwaitingResponse, loadingMessage, isStoryEnded } = useGameEngine()
 const { currentTheme } = useTheme()
 const outputContainer = ref<HTMLElement>()
 
-// Set up reactive story styling that responds to story and theme changes
-watch([() => gameState.currentStory, currentTheme], ([newStory, newTheme]) => {
-  if (newStory) {
-    useStoryStyles(newStory, newTheme)
-  }
-}, { immediate: true })
+// Set up reactive story styling - useStoryStyles handles its own reactivity
+useStoryStyles(computed(() => gameState.currentStory), currentTheme)
 
 // Auto-scroll to bottom when new messages arrive
 watch(() => gameState.messages.length, async () => {
@@ -151,5 +159,35 @@ function getMessageClass(type: string) {
   30% {
     opacity: 1;
   }
+}
+
+/* Story completion section */
+.completion-section {
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-accent);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.completion-section h3 {
+  margin: 0 0 1rem 0;
+  color: var(--color-accent);
+  font-size: 1.25rem;
+}
+
+.completion-section .ending-id {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0.5rem 0;
+  font-size: 1rem;
+}
+
+.completion-section .completion-note {
+  color: var(--color-text-secondary);
+  font-style: italic;
+  margin: 1rem 0 0 0;
+  line-height: 1.5;
 }
 </style>

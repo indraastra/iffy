@@ -248,8 +248,7 @@ export function useGameEngine() {
         console.log('🎭 Story ending detected, updating game state')
         // Update reactive game state
         gameState.isEnded = true
-        // Add a post-ending message
-        addMessage('🎭 **Story Complete**\n\nYou can continue to explore this moment, reflect on your choices, or ask questions about what happened.', 'system')
+        // Note: Story completion UI is now handled by StoryOutput component
       }
       
       // Clear input

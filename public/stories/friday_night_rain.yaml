@@ -42,15 +42,32 @@ world:
       sketch: "Your Friday companion who knows every barista's name and argues passionately about obscure
         films. Tonight they're stirring cold coffee like it holds answers, their usual quick wit
         replaced by something heavy behind careful eyes."
-      arc: |
-        Alex harbors romantic feelings but stands at an emotional crossroads. 
-        Their behavior depends on flag states:
-
-        IF alex_gaining_confidence: Opens up about feelings, tests waters with memories
-        IF alex_withdrawing: Makes excuses, checks time, prepares to leave
-        IF memories_shared AND player_supportive: Finds courage to confess
       voice: "Usually quick with film references and gentle teasing, but tonight speaks in careful words
         hiding deeper currents"
+      behaviors:
+        base: "Sits across from you, something unspoken weighing in the space between. Stirring cold coffee
+          like it holds answers, their usual quick wit replaced by something heavy behind careful
+          eyes."
+        states:
+        - when:
+            all_of: [ "alex_defensive" ]
+          description: "Has withdrawn completely, shoulders tense, avoiding eye contact. Responses are clipped
+            and guarded, checking time frequently as if looking for escape."
+        - when:
+            all_of: [ "admitted_feelings" ]
+            none_of: [ "player_reciprocated" ]
+          description: "Vulnerable but uncertain, watching your face carefully for any sign of how you're
+            taking this revelation. There's relief in finally speaking, but anxiety about what comes
+            next."
+        - when:
+            all_of: [ "admitted_feelings", "player_reciprocated" ]
+          description: "Relief and joy barely contained, leaning forward, fully present in this moment. The
+            careful distance has dissolved into warm intimacy."
+        - when:
+            all_of: [ "conversation_ending" ]
+            none_of: [ "admitted_feelings" ]
+          description: "Torn between wanting to speak and letting the moment pass. Keeps glancing at their
+            phone, then back at you, as if wrestling with words they can't quite say."
 
   locations:
     grounded_cafe:
@@ -69,9 +86,6 @@ scenes:
   opening:
     process_sketch: false
     location: "grounded_cafe"
-    initial_flags:
-      coffee_cold: true
-      alex_stirring_count: 17 # Specific detail for narrative
     sketch: |
       Friday evening settles around your corner table like a familiar weight. The 
       rain outside turns café windows into moving watercolors of city lights. 
@@ -88,7 +102,6 @@ scenes:
 
       You've counted seventeen stirs. The barista waits, cloth in hand, 
       her glance asking you to translate this silence.
-
 
 endings:
   requires:
@@ -146,20 +159,10 @@ endings:
 
 guidance: |
   STORY TONE: This is an intimate, realistic conversation between close friends where one is hiding something important. Focus on subtle emotional cues, meaningful silences, and the gradual building of trust.
-  
-  CHARACTER DYNAMICS:
-  - Player: Caring friend who has noticed Alex's distance. Wants to help but must be patient and gentle.
-  - Alex: Struggling with unspoken romantic feelings for the player. Torn between wanting to confess and fear of ruining the friendship.
-  
-  ALEX'S EMOTIONAL ARC:
-  Alex starts guarded and conflicted, slowly opening up based on the player's approach:
-  - Defensive → Conflicted → Vulnerable → Open
-  - Patient, empathetic responses help Alex feel safe to share
-  - Pushy or judgmental responses make Alex shut down
-  
+
   THE SECRET:
   Alex has developed romantic feelings for the player but is terrified of ruining their friendship. They've been pulling away to protect themselves and the relationship, but it's making everything worse. This is why they've been distant lately.
-  
+
   NARRATIVE APPROACH:
   - Write with restraint - what's unsaid matters more than what's spoken
   - Focus on gestures, glances, the physical language of concealed emotion

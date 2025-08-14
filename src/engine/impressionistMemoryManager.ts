@@ -66,7 +66,10 @@ export class ImpressionistMemoryManager {
       this.debugPane.updateMemoryContents(this.memories.map(m => ({ content: m.content, importance: m.importance })));
     }
 
-    console.log(`🧠 Added memory (importance: ${importance}). Total: ${this.memories.length}`);
+    // Only log memory additions at higher importance levels or when approaching compaction
+    if (importance >= 8 || this.shouldTriggerCompaction()) {
+      console.log(`🧠 Added memory (importance: ${importance}). Total: ${this.memories.length}`);
+    }
 
     // Check if we should trigger compaction
     if (this.shouldTriggerCompaction()) {
@@ -116,7 +119,7 @@ export class ImpressionistMemoryManager {
     this.isProcessing = false;
     this.lastCompactionTime = null;
     this.memoryMetrics.reset();
-    console.log('🧠 Memory manager reset');
+    // Memory manager reset - suppressed to reduce console noise during initialization
   }
 
   /**
@@ -225,11 +228,11 @@ export class ImpressionistMemoryManager {
     this.isProcessing = true;
     this.memoriesSinceLastCompaction = 0;
 
-    console.log('🔄 Starting async memory compaction...');
+    console.log(`🔄 Memory compaction starting (${this.memories.length} memories)...`);
 
     this.compactMemoriesAsync()
       .then(() => {
-        console.log('✅ Memory compaction completed');
+        console.log(`✅ Memory compaction completed (${this.memories.length} memories remaining)`);
         // Update debug pane with new memory contents after compaction
         if (this.debugPane) {
           this.debugPane.updateMemoryContents(this.memories.map(m => ({ content: m.content, importance: m.importance })));

@@ -71,10 +71,10 @@ export class SequenceController {
     }
 
     // Priority 1: Check for unfilled blanks
-    const unfilledBlanks = this.loadedScene.blanks.filter(
-      blank => !(blank in this.session.currentState)
-    );
-    console.log('SequenceController: Scene blanks:', this.loadedScene.blanks);
+    const unfilledBlanks = this.loadedScene?.blanks?.filter(
+      blank => !(blank in this.session!.currentState)
+    ) || [];
+    console.log('SequenceController: Scene blanks:', this.loadedScene?.blanks);
     console.log('SequenceController: Current state keys:', Object.keys(this.session.currentState));
     console.log('SequenceController: unfilledBlanks', unfilledBlanks);
 

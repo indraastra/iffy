@@ -121,11 +121,9 @@ export interface GameState {
 }
 
 export interface GameTurn {
-  sceneId: string;
   beat: StoryBeat;
-  choiceIndex: number;
-  stateAfter: GameState;
-  timestamp: Date;
+  choice: Choice;
+  timestamp: string;
 }
 
 export interface EmergentGameSession {

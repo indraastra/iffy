@@ -99,13 +99,25 @@ export interface WorldDefinition {
   atmosphere?: AtmosphereDefinition
 }
 
+// Character behavior system for flag-responsive characters
+export interface CharacterBehavior {
+  when?: FlagCondition  // Flag conditions for this behavior to be active
+  description: string   // Behavioral description for this state
+  voice?: string       // Optional voice override for this state
+}
+
+export interface CharacterBehaviors {
+  base: string                      // Base behavior description (always included)
+  states?: CharacterBehavior[]      // Conditional behaviors based on flags
+}
+
 // Character sketches over detailed stats
 export interface ImpressionistCharacter {
   id: string  // Character identifier (use "player" for player character)
   name: string
   sketch: string  // One line capturing character core
-  arc?: string  // Emotional journey
   voice?: string  // How they speak
+  behaviors?: CharacterBehaviors  // Flag-responsive behavior system
 }
 
 // Location sketches
@@ -198,6 +210,8 @@ export interface DirectorSignals {
   ending?: string       // ENDING:ending_id
   discover?: string     // DISCOVER:item_id
   error?: string        // Error message for debugging
+  endStory?: boolean    // Mark story as ended
+  endingId?: string     // ID of the ending that was triggered
 }
 
 // Metrics tracking for optimization

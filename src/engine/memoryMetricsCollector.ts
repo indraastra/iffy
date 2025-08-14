@@ -267,7 +267,7 @@ export class MemoryMetricsCollector {
    */
   reset(): void {
     this.metrics = [];
-    console.log('🔄 Memory metrics collector reset');
+    // Memory metrics collector reset - suppressed to reduce console noise during initialization
   }
 
   /**
@@ -287,11 +287,14 @@ export class MemoryMetricsCollector {
       ? ` (${metric.memoriesInput}→${metric.memoriesOutput}, ${(metric.compressionRatio * 100).toFixed(0)}%)`
       : '';
     
-    console.log(
-      `🧠 ${status} ${metric.operation}${compression}: ` +
-      `${metric.inputTokens}→${metric.outputTokens} tokens, ` +
-      `${metric.latencyMs.toFixed(0)}ms, $${cost.toFixed(5)}`
-    );
+    // Only log significant operations or failures
+    if (!metric.success || metric.operation === 'compaction' || metric.latencyMs > 5000) {
+      console.log(
+        `🧠 ${status} ${metric.operation}${compression}: ` +
+        `${metric.inputTokens}→${metric.outputTokens} tokens, ` +
+        `${metric.latencyMs.toFixed(0)}ms, $${cost.toFixed(5)}`
+      );
+    }
   }
 
   private generateRequestId(): string {

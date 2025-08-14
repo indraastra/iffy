@@ -18,14 +18,12 @@ This isn't a casual reunion. Something urgent has forced this dangerous encounte
 
 **Changed Circumstances**: Years have passed. You're both different people now, shaped by whatever kept you apart. The question isn't just whether you still love each other, but whether you can love who you've become.
 
-## Player-Defined Elements
+## Player Blanks
 
 The story intentionally leaves these elements as blanks for players to define through their choices:
 
 - **Gender** - Their gender identity and how you perceive them
 - **Appearance** - Physical features, how time has changed their looks
-- **Demeanor** - How they carry themselves, their bearing, body language, and energy
-- **Emotional connection** - The nature of what once bound you together  
 - **Separation context** - What circumstances forced you apart and shaped your different paths
 
 These blanks should be filled organically through diegetic observations, memories, and careful revelation rather than through explicit character creation.

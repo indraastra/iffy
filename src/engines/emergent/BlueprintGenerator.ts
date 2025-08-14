@@ -87,7 +87,9 @@ Generate a JSON object with the following components:
     - "description": A summary of the outcome.
     - "tone": The emotional feeling of the ending.
 
-5.  **blanks**: Story elements for players to define. Look for elements to be established or revealed through player choices. Convert to simple identifiers.
+5.  **blanks**: Extract ONLY the player-defined elements explicitly listed in the markdown under sections like "Player-Defined Elements", "Player Blanks", or similar. These are the specific story elements the author wants players to define through choices. Convert each one to a simple identifier (e.g., "Gender" → "gender", "Visitor's appearance" → "visitor_appearance"). Do NOT add your own blanks - only extract what the author explicitly specified.
+
+**CRITICAL**: For blanks, scan the markdown for sections titled "Player-Defined Elements", "Player Blanks", or similar. Each bullet point or numbered item in these sections represents one blank. Extract ONLY these author-specified blanks - do not invent additional ones.
 
 Extract everything meaningful from the markdown - all details, characters, events, conflicts, themes, and plot points must be captured or they'll be lost.
 
@@ -149,7 +151,7 @@ RESPONSE FORMAT (JSON ONLY):
       "tone": "melancholic and regretful"
     }
   ],
-  "blanks": ["visitor_identity", "keeper_motivation", "shared_history"]
+  "blanks": ["visitor_gender", "visitor_appearance", "relationship_type"]
 }
 
 Generate the story blueprint now:`;

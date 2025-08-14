@@ -390,7 +390,6 @@ function addToolMessage(message: string) {
 }
 
 function updateFlagStates(flags: Record<string, boolean>) {
-  console.log('🐛 DebugPane.updateFlagStates called with:', flags)
   currentFlags.value = { ...flags }
 }
 
@@ -452,7 +451,6 @@ function clearAllData() {
 
 // General purpose logging method
 function log(message: string) {
-  console.log('🐛 DebugPane.log called with:', message)
   // For now, add to tool messages as a simple log
   addToolMessage(message)
 }

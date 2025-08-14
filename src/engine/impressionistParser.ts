@@ -403,8 +403,8 @@ export class ImpressionistParser {
         id,
         name: char.name || id,
         sketch: char.sketch || 'A character in the story',
-        arc: char.arc,
-        voice: char.voice
+        voice: char.voice,
+        behaviors: char.behaviors
       };
     }
 

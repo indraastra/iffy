@@ -1,6 +1,6 @@
 // Debug tracking system for LLM interactions and state changes
 
-export type LLMInteractionType = 'blueprint_generation' | 'scene_generation' | 'beat_generation' | 'classification' | 'compilation' | 'content_generation';
+export type LLMInteractionType = 'blueprint_generation' | 'scene_generation' | 'beat_generation' | 'blank_filling_generation' | 'classification' | 'compilation' | 'content_generation';
 export type LLMInteractionPhase = 'architect' | 'director' | 'writer' | 'narrator' | 'classifier';
 
 export interface LLMInteraction {
