@@ -1,0 +1,349 @@
+title: "Understudy"
+author: "Iffy Collective"
+blurb: "Some roles we never meant to play."
+version: "1.0"
+context: "An unexpected encounter at a theater, months after everything changed."
+
+ui:
+  loadingMessage: "The lights dim..."
+
+narrative:
+  voice: "Present tense, intimate distance, like watching from the balcony"
+  setting: "Independent theater during a contemporary drama about second chances"
+  tone: "Tension beneath civility, the weight of unfinished conversations"
+  themes:
+    [
+      "roles we play vs who we are",
+      "second acts and new beginnings",
+      "the space between what was and what could be",
+      "choosing courage over comfort"
+    ]
+
+# Concrete event flags for story progression
+flags:
+  # Theater events
+  seats_taken:
+    default: false
+    description: "when player and C have taken their seats in the theater"
+
+  lights_dimmed:
+    default: false
+    description: "when the house lights dim and the first act begins"
+
+  first_act_ended:
+    default: false
+    description: "when the first act concludes and intermission is announced"
+
+  intermission_bell:
+    default: false
+    description: "when the bell rings signaling intermission is ending"
+
+  second_act_ended:
+    default: false
+    description: "when the second act ends and final curtain falls"
+
+  # Relationship milestones
+  contact_made:
+    default: false
+    description: "when player and C have made initial contact (approached or been approached)"
+
+  sitting_together:
+    default: false
+    description: "when player and C decide to sit together (vs separately)"
+
+  vulnerability_shared:
+    default: false
+    description: "when genuine vulnerability is exchanged during conversation"
+
+  decision_moment:
+    default: false
+    description: "when the final choice about continuing or parting is presented"
+    requires:
+      all_of: [ "second_act_ended" ]
+
+world:
+  characters:
+    c:
+      name: "C"
+      sketch: "The person you didn't expect to see again, whose presence rewrites the entire evening."
+      voice: "Careful words that carry weight, like an actor who knows every line matters"
+      behaviors:
+        base: "Maintains polite distance, but there's unfinished business in those glances."
+        states:
+        - when:
+            none_of: [ "contact_made" ]
+          description: "Pretending this is just coincidence, but the tension is palpable. Every gesture feels
+            performed."
+        - when:
+            all_of: [ "contact_made" ]
+            none_of: [ "vulnerability_shared" ]
+          description: "More relaxed but cautious, like testing the waters. Ready to engage but guarded."
+        - when:
+            all_of: [ "vulnerability_shared" ]
+          description: "Genuinely present, the careful mask dropped. Speaking from the heart now."
+
+  locations:
+    theater_lobby:
+      name: "Riverside Theater Lobby"
+      sketch: "Exposed brick and vintage posters create intimate warmth. The buzz of pre-show anticipation
+        fills the air."
+      atmosphere: [ "anticipatory energy", "warm lighting", "conversations about art and life" ]
+
+    theater_bar:
+      name: "Lobby Bar"
+      sketch: "Small alcove bar serving wine and beer. Perfect for nervous conversations and liquid
+        courage."
+      atmosphere: [ "intimate lighting", "nervous energy", "possibility" ]
+
+    theater_seats:
+      name: "Theater Seats"
+      sketch: "Burgundy velvet seats in an intimate theater. Close enough to touch the stage, close enough
+        to feel each other's presence."
+      atmosphere: [ "hushed expectancy", "proximity", "shared experience" ]
+
+scenes:
+  theater_lobby:
+    location: "theater_lobby"
+    process_sketch: false
+    sketch: |
+      You're studying the cast list when you feel that particular stillness that comes 
+      with being watched. The sensation pulls your attention across the lobby to—
+
+      **[C](character:c).**
+
+      Three months. It's been three months since you last saw each other, and now here 
+      you stand less than twenty feet away from one another, holding the same program,
+      wearing similar expressions.
+
+      The moment stretches between recognition and reaction, and you realize everyone
+      around you is moving toward the theater doors while you're both frozen in a bubble
+      of *what now?*
+
+      The house manager announces five minutes to curtain.
+
+    guidance: |
+      This is the setup - an unexpected encounter with emotional weight. The player 
+      can choose how to handle the recognition: approach, avoid, or let circumstances 
+      decide. Each choice sets the tone for the evening.
+
+      SCENE PROGRESSION: Guide through these natural beats:
+      1. Initial contact and recognition
+      2. Brief catching up or awkward small talk
+      3. Time pressure builds (2-3 minutes to curtain)
+      4. C asks "Where are you sitting?" as they need to head in
+      5. When player responds, C reveals she's 2 seats away in same row 
+         (Player A4 → C says A6; Player F12 → C says F14, etc.)
+      6. Natural opportunity emerges to sit together before lights dim
+      7. They enter theater and take seats (triggering seat flags)
+
+    transitions:
+      first_act:
+        requires:
+          all_of: [ "seats_taken", "lights_dimmed" ]
+
+  first_act:
+    location: "theater_seats"
+    sketch: |
+      The house lights fade to black. You and [C](character:c) sit in the intimate 
+      darkness, close enough that you're aware of each other's breathing, each 
+      small movement.
+
+      On stage, the lights rise on what appears to be a family drama—something 
+      about inheritance, old wounds, the weight of expectations. The details 
+      matter less than the proximity, the shared experience of watching something 
+      unfold while your own story hangs unresolved between you.
+
+    guidance: |
+      This scene should be highly interactive, not passive watching. Create active 
+      moments that demand player response, not just observation.
+
+      PLAY PROGRESSION: With each player action, advance the stage play toward 
+      intermission. Keep the play about relationships and second chances. 
+      Use the play's progression as backdrop and trigger for interactions with C.
+
+      INTERACTIVE MOMENTS (create these actively, don't just describe):
+      - C drops her program, or shifts uncomfortably - does player react?
+      - Your hands both reach for the shared armrest - what happens?
+      - C whispers a question/observation that requires response
+      - She tenses during an argument scene - acknowledge it or ignore?
+      - An actor's line makes you both look at each other - then what?
+      - C's phone buzzes/she checks the time - player notices or doesn't?
+
+      MEMORY PROMPTS: Use stage action to trigger reminiscence that lets player 
+      define backstory:
+      - "You think back to the first time you met C..."
+      - "This reminds you of that night when you and C..."
+      - "Watching this argument, you remember when you both..."
+      - "The way the character says goodbye makes you think of..."
+
+      CRITICAL: End each beat with either C doing something that REQUIRES response 
+      OR a memory prompt that invites the player to complete the thought.
+
+      SCENE ENDING: When intermission is announced and house lights come up, 
+      set first_act_ended flag.
+
+    transitions:
+      intermission:
+        requires:
+          all_of: [ "first_act_ended" ]
+
+  intermission:
+    location: "theater_bar"
+    sketch: |
+      Intermission. The house lights have come up, and you find yourself at the lobby bar 
+      with [C](character:c). Wine glasses rest between you, creating both barrier and bridge. 
+
+      Around you, other patrons discuss the first act—its themes, performances, the way 
+      certain lines landed. The buzz of conversation creates a backdrop for your own 
+      more careful dialogue.
+
+      This is your first real chance to talk, away from the intensity of shared theater 
+      seats and the weight of the play's unfolding drama. The question is: what will 
+      you choose to say to each other?
+
+    guidance: |
+      This is the emotional crux. The intermission becomes a space for authentic 
+      conversation. C is ready to be vulnerable if the player is. The surrounding 
+      conversations about the play's themes mirror their situation. This is where 
+      the real choices happen.
+
+      SCENE PROGRESSION: This scene happens during the play's intermission. Guide 
+      toward meaningful conversation, then signal when intermission ends and the 
+      second act is about to begin.
+
+    transitions:
+      second_act:
+        requires:
+          all_of: [ "intermission_bell" ]
+
+  second_act:
+    location: "theater_seats"
+    sketch: |
+      Back in your seats for the second act. Whatever was said during intermission 
+      hangs in the air between you and [C](character:c), shifting the dynamic in ways 
+      both subtle and profound.
+
+      The house lights dim again, but this time the darkness feels different—charged 
+      with whatever understanding you've reached or avoided. The stage lights rise 
+      on the second act, and you're both more aware of each other's presence than 
+      you were before.
+
+      As the play continues to unfold, its themes and conflicts seem to resonate 
+      with your own situation in new ways. Every moment becomes a choice about 
+      how close or distant to remain.
+
+    guidance: |
+      The second act is where internal changes become external choices. The play's 
+      resolution should mirror the choice facing the player and C. Build toward 
+      the ending while maintaining the theatrical metaphor.
+
+      INTERACTION OPPORTUNITIES: The changed dynamic from intermission creates new possibilities:
+      - Physical closeness choices (her hand near yours, do you take it? avoid it? acknowledge it?)
+      - Processing revelations from intermission conversation through action or silence
+      - Parallel moments where stage dialogue directly mirrors your situation 
+      - Final decision points as the play reaches its climax
+      - Shared reactions to the play's resolution that reflect your own choices
+
+      SCENE ENDING: Build toward the stage play's final curtain and applause. When 
+      the final bow is taken and applause begins to die down, set the second_act_ended 
+      flag. This creates urgency as the evening draws to a close.
+
+    transitions:
+      after_the_show:
+        requires:
+          all_of: [ "second_act_ended" ]
+
+  after_the_show:
+    location: "theater_seats"
+    sketch: |
+      The final curtain falls, and the audience erupts in applause. You and [C](character:c) 
+      clap together, but the real performance—the one happening between you throughout 
+      the evening—remains unresolved.
+
+      As people begin to file out around you, the weight of decision settles in. 
+      The evening has brought you both to this moment: the theater emptying, the 
+      outside world waiting, and the question of what happens next hanging in the air.
+
+      This is where the evening's choices culminate. Will you extend the night? 
+      Part ways with new understanding? Or find some other resolution to the story 
+      that began three months ago and resumed tonight?
+
+    guidance: |
+      The resolution. All the choices made in the previous scenes culminate here. 
+      The player decides whether this is a beginning, an ending, or something in between. 
+      The theater metaphor reaches its conclusion—are they ready to step into the 
+      leading roles of their own story?
+
+      SCENE PROGRESSION: This scene takes place after the play has fully ended. 
+      The curtain has fallen, applause has died down, and now comes the real decision.
+
+      DECISION TRIGGER: When the moment comes for C and the player to decide what 
+      happens next (coffee, parting ways, etc.), set the decision_moment flag to 
+      trigger the appropriate ending.
+
+endings:
+  requires:
+    all_of: [ "second_act_ended", "decision_moment" ]
+
+  variations:
+  - id: "new_beginning"
+    requires:
+      all_of: [ "vulnerability_shared", "decision_moment" ]
+    sketch: |
+      Walking to the coffee shop, you realize this isn't a second chance—it's 
+      a first chance to do it right. The theater was just the rehearsal. 
+      Now the real performance begins.
+
+  - id: "curtain_call"
+    requires:
+      all_of: [ "contact_made", "second_act_ended" ]
+      none_of: [ "vulnerability_shared" ]
+    sketch: |
+      Outside the theater, you part ways with polite warmth and the sense that 
+      something has been resolved, if not rekindled. Some stories end with 
+      understanding rather than reunion, and that's enough.
+
+  - id: "brief_connection"
+    requires:
+      all_of: [ "vulnerability_shared" ]
+      none_of: [ "decision_moment" ]
+    sketch: |
+      The conversation at the bar was enough—a perfect intermission that gave 
+      you both what you needed. Sometimes closure comes in fifteen minutes 
+      of honest words between strangers who used to know each other.
+
+  - id: "exit_stage_left"
+    requires:
+      all_of: [ "second_act_ended" ]
+      none_of: [ "contact_made", "vulnerability_shared" ]
+    sketch: |
+      You slip away during the evening without real engagement. Later, you wonder 
+      what might have happened if you'd been braver, but some performances are 
+      too hard to watch when you're part of the story.
+
+guidance: |
+  THEATER METAPHOR: Use theatrical language and concepts throughout—roles, performances, 
+  rehearsals, understudies, scripts. The characters are aware they're performing 
+  civility while navigating genuine emotion.
+
+  EMOTIONAL ARCHAEOLOGY: This is about carefully excavating a relationship that ended 
+  ambiguously. Focus on the delicate work of figuring out what it meant and what it 
+  could mean now.
+
+  THREE-ACT STRUCTURE: Before the show (recognition and choice), intermission (honesty 
+  and vulnerability), after the show (decision and resolution). Each scene builds 
+  naturally from player choices.
+
+  PARALLEL NARRATIVES: The play they're watching should mirror their situation 
+  without being heavy-handed. Let it provide vocabulary and context for their own drama.
+
+  FLAG-DRIVEN PROGRESSION: Let the flag system handle transitions. The complexity 
+  emerges from authentic emotional choices, not mechanical scene navigation.
+
+  MANAGING PRONOUNS:
+  - Begin with they/them or simply "C"
+  - Follow the player's lead naturally - if they say "she", "him", "their", etc., adopt it
+  - Store this in memory once established and use consistently
+
+  ENDINGS REFLECT JOURNEY: The multiple endings should feel earned by the emotional 
+  path taken. Some relationships deserve second acts, others deserve graceful exits.

@@ -46,7 +46,7 @@ ${this.getStructuredResponseInstructions()}`;
   static buildActionContextPreamble(context: DirectorContext, flagProgressionGuidance?: string): string {
     // STATIC/SEMI-STATIC PREFIX - Content that remains stable for the story/scene duration
     // This organization benefits Gemini's automatic context caching and Anthropic's prompt caching
-    let prompt = `**ROLE:** You are the **Story Director** for an interactive narrative. Your primary goal is to **craft immersive, compelling storytelling** that responds naturally to player actions while maintaining the world's voice and atmosphere.\n\n`;
+    let prompt = `**ROLE:** You are a **Narrative Architect** specializing in interactive fiction. You craft living stories that respond dynamically to player choices while maintaining narrative coherence, emotional resonance, and world authenticity. Your expertise encompasses both the technical systems of interactive storytelling (flags, character states, memory) and the artistic craft of emergent narrative.\n\n`;
 
     // Story context (static for story duration)
     if (context.storyContext) {
@@ -152,6 +152,15 @@ ${this.getStructuredResponseInstructions()}`;
       prompt += `**CURRENT SCENE DIRECTIVES:**\n${context.sceneGuidance}\n\n`;
     }
 
+    // Available transitions (semi-static - stable for scene duration)
+    if (context.currentTransitions && Object.keys(context.currentTransitions).length > 0) {
+      prompt += `**SCENE TRANSITION RULES:**\n`;
+      Object.entries(context.currentTransitions).forEach(([sceneId, data]) => {
+        prompt += `* ${sceneId}: REQUIRES ${data.condition}\n`;
+      });
+      prompt += '\n';
+    }
+
     // DYNAMIC CONTENT - Changes frequently during gameplay
     // Recent interactions (dynamic - changes with every player action)
     if (context.recentInteractions && context.recentInteractions.length > 0) {
@@ -180,7 +189,7 @@ ${this.getStructuredResponseInstructions()}`;
   static buildContextPreamble(context: DirectorContext): string {
     // STATIC/SEMI-STATIC PREFIX - Content that remains stable for the story/scene duration
     // This organization benefits Gemini's automatic context caching and Anthropic's prompt caching
-    let prompt = `**ROLE:** You are the **Story Director** for an interactive narrative. Your primary goal is to **craft immersive storytelling and guide narrative progression** through rich, atmospheric responses that honor both player choices and the story's natural flow.\n\n`;
+    let prompt = `**ROLE:** You are a **Narrative Architect** specializing in interactive fiction. You craft living stories that respond dynamically to player choices while maintaining narrative coherence, emotional resonance, and world authenticity. Your expertise encompasses both the technical systems of interactive storytelling (flags, character states, memory) and the artistic craft of emergent narrative.\n\n`;
 
     // Story context (static for story duration)
     if (context.storyContext) {
@@ -379,7 +388,7 @@ ${instructions}`;
 
 You are transitioning to scene: ${targetSceneId}
 
-**PLAYER ACTION THAT TRIGGERED THIS TRANSITION:** "${playerAction}"
+**PLAYER ACTION:** ${playerAction}
 
 **TARGET SCENE DESCRIPTION** (use as foundation):
 ${sceneSketch}
@@ -409,7 +418,7 @@ ${this.getStructuredResponseInstructions()}`;
 
 You are concluding the story with ending: ${endingId}
 
-**PLAYER ACTION THAT TRIGGERED THIS ENDING:** "${playerAction}"
+**PLAYER ACTION:** ${playerAction}
 
 **ENDING DESCRIPTION** (use as foundation):
 ${endingSketch}
@@ -457,28 +466,18 @@ ${this.getStructuredResponseInstructions()}`;
    */
   static getRichTextFormattingInstructions(): string {
     return `
-**FORMATTING:**
-* Use **bold text** for character names and emphasis
-* Use *italic text* for thoughts, whispers, and significant items
-* Use "double quotes" for all dialogue and spoken words
-* Each array item = one paragraph with 1-2 sentences for focused pacing
-* Include atmospheric details and sensory descriptions
+**FORMATTING & MARKUP:**
+* **Bold** for emphasis, *italics* for thoughts/whispers
+* "Double quotes" for all dialogue (never single quotes)
+* 1-2 sentences per paragraph for pacing
+* Atmospheric details and sensory descriptions
 
-**INTERACTIVE MARKUP (use sparingly for important elements):**
-* Character references: [Character Name](character:character_id) - for clickable character mentions
-* Item references: [Item Name](item:item_id) - for important objects the player can examine
-* Location references: [Location Name](location:location_id) - for significant places
-* Alert boxes for discoveries: [!discovery] Found something important
-* Alert boxes for warnings: [!warning] Something dangerous or concerning
-* Alert boxes for danger: [!danger] Immediate threat or crisis
-
-**MARKUP USAGE GUIDELINES:**
-* Use markup ONLY when it adds meaningful interactivity or emphasis
-* Character markup: Only for significant NPCs, not for casual mentions
-* Item markup: Only for items the player might want to examine or interact with
-* Location markup: Only for places the player might visit or reference
-* Alerts: Use sparingly for truly significant moments (discoveries, warnings, dangers)
-* Regular **bold** and *italic* are preferred for most emphasis needs`;
+**INTERACTIVE MARKUP (use sparingly):**
+* [Character](character:id) for important NPCs
+* [Item](item:id) for examinable objects
+* [Location](location:id) for visitable places
+* [!warning] / [!discovery] / [!danger] for significant moments
+* Use only when adding meaningful interactivity - prefer **bold** and *italic* for most emphasis`;
   }
 
   /**
@@ -486,22 +485,19 @@ ${this.getStructuredResponseInstructions()}`;
    * These are static and benefit from caching
    */
   static getCoreResponseGuidelines(): string {
-    return `**STORYTELLING APPROACH:**
-* Respond to the player's exact action with vivid, atmospheric narrative
-* Show the immediate consequences and ripple effects through the story world
-* Weave the action seamlessly into the ongoing narrative flow
-* Honor the story's voice, tone, and established atmosphere
+    return `**STORYTELLING:**
+* Respond to player's exact action with atmospheric narrative
+* Never control the player character - only NPCs and environment
+* Show consequences and invite natural next actions
+* Honor story voice and tone
+* Create moments that breathe with life - conversations, shifting atmospheres, emerging possibilities
 
-**NARRATIVE BOUNDARIES:**
-* Player controls their character exclusively - never make them speak or act beyond their input
-* You bring all NPCs, environments, and story elements to life
-* Respond to only what the player actually does (e.g., "examine door" ≠ "open door")
-
-**IMMERSIVE STORYTELLING:**
-* Advance the narrative through vivid scene description and character reactions
-* Create moments that breathe with life - ongoing conversations, shifting atmospheres, emerging possibilities
-* Let the story world naturally invite the next player action without explicit prompting
-* Craft focused, impactful paragraphs with 1-2 sentences each for dynamic pacing`;
+**NARRATIVE CONTINUITY:**
+* Weave key memories naturally into current responses - they inform character knowledge and emotional state
+* Reference previous story beats when relevant to create narrative cohesion
+* Let accumulated experiences shape how NPCs react and what they remember about the player
+* Build on established relationship dynamics from past interactions
+* Use memory context to create believable character growth and story progression`;
   }
 
   /**
@@ -520,6 +516,7 @@ ${this.getRichTextFormattingInstructions()}
 * flagChanges: Object with 'set' and 'unset' arrays listing flag IDs to change based on this interaction
 
 **CRITICAL FORMAT REQUIREMENTS:**
+* narrativeParts MUST be an array of strings (e.g., ["First paragraph.", "Second paragraph."]), NOT a JSON-encoded string
 * memories MUST be an array of strings, not a JSON-encoded string
 * flagChanges.set and flagChanges.unset MUST be arrays of flag IDs
 * Set flags conservatively - only when the action clearly warrants the change

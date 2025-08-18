@@ -93,6 +93,70 @@ export class LangChainDirector {
   }
 
   /**
+   * Extract the malformed response text from parsing errors
+   */
+  private extractResponseFromError(error: any): string {
+    // Try to extract the raw response from various error formats
+    if (error.message && error.message.includes('Text: ')) {
+      const match = error.message.match(/Text: "(.*?)"\. Error:/s);
+      if (match) {
+        return match[1];
+      }
+    }
+    
+    // Fallback - return error message
+    return error.message || 'Unknown malformed response';
+  }
+
+  /**
+   * Attempt to repair malformed JSON output and retry parsing
+   */
+  private async repairAndRetryStructuredRequest(malformedResponse: string, logLabel: string): Promise<any> {
+    const repairPrompt = `The following JSON response has formatting errors. Please fix it to match this exact schema:
+
+{
+  "reasoning": "string",
+  "narrativeParts": ["array", "of", "strings"],
+  "memories": ["array", "of", "strings"],
+  "importance": number,
+  "flagChanges": {
+    "set": ["array", "of", "flag", "strings"],
+    "unset": ["array", "of", "flag", "strings"]
+  }
+}
+
+CRITICAL: 
+- flagChanges MUST be an object with "set" and "unset" arrays
+- narrativeParts MUST be an array of strings
+- Do NOT include any explanation, just return the corrected JSON
+
+Original malformed response to fix:
+${malformedResponse}`;
+
+    try {
+      const repairResult = await this.multiModelService.makeStructuredRequest(
+        repairPrompt,
+        DirectorResponseSchema,
+        { temperature: 0.1 } // Lower temperature for more precise correction
+      );
+      console.log(`📝 ${logLabel} repair successful`);
+      return repairResult;
+    } catch (repairError) {
+      console.error(`📝 ${logLabel} repair also failed:`, repairError);
+      // Return a safe fallback response
+      return {
+        data: {
+          reasoning: "Response parsing failed, using fallback",
+          narrativeParts: ["I need a moment to process what you said."],
+          memories: [],
+          importance: 5,
+          flagChanges: { set: [], unset: [] }
+        }
+      };
+    }
+  }
+
+  /**
    * Common method to handle LLM requests with consistent error handling and logging
    */
   private async makeLLMRequest(
@@ -116,11 +180,20 @@ export class LangChainDirector {
     console.log(`📝 ${logLabel} Prompt:`, fullPrompt);
     
     // Use structured output with creative temperature for narrative generation
-    const result = await this.multiModelService.makeStructuredRequest(
-      fullPrompt,
-      DirectorResponseSchema,
-      { temperature: 0.7 } // Higher temperature for creative storytelling
-    );
+    let result;
+    try {
+      result = await this.multiModelService.makeStructuredRequest(
+        fullPrompt,
+        DirectorResponseSchema,
+        { temperature: 0.7 } // Higher temperature for creative storytelling
+      );
+    } catch (error) {
+      // If structured parsing fails, try to repair the output
+      console.log(`📝 ${logLabel} initial parsing failed, attempting repair...`);
+      // Extract the malformed response from the error
+      const malformedResponse = this.extractResponseFromError(error);
+      result = await this.repairAndRetryStructuredRequest(malformedResponse, logLabel);
+    }
 
     const latencyMs = performance.now() - startTime;
     
@@ -131,31 +204,35 @@ export class LangChainDirector {
     const rawNarrativeParts = result.data.narrativeParts;
     
     // If narrativeParts is a string that looks like a JSON array, try to parse it
-    if (typeof rawNarrativeParts === 'string' && 
-        rawNarrativeParts.trim().startsWith('[') && 
-        rawNarrativeParts.trim().endsWith(']')) {
-      try {
-        const parsed = JSON.parse(rawNarrativeParts);
-        if (Array.isArray(parsed)) {
-          console.log('📝 Detected double-encoded narrativeParts, parsing JSON array');
-          narrativeArray = parsed;
-        } else {
+    if (typeof rawNarrativeParts === 'string') {
+      const trimmed = rawNarrativeParts.trim();
+      
+      // Check if it's a JSON array string
+      if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            console.log('📝 Detected double-encoded narrativeParts, parsing JSON array');
+            narrativeArray = parsed;
+          } else {
+            // Parsed but not an array
+            narrativeArray = [rawNarrativeParts];
+          }
+        } catch (e) {
+          // Not valid JSON, might be a narrative that just happens to start with [
+          console.log('📝 NarrativeParts looks like JSON but failed to parse, treating as narrative text');
           narrativeArray = [rawNarrativeParts];
         }
-      } catch (e) {
-        // Not valid JSON, treat as single paragraph
-        console.log('📝 NarrativeParts looks like JSON but failed to parse, wrapping in array');
+      } else {
+        // Regular string, wrap in array
         narrativeArray = [rawNarrativeParts];
       }
-    } else if (typeof rawNarrativeParts === 'string') {
-      // Single string, wrap in array
-      narrativeArray = [rawNarrativeParts];
     } else if (Array.isArray(rawNarrativeParts)) {
-      // Already an array
+      // Already an array - this is the expected format
       narrativeArray = rawNarrativeParts;
     } else {
       // Fallback - ensure we always have an array
-      console.warn('📝 Unexpected narrativeParts type, using fallback');
+      console.warn('📝 Unexpected narrativeParts type:', typeof rawNarrativeParts);
       narrativeArray = ['An error occurred processing the narrative.'];
     }
 
@@ -265,8 +342,7 @@ export class LangChainDirector {
    */
   async processInputStreaming(
     context: DirectorContext,
-    playerInput: string,
-    callbacks?: TransitionCallbacks
+    playerInput: string
   ): Promise<DirectorResponse> {
     if (!this.flagManager) {
       throw new Error('Flag system not initialized. Call initializeFlags() first.');
@@ -298,46 +374,8 @@ export class LangChainDirector {
       }
     }
 
-    // Check for transitions/endings after applying flags
-    const transitionTriggered = this.checkTransitions(context);
-    const endingTriggered = this.checkEndings(context);
-
-    // If transition or ending is triggered, handle two-phase processing
-    if (transitionTriggered) {
-      callbacks?.onTransitionStart?.(transitionTriggered.targetScene);
-      
-      // Generate transition narrative
-      const transitionResponse = await this.processTransitionAction(
-        context,
-        playerInput,
-        transitionTriggered
-      );
-      
-      // Transitions handled automatically by flag system
-      // No need to add transition signals
-      
-      // Return transition response with flag-based handling
-      callbacks?.onTransitionComplete?.(transitionResponse);
-      return transitionResponse;
-    }
-
-    if (endingTriggered) {
-      // Generate ending narrative
-      const endingResponse = await this.processEndingAction(
-        context,
-        playerInput,
-        endingTriggered
-      );
-      
-      // Mark story as ended and include ending ID
-      endingResponse.signals = {
-        ...endingResponse.signals,
-        endStory: true,
-        endingId: endingTriggered.id
-      };
-      
-      return endingResponse;
-    }
+    // Transition and ending checking is now handled by the engine after flag changes are applied
+    // This allows for proper sequence: action -> flag changes -> automatic transitions/endings
 
     // Debug logging
     if (this.debugPane && this.debugPane.log) {
@@ -400,50 +438,22 @@ ${instructions}
   }
 
   /**
-   * Check if current flag state triggers any transitions
+   * Process a scene transition with narrative generation
    */
-  private checkTransitions(_context: DirectorContext): { targetScene: string; content: string } | undefined {
-    // Scene transitions are now handled by the LLM using flag system context
-    // rather than automatic transitions based on conditions
-    return undefined;
-  }
-
-  /**
-   * Check if current flag state triggers any endings
-   */
-  private checkEndings(context: DirectorContext): { id: string; content: string } | undefined {
-    if (!context.availableEndings || !this.flagManager) return undefined;
-
-    for (const ending of context.availableEndings.variations) {
-      if (ending.requires && this.flagManager.checkConditions(ending.requires)) {
-        return {
-          id: ending.id,
-          content: ending.sketch || `Ending: ${ending.id}`
-        };
-      }
-    }
-
-    return undefined;
-  }
-
-
-
-  /**
-   * Process an action that triggers a transition
-   */
-  private async processTransitionAction(
+  async processSceneTransition(
     context: DirectorContext,
-    playerInput: string,
-    transitionInfo: { targetScene: string; content: string }
+    targetSceneId: string,
+    targetSceneSketch: string,
+    playerAction: string = ''
   ): Promise<DirectorResponse> {
     const promptBuilder = () => {
       const contextPreamble = this.flagManager 
         ? LangChainPrompts.buildContextWithFlagManager(context, this.flagManager)
         : LangChainPrompts.buildActionContextPreamble(context, '');
       const instructions = LangChainPrompts.buildTransitionInstructions(
-        transitionInfo.targetScene,
-        transitionInfo.content,
-        playerInput
+        targetSceneId,
+        targetSceneSketch,
+        playerAction
       );
       
       return `${contextPreamble}
@@ -451,27 +461,22 @@ ${instructions}
 ${instructions}`;
     };
 
-    const response = await this.makeLLMRequest(
+    return this.makeLLMRequest(
       promptBuilder,
-      'Transition',
+      'Scene Transition',
       {
-        scene: transitionInfo.targetScene,
+        scene: `${context.currentSceneId} -> ${targetSceneId}`,
         memories: context.activeMemory?.length || 0,
         transitions: Object.keys(context.currentTransitions || {}).length
       },
-      6 // Higher importance for transitions
+      7 // High importance for transitions
     );
-
-    // Transitions handled automatically by flag system
-    // No need to add transition signals
-
-    return response;
   }
 
   /**
    * Process an action that triggers an ending
    */
-  private async processEndingAction(
+  async processEndingAction(
     context: DirectorContext,
     playerInput: string,
     endingInfo: { id: string; content: string }
@@ -502,8 +507,12 @@ ${instructions}`;
       8 // Highest importance for endings
     );
 
-    // Endings handled automatically by flag system
-    // No need to add ending signals
+    // Mark story as ended and include ending ID in signals
+    response.signals = {
+      ...response.signals,
+      endStory: true,
+      endingId: endingInfo.id
+    };
 
     return response;
   }

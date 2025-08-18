@@ -27,8 +27,10 @@ export class FlagManager {
   private flagDefinitions: Map<string, StructuredFlag> = new Map();
   private flagTriggers: FlagTrigger[] = [];
   private conditionCache: Map<string, boolean> = new Map();
+  private storyData: ImpressionistStory; // Store reference to story data
 
   constructor(story: ImpressionistStory) {
+    this.storyData = story; // Store the story data
     this.initializeFromStory(story);
   }
 
@@ -68,6 +70,15 @@ export class FlagManager {
 
   // Set a flag value
   setFlag(name: string, value: any): void {
+    // Check requirements before setting flag to true
+    if (value === true) {
+      const flagDef = this.flagDefinitions.get(name);
+      if (flagDef?.requires && !this.checkConditions(flagDef.requires)) {
+        console.warn(`Cannot set flag '${name}' to true: requirements not met (${JSON.stringify(flagDef.requires)})`);
+        return; // Don't set the flag
+      }
+    }
+    
     this.flags.set(name, value);
     this.invalidateConditionCache();
   }
@@ -94,12 +105,12 @@ export class FlagManager {
 
   // Apply flag changes from LLM
   applyChanges(changes: FlagChange): void {
-    // Set flags to true
+    // Set flags to true (with requirement checking)
     for (const flag of changes.set) {
-      this.flags.set(flag, true);
+      this.setFlag(flag, true);
     }
 
-    // Set flags to false
+    // Set flags to false (no requirement checking needed)
     for (const flag of changes.clear) {
       this.flags.set(flag, false);
     }
@@ -178,6 +189,11 @@ export class FlagManager {
       result[key] = value;
     }
     return result;
+  }
+
+  // Get the original story data (for transition checking)
+  getStoryData(): ImpressionistStory {
+    return this.storyData;
   }
 
   // Get story flags only (excluding location flags) for LLM context

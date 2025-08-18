@@ -1,0 +1,75 @@
+title: "Transition Test"
+author: "Test"
+blurb: "Testing immediate vs delayed transitions"
+version: "1.0"
+context: "A simple test for understanding transition timing"
+
+narrative:
+  voice: "Clear and direct"
+  tone: "Testing focused"
+
+# Simple flags to test transition logic
+flags:
+  door_opened:
+    default: false
+    description: "when the player opens the door"
+  
+  ready_to_leave:
+    default: false
+    description: "when the player is ready to leave the room"
+
+scenes:
+  room:
+    sketch: |
+      You're in a simple room. There's a **door** to the east.
+      
+      You can:
+      - "open door" (sets door_opened flag)
+      - "get ready to leave" (sets ready_to_leave flag)
+      - "walk through door" (should trigger transition if both flags are set)
+      
+    guidance: |
+      Simple test scene. Set flags based on player actions:
+      - "door_opened" when they open the door
+      - "ready_to_leave" when they get ready
+      - Transition should only happen when BOTH flags are set and they try to leave
+      
+    transitions:
+      hallway:
+        requires:
+          all_of: ["door_opened", "ready_to_leave"]
+
+  hallway:
+    sketch: |
+      You're now in the hallway. The transition worked!
+      
+      This proves the transition happened when both flags were set.
+      
+    guidance: |
+      Simple destination scene to confirm transition worked.
+      
+    transitions:
+      room:
+        requires:
+          all_of: ["back_to_room"]  # Won't trigger without this flag
+
+# Simple ending for completeness
+endings:
+  requires:
+    all_of: ["in_hallway"]
+  variations:
+    - id: "test_complete"
+      requires:
+        all_of: ["door_opened", "ready_to_leave"]
+      sketch: "Test completed successfully!"
+
+guidance: |
+  Test story to understand transition timing:
+  
+  1. Try "open door" - should set door_opened but NOT transition
+  2. Try "get ready to leave" - should set ready_to_leave but NOT transition  
+  3. Try "walk through door" - should transition immediately if both flags set
+  
+  This will help determine if transitions happen:
+  - Immediately when flags are set (during flag setting action)
+  - Only on the next player action after flags are set

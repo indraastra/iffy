@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { FlagManager } from '../engine/FlagManager';
 import { ImpressionistStory } from '../types/impressionistStory';
 
@@ -487,6 +487,176 @@ describe('FlagManager', () => {
       // Verify some flags were set correctly
       expect(flagManager.getFlag('flag_0')).toBe(true);
       expect(flagManager.getFlag('flag_100')).toBe(false);
+    });
+  });
+
+  describe('Flag Requirements', () => {
+    let flagManager: FlagManager;
+
+    beforeEach(() => {
+      const story: ImpressionistStory = {
+        title: 'Test Story',
+        author: 'Test',
+        blurb: 'Test blurb',
+        version: '1.0',
+        context: 'Test context',
+        guidance: 'Test guidance',
+        scenes: { start: { sketch: 'Test scene' } },
+        endings: { variations: [] },
+        flags: {
+          prerequisite_flag: {
+            default: false,
+            description: 'must be set first'
+          },
+          dependent_flag: {
+            default: false,
+            description: 'depends on prerequisite',
+            requires: {
+              all_of: ['prerequisite_flag']
+            }
+          },
+          complex_dependent_flag: {
+            default: false,
+            description: 'has complex requirements',
+            requires: {
+              all_of: ['prerequisite_flag'],
+              none_of: ['blocking_flag']
+            }
+          },
+          blocking_flag: {
+            default: false,
+            description: 'blocks complex dependent flag'
+          }
+        }
+      };
+
+      flagManager = new FlagManager(story);
+    });
+
+    it('should allow setting flags without requirements', () => {
+      flagManager.setFlag('prerequisite_flag', true);
+      expect(flagManager.getFlag('prerequisite_flag')).toBe(true);
+    });
+
+    it('should block setting flag when requirements not met', () => {
+      // Try to set dependent flag without prerequisite
+      flagManager.setFlag('dependent_flag', true);
+      expect(flagManager.getFlag('dependent_flag')).toBe(false); // Should remain false
+    });
+
+    it('should allow setting flag when requirements are met', () => {
+      // Set prerequisite first
+      flagManager.setFlag('prerequisite_flag', true);
+      
+      // Now dependent flag should be settable
+      flagManager.setFlag('dependent_flag', true);
+      expect(flagManager.getFlag('dependent_flag')).toBe(true);
+    });
+
+    it('should handle complex requirements correctly', () => {
+      // Set prerequisite but also set blocking flag
+      flagManager.setFlag('prerequisite_flag', true);
+      flagManager.setFlag('blocking_flag', true);
+      
+      // Complex dependent flag should not be settable due to blocking flag
+      flagManager.setFlag('complex_dependent_flag', true);
+      expect(flagManager.getFlag('complex_dependent_flag')).toBe(false);
+      
+      // Remove blocking flag
+      flagManager.setFlag('blocking_flag', false);
+      
+      // Now it should be settable
+      flagManager.setFlag('complex_dependent_flag', true);
+      expect(flagManager.getFlag('complex_dependent_flag')).toBe(true);
+    });
+
+    it('should allow setting flag to false regardless of requirements', () => {
+      // Should be able to set to false even if requirements aren't met
+      flagManager.setFlag('dependent_flag', false);
+      expect(flagManager.getFlag('dependent_flag')).toBe(false);
+    });
+
+    it('should check requirements in applyChanges', () => {
+      // Try to set dependent flag via applyChanges without prerequisite
+      flagManager.applyChanges({
+        set: ['dependent_flag'],
+        clear: []
+      });
+      
+      expect(flagManager.getFlag('dependent_flag')).toBe(false);
+      
+      // Set prerequisite and try again
+      flagManager.setFlag('prerequisite_flag', true);
+      flagManager.applyChanges({
+        set: ['dependent_flag'],
+        clear: []
+      });
+      
+      expect(flagManager.getFlag('dependent_flag')).toBe(true);
+    });
+
+    it('should handle batch operations correctly', () => {
+      // Try to set both prerequisite and dependent in same batch
+      flagManager.applyChanges({
+        set: ['prerequisite_flag', 'dependent_flag'],
+        clear: []
+      });
+      
+      // Prerequisite should be set, but dependent might not be due to order
+      expect(flagManager.getFlag('prerequisite_flag')).toBe(true);
+      // This behavior depends on implementation - dependent_flag might fail if checked before prerequisite_flag is set
+    });
+
+    it('should provide meaningful warning messages', () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      
+      flagManager.setFlag('dependent_flag', true);
+      
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Cannot set flag 'dependent_flag' to true: requirements not met")
+      );
+      
+      consoleSpy.mockRestore();
+    });
+
+    it('should work with understudy story decision_moment scenario', () => {
+      // Test the specific scenario from understudy.yaml
+      const understudyStory: ImpressionistStory = {
+        title: 'Understudy',
+        author: 'Test',
+        blurb: 'Test blurb',
+        version: '1.0',
+        context: 'Test context',
+        guidance: 'Test guidance',
+        scenes: { start: { sketch: 'Test scene' } },
+        endings: { variations: [] },
+        flags: {
+          second_act_ended: {
+            default: false,
+            description: 'when the second act ends and final curtain falls'
+          },
+          decision_moment: {
+            default: false,
+            description: 'when the final choice about continuing or parting is presented',
+            requires: {
+              all_of: ['second_act_ended']
+            }
+          }
+        }
+      };
+
+      const understudyFlagManager = new FlagManager(understudyStory);
+
+      // Try to set decision_moment before second_act_ended
+      understudyFlagManager.setFlag('decision_moment', true);
+      expect(understudyFlagManager.getFlag('decision_moment')).toBe(false);
+
+      // Set second_act_ended first
+      understudyFlagManager.setFlag('second_act_ended', true);
+      
+      // Now decision_moment should be settable
+      understudyFlagManager.setFlag('decision_moment', true);
+      expect(understudyFlagManager.getFlag('decision_moment')).toBe(true);
     });
   });
 

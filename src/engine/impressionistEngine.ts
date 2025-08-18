@@ -26,18 +26,27 @@ import { useMarkdownRenderer } from '@/composables/useMarkdownRenderer';
  * Convert narrative from string[] to string, optionally applying formatters per-element
  */
 function normalizeNarrative(narrative: string | string[], formatters?: FormatterRule[]): string {
-  if (!Array.isArray(narrative)) {
-    return narrative;
+  // Convert to string first
+  let text: string;
+  if (Array.isArray(narrative)) {
+    text = narrative.join('\n\n');
+  } else {
+    text = narrative;
   }
   
-  // If formatters are provided, apply them to each element individually before joining
-  if (formatters && formatters.length > 0) {
+  // Apply text preprocessing to fix common formatting issues
+  // Add spaces around em-dashes for better readability
+  text = text.replace(/(\w)—(\w)/g, '$1 — $2');  // word—word becomes word — word
+  text = text.replace(/(\w)—(\s)/g, '$1 —$2');   // word— space becomes word — space
+  text = text.replace(/(\s)—(\w)/g, '$1— $2');   // space —word becomes space — word
+  
+  // If formatters are provided and narrative was an array, apply them
+  if (formatters && formatters.length > 0 && Array.isArray(narrative)) {
     const { renderMarkup } = useMarkdownRenderer();
-    return renderMarkup(narrative, formatters);
+    return renderMarkup(text, formatters);
   }
   
-  // Otherwise, just join the array
-  return narrative.join('\n\n');
+  return text;
 }
 
 export interface PlayerAction {
@@ -326,6 +335,59 @@ export class ImpressionistEngine {
       // Apply any signals from the final response (but don't trigger ending callback yet)
       this.applyDirectorSignals(finalResponse);
       
+      // Check for automatic scene transitions after applying flag changes
+      const transitionTriggered = this.checkAutomaticTransitions();
+      if (transitionTriggered) {
+        // Generate transition narrative
+        const targetScene = this.story?.scenes[transitionTriggered];
+        if (targetScene) {
+          const transitionResponse = await this.director.processSceneTransition(
+            context,
+            transitionTriggered,
+            targetScene.sketch,
+            action.input
+          );
+          
+          // Display transition narrative
+          if (this.uiAddMessageCallback && transitionResponse.narrative) {
+            const formatters = this.story?.ui?.formatters || [];
+            this.uiAddMessageCallback(normalizeNarrative(transitionResponse.narrative, formatters), 'story');
+          }
+          
+          // Store transition memories
+          if (transitionResponse.memories) {
+            transitionResponse.memories.forEach(memory => {
+              this.memoryManager.addMemory(memory, transitionResponse.importance || 7);
+            });
+          }
+        }
+        
+        // Update scene state
+        this.handleSceneTransition(transitionTriggered);
+      }
+      
+      // Check for automatic endings after applying flag changes
+      const endingTriggered = this.checkAutomaticEndings();
+      if (endingTriggered) {
+        // Generate ending narrative through director
+        const endingInfo = this.story?.endings?.variations.find(e => e.id === endingTriggered);
+        if (endingInfo) {
+          const endingResponse = await this.director.processEndingAction(
+            context, 
+            action.input, 
+            { id: endingTriggered, content: endingInfo.sketch }
+          );
+          
+          // Update the final response with ending narrative
+          finalResponse.narrative = endingResponse.narrative;
+          finalResponse.memories = [...(finalResponse.memories || []), ...(endingResponse.memories || [])];
+          finalResponse.signals = { ...finalResponse.signals, ...endingResponse.signals };
+        }
+        
+        this.gameState.isEnded = true;
+        this.gameState.endingId = endingTriggered;
+      }
+      
       // Check if an ending was actually triggered after applying signals (not just if signal existed)
       const isEndingTriggered = this.gameState.isEnded;
       
@@ -373,6 +435,7 @@ export class ImpressionistEngine {
       // Core context (~200 tokens)
       storyContext: this.story!.context,
       currentSketch: currentScene.sketch,
+      currentSceneId: this.gameState.currentScene, // Add current scene ID for transition handling
       
       // Recent activity (~300 tokens) 
       recentInteractions: this.gameState.interactions,
@@ -384,11 +447,37 @@ export class ImpressionistEngine {
     };
 
     // Available transitions (~100 tokens)
-    if (currentScene.leads_to) {
-      context.currentTransitions = {};
-      for (const [sceneId, condition] of Object.entries(currentScene.leads_to)) {
+    context.currentTransitions = {};
+    
+    // Modern flag-based transitions
+    if (currentScene.transitions) {
+      for (const [sceneId, transition] of Object.entries(currentScene.transitions)) {
         const targetScene = this.story!.scenes[sceneId];
         if (targetScene) {
+          // Convert flag conditions to readable description
+          let conditionDesc = (transition as any).when || 'flag conditions met';
+          if ((transition as any).requires) {
+            const requires = (transition as any).requires;
+            const parts: string[] = [];
+            if (requires.all_of) parts.push(`ALL: ${requires.all_of.join(', ')}`);
+            if (requires.any_of) parts.push(`ANY: ${requires.any_of.join(', ')}`);
+            if (requires.none_of) parts.push(`NONE: ${requires.none_of.join(', ')}`);
+            conditionDesc = parts.join(' AND ');
+          }
+          
+          context.currentTransitions[sceneId] = {
+            condition: conditionDesc,
+            sketch: targetScene.sketch
+          };
+        }
+      }
+    }
+    
+    // Legacy leads_to support
+    if (currentScene.leads_to) {
+      for (const [sceneId, condition] of Object.entries(currentScene.leads_to)) {
+        const targetScene = this.story!.scenes[sceneId];
+        if (targetScene && !context.currentTransitions[sceneId]) { // Don't override modern transitions
           context.currentTransitions[sceneId] = {
             condition: condition as string,
             sketch: targetScene.sketch
@@ -476,6 +565,11 @@ export class ImpressionistEngine {
       this.handleItemDiscovery(response.signals.discover);
     }
 
+    // Scene transition
+    if (response.signals.transition) {
+      this.handleSceneTransition(response.signals.transition);
+    }
+
     // Story ending
     if (response.signals.endStory) {
       this.gameState.isEnded = true;
@@ -483,8 +577,74 @@ export class ImpressionistEngine {
         this.gameState.endingId = response.signals.endingId;
       }
     }
+  }
 
-    // Scene transitions are handled automatically by flag system
+  /**
+   * Check for automatic scene transitions based on current flags
+   */
+  private checkAutomaticTransitions(): string | undefined {
+    if (!this.story) return undefined;
+    
+    const flagManager = this.director.getFlagManager();
+    if (!flagManager) return undefined;
+    
+    const currentScene = this.getCurrentScene();
+    if (!currentScene?.transitions) return undefined;
+    
+    // Check flag-based transitions
+    for (const [sceneId, transition] of Object.entries(currentScene.transitions)) {
+      if (transition.requires && flagManager.checkConditions(transition.requires)) {
+        return sceneId;
+      }
+    }
+    
+    return undefined;
+  }
+
+  /**
+   * Check for automatic story endings based on current flags
+   */
+  private checkAutomaticEndings(): string | undefined {
+    if (!this.story?.endings) return undefined;
+    
+    const flagManager = this.director.getFlagManager();
+    if (!flagManager) return undefined;
+    
+    // Check global ending conditions first
+    if (this.story.endings.requires && !flagManager.checkConditions(this.story.endings.requires)) {
+      return undefined; // Global conditions not met
+    }
+    
+    // Check individual ending conditions
+    for (const ending of this.story.endings.variations) {
+      if (ending.requires && flagManager.checkConditions(ending.requires)) {
+        return ending.id;
+      }
+    }
+    
+    return undefined;
+  }
+
+  /**
+   * Handle scene transition
+   */
+  private handleSceneTransition(targetSceneId: string) {
+    if (!this.story?.scenes[targetSceneId]) {
+      console.warn(`Cannot transition to unknown scene: ${targetSceneId}`);
+      return;
+    }
+
+    const previousScene = this.gameState.currentScene;
+    this.gameState.currentScene = targetSceneId;
+    
+    // Update location if the new scene has a location
+    const newScene = this.story.scenes[targetSceneId];
+    if (newScene.location) {
+      this.director.setLocationFlag(newScene.location);
+      this.previousLocation = this.story.scenes[previousScene]?.location;
+    }
+
+    console.log(`🎬 Scene transition: ${previousScene} -> ${targetSceneId}`);
   }
 
 

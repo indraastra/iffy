@@ -471,4 +471,165 @@ multiple lines for readability.`,
       expect(interactions[0].importance).toBe(7); // Should use LLM-provided importance
     });
   });
+
+  describe('Scene Transition UI Display Bug', () => {
+    it('should capture both action response and transition narrative in UI callbacks', async () => {
+      // Create a story with flag-based transitions
+      const transitionTestStory: ImpressionistStory = {
+        title: 'Transition Test',
+        author: 'Test',
+        blurb: 'Testing transitions',
+        version: '1.0',
+        context: 'Test context',
+        flags: {
+          door_opened: { default: false, description: 'when door is opened' },
+          ready_to_leave: { default: false, description: 'when ready to leave' }
+        },
+        scenes: {
+          room: {
+            sketch: 'You are in a room',
+            transitions: {
+              hallway: {
+                requires: { all_of: ['door_opened', 'ready_to_leave'] }
+              }
+            }
+          },
+          hallway: {
+            sketch: 'You are in the hallway'
+          }
+        },
+        endings: { variations: [] }
+      };
+
+      // Mock LLM service to simulate flag-setting responses
+      let callCount = 0;
+      const mockService = {
+        isConfigured: vi.fn().mockReturnValue(true),
+        makeStructuredRequest: vi.fn().mockImplementation(() => {
+          callCount++;
+          if (callCount === 1) {
+            // First call: action that sets both required flags
+            return Promise.resolve({
+              data: {
+                narrativeParts: ['Action response: You are now ready'],
+                memories: ['Player is ready'],
+                importance: 5,
+                flagChanges: { set: ['door_opened', 'ready_to_leave'], unset: [] }
+              }
+            });
+          } else {
+            // Second call: transition narrative
+            return Promise.resolve({
+              data: {
+                narrativeParts: ['Transition: You move to the hallway'],
+                memories: ['Player moved to hallway'],
+                importance: 7,
+                flagChanges: { set: [], unset: [] }
+              }
+            });
+          }
+        })
+      };
+
+      const engine = new ImpressionistEngine(mockService as any);
+      
+      // Capture UI callback messages
+      const uiMessages: { text: string; type: string }[] = [];
+      engine.setUIAddMessageCallback((text: string, type: string) => {
+        uiMessages.push({ text, type });
+      });
+
+      engine.loadStory(transitionTestStory);
+      
+      // Process action that should trigger transition
+      const response = await engine.processAction({ input: 'get ready and open door' });
+
+      // Verify the LLM was called twice (action + transition)
+      expect(mockService.makeStructuredRequest).toHaveBeenCalledTimes(2);
+      
+      // Debug: Check what we actually captured
+      console.log('UI Messages captured:', uiMessages.length, uiMessages);
+      console.log('LLM call count:', mockService.makeStructuredRequest.mock.calls.length);
+      
+      // Verify the LLM was called twice (action + transition)
+      expect(mockService.makeStructuredRequest).toHaveBeenCalledTimes(2);
+      
+      // Verify scene actually changed
+      const gameState = engine.getGameState();
+      expect(gameState.currentScene).toBe('hallway');
+      
+      // Check if we got the expected UI messages
+      if (uiMessages.length !== 2) {
+        throw new Error(`Expected 2 UI messages but got ${uiMessages.length}: ${JSON.stringify(uiMessages)}`);
+      }
+      
+      expect(uiMessages[0].text).toContain('Action response');
+      expect(uiMessages[1].text).toContain('Transition');
+    });
+
+    it('should handle empty transition narratives gracefully', async () => {
+      const transitionTestStory: ImpressionistStory = {
+        title: 'Empty Transition Test',
+        author: 'Test', 
+        blurb: 'Testing empty transitions',
+        version: '1.0',
+        context: 'Test context',
+        flags: {
+          trigger_flag: { default: false, description: 'trigger flag' }
+        },
+        scenes: {
+          start: {
+            sketch: 'Start scene',
+            transitions: {
+              end: { requires: { all_of: ['trigger_flag'] } }
+            }
+          },
+          end: { sketch: 'End scene' }
+        },
+        endings: { variations: [] }
+      };
+
+      let callCount = 0;
+      const mockService = {
+        isConfigured: vi.fn().mockReturnValue(true),
+        makeStructuredRequest: vi.fn().mockImplementation(() => {
+          callCount++;
+          if (callCount === 1) {
+            return Promise.resolve({
+              data: {
+                narrativeParts: ['Action sets flag'],
+                memories: [],
+                importance: 5,
+                flagChanges: { set: ['trigger_flag'], unset: [] }
+              }
+            });
+          } else {
+            // Return empty narrative for transition
+            return Promise.resolve({
+              data: {
+                narrativeParts: [],
+                memories: [],
+                importance: 5,
+                flagChanges: { set: [], unset: [] }
+              }
+            });
+          }
+        })
+      };
+
+      const engine = new ImpressionistEngine(mockService as any);
+      
+      const uiMessages: { text: string; type: string }[] = [];
+      engine.setUIAddMessageCallback((text: string, type: string) => {
+        uiMessages.push({ text, type });
+      });
+
+      engine.loadStory(transitionTestStory);
+      await engine.processAction({ input: 'trigger transition' });
+
+      // Should handle empty transition narrative without errors
+      expect(uiMessages.length).toBeGreaterThan(0);
+      console.log('UI Messages with empty transition:', uiMessages);
+    });
+  });
 });
