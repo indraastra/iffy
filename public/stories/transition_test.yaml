@@ -1,8 +1,8 @@
 title: "Transition Test"
 author: "Test"
-blurb: "Testing immediate vs delayed transitions"
+blurb: "Testing flag-based story endings"
 version: "1.0"
-context: "A simple test for understanding transition timing"
+context: "A simple test for understanding flag-based endings"
 
 narrative:
   voice: "Clear and direct"
@@ -17,6 +17,10 @@ flags:
   ready_to_leave:
     default: false
     description: "when the player is ready to leave the room"
+  
+  walked_through:
+    default: false
+    description: "when the player walks through the door"
 
 scenes:
   room:
@@ -26,51 +30,37 @@ scenes:
       You can:
       - "open door" (sets door_opened flag)
       - "get ready to leave" (sets ready_to_leave flag)
-      - "walk through door" (should trigger transition if both flags are set)
+      - "walk through door" (ends the test if both flags are set)
       
     guidance: |
       Simple test scene. Set flags based on player actions:
       - "door_opened" when they open the door
       - "ready_to_leave" when they get ready
-      - Transition should only happen when BOTH flags are set and they try to leave
-      
-    transitions:
-      hallway:
-        requires:
-          all_of: ["door_opened", "ready_to_leave"]
-
-  hallway:
-    location: "hallway"
-    sketch: |
-      You're now in the hallway. The transition worked!
-      
-      This proves the transition happened when both flags were set.
-      
-    guidance: |
-      Simple destination scene to confirm transition worked.
-      
-    transitions:
-      room:
-        requires:
-          all_of: ["back_to_room"]  # Won't trigger without this flag
+      - "walked_through" when they walk through the door (only if both other flags are set)
 
 # Simple ending for completeness
 endings:
   requires:
-    all_of: ["at_hallway"]
+    all_of: ["walked_through"]
   variations:
     - id: "test_complete"
       requires:
-        all_of: ["door_opened", "ready_to_leave"]
-      sketch: "Test completed successfully!"
+        all_of: ["door_opened", "ready_to_leave", "walked_through"]
+      sketch: |
+        You walk through the open door, ready to leave. The test is complete!
+        
+        This demonstrates that all three conditions were met:
+        1. The door was opened
+        2. You were ready to leave
+        3. You explicitly walked through
 
 guidance: |
-  Test story to understand transition timing:
+  Test story to understand flag-based endings:
   
-  1. Try "open door" - should set door_opened but NOT transition
-  2. Try "get ready to leave" - should set ready_to_leave but NOT transition  
-  3. Try "walk through door" - should transition immediately if both flags set
+  1. Try "open door" - sets door_opened flag
+  2. Try "get ready to leave" - sets ready_to_leave flag
+  3. Try "walk through door" - sets walked_through flag (only if both other flags are set)
   
-  This will help determine if transitions happen:
-  - Immediately when flags are set (during flag setting action)
-  - Only on the next player action after flags are set
+  The ending triggers when all three flags are set. The LLM should only set
+  walked_through when the player explicitly tries to walk through AND both
+  prerequisites are met.

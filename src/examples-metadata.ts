@@ -39,7 +39,7 @@ export const STORY_METADATA: StoryMetadata[] = [
     "filename": "transition_test.yaml",
     "title": "Transition Test",
     "author": "Test",
-    "blurb": "Testing immediate vs delayed transitions",
+    "blurb": "Testing flag-based story endings",
     "slug": "transition-test"
   },
   {
