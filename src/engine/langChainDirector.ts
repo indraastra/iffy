@@ -444,7 +444,8 @@ ${instructions}
     context: DirectorContext,
     targetSceneId: string,
     targetSceneSketch: string,
-    playerAction: string = ''
+    playerAction: string = '',
+    previousActionResponse?: string[]
   ): Promise<DirectorResponse> {
     const promptBuilder = () => {
       const contextPreamble = this.flagManager 
@@ -453,7 +454,8 @@ ${instructions}
       const instructions = LangChainPrompts.buildTransitionInstructions(
         targetSceneId,
         targetSceneSketch,
-        playerAction
+        playerAction,
+        previousActionResponse
       );
       
       return `${contextPreamble}

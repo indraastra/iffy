@@ -40,6 +40,7 @@ scenes:
           all_of: ["door_opened", "ready_to_leave"]
 
   hallway:
+    location: "hallway"
     sketch: |
       You're now in the hallway. The transition worked!
       
@@ -56,7 +57,7 @@ scenes:
 # Simple ending for completeness
 endings:
   requires:
-    all_of: ["in_hallway"]
+    all_of: ["at_hallway"]
   variations:
     - id: "test_complete"
       requires:

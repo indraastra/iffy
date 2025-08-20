@@ -28,13 +28,20 @@ export interface ImpressionistStory {
   ui?: UIConfiguration
 }
 
+// Scene transition definition
+export interface SceneTransition {
+  requires?: FlagCondition  // Flag-based conditions for this transition
+  when?: string  // Legacy natural language condition (still supported)
+}
+
 // Scene definition - impressionistic outlines
 export interface ImpressionistScene {
   sketch: string  // Impressionistic outline for LLM to interpret
   location?: string  // Optional reference to location key
   guidance?: string  // Optional scene-specific guidance for LLM behavior
   process_sketch?: boolean  // If true, send sketch through LLM (default: true). Set false for verbatim display
-  leads_to?: Record<string, string>  // scene_id: "when this happens"
+  leads_to?: Record<string, string>  // scene_id: "when this happens" (legacy)
+  transitions?: Record<string, SceneTransition>  // scene_id: transition_conditions (modern)
   
   // Flag system support
   initial_flags?: Record<string, any>  // Flags to set when scene starts
@@ -159,6 +166,7 @@ export interface DirectorContext {
   // Core context (~200 tokens)
   storyContext: string
   currentSketch: string
+  currentSceneId?: string  // Current scene ID for transition handling
   
   // Recent activity (~300 tokens)
   recentInteractions: ImpressionistInteraction[]

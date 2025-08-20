@@ -32,6 +32,12 @@ const gameState = reactive<GameState>({
 // Global loading state
 const isAwaitingResponse = ref(false)
 
+// Guard to prevent duplicate initial scene processing
+const isInitialSceneProcessing = ref(false)
+
+// Guard to prevent multiple route watchers
+let routeWatcherInitialized = false
+
 // Message ID counter to ensure unique IDs
 let messageIdCounter = 0
 
@@ -155,6 +161,7 @@ export function useGameEngine() {
       
       // Clear previous messages and reset state
       gameState.messages = []
+      isInitialSceneProcessing.value = false // Reset initial scene guard for new story
       gameState.isEnded = false
       
       // Parse story from YAML
@@ -192,6 +199,13 @@ export function useGameEngine() {
 
   async function processInitialScene() {
     try {
+      // Prevent duplicate initial scene processing
+      if (isInitialSceneProcessing.value) {
+        console.log('⚠️ Initial scene processing already in progress, skipping duplicate call');
+        return;
+      }
+      
+      isInitialSceneProcessing.value = true;
       gameState.isProcessing = true
       
       // Handle initial scene - check if it should be processed through LLM or displayed verbatim
@@ -216,6 +230,7 @@ export function useGameEngine() {
     } finally {
       gameState.isProcessing = false
       isAwaitingResponse.value = false
+      isInitialSceneProcessing.value = false
     }
   }
 
@@ -326,22 +341,27 @@ export function useGameEngine() {
     router.push('/')
   }
 
-  // Watch for route changes to load stories from URLs
-  watch(
-    () => route.params.storySlug,
-    async (newSlug, oldSlug) => {
-      // Only load if we're on a story route and the slug actually changed
-      if (route.name === 'story' && newSlug && newSlug !== oldSlug) {
-        try {
-          await loadStoryFromUrl()
-        } catch (error) {
-          console.error('Error loading story from URL:', error)
-          addMessage(`Error loading story: ${error}`, 'error')
+  // Watch for route changes to load stories from URLs - but only initialize once globally
+  if (!routeWatcherInitialized) {
+    routeWatcherInitialized = true
+    console.log('🎬 Initializing route watcher for story loading')
+    
+    watch(
+      () => route.params.storySlug,
+      async (newSlug, oldSlug) => {
+        // Only load if we're on a story route and the slug actually changed
+        if (route.name === 'story' && newSlug && newSlug !== oldSlug) {
+          try {
+            await loadStoryFromUrl()
+          } catch (error) {
+            console.error('Error loading story from URL:', error)
+            addMessage(`Error loading story: ${error}`, 'error')
+          }
         }
-      }
-    },
-    { immediate: true } // Run immediately for the initial route
-  )
+      },
+      { immediate: true } // Run immediately for the initial route
+    )
+  }
 
   // Computed property for story ended state
   const isStoryEnded = computed(() => {

@@ -1,0 +1,62 @@
+name: "Transition Test - Complete Flow"
+description: "Tests the complete flow of the transition test story to ensure narrative handoff works"
+storyFile: "public/stories/transition_test.yaml"
+
+# Player configuration - using a fast model for simple test
+playerModel:
+  provider: "anthropic"
+  model: "claude-3-5-haiku-latest"
+
+# Engine configuration - using fast model for test
+engineModels:
+  costModel:
+    provider: "anthropic"
+    model: "claude-3-5-haiku-latest"
+  qualityModel:
+    provider: "anthropic"
+    model: "claude-3-5-haiku-latest"
+
+# Goals for the player
+goals:
+- type: "reach_scene"
+  scene: "hallway"
+  description: "Reach the hallway by setting both required flags"
+
+maxTurns: 10
+
+player:
+  - action: "open door"
+    expectations:
+      flags:
+        door_opened: true
+      scene: "room"
+      narrative:
+        contains:
+          - "door"
+          - "open"
+        excludes:
+          - "hallway"
+          - "transition"
+  
+  - action: "get ready to leave"
+    expectations:
+      flags:
+        door_opened: true
+        ready_to_leave: true
+      scene: "hallway"  # Should transition immediately
+      narrative:
+        contains:
+          - "hallway"
+        # With narrative handoff, should have single cohesive response
+        matches:
+          - pattern: "ready.*hallway"
+            description: "Should connect getting ready with moving to hallway"
+
+success:
+  scene: "hallway"
+  flags:
+    door_opened: true
+    ready_to_leave: true
+  narrative:
+    contains:
+      - "hallway"

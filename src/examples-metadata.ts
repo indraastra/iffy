@@ -22,20 +22,6 @@ export interface BundledStory {
 
 export const STORY_METADATA: StoryMetadata[] = [
   {
-    "filename": "away_message.yaml",
-    "title": "Away Message",
-    "author": "Iffy Collective",
-    "blurb": "One last Thursday night chat before the real world begins.",
-    "slug": "away-message"
-  },
-  {
-    "filename": "corridor_of_mirrors.yaml",
-    "title": "The Corridor of Mirrors",
-    "author": "Iffy Collective",
-    "blurb": "Navigate five rooms where reality bends through different narrative lenses.",
-    "slug": "corridor-of-mirrors"
-  },
-  {
     "filename": "friday_night_rain.yaml",
     "title": "Friday Night Rain",
     "author": "Iffy Collective",
@@ -50,53 +36,18 @@ export const STORY_METADATA: StoryMetadata[] = [
     "slug": "friday-night-rain-reflected"
   },
   {
-    "filename": "restaurant_catastrophe.yaml",
-    "title": "The Great Sandwich Catastrophe",
-    "author": "Iffy Collective",
-    "blurb": "Jennifer's EPIC SANDWICH MASTERY faces its most DEVASTATING professional challenge!",
-    "slug": "restaurant-catastrophe"
+    "filename": "transition_test.yaml",
+    "title": "Transition Test",
+    "author": "Test",
+    "blurb": "Testing immediate vs delayed transitions",
+    "slug": "transition-test"
   },
   {
-    "filename": "sandwich_crisis.yaml",
-    "title": "The Great Sandwich Crisis",
+    "filename": "understudy.yaml",
+    "title": "Understudy",
     "author": "Iffy Collective",
-    "blurb": "Experience the EPIC DRAMA of making lunch - will you survive the kitchen?",
-    "slug": "sandwich-crisis"
-  },
-  {
-    "filename": "sentient_quill.yaml",
-    "title": "The Peculiar Case of the Sentient Quill",
-    "author": "Iffy Collective",
-    "blurb": "Solve a murder in gaslit London with an impossible AI companion.",
-    "slug": "sentient-quill"
-  },
-  {
-    "filename": "test_conditions.yaml",
-    "title": "Security Access Terminal",
-    "author": "Iffy Collective",
-    "blurb": "A test story designed to verify ending condition enforcement using a password system.",
-    "slug": "test-conditions"
-  },
-  {
-    "filename": "the_final_word_v2.yaml",
-    "title": "The Final Word v2",
-    "author": "Iffy Collective",
-    "blurb": "Run an underground bookstore where literature lives dangerously",
-    "slug": "the-final-word-v2"
-  },
-  {
-    "filename": "the_key.yaml",
-    "title": "The Key",
-    "author": "Iffy Collective",
-    "blurb": "A simple puzzle about getting through a locked door.",
-    "slug": "the-key"
-  },
-  {
-    "filename": "winter_light.yaml",
-    "title": "Winter Light",
-    "author": "Iffy Collective",
-    "blurb": "A chess prodigy confronts the silence between moves in post-war Germany",
-    "slug": "winter-light"
+    "blurb": "Some roles we never meant to play.",
+    "slug": "understudy"
   }
 ];
 

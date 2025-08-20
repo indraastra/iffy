@@ -41,6 +41,16 @@ author: "Your Name"
 blurb: "Explore a mysterious garden where time moves differently"
 version: "1.0"
 context: "Victorian England. You discover a garden where past and present collide."
+
+# Optional: Narrative metadata for tone and style
+narrative:
+  voice: "Second person, present tense, dreamlike"
+  tone: "Mysterious, wondrous, with underlying melancholy"
+  themes: ["time", "memory", "the price of knowledge"]
+
+# Optional: UI configuration
+ui:
+  loadingMessage: "The garden shifts around you..."
 ```
 
 - **title**: Your story's name
@@ -83,28 +93,60 @@ Define how your story can conclude with global requirements and specific ending 
 
 ```yaml
 endings:
-  when:                                    # Global requirements for ANY ending
-    - "conversation has concluded"
-    - "player attempts to leave the garden"
+  requires:                               # Global flag requirements for ANY ending
+    any_of:
+    - "conversation_ending"
+    - "player_leaves"
   variations:
     - id: "temporal_understanding"
-      when: "player grasps the garden's true nature AND leaves peacefully"
+      requires:                           # Flag-based conditions (preferred)
+        all_of: ["discovered_secret", "player_leaves"]
+        none_of: ["confused"]
       sketch: |
         You understand now - the garden exists in all times at once. 
         As you step through the gate, you carry this secret forever.
         
-    - id: "lost_in_time"
-      when: "player becomes confused OR stays too long"
+    - id: "lost_in_time" 
+      when: "player becomes confused OR stays too long"  # Legacy natural language
+      requires:                           # Modern flag conditions
+        any_of: ["confused", "stayed_too_long"]
       sketch: |
         The garden keeps you, adding your voice to the fountain's whispers.
         Another soul learning that some mysteries consume those who seek them.
 ```
 
 **Ending Guidelines**:
-- **when** (global): Requirements that must be met for ANY ending to trigger
-- **when** (per ending): Specific conditions for this particular ending
-- **sketch**: The conclusion narrative
+- **requires** (global): Flag conditions that must be met for ANY ending to trigger
+- **requires** (per ending): Flag-based conditions for this specific ending (preferred)
+- **when** (per ending): Legacy natural language conditions (still supported)
+- **sketch**: The conclusion narrative  
 - The AI enforces BOTH global and specific conditions before triggering endings
+- Flag conditions use `all_of`, `any_of`, `none_of` for complex logic
+
+#### Flags System
+Use flags to track story state and enable complex branching narratives:
+
+```yaml
+flags:
+  discovered_secret:
+    default: false
+    description: "when player uncovers the garden's true nature"
+  
+  trust_level:
+    default: 0
+    description: "numerical trust with the gardener (0-3)"
+    
+  memories_shared:
+    default: false
+    description: "when personal memories have been exchanged"
+    requires:
+      all_of: ["discovered_secret"]  # Can only share memories after discovering secret
+```
+
+**Flag Guidelines**:
+- **default**: Initial value (boolean, string, number)
+- **description**: When/if condition for LLM guidance  
+- **requires**: Optional conditions for flag to be settable (uses `all_of`, `any_of`, `none_of`)
 
 #### Characters
 Define people and entities that players can interact with:
@@ -116,7 +158,16 @@ world:
       name: "Master Chen"
       sketch: "Ancient teacher with knowing eyes and weathered hands"
       voice: "Speaks slowly, choosing words with care"
-      arc: "mysterious → trusting → reveals hidden wisdom"
+      behaviors:
+        base: "Sits in quiet meditation, observing with patient wisdom"
+        states:
+        - when:
+            all_of: ["discovered_secret"]
+          description: "Becomes more open, willing to share deeper teachings"
+          voice: "Speaks with greater warmth and directness"
+        - when:
+            any_of: ["trust_level >= 2"]
+          description: "Reveals hidden knowledge about the garden's power"
       
     mysterious_visitor:
       name: "The Stranger"
@@ -128,7 +179,10 @@ world:
 - **name**: Display name for the character
 - **sketch**: Atmospheric description that captures the character's essence
 - **voice**: How they speak and express themselves
-- **arc**: Optional character development journey (e.g., "suspicious → trusting → ally")
+- **behaviors**: Flag-responsive behavior system
+  - **base**: Base behavior description (always included)
+  - **states**: Array of conditional behaviors based on flag conditions
+  - Each state can override **description** and **voice** when conditions are met
 
 #### Items
 Define objects that players can discover and interact with:

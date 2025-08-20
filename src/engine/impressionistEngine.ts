@@ -302,18 +302,6 @@ export class ImpressionistEngine {
       
       console.log('📝 Response ready:', normalizeNarrative(finalResponse.narrative));
       
-      // Display response via UI callback
-      if (this.uiAddMessageCallback) {
-        // Hide the initial loading indicator
-        if (this.uiHideTypingCallback) {
-          this.uiHideTypingCallback();
-        }
-        
-        // Display the response
-        const formatters = this.story?.ui?.formatters || [];
-        this.uiAddMessageCallback(normalizeNarrative(finalResponse.narrative, formatters), 'story');
-      }
-
       // Ensure we have a response
       if (!finalResponse) {
         throw new Error('No response received from director');
@@ -337,22 +325,25 @@ export class ImpressionistEngine {
       
       // Check for automatic scene transitions after applying flag changes
       const transitionTriggered = this.checkAutomaticTransitions();
+      
+      let finalNarrative: string;
+      let displayResponse = finalResponse;
+      
       if (transitionTriggered) {
-        // Generate transition narrative
+        // Generate transition narrative with action response handoff
         const targetScene = this.story?.scenes[transitionTriggered];
         if (targetScene) {
           const transitionResponse = await this.director.processSceneTransition(
             context,
             transitionTriggered,
             targetScene.sketch,
-            action.input
+            action.input,
+            Array.isArray(finalResponse.narrative) ? finalResponse.narrative : [finalResponse.narrative] // Pass action response for narrative handoff
           );
           
-          // Display transition narrative
-          if (this.uiAddMessageCallback && transitionResponse.narrative) {
-            const formatters = this.story?.ui?.formatters || [];
-            this.uiAddMessageCallback(normalizeNarrative(transitionResponse.narrative, formatters), 'story');
-          }
+          // Use transition response instead of action response
+          displayResponse = transitionResponse;
+          finalNarrative = normalizeNarrative(transitionResponse.narrative);
           
           // Store transition memories
           if (transitionResponse.memories) {
@@ -360,10 +351,26 @@ export class ImpressionistEngine {
               this.memoryManager.addMemory(memory, transitionResponse.importance || 7);
             });
           }
+        } else {
+          finalNarrative = normalizeNarrative(finalResponse.narrative);
         }
         
         // Update scene state
         this.handleSceneTransition(transitionTriggered);
+      } else {
+        // No transition - use original action response
+        finalNarrative = normalizeNarrative(finalResponse.narrative);
+      }
+
+      // Display final response via UI callback (only once - either action or transition)
+      if (this.uiAddMessageCallback) {
+        // Hide the initial loading indicator
+        if (this.uiHideTypingCallback) {
+          this.uiHideTypingCallback();
+        }
+        
+        // Display the final response (action or transition)
+        this.uiAddMessageCallback(finalNarrative, 'story');
       }
       
       // Check for automatic endings after applying flag changes
@@ -378,10 +385,10 @@ export class ImpressionistEngine {
             { id: endingTriggered, content: endingInfo.sketch }
           );
           
-          // Update the final response with ending narrative
-          finalResponse.narrative = endingResponse.narrative;
-          finalResponse.memories = [...(finalResponse.memories || []), ...(endingResponse.memories || [])];
-          finalResponse.signals = { ...finalResponse.signals, ...endingResponse.signals };
+          // Update the display response with ending narrative
+          displayResponse.narrative = endingResponse.narrative;
+          displayResponse.memories = [...(displayResponse.memories || []), ...(endingResponse.memories || [])];
+          displayResponse.signals = { ...displayResponse.signals, ...endingResponse.signals };
         }
         
         this.gameState.isEnded = true;
@@ -391,21 +398,21 @@ export class ImpressionistEngine {
       // Check if an ending was actually triggered after applying signals (not just if signal existed)
       const isEndingTriggered = this.gameState.isEnded;
       
-      // Track the interaction
-      this.trackInteraction(action.input, normalizeNarrative(finalResponse.narrative), {
-        usage: (finalResponse as any).usage,
-        latencyMs: (finalResponse as any).latencyMs,
-        signals: finalResponse.signals,
-        llmImportance: finalResponse.importance,
-        memories: finalResponse.memories,
-        isTransitionPart: false
+      // Track the interaction (using the response that was actually displayed)
+      this.trackInteraction(action.input, finalNarrative, {
+        usage: (displayResponse as any).usage,
+        latencyMs: (displayResponse as any).latencyMs,
+        signals: displayResponse.signals,
+        llmImportance: displayResponse.importance,
+        memories: displayResponse.memories,
+        isTransitionPart: transitionTriggered ? true : false
       });
 
       // Return empty text since UI callback handled the display
       return {
-        text: this.uiAddMessageCallback ? '' : normalizeNarrative(finalResponse.narrative), // Fallback if no callback set
+        text: this.uiAddMessageCallback ? '' : finalNarrative, // Fallback if no callback set
         gameState: { ...this.gameState },
-        error: finalResponse.signals?.error,
+        error: displayResponse.signals?.error,
         endingTriggered: isEndingTriggered
       };
     } catch (error) {

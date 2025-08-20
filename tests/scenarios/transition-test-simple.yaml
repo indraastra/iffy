@@ -1,0 +1,30 @@
+name: "Transition Test - Simple Flow"
+description: "Simple test to verify transition mechanics work"
+storyFile: "public/stories/transition_test.yaml"
+
+# Player configuration
+playerModel:
+  provider: "anthropic"
+  model: "claude-3-5-haiku-latest"
+
+# Engine configuration - using fast model for test
+engineModels:
+  costModel:
+    provider: "anthropic"
+    model: "claude-3-5-haiku-latest"
+  qualityModel:
+    provider: "anthropic"
+    model: "claude-3-5-haiku-latest"
+
+# Simple goal
+goals:
+- type: "reach_scene"
+  scene: "hallway"
+  description: "Successfully transition to hallway"
+
+maxTurns: 5
+
+# Simplified player actions
+player:
+  - action: "open door"
+  - action: "get ready to leave"

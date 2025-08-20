@@ -193,23 +193,25 @@ STORY SO FAR: ${this.formatNarrativeHistory(sessionHistory)}
 
 ESTABLISHED ELEMENTS: ${this.formatEstablishedState(currentState)}
 
-Use placeholder language in narrative that invites observation. Create 3-4 choices that let players define different aspects of "${blankToFill}" through natural moments of discovery. Each choice establishes "${blankToFill}" as a specific, vivid detail.
+Use open language in narrative that invites observation. Create 3-4 choices that let players define different aspects of "${blankToFill}" through natural moments of discovery. Each choice must set the effects key to exactly "${blankToFill}" with a specific, vivid detail expressed diegetically - through actions, dialogue, observations, or reactions that naturally reveal the information rather than stating it directly.
 
-RESPONSE FORMAT (JSON ONLY):
+EXAMPLE:
+For blank to fill: "overall_presence"
+
 {
   "narrative_text": "Your companion stands in the doorway, and you find yourself studying them carefully after all these years apart. Time has left its mark, but you're not sure yet what story those changes tell.",
   "choices": [
     {
-      "text": "Notice their striking green eyes and how silver threads through their dark hair",
-      "effects": { "companion_appearance": "green_eyes_silver_hair" }
+      "text": "Notice how she moves with newfound confidence, her voice deeper when she calls your name",
+      "effects": { "overall_presence": "confident_woman" }
     },
     {
-      "text": "Observe their weathered hands and the new scar across their left cheek",
-      "effects": { "companion_appearance": "weathered_scarred" }
+      "text": "Observe his weathered hands as he removes his hat, revealing silver at his temples", 
+      "effects": { "overall_presence": "distinguished_man" }
     },
     {
-      "text": "Focus on their lean build and the way they favor their right leg slightly",
-      "effects": { "companion_appearance": "lean_slight_limp" }
+      "text": "Watch them pause thoughtfully before speaking, choosing their words with careful precision",
+      "effects": { "overall_presence": "thoughtful_person" }
     }
   ]
 }

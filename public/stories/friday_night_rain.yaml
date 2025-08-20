@@ -34,6 +34,13 @@ flags:
   alex_defensive:
     default: false
     description: "if Alex shuts down or gets defensive"
+  memories_shared:
+    default: false
+    description: "when Alex and the player have talked about a shared memory"
+  player_supportive:
+    default: false
+    description: "when player responds warmly to Alex's reminiscing"
+    requires: "memories_shared"
 
 world:
   characters:
@@ -50,6 +57,10 @@ world:
           eyes."
         states:
         - when:
+            none_of: [ "memories_shared" ]
+          description: "Is about to bring up a specific shared memory from your past together. Alex needs to break
+            the silence by asking 'Do you remember...' and sharing something meaningful from your friendship."
+        - when:
             all_of: [ "alex_defensive" ]
           description: "Has withdrawn completely, shoulders tense, avoiding eye contact. Responses are clipped
             and guarded, checking time frequently as if looking for escape."
@@ -59,6 +70,11 @@ world:
           description: "Vulnerable but uncertain, watching your face carefully for any sign of how you're
             taking this revelation. There's relief in finally speaking, but anxiety about what comes
             next."
+        - when:
+            all_of: [ "memories_shared", "player_supportive" ]
+            none_of: [ "admitted_feelings" ]
+          description: "Encouraged by your warm response to their reminiscing, Alex's posture relaxes. There's
+            a growing confidence in their eyes, like you've just given them permission to be vulnerable."
         - when:
             all_of: [ "admitted_feelings", "player_reciprocated" ]
           description: "Relief and joy barely contained, leaning forward, fully present in this moment. The

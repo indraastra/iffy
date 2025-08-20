@@ -188,9 +188,14 @@ export class ImpressionistParser {
       // Optional process_sketch flag (defaults to true for LLM-first engine)
       parsed.process_sketch = scene.process_sketch !== undefined ? Boolean(scene.process_sketch) : true;
 
-      // Parse leads_to transitions
+      // Parse leads_to transitions (legacy)
       if (scene.leads_to) {
         parsed.leads_to = this.parseLeadsTo(scene.leads_to, `scenes.${sceneId}.leads_to`, warnings);
+      }
+
+      // Parse modern flag-based transitions
+      if (scene.transitions) {
+        parsed.transitions = this.parseTransitions(scene.transitions, `scenes.${sceneId}.transitions`, warnings);
       }
 
       scenes[sceneId] = parsed;
@@ -247,8 +252,8 @@ export class ImpressionistParser {
       if (!parsed.id) {
         errors.push(`Ending ${index} missing id`);
       }
-      if (!parsed.when) {
-        errors.push(`Ending ${index} missing when condition`);
+      if (!parsed.when && !parsed.requires) {
+        errors.push(`Ending ${index} missing condition (either 'when' or 'requires' field required)`);
       }
       if (!parsed.sketch) {
         errors.push(`Ending ${index} missing sketch`);
@@ -495,6 +500,37 @@ export class ImpressionistParser {
     return result;
   }
 
+  private parseTransitions(data: any, path: string, warnings: string[]): Record<string, any> {
+    if (!data || typeof data !== 'object') {
+      warnings.push(`${path} should be an object mapping scene IDs to transition conditions`);
+      return {};
+    }
+
+    const result: Record<string, any> = {};
+    for (const [sceneId, transitionData] of Object.entries(data)) {
+      if (typeof transitionData === 'string') {
+        // Simple string format: treat as legacy 'when' condition
+        result[sceneId] = { when: transitionData };
+      } else if (transitionData && typeof transitionData === 'object') {
+        // Object format with requires/when fields
+        const transition: any = {};
+        
+        if ((transitionData as any).requires) {
+          transition.requires = (transitionData as any).requires;
+        }
+        
+        if ((transitionData as any).when) {
+          transition.when = String((transitionData as any).when);
+        }
+        
+        result[sceneId] = transition;
+      } else {
+        warnings.push(`${path}.${sceneId} should be an object with 'requires' or 'when' field`);
+      }
+    }
+    return result;
+  }
+
 
   private validateCoreFields(story: ImpressionistStory, errors: string[]) {
     // Core metadata validation
@@ -529,6 +565,15 @@ export class ImpressionistParser {
         for (const targetScene of Object.keys(scene.leads_to)) {
           if (!scenes[targetScene]) {
             warnings.push(`Scene '${sceneId}' references unknown scene: '${targetScene}'`);
+          }
+        }
+      }
+
+      // Validate transitions references
+      if (scene.transitions) {
+        for (const targetScene of Object.keys(scene.transitions)) {
+          if (!scenes[targetScene]) {
+            warnings.push(`Scene '${sceneId}' transitions references unknown scene: '${targetScene}'`);
           }
         }
       }

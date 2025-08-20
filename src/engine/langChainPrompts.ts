@@ -381,26 +381,42 @@ ${instructions}`;
   static buildTransitionInstructions(
     targetSceneId: string, 
     sceneSketch: string, 
-    playerAction: string
+    playerAction: string,
+    previousActionResponse?: string[]
   ): string {
     // DYNAMIC CONTENT - Changes per transition
     let instructions = `**SCENE TRANSITION IN PROGRESS**
 
-You are transitioning to scene: ${targetSceneId}
+You are transitioning to scene: ${targetSceneId}`;
+
+    // Include previous action response if provided for narrative handoff
+    if (previousActionResponse && previousActionResponse.length > 0) {
+      const previousNarrative = previousActionResponse.join('\n\n');
+      instructions += `
+
+**PREVIOUS ACTION RESPONSE** (build upon this):
+${previousNarrative}`;
+    }
+
+    instructions += `
 
 **PLAYER ACTION:** ${playerAction}
 
 **TARGET SCENE DESCRIPTION** (use as foundation):
 ${sceneSketch}
 
+**NARRATIVE HANDOFF INSTRUCTIONS:**
+* Build seamlessly upon the previous action response - extend it naturally into the scene transition
+* Create smooth narrative flow that makes the transition feel like a natural continuation
+* Weave the scene change into the existing narrative thread rather than starting fresh
+* Honor the established tone and pacing from the previous response
+* Focus purely on narrative continuity - no need to set flags or manage game state
+* The transition should feel like one cohesive story moment, not two separate responses
 
 **SCENE TRANSITION STORYTELLING:**
 * Follow the GLOBAL STORY GUIDANCE above - it takes priority over any generic instructions
-* Weave the player's action into the scene transition
 * Present the scene content using the storytelling method specified in the story guidance
 * Honor the story's established narrative voice, tone, and format requirements
-* Add atmospheric context only when it enhances rather than replaces the core content
-* Maintain consistency with the story's distinctive storytelling approach
 * RESPECT THE STORY'S PRIMARY STORYTELLING METHOD established in the guidance above
 
 ${this.getStructuredResponseInstructions()}`;

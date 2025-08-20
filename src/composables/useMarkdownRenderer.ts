@@ -99,9 +99,24 @@ export function useMarkdownRenderer() {
   function applyAutomaticStyling(html: string): string {
     let styled = html
 
-    // Automatic styling for quoted speech - but avoid HTML attributes
-    // Only match quotes that are not inside HTML tags
-    styled = styled.replace(/"([^"<>]+)"(?![^<]*>)/g, '<span class="markup-speech">"$1"</span>')
+    // Automatic styling for quoted speech - avoid HTML attributes with safer regex
+    // First protect existing markup by temporarily replacing it
+    const protectedMarkup: string[] = []
+    let markupIndex = 0
+    
+    // Protect existing spans and HTML attributes
+    styled = styled.replace(/<[^>]*>/g, (match) => {
+      protectedMarkup.push(match)
+      return `__PROTECTED_MARKUP_${markupIndex++}__`
+    })
+    
+    // Apply quote styling only to double quotes (for dialogue)
+    styled = styled.replace(/"([^"]+)"/g, '<span class="markup-speech">"$1"</span>')
+    
+    // Restore protected markup
+    for (let i = protectedMarkup.length - 1; i >= 0; i--) {
+      styled = styled.replace(`__PROTECTED_MARKUP_${i}__`, protectedMarkup[i])
+    }
     
     // Automatic styling for ALL CAPS words (3+ letters, avoid HTML tags)
     // Only match caps that are not inside HTML tags

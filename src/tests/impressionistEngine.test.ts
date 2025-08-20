@@ -473,7 +473,7 @@ multiple lines for readability.`,
   });
 
   describe('Scene Transition UI Display Bug', () => {
-    it('should capture both action response and transition narrative in UI callbacks', async () => {
+    it('should use narrative handoff to display only transition response incorporating action', async () => {
       // Create a story with flag-based transitions
       const transitionTestStory: ImpressionistStory = {
         title: 'Transition Test',
@@ -481,6 +481,7 @@ multiple lines for readability.`,
         blurb: 'Testing transitions',
         version: '1.0',
         context: 'Test context',
+        guidance: 'Test guidance',
         flags: {
           door_opened: { default: false, description: 'when door is opened' },
           ready_to_leave: { default: false, description: 'when ready to leave' }
@@ -542,7 +543,7 @@ multiple lines for readability.`,
       engine.loadStory(transitionTestStory);
       
       // Process action that should trigger transition
-      const response = await engine.processAction({ input: 'get ready and open door' });
+      await engine.processAction({ input: 'get ready and open door' });
 
       // Verify the LLM was called twice (action + transition)
       expect(mockService.makeStructuredRequest).toHaveBeenCalledTimes(2);
@@ -558,13 +559,10 @@ multiple lines for readability.`,
       const gameState = engine.getGameState();
       expect(gameState.currentScene).toBe('hallway');
       
-      // Check if we got the expected UI messages
-      if (uiMessages.length !== 2) {
-        throw new Error(`Expected 2 UI messages but got ${uiMessages.length}: ${JSON.stringify(uiMessages)}`);
-      }
-      
-      expect(uiMessages[0].text).toContain('Action response');
-      expect(uiMessages[1].text).toContain('Transition');
+      // With narrative handoff, we should only get ONE UI message (the transition that incorporates the action)
+      expect(uiMessages).toHaveLength(1);
+      expect(uiMessages[0].text).toContain('Transition');
+      expect(uiMessages[0].type).toBe('story');
     });
 
     it('should handle empty transition narratives gracefully', async () => {
@@ -574,6 +572,7 @@ multiple lines for readability.`,
         blurb: 'Testing empty transitions',
         version: '1.0',
         context: 'Test context',
+        guidance: 'Test guidance',
         flags: {
           trigger_flag: { default: false, description: 'trigger flag' }
         },
