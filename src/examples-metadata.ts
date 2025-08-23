@@ -36,18 +36,18 @@ export const STORY_METADATA: StoryMetadata[] = [
     "slug": "friday-night-rain-reflected"
   },
   {
+    "filename": "intermission.yaml",
+    "title": "Intermission",
+    "author": "Iffy Collective",
+    "blurb": "The house lights come up. You see who's been sitting there all along.",
+    "slug": "intermission"
+  },
+  {
     "filename": "transition_test.yaml",
     "title": "Transition Test",
     "author": "Test",
     "blurb": "Testing flag-based story endings",
     "slug": "transition-test"
-  },
-  {
-    "filename": "understudy.yaml",
-    "title": "Understudy",
-    "author": "Iffy Collective",
-    "blurb": "Some roles we never meant to play.",
-    "slug": "understudy"
   }
 ];
 

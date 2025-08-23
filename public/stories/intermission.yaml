@@ -1,22 +1,22 @@
-title: "Understudy"
+title: "Intermission"
 author: "Iffy Collective"
-blurb: "Some roles we never meant to play."
+blurb: "Three months of sediment, disturbed by a chance encounter."
 version: "1.0"
-context: "An unexpected encounter at a theater, months after everything changed."
+context: "An unexpected encounter at a theater unearths what was carefully buried."
 
 ui:
   loadingMessage: "The lights dim..."
 
 narrative:
-  voice: "Present tense, intimate distance, like watching from the balcony"
-  setting: "Independent theater during a contemporary drama about second chances"
-  tone: "Tension beneath civility, the weight of unfinished conversations"
+  voice: "Present tense, intimate observation, examining emotional artifacts"
+  setting: "Independent theater where shared history lives in every corner"
+  tone: "Careful excavation, each word brushing dust from buried feelings"
   themes:
     [
-      "roles we play vs who we are",
-      "second acts and new beginnings",
-      "the space between what was and what could be",
-      "choosing courage over comfort"
+      "memory as physical space",
+      "the archaeology of lost love",
+      "objects that hold time",
+      "unearthing what was buried"
     ]
 
 # Concrete event flags for story progression
@@ -65,22 +65,22 @@ world:
   characters:
     c:
       name: "C"
-      sketch: "The person you didn't expect to see again, whose presence rewrites the entire evening."
-      voice: "Careful words that carry weight, like an actor who knows every line matters"
+      sketch: "The person you didn't expect to see again, carrying three months of unspoken history in their posture."
+      voice: "Careful words that reveal sediment layers of meaning, each sentence an excavation"
       behaviors:
-        base: "Maintains polite distance, but there's unfinished business in those glances."
+        base: "Maintains polite distance, but shared history weighs heavy in the space between."
         states:
         - when:
             none_of: [ "contact_made" ]
-          description: "Pretending this is just coincidence, but the tension is palpable. Every gesture feels
-            performed."
+          description: "Pretending this is just coincidence, while memories accumulate like dust motes in
+            the light between you."
         - when:
             all_of: [ "contact_made" ]
             none_of: [ "vulnerability_shared" ]
-          description: "More relaxed but cautious, like testing the waters. Ready to engage but guarded."
+          description: "More present but cautious, like an archaeologist unsure what they're uncovering. Each word carefully measured."
         - when:
             all_of: [ "vulnerability_shared" ]
-          description: "Genuinely present, the careful mask dropped. Speaking from the heart now."
+          description: "Fully unearthed, no longer buried under careful civility. Raw and real as exposed bedrock."
 
   locations:
     theater_lobby:
@@ -106,35 +106,34 @@ scenes:
     location: "theater_lobby"
     process_sketch: false
     sketch: |
-      You're studying the cast list when you feel that particular stillness that comes 
-      with being watched. The sensation pulls your attention across the lobby to—
+      You're studying the cast list when that familiar sensation crawls up your spine—
+      the specific gravity of being seen by someone who knows your history. You turn.
 
       **[C](character:c).**
 
-      Three months. It's been three months since you last saw each other, and now here 
-      you stand less than twenty feet away from one another, holding the same program,
-      wearing similar expressions.
+      Three months of carefully arranged distance collapses instantly. The program 
+      trembles slightly in your hands, the same tremor you notice in theirs. Between 
+      you: twenty feet of lobby carpet that might as well be an archaeological dig 
+      site, layered with everything you'd buried.
 
-      The moment stretches between recognition and reaction, and you realize everyone
-      around you is moving toward the theater doors while you're both frozen in a bubble
-      of *what now?*
+      Around you, strangers flow toward the theater doors, but you're both caught—
+      artifacts suddenly exposed to light.
 
-      The house manager announces five minutes to curtain.
+      The house manager's voice: "Five minutes to curtain."
 
     guidance: |
-      This is the setup - an unexpected encounter with emotional weight. The player 
-      can choose how to handle the recognition: approach, avoid, or let circumstances 
-      decide. Each choice sets the tone for the evening.
+      This moment of recognition carries the weight of unexcavated history. The player 
+      chooses how to handle this archaeological site suddenly exposed: approach and 
+      begin the dig, avoid and leave it buried, or let proximity decide.
 
       SCENE PROGRESSION: Guide through these natural beats:
-      1. Initial contact and recognition
-      2. Brief catching up or awkward small talk
+      1. Initial recognition - the moment when buried history surfaces
+      2. Careful conversation, each word brushing dust from the past
       3. Time pressure builds (2-3 minutes to curtain)
-      4. C asks "Where are you sitting?" as they need to head in
-      5. When player responds, C reveals she's 2 seats away in same row 
-         (Player A4 → C says A6; Player F12 → C says F14, etc.)
-      6. Natural opportunity emerges to sit together before lights dim
-      7. They enter theater and take seats (triggering seat flags)
+      4. C asks "Where are you sitting?" - practical question carrying emotional weight
+      5. When player responds, C reveals proximity (2 seats away in same row)
+      6. The question of sitting together becomes about more than just seats
+      7. They enter theater, beginning their excavation or preservation
 
     transitions:
       first_act:
@@ -144,14 +143,14 @@ scenes:
   first_act:
     location: "theater_seats"
     sketch: |
-      The house lights fade to black. You and [C](character:c) sit in the intimate 
-      darkness, close enough that you're aware of each other's breathing, each 
-      small movement.
+      The house lights fade, and darkness becomes a kind of preservation—you and 
+      [C](character:c) suspended together, aware of each breath disturbing the 
+      carefully maintained distance of three months.
 
-      On stage, the lights rise on what appears to be a family drama—something 
-      about inheritance, old wounds, the weight of expectations. The details 
-      matter less than the proximity, the shared experience of watching something 
-      unfold while your own story hangs unresolved between you.
+      On stage, lights reveal a family excavating their own buried grievances—
+      inheritances both material and emotional, wounds preserved in family amber. 
+      You're conscious of how your own unresolved history sits between you, 
+      another artifact waiting to be examined or left undisturbed.
 
     guidance: |
       This scene should be highly interactive, not passive watching. Create active 
@@ -190,16 +189,16 @@ scenes:
   intermission:
     location: "theater_bar"
     sketch: |
-      Intermission. The house lights have come up, and you find yourself at the lobby bar 
-      with [C](character:c). Wine glasses rest between you, creating both barrier and bridge. 
+      Intermission finds you at the lobby bar with [C](character:c), wine glasses 
+      between you like carefully placed artifacts. Each sip seems considered, 
+      measured—as if you're both archaeologists afraid of contaminating the site.
 
-      Around you, other patrons discuss the first act—its themes, performances, the way 
-      certain lines landed. The buzz of conversation creates a backdrop for your own 
-      more careful dialogue.
+      Around you, strangers discuss the play's first act, but their conversations 
+      feel distant, muffled. This is your first real chance to excavate what's 
+      been buried for three months.
 
-      This is your first real chance to talk, away from the intensity of shared theater 
-      seats and the weight of the play's unfolding drama. The question is: what will 
-      you choose to say to each other?
+      The question hangs unspoken: will you carefully brush away the sediment 
+      of time, or leave the past preserved as it is?
 
     guidance: |
       This is the emotional crux. The intermission becomes a space for authentic 
@@ -290,47 +289,52 @@ endings:
     requires:
       all_of: [ "vulnerability_shared", "decision_moment" ]
     sketch: |
-      Walking to the coffee shop, you realize this isn't a second chance—it's 
-      a first chance to do it right. The theater was just the rehearsal. 
-      Now the real performance begins.
+      Walking to the coffee shop, you both carry yourselves differently—lighter, 
+      like archaeologists who've finally understood what they've been excavating. 
+      The past three months weren't wasted time but necessary sediment, preserving 
+      what needed to be preserved until you were both ready to unearth it.
 
-  - id: "curtain_call"
+  - id: "gentle_closure"
     requires:
       all_of: [ "contact_made", "second_act_ended" ]
       none_of: [ "vulnerability_shared" ]
     sketch: |
-      Outside the theater, you part ways with polite warmth and the sense that 
-      something has been resolved, if not rekindled. Some stories end with 
-      understanding rather than reunion, and that's enough.
+      Outside the theater, you part with the particular weight of examined history. 
+      Some artifacts are meant to be catalogued and carefully returned to storage—
+      precious but belonging to another time. You both understand this now, and 
+      there's peace in that understanding.
 
   - id: "brief_connection"
     requires:
       all_of: [ "vulnerability_shared" ]
       none_of: [ "decision_moment" ]
     sketch: |
-      The conversation at the bar was enough—a perfect intermission that gave 
-      you both what you needed. Sometimes closure comes in fifteen minutes 
-      of honest words between strangers who used to know each other.
+      The conversation at the bar was enough—fifteen minutes of careful excavation 
+      that explained three months of buried silence. Sometimes the dig site yields 
+      its secrets quickly, completely, leaving nothing more to uncover.
 
-  - id: "exit_stage_left"
+  - id: "artifacts_remain_buried"
     requires:
       all_of: [ "second_act_ended" ]
       none_of: [ "contact_made", "vulnerability_shared" ]
     sketch: |
-      You slip away during the evening without real engagement. Later, you wonder 
-      what might have happened if you'd been braver, but some performances are 
-      too hard to watch when you're part of the story.
+      You leave without excavating anything, both of you preserving the careful 
+      burial of three months ago. Some sites aren't ready to be disturbed. Some 
+      artifacts are too fragile for the light. The sediment remains undisturbed, 
+      and perhaps that's its own kind of preservation.
 
 guidance: |
-  THEATER METAPHOR: Use theatrical language and concepts throughout—roles, performances, 
-  rehearsals, understudies, scripts.
+  MEMORY AS ARCHAEOLOGY: Focus on physical and sensory details that unlock the past.
+  Each gesture, object, or scent carries emotional sediment. Treat memories like 
+  artifacts being carefully unearthed.
 
-  EMOTIONAL ARCHAEOLOGY: This is about carefully excavating a relationship that ended 
-  ambiguously. Focus on the delicate work of figuring out what it meant and what it 
-  could mean now.
+  EMOTIONAL EXCAVATION: This relationship ended ambiguously, leaving layers of 
+  unprocessed feeling. Each interaction brushes away dust, revealing what was 
+  buried—sometimes intact, sometimes broken, always significant.
 
-  PARALLEL NARRATIVES: The play they're watching should mirror their situation 
-  without being heavy-handed. Let it provide vocabulary and context for their own drama.
+  THE PLAY AS MIRROR: The play they watch reflects their situation through 
+  emotional resonance, not theatrical metaphor. They're observers finding their 
+  own story reflected back.
 
   MANAGING PRONOUNS:
   - Begin with they/them or simply "C"
