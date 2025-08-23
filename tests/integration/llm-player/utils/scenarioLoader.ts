@@ -23,6 +23,7 @@ export async function loadScenario(filePath: string): Promise<TestScenario> {
       withinTurnLimit: true
     },
     playerInstructions: data.playerInstructions,
+    styleAssessment: data.styleAssessment,
     observability: data.observability,
     logging: data.logging
   };

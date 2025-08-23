@@ -169,6 +169,30 @@ async function main() {
       }
     }
     
+    if (result.styleAssessment) {
+      console.log('\nStyle Assessment:');
+      console.log(`  🎭 Overall Score: ${result.styleAssessment.overallScore}/10`);
+      console.log(`  📏 Style Consistency: ${result.styleAssessment.styleConsistency}/10`);
+      console.log(`  🗣️  Character Voice: ${result.styleAssessment.characterVoiceAlignment}/10`);
+      console.log(`  📖 Narrative Elements: ${result.styleAssessment.narrativeElementsAlignment}/10`);
+      console.log(`  🔍 Recommendation: ${result.styleAssessment.recommendedAction}`);
+      console.log(`  💭 Reasoning: ${result.styleAssessment.reasoning}`);
+      
+      if (result.styleAssessment.adaptationEvidence.length > 0) {
+        console.log('  ✅ Evidence of Style Adaptation:');
+        result.styleAssessment.adaptationEvidence.forEach(evidence => {
+          console.log(`    - ${evidence}`);
+        });
+      }
+      
+      if (result.styleAssessment.styleViolations.length > 0) {
+        console.log('  ❌ Style Violations:');
+        result.styleAssessment.styleViolations.forEach(violation => {
+          console.log(`    - ${violation}`);
+        });
+      }
+    }
+    
     exitWithResult(result.success, result.errorMessage);
     
   } catch (error) {

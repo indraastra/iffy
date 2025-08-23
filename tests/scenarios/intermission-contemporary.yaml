@@ -1,0 +1,83 @@
+name: "Intermission - Contemporary Drama Style Adaptation"
+storyFile: "public/stories/intermission_test.yaml"
+
+# Player configuration
+playerModel:
+  provider: "anthropic"
+  model: "claude-3-5-sonnet-latest"
+
+# Engine configuration
+engineModels:
+  costModel:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
+  qualityModel:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
+
+# Goals for the player
+goals:
+- type: "set_flag"
+  target: "play_established"
+  priority: "required"
+  description: "Establish that we're watching a contemporary drama"
+
+- type: "set_flag"
+  target: "style_adapted"
+  priority: "required"
+  description: "Narrative should adapt to contemporary dramatic style"
+
+- type: "set_flag"
+  target: "conversation_developed"
+  priority: "required"
+  description: "Engage in meaningful dialogue with C"
+
+- type: "reach_ending"
+  target: "mirrored_resolution"
+  priority: "required"
+  description: "Complete the story with style-consistent resolution"
+
+# Test parameters
+maxTurns: 12
+
+# Success criteria
+successCriteria:
+  allRequiredGoals: true
+  withinTurnLimit: true
+
+# Player behavior instructions
+playerInstructions: |
+  You are meeting someone from your past at the theater. When prompted about what play you're watching, respond that you're here to see a contemporary drama (mention a specific playwright like Annie Baker, Jordan Peele, Lynn Nottage, or a current Broadway/regional production).
+  
+  After establishing the play:
+  1. Engage in naturalistic, immediate dialogue
+  2. Make choices that allow for authentic emotional expression
+  3. Have meaningful dialogue during the intermission scene
+  4. Reference contemporary concerns and modern life
+  5. Let the conversation build to emotional honesty
+
+# Style assessment configuration
+styleAssessment:
+  expectedStyleName: "Contemporary Drama"
+  expectedStyleCharacteristics:
+    - "Naturalistic dialogue that sounds like real conversation"
+    - "Modern vernacular with contractions and casual speech"
+    - "Immediate, present-tense emotional urgency"
+    - "References to contemporary life and current concerns"
+    - "Direct emotional expression rather than coded subtext"
+    - "Shorter, punchy sentences mixed with longer emotional outpourings"
+    - "Characters who speak authentically for their generation"
+    - "Themes relevant to modern relationships and society"
+    - "Realistic pacing that mirrors actual human interaction"
+
+# Observability settings
+observability:
+  interactive: true
+  showThinking: true
+  verbosity: "detailed"
+
+# Logging settings
+logging:
+  saveTranscript: true
+  saveDebugInfo: true
+  logDirectory: "./tests/logs"

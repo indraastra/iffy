@@ -1,0 +1,212 @@
+title: "Intermission Test"
+author: "Iffy Collective"
+blurb: "The play you're watching shapes how your story unfolds."
+version: "0.1"
+context: "A test of adaptive narrative style based on player's theatrical memory."
+
+ui:
+  loadingMessage: "The lights dim..."
+
+narrative:
+  voice: "Adaptive - mirrors the style of whatever play the audience is watching"
+  setting: "Theater where the performance influences reality"
+  tone: "Mirrors the emotional register of the play being performed"
+  themes:
+    [
+      "art influencing life",
+      "narrative styles as emotional frameworks", 
+      "memory as creative force",
+      "the bleed between performance and reality"
+    ]
+
+flags:
+  play_established:
+    default: false
+    description: "when the player has established what play they're watching"
+  contact_made:
+    default: false
+    description: "when player and C have made initial contact (approached or been approached)"
+  seated_in_theater:
+    default: false
+    description: "when they've moved into the theater and taken their seats"
+  style_adapted:
+    default: false  
+    description: "when the narrative has adapted to match the play's style"
+  conversation_developed:
+    default: false
+    description: "when the conversation between the characters has developed"
+
+world:
+  characters:
+    c:
+      name: "C"
+      sketch: "Someone from your past, whose presence shifts the evening's emotional weight."
+      voice: "Adapts to match the theatrical style - formal for classical, intimate for contemporary, etc."
+
+  locations:
+    theater_lobby:
+      name: "Theater Lobby" 
+      sketch: "A space between the ordinary world and whatever drama unfolds on stage."
+      atmosphere: ["anticipation", "possibility", "the threshold between art and life"]
+
+scenes:
+  arrival:
+    location: "theater_lobby"
+    process_sketch: false
+    sketch: |
+      You arrive at the theater with just enough time before curtain. The lobby 
+      buzzes with pre-show energy - patrons checking coats, buying programs, 
+      chatting about what they've heard about tonight's production.
+      
+      You pull out your ticket to check the seat number. The play's title stares 
+      back at you from the cream-colored stub...
+
+    guidance: |
+      CRITICAL: This brief opening scene establishes what play they're watching.
+      The player should naturally complete the thought by naming the play.
+      
+      Once they identify the play, immediately transition to the main opening 
+      scene where they see C. Set play_established flag when they name the play.
+      
+      Store their choice in memory - it will influence the entire narrative style.
+
+    transitions:
+      opening:
+        requires:
+          all_of: ["play_established"]
+
+  opening:
+    location: "theater_lobby"
+    sketch: |
+      You're studying the seat assignment on your ticket when that familiar sensation 
+      crawls up your spine - the specific gravity of being seen by someone who knows 
+      your history. You turn.
+      
+      **[C](character:c).**
+      
+      Three months of carefully arranged distance collapses instantly. They're holding 
+      a program for the same show, clearly. Between you: twenty feet of lobby carpet 
+      that might as well be an ocean.
+      
+      The house manager's voice: "Five minutes to curtain."
+
+    guidance: |
+      NOW begin adapting to the theatrical style they identified. This is the real 
+      opening - the moment of recognition with C. From here forward, let the play's 
+      style gradually influence your writing.
+      
+      Based on what play they named:
+      - Shakespeare: Begin introducing heightened language and metaphor
+      - Chekhov: Subtext and things left unsaid become important
+      - Beckett: Sparse, repetitive, existential undertones
+      - Contemporary: Natural, immediate, emotionally direct
+      
+      The player needs to decide how to handle this encounter. Do they approach C? 
+      Avoid? Let proximity decide? This scene should allow for meaningful interaction 
+      before they enter the theater.
+
+    transitions:
+      first_act:
+        requires:
+          all_of: ["contact_made", "seated_in_theater"]
+
+  first_act:
+    location: "theater_lobby" 
+    sketch: |
+      [This scene continues from the player identifying the play]
+      
+      You both move toward the theater doors, drawn by the same invisible current 
+      as the other patrons. Neither of you has acknowledged the other yet - that 
+      strange dance of pretending not to see someone you know too well.
+
+    guidance: |
+      This is a transitional moment - the player and C are aware of each other but 
+      haven't spoken yet. Build tension as they move toward the theater.
+      
+      Let the established play's style BEGIN to influence your writing, but subtly:
+      - Start incorporating the emotional register
+      - Let small phrases echo the playwright's voice
+      - Build toward the full style adaptation
+      
+      They should end up seated near each other (by chance or design).
+      Don't set style_adapted yet - we're building toward it.
+      
+      Set seated_in_theater once they've taken their seats in the theater.
+
+    transitions:
+      watching:
+        requires:
+          all_of: ["seated_in_theater"]
+
+  watching:
+    location: "theater_lobby"
+    sketch: |
+      [Dynamically generated based on the play]
+      
+      Seated now, separated by only an armrest or perhaps a single empty seat.
+      The lights dim. The curtain rises. On stage, the world of [PLAY TITLE] 
+      begins to unfold, and its rhythms start to influence the space between you.
+
+    guidance: |
+      NOW fully embrace the theatrical style. This is where the adaptation becomes 
+      complete. The play is happening on stage, and its language should completely 
+      infect your narrative voice:
+      
+      - Full stylistic commitment to the playwright's voice
+      - Let the themes of the play reflect in their silent interaction
+      - Describe both what's happening on stage and between them
+      - Create parallels between the play and their situation
+      
+      This scene should last for several exchanges, showing the first act of the play.
+      Set style_adapted once you've fully demonstrated the style.
+
+    transitions:
+      intermission:
+        requires:
+          all_of: ["style_adapted"]
+
+  intermission:
+    location: "theater_lobby"
+    sketch: |
+      The house lights rise for intermission. The spell of the play breaks, 
+      but its language still colors everything. Now, finally, you and C 
+      must speak.
+
+    guidance: |
+      Continue using the established theatrical style. This is where the real
+      conversation between the characters develops. They should have meaningful 
+      dialogue that reflects both:
+      - The style of the play they're watching
+      - Their own complicated history
+      
+      Let them interact for multiple exchanges. This is the heart of the story.
+      Set conversation_developed after substantial dialogue.
+
+endings:
+  requires:
+    any_of: ["conversation_developed"]
+    
+  variations:
+  - id: "mirrored_resolution"
+    requires:
+      all_of: ["play_established", "style_adapted", "conversation_developed"]
+    sketch: |
+      Your story concludes in the same emotional register as the play you watched.
+      Art and life have become mirrors of each other, each reflecting the other's truths.
+
+guidance: |
+  ADAPTIVE STYLE SYSTEM: This story's unique feature is that it changes its 
+  narrative voice to match whatever play the audience claims to be watching.
+  
+  PLAYER AGENCY: Let the player's theatrical knowledge and preferences shape 
+  not just the content but the very style of their story.
+  
+  STYLE MATCHING: Pay careful attention to:
+  - Sentence rhythm and length
+  - Vocabulary choices (formal vs casual, poetic vs plain)
+  - Emotional temperature (hot vs cool)
+  - Pacing (rushed vs contemplative)
+  - Metaphorical density
+  
+  The goal is to make the player feel like their story is happening inside 
+  the world of whatever play they chose.

@@ -25,6 +25,8 @@ export async function loadScenario(filePath: string): Promise<TestScenario> {
     engineModels: data.engineModels,
     playerModel: data.playerModel,
     // Additional settings
+    playerInstructions: data.playerInstructions,
+    styleAssessment: data.styleAssessment,
     observability: data.observability,
     logging: data.logging
   };

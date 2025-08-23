@@ -10,9 +10,11 @@ import {
   InteractionLog, 
   GoalStatus,
   GameState,
-  EndingAssessment 
+  EndingAssessment,
+  StyleAssessment 
 } from './types';
 import { EndingAssessor } from '../assessors/EndingAssessor';
+import { StyleAssessor } from '../assessors/StyleAssessor';
 import { readFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 import { configureMultiModelService, preparePlayerModelConfig, validateTestConfiguration, TestConfiguration } from '../utils/modelConfig';
@@ -75,16 +77,20 @@ export class TestRunner {
       console.error('Test execution failed:', error);
     }
 
-    // Perform post-game assessment if we have logs and a story
+    // Perform post-game assessments if we have logs and a story
     let assessment: EndingAssessment | undefined;
+    let styleAssessment: StyleAssessment | undefined;
+    
     if (this.logger && this.engine) {
       const gameHistory = this.logger.getAllLogs();
       const story = this.engine.getCurrentStory();
       const engineState = this.engine.getGameState();
       
       if (gameHistory.length > 0 && story) {
+        const playerModelConfig = preparePlayerModelConfig(this.scenario.playerModel!);
+        
+        // Run ending assessment
         try {
-          const playerModelConfig = preparePlayerModelConfig(this.scenario.playerModel!);
           const assessor = new EndingAssessor(playerModelConfig);
           assessment = await assessor.assessEnding(
             story,
@@ -100,9 +106,33 @@ export class TestRunner {
             }
           }
           
-          console.log(`🔍 Assessment: ${assessment.recommendedAction} - ${assessment.reasoning}`);
+          console.log(`🔍 Ending Assessment: ${assessment.recommendedAction} - ${assessment.reasoning}`);
         } catch (error) {
-          console.warn('Post-game assessment failed:', error);
+          console.warn('Post-game ending assessment failed:', error);
+        }
+        
+        // Run style assessment if configured
+        if (this.scenario.styleAssessment) {
+          try {
+            const styleAssessor = new StyleAssessor(playerModelConfig);
+            styleAssessment = await styleAssessor.assessStyleAdaptation(
+              gameHistory,
+              this.scenario.styleAssessment.expectedStyleName,
+              this.scenario.styleAssessment.expectedStyleCharacteristics
+            );
+            
+            // Override success based on style assessment
+            if (styleAssessment.recommendedAction === 'FAIL') {
+              success = false;
+              if (!errorMessage) {
+                errorMessage = `Style assessment failed: ${styleAssessment.reasoning}`;
+              }
+            }
+            
+            console.log(`🎭 Style Assessment: ${styleAssessment.recommendedAction} - Score: ${styleAssessment.overallScore}/10`);
+          } catch (error) {
+            console.warn('Post-game style assessment failed:', error);
+          }
         }
       }
     }
@@ -121,6 +151,7 @@ export class TestRunner {
       duration: Date.now() - startTime,
       logPath: this.logger ? this.logger['logDir'] : undefined,
       assessment,
+      styleAssessment,
       costs: this.costTracker.getCostBreakdown()
     };
 

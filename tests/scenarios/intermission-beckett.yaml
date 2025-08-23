@@ -1,0 +1,83 @@
+name: "Intermission - Beckett Style Adaptation"
+storyFile: "public/stories/intermission_test.yaml"
+
+# Player configuration
+playerModel:
+  provider: "anthropic"
+  model: "claude-3-5-sonnet-latest"
+
+# Engine configuration
+engineModels:
+  costModel:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
+  qualityModel:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
+
+# Goals for the player
+goals:
+- type: "set_flag"
+  target: "play_established"
+  priority: "required"
+  description: "Establish that we're watching a Beckett play"
+
+- type: "set_flag"
+  target: "style_adapted"
+  priority: "required"
+  description: "Narrative should adapt to Beckettian style"
+
+- type: "set_flag"
+  target: "conversation_developed"
+  priority: "required"
+  description: "Engage in meaningful dialogue with C"
+
+- type: "reach_ending"
+  target: "mirrored_resolution"
+  priority: "required"
+  description: "Complete the story with style-consistent resolution"
+
+# Test parameters
+maxTurns: 10
+
+# Success criteria
+successCriteria:
+  allRequiredGoals: true
+  withinTurnLimit: true
+
+# Player behavior instructions
+playerInstructions: |
+  You are meeting someone from your past at the theater. When you look at your ticket stub, naturally mention that you're here to see a Beckett play (Waiting for Godot, Endgame, Krapp's Last Tape, etc.). You might say something like "Well. Here we are. Godot." or make a brief comment about the absurdity of the situation.
+  
+  After establishing the play:
+  1. Engage in sparse, existential dialogue
+  2. Make choices that highlight the absurdity of the situation
+  3. Have meaningful dialogue during the intermission scene
+  4. Allow for repetitive or circular conversations
+  5. Let the interaction explore themes of waiting, uncertainty, and human connection
+
+# Style assessment configuration
+styleAssessment:
+  expectedStyleName: "Beckettian"
+  expectedStyleCharacteristics:
+    - "Sparse, minimalist language with repetitive patterns"
+    - "Existential themes about meaninglessness and waiting"
+    - "Circular, repetitive dialogue that goes nowhere"
+    - "Dark humor emerging from absurd situations"
+    - "Short, clipped sentences with frequent pauses"
+    - "Characters unable to communicate effectively or leave"
+    - "Themes of memory, time, and human isolation"
+    - "Mundane actions given disproportionate importance"
+    - "Endings that offer no resolution or closure"
+
+# Observability settings
+observability:
+  interactive: true
+  showThinking: true
+  verbosity: "detailed"
+
+# Logging settings
+logging:
+  saveTranscript: true
+  saveDebugInfo: true
+  logDirectory: "./tests/logs"

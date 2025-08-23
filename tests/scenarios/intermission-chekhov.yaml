@@ -1,0 +1,83 @@
+name: "Intermission - Chekhov Style Adaptation"
+storyFile: "public/stories/intermission_test.yaml"
+
+# Player configuration
+playerModel:
+  provider: "anthropic"
+  model: "claude-3-5-sonnet-latest"
+
+# Engine configuration
+engineModels:
+  costModel:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
+  qualityModel:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
+
+# Goals for the player
+goals:
+- type: "set_flag"
+  target: "play_established"
+  priority: "required"
+  description: "Establish that we're watching a Chekhov play"
+
+- type: "set_flag"
+  target: "style_adapted"
+  priority: "required"
+  description: "Narrative should adapt to Chekhovian style"
+
+- type: "set_flag"
+  target: "conversation_developed"
+  priority: "required"
+  description: "Engage in meaningful dialogue with C"
+
+- type: "reach_ending"
+  target: "mirrored_resolution"
+  priority: "required"
+  description: "Complete the story with style-consistent resolution"
+
+# Test parameters
+maxTurns: 15
+
+# Success criteria
+successCriteria:
+  allRequiredGoals: true
+  withinTurnLimit: true
+
+# Player behavior instructions
+playerInstructions: |
+  You are meeting someone from your past at the theater. When you look at your ticket stub, naturally mention that you're here to see a Chekhov play (The Cherry Orchard, Three Sisters, The Seagull, Uncle Vanya, etc.). You might glance at your program and comment on the production, or say something like "I see you're here for [PLAY NAME] too."
+  
+  After establishing the play:
+  1. Engage in conversation that allows for subtext and unspoken emotions
+  2. Make choices that explore melancholy and missed connections
+  3. Have meaningful dialogue during the intermission scene
+  4. Allow pauses and silences in the conversation to develop naturally
+  5. Let the interaction conclude with characteristic Chekhovian ambiguity
+
+# Style assessment configuration
+styleAssessment:
+  expectedStyleName: "Chekhovian"
+  expectedStyleCharacteristics:
+    - "Subtext-heavy dialogue where characters don't say what they mean"
+    - "Melancholic, wistful tone with undertones of loss"
+    - "Realistic, conversational language without poetic flourishes"
+    - "Focus on small, intimate moments rather than grand gestures"
+    - "Sense of time passing and opportunities missed"
+    - "Characters talking past each other or avoiding direct confrontation"
+    - "Detailed observations of mundane details that carry emotional weight"
+    - "Endings that are ambiguous or quietly devastating"
+    - "Themes of change, memory, and the passage of time"
+
+# Observability settings
+observability:
+  interactive: true
+  showThinking: true
+  verbosity: "detailed"
+
+# Logging settings
+logging:
+  saveTranscript: true
+  saveDebugInfo: true
+  logDirectory: "./tests/logs"

@@ -1,0 +1,86 @@
+name: "Intermission - Shakespeare Style Adaptation"
+storyFile: "public/stories/intermission_test.yaml"
+
+# Player configuration
+playerModel:
+  provider: "anthropic"
+  model: "claude-3-5-sonnet-latest"
+
+# Engine configuration
+engineModels:
+  costModel:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
+  qualityModel:
+    provider: "anthropic"
+    model: "claude-3-5-sonnet-latest"
+
+# Goals for the player
+goals:
+- type: "set_flag"
+  target: "play_established"
+  priority: "required"
+  description: "Establish that we're watching a Shakespeare play"
+
+- type: "set_flag"
+  target: "contact_made"
+  priority: "required"
+  description: "Make initial contact with C"
+
+- type: "set_flag"
+  target: "style_adapted"
+  priority: "required"
+  description: "Narrative should adapt to Shakespearean style"
+
+- type: "set_flag"
+  target: "conversation_developed"
+  priority: "required"
+  description: "Engage in meaningful dialogue with C"
+
+- type: "reach_ending"
+  target: "mirrored_resolution"
+  priority: "required"
+  description: "Complete the story with style-consistent resolution"
+
+# Test parameters
+maxTurns: 12
+
+# Success criteria
+successCriteria:
+  allRequiredGoals: true
+  withinTurnLimit: true
+
+# Player behavior instructions
+playerInstructions: |
+  You are meeting someone from your past at the theater. When you look at your ticket stub, naturally mention that you're here to see a Shakespeare play - be specific (Hamlet, Romeo and Juliet, Macbeth, etc.). You might say something like "I can't believe we're both here for [PLAY NAME]" or glance at your ticket and comment on the show.
+  
+  After establishing the play:
+  1. Engage with C in conversation that allows the narrative to demonstrate Shakespearean style
+  2. Make choices that let the story develop through multiple scenes
+  3. Have meaningful dialogue with C during the intermission
+  4. Allow the conversation to reach a natural conclusion
+
+# Style assessment configuration
+styleAssessment:
+  expectedStyleName: "Shakespearean"
+  expectedStyleCharacteristics:
+    - "Heightened, poetic language with metaphorical density"
+    - "Iambic rhythm patterns in prose, even if not strict meter"
+    - "Rich imagery and nature metaphors"
+    - "Formal register with 'you' instead of casual contractions"
+    - "Complex sentence structures with subordinate clauses"
+    - "Themes of fate, passion, and cosmic forces"
+    - "Characters speaking in elevated, philosophical manner"
+    - "Use of parallel structures and rhetorical devices"
+
+# Observability settings
+observability:
+  interactive: true
+  showThinking: true
+  verbosity: "detailed"
+
+# Logging settings
+logging:
+  saveTranscript: true
+  saveDebugInfo: true
+  logDirectory: "./tests/logs"

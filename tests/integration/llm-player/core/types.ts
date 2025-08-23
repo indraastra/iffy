@@ -27,6 +27,10 @@ export interface TestScenario {
   maxTurns?: number;
   successCriteria: SuccessCriteria;
   playerInstructions?: string; // Instructions for AI player behavior
+  styleAssessment?: {
+    expectedStyleName: string;
+    expectedStyleCharacteristics: string[];
+  };
   observability?: {
     interactive?: boolean;
     showThinking?: boolean;
@@ -85,6 +89,17 @@ export interface EndingAssessment {
   recommendedAction: 'PASS' | 'FAIL';
 }
 
+export interface StyleAssessment {
+  styleConsistency: number;
+  characterVoiceAlignment: number;
+  narrativeElementsAlignment: number;
+  adaptationEvidence: string[];
+  styleViolations: string[];
+  overallScore: number;
+  recommendedAction: 'PASS' | 'FAIL';
+  reasoning: string;
+}
+
 export interface TestResult {
   success: boolean;
   scenario: string;
@@ -95,6 +110,7 @@ export interface TestResult {
   logPath?: string;
   duration: number;
   assessment?: EndingAssessment;
+  styleAssessment?: StyleAssessment;
   costs?: {
     engine: {
       classification: number;
