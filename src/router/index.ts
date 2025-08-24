@@ -1,11 +1,11 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import GameLayout from '@/components/GameLayout.vue'
 import EmergentInterface from '@/components/EmergentInterface.vue'
 import { getStoryMetadataBySlug } from '@/examples-metadata'
 import { isValidStorySlug } from '@/utils/storySlug'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
