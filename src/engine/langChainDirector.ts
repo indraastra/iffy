@@ -429,7 +429,7 @@ ${instructions}
       promptBuilder,
       'Action',
       {
-        scene: context.currentSketch ? 'current_scene' : 'unknown',
+        scene: context.currentSceneId || 'unknown',
         memories: context.activeMemory?.length || 0,
         transitions: Object.keys(context.currentTransitions || {}).length
       },
@@ -502,7 +502,7 @@ ${instructions}`;
       promptBuilder,
       'Ending',
       {
-        scene: context.currentSketch ? 'current_scene' : 'unknown',
+        scene: context.currentSceneId || 'unknown',
         memories: context.activeMemory?.length || 0,
         transitions: Object.keys(context.currentTransitions || {}).length
       },

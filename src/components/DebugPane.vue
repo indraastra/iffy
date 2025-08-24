@@ -34,7 +34,7 @@
                 <table>
                   <tbody>
                     <tr><td>Total API Calls</td><td>{{ totalStats.totalCalls }}</td></tr>
-                    <tr><td>Story Calls</td><td>{{ sessionStats?.totalCalls || 0 }}</td></tr>
+                    <tr><td>Story Calls</td><td>{{ storyCallCount }}</td></tr>
                     <tr><td>Memory Calls</td><td>{{ memoryStats?.totalCalls || 0 }}</td></tr>
                     <tr><td>Flag Calls</td><td>{{ actionClassifierCalls }}</td></tr>
                     <tr><td>Total Input Tokens</td><td>{{ totalStats.totalInputTokens.toLocaleString() }}</td></tr>
@@ -44,15 +44,15 @@
                 </table>
               </div>
               
-              <div v-if="sessionStats" class="stats-card">
-                <h4>🎮 Quality Model Stats</h4>
+              <div v-if="storyCallCount > 0" class="stats-card">
+                <h4>🎮 Story Generation Stats</h4>
                 <table>
                   <tbody>
-                    <tr><td>Total Calls</td><td>{{ sessionStats.totalCalls }}</td></tr>
-                    <tr><td>Success Rate</td><td>{{ sessionSuccessRate }}%</td></tr>
-                    <tr><td>Average Latency</td><td>{{ Math.round(sessionStats.avgLatency) }}ms</td></tr>
-                    <tr><td>Avg Input Tokens</td><td>{{ Math.round(sessionStats.avgInputTokens) }}</td></tr>
-                    <tr><td>Avg Output Tokens</td><td>{{ Math.round(sessionStats.avgOutputTokens) }}</td></tr>
+                    <tr><td>Total Calls</td><td>{{ storyCallCount }}</td></tr>
+                    <tr><td>Success Rate</td><td>{{ storySuccessRate }}%</td></tr>
+                    <tr><td>Average Latency</td><td>{{ Math.round(storyAvgLatency) }}ms</td></tr>
+                    <tr><td>Avg Input Tokens</td><td>{{ Math.round(storyAvgInputTokens) }}</td></tr>
+                    <tr><td>Avg Output Tokens</td><td>{{ Math.round(storyAvgOutputTokens) }}</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -111,7 +111,7 @@
             </div>
             
             <!-- Memory State Section -->
-            <div v-if="currentMemories.length > 0" class="stats-card">
+            <div v-if="currentMemories.length > 0" class="stats-card memory-section">
               <h4>🧠 Current Memory Contents</h4>
               <p class="subtitle">{{ currentMemories.length }} memories stored</p>
               <div class="memory-list">
@@ -196,7 +196,8 @@
             </div>
             
             <div v-if="toolMessages.length > 0" class="tool-messages">
-              <h4>🔧 Tool Output</h4>
+              <h4>🔧 Recent Tool Activity</h4>
+              <p class="subtitle">Last {{ toolMessages.length }} tool operations</p>
               <div v-for="(message, index) in toolMessages" :key="index" class="tool-message">
                 {{ message }}
               </div>
@@ -265,6 +266,48 @@ const hasApiData = computed(() => {
 
 const actionClassifierCalls = computed(() => {
   return llmInteractions.value.filter(i => i.context.classifier === true).length
+})
+
+const storyCallCount = computed(() => {
+  // Count non-classifier langchain calls as story calls
+  return langchainMetrics.value.length - actionClassifierCalls.value
+})
+
+const storyMetrics = computed(() => {
+  // Get all non-classifier calls (story generation calls)
+  const classifierInteractions = new Set(
+    llmInteractions.value
+      .filter(i => i.context.classifier === true)
+      .map((_, index) => langchainMetrics.value.length - 1 - index) // Map to langchain metric indices
+  )
+  
+  return langchainMetrics.value.filter((_, index) => !classifierInteractions.has(index))
+})
+
+const storySuccessRate = computed(() => {
+  const storyMetricsList = storyMetrics.value
+  if (storyMetricsList.length === 0) return 0
+  const successfulCalls = storyMetricsList.filter(m => m.success).length
+  return ((successfulCalls / storyMetricsList.length) * 100).toFixed(1)
+})
+
+const storyAvgLatency = computed(() => {
+  const storyMetricsList = storyMetrics.value
+  if (storyMetricsList.length === 0) return 0
+  const avgLatency = storyMetricsList.reduce((sum, m) => sum + m.latencyMs, 0) / storyMetricsList.length
+  return avgLatency
+})
+
+const storyAvgInputTokens = computed(() => {
+  const storyMetricsList = storyMetrics.value
+  if (storyMetricsList.length === 0) return 0
+  return storyMetricsList.reduce((sum, m) => sum + m.promptTokens, 0) / storyMetricsList.length
+})
+
+const storyAvgOutputTokens = computed(() => {
+  const storyMetricsList = storyMetrics.value
+  if (storyMetricsList.length === 0) return 0
+  return storyMetricsList.reduce((sum, m) => sum + m.completionTokens, 0) / storyMetricsList.length
 })
 
 const totalStats = computed(() => {
@@ -898,6 +941,10 @@ defineExpose({
   gap: 1rem;
   font-size: 0.8rem;
   color: var(--color-text-secondary);
+}
+
+.memory-section {
+  margin-top: 1rem;
 }
 
 /* Transitions */
