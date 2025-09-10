@@ -39,7 +39,7 @@ export const STORY_METADATA: StoryMetadata[] = [
     "filename": "intermission.yaml",
     "title": "Intermission",
     "author": "Iffy Collective",
-    "blurb": "Three months of sediment, disturbed by a chance encounter.",
+    "blurb": "Three months of silence, broken by a chance encounter.",
     "slug": "intermission"
   },
   {

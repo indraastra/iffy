@@ -59,9 +59,26 @@ export function useGameActions() {
       if (storyIndex >= 0 && storyIndex < STORY_METADATA.length) {
         const metadata = STORY_METADATA[storyIndex]
         
-        // Close modal and navigate to story URL
+        // Close modal first
         showLoadModal.value = false
-        navigateToStory(metadata.slug)
+        
+        // Force reload the story even if we're already on the same route
+        const { loadStoryBySlug, loadStory, processInitialScene } = useGameEngine()
+        
+        // Load story directly instead of relying on route navigation
+        const story = await loadStoryBySlug(metadata.slug)
+        if (story) {
+          const result = await loadStory(story.content, story.filename)
+          if (result.success) {
+            await processInitialScene()
+            // Navigate to the story URL to update the browser URL
+            navigateToStory(metadata.slug)
+          } else {
+            addMessage(`Failed to load story: ${result.error}`, 'error')
+          }
+        } else {
+          addMessage(`Story not found: ${metadata.slug}`, 'error')
+        }
       } else {
         console.error('Invalid story index:', storyIndex)
         showLoadModal.value = false
@@ -69,6 +86,7 @@ export function useGameActions() {
     } catch (error) {
       console.error('Error loading story:', error)
       showLoadModal.value = false
+      addMessage(`Error loading story: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
     }
   }
 

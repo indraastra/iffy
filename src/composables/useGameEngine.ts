@@ -379,6 +379,7 @@ export function useGameEngine() {
     isStoryEnded,
     loadingMessage,
     loadStory,
+    loadStoryBySlug,
     processInitialScene,
     processCommand,
     addMessage,
