@@ -124,7 +124,7 @@ endings:
 - Flag conditions use `all_of`, `any_of`, `none_of` for complex logic
 
 #### Flags System
-Use flags to track story state and enable complex branching narratives:
+Use flags to track story state and enable complex branching narratives. Flags can hold any type of value:
 
 ```yaml
 flags:
@@ -135,6 +135,10 @@ flags:
   trust_level:
     default: 0
     description: "numerical trust with the gardener (0-3)"
+  
+  current_location:
+    default: "entrance"
+    description: "player's current location in the garden"
     
   memories_shared:
     default: false
@@ -143,10 +147,29 @@ flags:
       all_of: ["discovered_secret"]  # Can only share memories after discovering secret
 ```
 
+**Flag Types**:
+- **Boolean**: Track events and conditions (`discovered_secret: true`)
+- **Number**: Count items, measure progress (`trust_level: 3`, `keys_found: 2`)
+- **String**: Track states and names (`current_mood: "anxious"`, `equipped_item: "lantern"`)
+
 **Flag Guidelines**:
-- **default**: Initial value (boolean, string, number)
-- **description**: When/if condition for LLM guidance  
-- **requires**: Optional conditions for flag to be settable (uses `all_of`, `any_of`, `none_of`)
+- **default**: Initial value (any type)
+- **description**: When/how the flag should be set (guidance for the LLM)
+- **requires**: Optional conditions that must be met before this flag can be set
+
+**How Flags are Updated**:
+The LLM updates flags naturally through the narrative response:
+```json
+{
+  "flagChanges": {
+    "values": {
+      "discovered_secret": true,
+      "trust_level": 2,
+      "current_location": "fountain"
+    }
+  }
+}
+```
 
 #### Characters
 Define people and entities that players can interact with:

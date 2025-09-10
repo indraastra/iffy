@@ -42,6 +42,7 @@ The heart of Iffy that makes everything work:
 - **Game State Manager**: Tracks what's happened, where players are, what they have
 - **AI Director**: Sends context to Claude API and interprets responses
 - **Memory System**: Remembers the entire conversation for consistent storytelling
+- **Flag Manager**: Advanced state tracking with support for any data type
 
 ### 3. User Interface
 Clean, focused interface for storytelling:
@@ -60,6 +61,28 @@ Clean, focused interface for storytelling:
 5. **State updates**: Engine tracks changes (location, inventory, flags)
 6. **Display updated**: Player sees rich, formatted response
 
+## Flag System Architecture
+
+The flag system provides flexible state management for complex narratives:
+
+**Flag Types Supported:**
+- **Boolean**: Event tracking and conditions (`door_opened: true`)
+- **String**: Named states and items (`current_mood: "anxious"`)
+- **Number**: Counters and measurements (`trust_level: 75`)
+
+**Flag Features:**
+- Hierarchical dependencies (flags can require other flags)
+- Automatic location tracking during scene transitions
+- Condition evaluation with complex logic (`all_of`, `any_of`, `none_of`)
+- Cache optimization for fast condition checking
+
+**How Flags Work:**
+1. Story defines flags with defaults and requirements
+2. LLM updates flags naturally through narrative responses
+3. Flag Manager validates dependencies before setting
+4. Engine checks flag conditions for transitions and endings
+5. Debug pane shows real-time flag state for testing
+
 ## Memory and Context Management
 
 Iffy maintains rich context for consistent storytelling:
@@ -67,7 +90,7 @@ Iffy maintains rich context for consistent storytelling:
 **What the AI Always Knows:**
 - Complete story definition (characters, locations, tone)
 - Full conversation history 
-- Current game state (location, inventory, completed events)
+- Current game state (location, inventory, flags, completed events)
 - Story format guidelines and rules
 
 **Smart Memory Management:**
@@ -75,6 +98,7 @@ Iffy maintains rich context for consistent storytelling:
 - Older interactions summarized to key events
 - Character personalities and story tone preserved
 - Critical story beats never forgotten
+- Flag states tracked throughout the session
 
 ## File Structure
 
@@ -84,7 +108,9 @@ src/
 │   ├── gameEngine.ts           # Main engine orchestration
 │   ├── impressionistEngine.ts  # Sketch-based story handling
 │   ├── impressionistParser.ts  # YAML parsing and validation
-│   └── memoryManager.ts        # Context and history management
+│   ├── memoryManager.ts        # Context and history management
+│   ├── FlagManager.ts          # Advanced flag state management
+│   └── langChainDirector.ts    # AI narrative generation
 ├── components/       # Vue components
 │   ├── GameInterface.vue       # Main game UI
 │   ├── LoadModal.vue          # Story selection

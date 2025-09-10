@@ -119,6 +119,13 @@ npm run test:run       # One-time run
 npm run test:ui        # Visual interface
 ```
 
+**Test Coverage Areas:**
+- **Flag System**: Comprehensive tests for flag types, dependencies, and conditions
+- **LangChain Director**: AI response handling and flag updates
+- **Memory Manager**: Context tracking and summarization
+- **Story Parser**: YAML validation and structure checking
+- **Integration Tests**: End-to-end scenario testing with flag transitions
+
 ### Story Validation
 
 ```bash
@@ -196,6 +203,29 @@ Test ActionClassifier prompts directly against models:
 ```bash
 npm run debug-classifier
 ```
+
+### Flag System Debugging
+
+The enhanced flag system supports debugging through:
+
+1. **Debug Pane**: Real-time flag state visualization
+   - Shows all active flags with their current values
+   - Color-coded by type (boolean, string, number)
+   - Updates live as the story progresses
+
+2. **Flag Manager API**:
+   ```typescript
+   flagManager.getAllFlags()        // Get all current flag values
+   flagManager.getStoryFlags()      // Get flags excluding location flags
+   flagManager.checkConditions()    // Test flag conditions
+   flagManager.getDebugString()     // Get formatted debug output
+   ```
+
+3. **Test Utilities**:
+   ```bash
+   npm run test src/tests/flagManager.test.ts    # Run flag system tests
+   npm run test src/tests/flagSystemIntegration.test.ts  # Integration tests
+   ```
 
 This tool helps debug classification failures by testing different temperatures and model configurations.
 

@@ -83,6 +83,45 @@ Players can type anything they want — "examine the keyhole," "break down the d
 - **Experimental Fiction**: Push the boundaries of what storytelling can be
 - **Personal Narratives**: Interactive memoirs, therapy tools, creative exercises
 
+## Recent Improvements
+
+### Enhanced Flag System
+
+The flag system now supports **non-boolean values**, enabling richer narrative tracking:
+
+- **String Values**: Track relationship states, mood, or named items (e.g., `current_mood: "anxious"`, `equipped_weapon: "sword"`)
+- **Number Values**: Count items, track scores, or measure progress (e.g., `trust_level: 75`, `keys_found: 3`)
+- **Boolean Values**: Traditional on/off states for events and conditions
+- **Automatic Location Tracking**: Scene transitions automatically set location flags
+- **Hierarchical Dependencies**: Flags can require other flags to be set first
+
+**Flag Usage in Stories**:
+```yaml
+flags:
+  relationship_status:
+    default: "stranger" 
+    description: "Current relationship level with NPC"
+  current_mood:
+    default: "neutral"
+    description: "Player character's emotional state"
+  items_collected:
+    default: 0
+    description: "Number of special items found"
+```
+
+The LLM updates flags naturally through the narrative:
+```json
+{
+  "flagChanges": {
+    "values": {
+      "relationship_status": "friend",
+      "current_mood": "hopeful",
+      "items_collected": 2
+    }
+  }
+}
+```
+
 ## Known Issues
 
 ### Action Classification Updates
@@ -103,6 +142,12 @@ The **ActionClassifier** component has been significantly improved with stricter
 - Very abstract or metaphorical conditions work best with higher-tier models
 
 **Authoring Tips**: Write clear, concrete transition conditions. Test critical story branches with your target model. Use the debug-classifier script to validate complex transitions.
+
+### Narrative Style Improvements
+
+- **Subtler Storytelling**: Stories now use naturalistic language with themes emerging through narrative rather than explicit metaphors
+- **Show, Don't Tell**: The engine encourages stories that demonstrate emotions and themes through actions and dialogue
+- **Dynamic Character States**: Characters can evolve based on player interactions using the flexible flag system
 
 ## Get Started Today
 
