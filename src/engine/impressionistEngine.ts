@@ -36,9 +36,11 @@ function normalizeNarrative(narrative: string | string[], formatters?: Formatter
   
   // Apply text preprocessing to fix common formatting issues
   // Add spaces around em-dashes for better readability
-  text = text.replace(/(\w)—(\w)/g, '$1 — $2');  // word—word becomes word — word
-  text = text.replace(/(\w)—(\s)/g, '$1 —$2');   // word— space becomes word — space
-  text = text.replace(/(\s)—(\w)/g, '$1— $2');   // space —word becomes space — word
+  // First, normalize all em-dash patterns to have consistent spacing
+  text = text.replace(/—/g, ' — ');  // Replace all em-dashes with spaced version
+  text = text.replace(/\s+—\s+/g, ' — ');  // Clean up multiple spaces around em-dashes
+  text = text.replace(/^\s+—\s+/gm, '— ');  // Handle em-dashes at start of lines
+  text = text.replace(/\s+—\s+$/gm, ' —');  // Handle em-dashes at end of lines
   
   // If formatters are provided and narrative was an array, apply them
   if (formatters && formatters.length > 0 && Array.isArray(narrative)) {
