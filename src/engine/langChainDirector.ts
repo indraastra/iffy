@@ -15,7 +15,7 @@ import { DirectorContext, DirectorResponse } from '@/types/impressionistStory';
 import { LangChainPrompts } from './langChainPrompts';
 import { MultiModelService } from '@/services/multiModelService';
 import { DirectorResponseSchema } from '@/schemas/directorSchemas';
-import { FlagManager, FlagChange } from './FlagManager';
+import { FlagManager } from './FlagManager';
 // StoryData type is now imported via FlagManager
 
 export interface TransitionCallbacks {

@@ -272,22 +272,6 @@ export class FlagManager {
       return '';
     }
 
-    const booleanTrueFlags = Object.entries(currentFlags)
-      .filter(([_, value]) => value === true)
-      .map(([key, _]) => key);
-    
-    const booleanFalseFlags = Object.entries(currentFlags)
-      .filter(([_, value]) => value === false)
-      .map(([key, _]) => key);
-    
-    const stringFlags = Object.entries(currentFlags)
-      .filter(([_, value]) => typeof value === 'string')
-      .map(([key, value]) => `${key}="${value}"`);
-    
-    const otherFlags = Object.entries(currentFlags)
-      .filter(([_, value]) => typeof value !== 'boolean' && typeof value !== 'string')
-      .map(([key, value]) => `${key}=${JSON.stringify(value)}`);
-    
     let section = `**CURRENT STORY FLAGS:**\n`;
     
     // Show all flags with their actual values
