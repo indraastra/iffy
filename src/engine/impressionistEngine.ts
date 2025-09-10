@@ -160,8 +160,9 @@ export class ImpressionistEngine {
       return null; // Signal that LLM processing is required
     }
     
-    // Normalize YAML content for browser display
-    return normalizeYamlText(firstScene.sketch);
+    // Apply both YAML normalization and narrative processing (including emdash spacing)
+    const yamlNormalized = normalizeYamlText(firstScene.sketch);
+    return normalizeNarrative(yamlNormalized);
   }
 
   /**
