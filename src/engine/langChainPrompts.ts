@@ -2,6 +2,11 @@
  * LangChain Prompt Templates for Scene Transitions
  * 
  * Specialized prompts for action processing and scene transition rendering
+ * 
+ * DOCUMENTATION SYNC: When modifying prompts in this file, update:
+ * - docs/PROMPTS.md sections corresponding to changed methods
+ * - Test files in src/tests/langChainDirector.test.ts
+ * - Schema definitions if response format changes
  */
 
 import { DirectorContext } from '@/types/impressionistStory';

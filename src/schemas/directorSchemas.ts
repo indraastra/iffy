@@ -1,6 +1,11 @@
 /**
  * Zod schemas for Director responses
  * Used for structured output with LangChain
+ * 
+ * DOCUMENTATION SYNC: When modifying schemas, update:
+ * - docs/PROMPTS.md "Schema Enforcement" section
+ * - src/engine/langChainDirector.ts repairAndRetryStructuredRequest() if schema structure changes
+ * - Test expectations in src/tests/langChainDirector.test.ts
  */
 
 import { z } from 'zod';

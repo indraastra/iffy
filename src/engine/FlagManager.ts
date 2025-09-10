@@ -1,3 +1,10 @@
+/**
+ * DOCUMENTATION SYNC: When modifying flag management logic, update:
+ * - docs/PROMPTS.md "Flag Management Instructions" section
+ * - docs/STORY_FORMAT.md "Flags System" section
+ * - docs/ARCHITECTURE.md "Flag System Architecture" section
+ */
+
 import { ImpressionistStory, StructuredFlag } from '@/types/impressionistStory';
 
 // Create an alias for compatibility
