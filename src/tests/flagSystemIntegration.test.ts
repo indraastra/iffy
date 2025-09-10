@@ -14,9 +14,10 @@ describe('Simplified Flag System Integration', () => {
       
       const story = parser.parseYaml(yamlContent);
       
-      // Verify the story has the expected flags
+      // Verify the story has the expected flags (now includes pronoun flag)
       expect(story.flags).toBeDefined();
-      expect(Object.keys(story.flags!)).toHaveLength(4);
+      expect(Object.keys(story.flags!)).toHaveLength(7);
+      expect(story.flags!.alex_pronouns).toBeDefined();
       expect(story.flags!.admitted_feelings).toBeDefined();
       expect(story.flags!.player_reciprocated).toBeDefined();
       expect(story.flags!.conversation_ending).toBeDefined();
@@ -106,14 +107,17 @@ describe('Simplified Flag System Integration', () => {
       const yamlContent = await readFile(storyPath, 'utf-8');
       const story = parser.parseYaml(yamlContent);
       
-      // Verify we have exactly 4 flags (minimal set)
+      // Verify we have exactly 7 flags (minimal set + pronoun flag + new flags)
       const flagNames = Object.keys(story.flags!);
-      expect(flagNames).toHaveLength(4);
+      expect(flagNames).toHaveLength(7);
       expect(flagNames).toEqual([
+        'alex_pronouns',
         'admitted_feelings',
         'player_reciprocated', 
         'conversation_ending',
-        'alex_defensive'
+        'alex_defensive',
+        'memories_shared',
+        'player_supportive'
       ]);
       
       // Verify we have 4 endings

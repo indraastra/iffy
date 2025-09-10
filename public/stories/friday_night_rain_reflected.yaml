@@ -13,6 +13,11 @@ narrative:
   tone: "Internal struggle made visible"
   themes: [ "the gap between thinking and doing", "patience as gift", "courage through small steps" ]
 
+flags:
+  jordan_pronouns:
+    default: "they"
+    description: "Current pronouns for Jordan (they/she/he)"
+
 world:
   characters:
     jordan:
@@ -127,10 +132,14 @@ endings:
       streaked glass. Some words need more time to find their way.
 
 guidance: |
+  CRITICAL - PRONOUN HANDLING:
+  - Current pronouns for Jordan: {jordan_pronouns} (check flag value)
+  - Listen for how player refers to Jordan in their thoughts/actions:
+    * "I think she's..." → Set jordan_pronouns="she"
+    * "He looks patient" → Set jordan_pronouns="he" 
+    * "Tell them..." → Keep jordan_pronouns="they"
+  - Once established, use consistently throughout your response
+  - Update via: flagChanges: { values: { jordan_pronouns: "she" } }
+
   CORE CONCEPT: The gap between thought and action IS the story. Jordan responds 
   to behaviors, not thoughts (which only the player and narrator know).
-
-  MANAGING PRONOUNS:
-  - Begin with they/them or simply "Jordan"
-  - Follow the player's lead naturally - if they say "she", "him", "their", etc., adopt it
-  - Store this in memory once established and use consistently

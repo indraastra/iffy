@@ -154,12 +154,16 @@ describe('FlagManager', () => {
 
     it('should apply flag changes from LLM', () => {
       flagManager.applyChanges({
-        set: ['flag1'],
-        clear: ['flag2']
+        values: { 
+          flag1: true, 
+          flag2: false,
+          flag3: "string_value"
+        }
       });
 
       expect(flagManager.getFlag('flag1')).toBe(true);
       expect(flagManager.getFlag('flag2')).toBe(false);
+      expect(flagManager.getFlag('flag3')).toBe("string_value");
     });
 
     it('should get story flags excluding location flags', () => {
@@ -376,8 +380,7 @@ describe('FlagManager', () => {
 
     it('should handle empty flag changes', () => {
       flagManager.applyChanges({
-        set: [],
-        clear: []
+        values: {}
       });
       
       // Should not throw errors
@@ -467,12 +470,13 @@ describe('FlagManager', () => {
       const start = Date.now();
       
       // Set many flags
-      const changes = {
-        set: Array.from({length: 100}, (_, i) => `flag_${i}`),
-        clear: Array.from({length: 100}, (_, i) => `flag_${i + 100}`)
-      };
+      const values: Record<string, any> = {};
+      for (let i = 0; i < 100; i++) {
+        values[`flag_${i}`] = true;
+        values[`flag_${i + 100}`] = false;
+      }
       
-      flagManager.applyChanges(changes);
+      flagManager.applyChanges({ values });
       
       // Check conditions on many flags
       const condition = {
@@ -579,8 +583,7 @@ describe('FlagManager', () => {
     it('should check requirements in applyChanges', () => {
       // Try to set dependent flag via applyChanges without prerequisite
       flagManager.applyChanges({
-        set: ['dependent_flag'],
-        clear: []
+        values: { dependent_flag: true }
       });
       
       expect(flagManager.getFlag('dependent_flag')).toBe(false);
@@ -588,8 +591,7 @@ describe('FlagManager', () => {
       // Set prerequisite and try again
       flagManager.setFlag('prerequisite_flag', true);
       flagManager.applyChanges({
-        set: ['dependent_flag'],
-        clear: []
+        values: { dependent_flag: true }
       });
       
       expect(flagManager.getFlag('dependent_flag')).toBe(true);
@@ -598,8 +600,7 @@ describe('FlagManager', () => {
     it('should handle batch operations correctly', () => {
       // Try to set both prerequisite and dependent in same batch
       flagManager.applyChanges({
-        set: ['prerequisite_flag', 'dependent_flag'],
-        clear: []
+        values: { prerequisite_flag: true, dependent_flag: true }
       });
       
       // Prerequisite should be set, but dependent might not be due to order
@@ -724,8 +725,7 @@ describe('FlagManager', () => {
       
       // Apply batch changes
       flagManager.applyChanges({
-        set: ['flag1', 'flag2'],
-        clear: []
+        values: { flag1: true, flag2: true }
       });
       
       // Cache should be invalidated

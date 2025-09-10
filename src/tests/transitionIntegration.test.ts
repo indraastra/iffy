@@ -25,7 +25,7 @@ describe('Transition Integration Test', () => {
               narrativeParts: ["You turn the handle and push the door open. It swings smoothly on its hinges."],
               memories: ["Player opened the door"],
               importance: 5,
-              flagChanges: { set: ["door_opened"], unset: [] }
+              flagChanges: { values: { door_opened: true } }
             }
           });
         } else if (callCount === 2) {
@@ -36,7 +36,7 @@ describe('Transition Integration Test', () => {
               narrativeParts: ["You take a moment to gather yourself and prepare to leave."],
               memories: ["Player is ready to leave"],
               importance: 5,
-              flagChanges: { set: ["ready_to_leave"], unset: [] }
+              flagChanges: { values: { ready_to_leave: true } }
             }
           });
         } else if (callCount === 3) {
@@ -51,7 +51,7 @@ describe('Transition Integration Test', () => {
               ],
               memories: ["Player successfully transitioned to hallway"],
               importance: 7,
-              flagChanges: { set: [], unset: [] }
+              flagChanges: { values: {} }
             }
           });
         }
@@ -62,7 +62,7 @@ describe('Transition Integration Test', () => {
             narrativeParts: ["Something happened."],
             memories: [],
             importance: 3,
-            flagChanges: { set: [], unset: [] }
+            flagChanges: { values: {} }
           }
         });
       })

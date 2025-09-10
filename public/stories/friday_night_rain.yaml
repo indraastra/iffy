@@ -21,6 +21,9 @@ narrative:
 
 # Simple flags - only what's needed for the endings
 flags:
+  alex_pronouns:
+    default: "they"
+    description: "Current pronouns for Alex (they/she/he)"
   admitted_feelings:
     default: false
     description: "when Alex confesses their romantic feelings"
@@ -174,7 +177,14 @@ endings:
       too strong to tear down in a single evening.
 
 guidance: |
-  STORY TONE: This is an intimate, realistic conversation between close friends where one is hiding something important. Focus on subtle emotional cues, meaningful silences, and the gradual building of trust.
+  CRITICAL - PRONOUN HANDLING:
+  - Current pronouns for Alex: {alex_pronouns} (check flag value)
+  - Listen for how player refers to Alex in their actions/dialogue:
+    * "I think she's..." → Set alex_pronouns="she" 
+    * "He looks tired" → Set alex_pronouns="he"
+    * "Tell them..." → Keep alex_pronouns="they"
+  - Once established, use consistently throughout your response
+  - Update via: flagChanges: { values: { alex_pronouns: "she" } }
 
   THE SECRET:
   Alex has developed romantic feelings for the player but is terrified of ruining their friendship. They've been pulling away to protect themselves and the relationship, but it's making everything worse. This is why they've been distant lately.
@@ -185,8 +195,3 @@ guidance: |
   - Let silence have weight and meaning
   - Include natural hesitations, incomplete sentences, and meaningful silences
   - Show emotions through actions: stirring coffee, looking away, fidgeting
-
-  MANAGING PRONOUNS:
-  - Begin with they/them or simply "Alex"
-  - Follow the player's lead naturally - if they say "she", "him", "their", etc., adopt it
-  - Store this in memory once established and use consistently

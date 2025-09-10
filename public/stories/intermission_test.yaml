@@ -20,6 +20,9 @@ narrative:
     ]
 
 flags:
+  c_pronouns:
+    default: "they"
+    description: "Current pronouns for C (they/she/he)"
   play_established:
     default: false
     description: "when the player has established what play they're watching"
@@ -195,6 +198,15 @@ endings:
       Art and life have become mirrors of each other, each reflecting the other's truths.
 
 guidance: |
+  CRITICAL - PRONOUN HANDLING:
+  - Current pronouns for C: {c_pronouns} (check flag value)
+  - Listen for how player refers to C in their actions/dialogue:
+    * "I think she's..." → Set c_pronouns="she"
+    * "He looks tired" → Set c_pronouns="he" 
+    * "Tell them..." → Keep c_pronouns="they"
+  - Once established, use consistently throughout your response
+  - Update via: flagChanges: { values: { c_pronouns: "she" } }
+
   ADAPTIVE STYLE SYSTEM: This story's unique feature is that it changes its 
   narrative voice to match whatever play the audience claims to be watching.
   

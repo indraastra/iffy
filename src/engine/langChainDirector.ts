@@ -120,13 +120,12 @@ export class LangChainDirector {
   "memories": ["array", "of", "strings"],
   "importance": number,
   "flagChanges": {
-    "set": ["array", "of", "flag", "strings"],
-    "unset": ["array", "of", "flag", "strings"]
+    "values": { "flag_name": "value" }
   }
 }
 
 CRITICAL: 
-- flagChanges MUST be an object with "set" and "unset" arrays
+- flagChanges MUST be an object with "values" object
 - narrativeParts MUST be an array of strings
 - Do NOT include any explanation, just return the corrected JSON
 
@@ -150,7 +149,7 @@ ${malformedResponse}`;
           narrativeParts: ["I need a moment to process what you said."],
           memories: [],
           importance: 5,
-          flagChanges: { set: [], unset: [] }
+          flagChanges: { values: {} }
         }
       };
     }
@@ -243,8 +242,7 @@ ${malformedResponse}`;
       importance: result.data.importance || defaultImportance,
       signals: result.data.signals || {},
       actualFlags: {
-        set: result.data.flagChanges?.set || [],
-        unset: result.data.flagChanges?.unset || []
+        values: result.data.flagChanges?.values || {}
       }
     };
 
@@ -357,12 +355,8 @@ ${malformedResponse}`;
     const response = await this.processAction(context, playerInput);
 
     // Apply flag changes from the narrative response
-    if (response.actualFlags && (response.actualFlags.set.length > 0 || response.actualFlags.unset.length > 0)) {
-      const flagChange: FlagChange = {
-        set: response.actualFlags.set,
-        clear: response.actualFlags.unset
-      };
-      this.flagManager?.applyChanges(flagChange);
+    if (response.actualFlags && Object.keys(response.actualFlags.values).length > 0) {
+      this.flagManager?.applyChanges(response.actualFlags);
       
       // Update debug pane with current flag states
       if (this.debugPane && this.debugPane.updateFlagStates) {
@@ -383,14 +377,18 @@ ${malformedResponse}`;
         this.debugPane.log(`=== Action Processing ===`);
         this.debugPane.log(`Player: "${playerInput}"`);
         
-        if (response.actualFlags?.set.length || response.actualFlags?.unset.length) {
+        if (response.actualFlags && Object.keys(response.actualFlags.values).length > 0) {
           this.debugPane.log(`Flag changes from narrative:`);
-          if (response.actualFlags?.set.length) {
-            this.debugPane.log(`  Set: ${response.actualFlags.set.join(', ')}`);
-          }
-          if (response.actualFlags?.unset.length) {
-            this.debugPane.log(`  Unset: ${response.actualFlags.unset.join(', ')}`);
-          }
+          const valueEntries = Object.entries(response.actualFlags.values).map(([k, v]) => {
+            if (typeof v === 'boolean') {
+              return `${k}: ${v}`;
+            } else if (typeof v === 'string') {
+              return `${k}: "${v}"`;
+            } else {
+              return `${k}: ${JSON.stringify(v)}`;
+            }
+          });
+          this.debugPane.log(`  ${valueEntries.join(', ')}`);
         }
         
         this.debugPane.log(`Current flags: ${this.flagManager?.getDebugString() || 'none'}`);

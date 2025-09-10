@@ -198,8 +198,7 @@ export interface DirectorContext {
 
 // Flag changes for action classification and narrative generation
 export interface FlagChanges {
-  set: string[];
-  unset: string[];
+  values: Record<string, any>;
 }
 
 // LLM response with clear signals

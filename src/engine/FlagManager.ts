@@ -3,10 +3,9 @@ import { ImpressionistStory, StructuredFlag } from '@/types/impressionistStory';
 // Create an alias for compatibility
 export type StoryData = ImpressionistStory;
 
-// Simple flag change interface for LLM responses
+// Simple flag change interface for LLM responses  
 export interface FlagChange {
-  set: string[];
-  clear: string[];
+  values: Record<string, any>;
 }
 
 export interface FlagTrigger {
@@ -105,14 +104,11 @@ export class FlagManager {
 
   // Apply flag changes from LLM
   applyChanges(changes: FlagChange): void {
-    // Set flags to true (with requirement checking)
-    for (const flag of changes.set) {
-      this.setFlag(flag, true);
-    }
-
-    // Set flags to false (no requirement checking needed)
-    for (const flag of changes.clear) {
-      this.flags.set(flag, false);
+    // Set flags to their specific values
+    if (changes.values) {
+      for (const [flag, value] of Object.entries(changes.values)) {
+        this.setFlag(flag, value);
+      }
     }
     
     // Invalidate cache after batch changes
@@ -197,12 +193,12 @@ export class FlagManager {
   }
 
   // Get story flags only (excluding location flags) for LLM context
-  getStoryFlags(): Record<string, boolean> {
-    const result: Record<string, boolean> = {};
+  getStoryFlags(): Record<string, any> {
+    const result: Record<string, any> = {};
     for (const [key, value] of this.flags.entries()) {
       // Exclude location flags (at_*) and the location key itself
       if (!key.startsWith('at_') && key !== 'location') {
-        result[key] = value === true;
+        result[key] = value;
       }
     }
     return result;
@@ -269,20 +265,38 @@ export class FlagManager {
       return '';
     }
 
-    const setFlags = Object.entries(currentFlags)
+    const booleanTrueFlags = Object.entries(currentFlags)
       .filter(([_, value]) => value === true)
       .map(([key, _]) => key);
     
-    const unsetFlags = Object.entries(currentFlags)
+    const booleanFalseFlags = Object.entries(currentFlags)
       .filter(([_, value]) => value === false)
       .map(([key, _]) => key);
     
+    const stringFlags = Object.entries(currentFlags)
+      .filter(([_, value]) => typeof value === 'string')
+      .map(([key, value]) => `${key}="${value}"`);
+    
+    const otherFlags = Object.entries(currentFlags)
+      .filter(([_, value]) => typeof value !== 'boolean' && typeof value !== 'string')
+      .map(([key, value]) => `${key}=${JSON.stringify(value)}`);
+    
     let section = `**CURRENT STORY FLAGS:**\n`;
-    if (setFlags.length > 0) {
-      section += `Set (true): ${setFlags.join(', ')}\n`;
-    }
-    if (unsetFlags.length > 0) {
-      section += `Unset (false): ${unsetFlags.join(', ')}\n`;
+    
+    // Show all flags with their actual values
+    const allFlagEntries = Object.entries(currentFlags)
+      .map(([key, value]) => {
+        if (typeof value === 'boolean') {
+          return `${key}: ${value}`;
+        } else if (typeof value === 'string') {
+          return `${key}: "${value}"`;
+        } else {
+          return `${key}: ${JSON.stringify(value)}`;
+        }
+      });
+    
+    if (allFlagEntries.length > 0) {
+      section += `${allFlagEntries.join(', ')}\n`;
     }
     section += '\n';
     
@@ -317,11 +331,12 @@ export class FlagManager {
     return `**FLAG AWARENESS:**
 * Consider current flag states when crafting responses
 * Respect character behavior based on flags (e.g., if alex_withdrawing is true, show Alex retreating)
+* For string flags (e.g., alex_pronouns="she"), use the value consistently in your response
 
 **FLAG MANAGEMENT (Simplified System):**
-* All flags are boolean (true/false) - no complex expressions
+* Flags can be boolean (true/false) or strings (e.g., alex_pronouns="she")
 * Set flags when significant story events occur - BE PROACTIVE in recognizing these moments
-* Flags track story state and character relationships
+* Flags track story state, character relationships, and narrative properties
 * Only set/unset flags that logically result from the current interaction
 * IMPORTANT: Don't be overly conservative - set flags when narrative events clearly occur
 * Look for clear narrative moments that match the flag descriptions provided in the story

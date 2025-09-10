@@ -101,10 +101,10 @@
               <h4>🏁 Current Flag States</h4>
               <p class="subtitle">{{ Object.keys(currentFlags).length }} flags tracked</p>
               <div class="flag-list">
-                <div v-for="[flagId, isSet] in Object.entries(currentFlags)" :key="flagId" class="flag-item">
+                <div v-for="[flagId, value] in Object.entries(currentFlags)" :key="flagId" class="flag-item">
                   <span class="flag-name">{{ flagId }}</span>
-                  <span :class="['flag-status', isSet ? 'flag-set' : 'flag-unset']">
-                    {{ isSet ? '✅ SET' : '❌ UNSET' }}
+                  <span :class="['flag-value', typeof value === 'boolean' ? (value ? 'flag-true' : 'flag-false') : 'flag-string']">
+                    {{ typeof value === 'string' ? `"${value}"` : value.toString() }}
                   </span>
                 </div>
               </div>
@@ -249,7 +249,7 @@ const langchainMetrics = ref<LangChainMetrics[]>([])
 const maxMetrics = 50
 const memoryManager = ref<any>(null)
 const toolMessages = ref<string[]>([])
-const currentFlags = ref<Record<string, boolean>>({})
+const currentFlags = ref<Record<string, any>>({})
 
 // Tabs configuration
 const tabs = [
@@ -740,7 +740,7 @@ defineExpose({
   color: var(--color-text-primary);
 }
 
-.flag-status {
+.flag-value {
   font-size: 0.85rem;
   font-weight: bold;
   padding: 0.2rem 0.6rem;
@@ -748,16 +748,22 @@ defineExpose({
   border: 1px solid;
 }
 
-.flag-set {
+.flag-true {
   color: #4caf50;
   background: rgba(76, 175, 80, 0.1);
   border-color: rgba(76, 175, 80, 0.3);
 }
 
-.flag-unset {
+.flag-false {
   color: #f44336;
   background: rgba(244, 67, 54, 0.1);
   border-color: rgba(244, 67, 54, 0.3);
+}
+
+.flag-string {
+  color: #2196f3;
+  background: rgba(33, 150, 243, 0.1);
+  border-color: rgba(33, 150, 243, 0.3);
 }
 
 .interactions-list {
