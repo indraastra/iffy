@@ -5,6 +5,7 @@ import { getStoryUrl } from '@/utils/storySlug'
 
 const showSettingsModal = ref(false)
 const showLoadModal = ref(false)
+const showHelpModal = ref(false)
 
 export function useGameActions() {
   const { engine, addMessage, navigateToStory, gameState } = useGameEngine()
@@ -102,6 +103,14 @@ export function useGameActions() {
     showLoadModal.value = false
   }
 
+  function showHelp() {
+    showHelpModal.value = true
+  }
+
+  function hideHelp() {
+    showHelpModal.value = false
+  }
+
   async function shareStory() {
     try {
       const currentStory = gameState.currentStory
@@ -157,10 +166,14 @@ export function useGameActions() {
     loadSelectedStory,
     showSettings,
     hideSettings,
+    showHelp,
+    hideHelp,
     shareStory,
     showSettingsModal,
     showLoadModal,
+    showHelpModal,
     hideLoadModal,
+    hideHelpModal: hideHelp,
     availableStories: STORY_METADATA
   }
 }

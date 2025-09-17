@@ -25,6 +25,7 @@
     <!-- Modals -->
     <LoadModal />
     <SettingsModal />
+    <HelpModal />
   </main>
 </template>
 
@@ -36,6 +37,7 @@ import StoryOutput from '@/components/StoryOutput.vue'
 import CommandInput from '@/components/CommandInput.vue'
 import LoadModal from '@/components/LoadModal.vue'
 import SettingsModal from '@/components/SettingsModal.vue'
+import HelpModal from '@/components/HelpModal.vue'
 import { useGameEngine } from '@/composables/useGameEngine'
 import { useGameActions } from '@/composables/useGameActions'
 
