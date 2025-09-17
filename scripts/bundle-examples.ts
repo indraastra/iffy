@@ -40,6 +40,7 @@ function bundleExampleStories() {
   
   const stories: ExampleStory[] = [];
   const metadata: StoryMetadata[] = [];
+  const unlistedMetadata: StoryMetadata[] = [];  // Track unlisted stories separately
   let validationErrors = 0;
   
   for (const file of files) {
@@ -76,18 +77,27 @@ function bundleExampleStories() {
         content
       });
       
-      // Add to metadata array
-      metadata.push({
+      // Check if story is unlisted
+      const isUnlisted = story.unlisted === true;
+      
+      // Add to appropriate metadata array
+      const metadataEntry = {
         filename: file,
         title,
         author,
         blurb,
         slug: filenameToSlug(file)
-      });
+      };
+      
+      if (isUnlisted) {
+        unlistedMetadata.push(metadataEntry);
+      } else {
+        metadata.push(metadataEntry);
+      }
       
       // Stories are already in public/stories - no need to copy
       
-      console.log(`✅ ${file} validated successfully`);
+      console.log(`✅ ${file} validated successfully${isUnlisted ? ' (unlisted)' : ''}`);
       
     } catch (error) {
       validationErrors++;
@@ -138,6 +148,9 @@ export interface BundledStory {
 
 export const STORY_METADATA: StoryMetadata[] = ${JSON.stringify(metadata, null, 2)};
 
+// All stories including unlisted ones (for direct access by slug/filename)
+const ALL_STORY_METADATA: StoryMetadata[] = ${JSON.stringify([...metadata, ...unlistedMetadata], null, 2)};
+
 /**
  * Dynamically load a story's content from the public/stories directory
  */
@@ -151,10 +164,10 @@ export async function loadStoryContent(filename: string): Promise<string> {
 }
 
 /**
- * Load a complete story with content
+ * Load a complete story with content (including unlisted stories)
  */
 export async function loadStory(filename: string): Promise<BundledStory | undefined> {
-  const meta = STORY_METADATA.find(story => story.filename === filename);
+  const meta = ALL_STORY_METADATA.find(story => story.filename === filename);
   if (!meta) {
     return undefined;
   }
@@ -171,11 +184,13 @@ export function getStoryMetadata(): StoryMetadata[] {
 }
 
 export function getStoryMetadataByFilename(filename: string): StoryMetadata | undefined {
-  return STORY_METADATA.find(story => story.filename === filename);
+  // Check all stories including unlisted ones
+  return ALL_STORY_METADATA.find(story => story.filename === filename);
 }
 
 export function getStoryMetadataBySlug(slug: string): StoryMetadata | undefined {
-  return STORY_METADATA.find(story => story.slug === slug);
+  // Check all stories including unlisted ones
+  return ALL_STORY_METADATA.find(story => story.slug === slug);
 }
 
 export async function loadStoryBySlug(slug: string): Promise<BundledStory | undefined> {
@@ -212,8 +227,12 @@ export function getBundledStoryTitles(): Array<{filename: string, title: string,
   writeFileSync(metadataOutputPath, metadataModuleContent, 'utf-8');
   
   console.log(`\n🎉 Successfully validated ${stories.length} example stories:`);
+  console.log(`   📚 ${metadata.length} listed stories`);
+  console.log(`   🔒 ${unlistedMetadata.length} unlisted stories`);
+  
   stories.forEach(story => {
-    console.log(`   ✅ ${story.title} by ${story.author} (${story.filename})`);
+    const isUnlisted = unlistedMetadata.some(m => m.filename === story.filename);
+    console.log(`   ✅ ${story.title} by ${story.author} (${story.filename})${isUnlisted ? ' [unlisted]' : ''}`);
   });
   
   console.log(`\n📦 Metadata written to: ${metadataOutputPath}`);

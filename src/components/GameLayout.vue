@@ -59,6 +59,8 @@ const isNotFound = computed(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
 }
 
 .not-found-container {
@@ -67,6 +69,7 @@ const isNotFound = computed(() => {
   justify-content: center;
   flex: 1;
   padding: 2rem;
+  background-color: var(--color-background);
 }
 
 .not-found-content {
@@ -77,13 +80,13 @@ const isNotFound = computed(() => {
 .not-found-content h2 {
   font-size: 2rem;
   margin-bottom: 1rem;
-  color: var(--text-color);
+  color: var(--color-text-primary);
 }
 
 .not-found-content p {
   font-size: 1.1rem;
   margin-bottom: 2rem;
-  color: var(--text-color-secondary);
+  color: var(--color-text-secondary);
   line-height: 1.6;
 }
 
@@ -110,11 +113,12 @@ const isNotFound = computed(() => {
 }
 
 .btn-primary {
-  background-color: var(--primary-color);
-  color: white;
+  background-color: var(--color-accent);
+  color: var(--color-background);
 }
 
 .btn-primary:hover {
-  background-color: var(--primary-color-hover);
+  background-color: var(--color-accent);
+  opacity: 0.9;
 }
 </style>

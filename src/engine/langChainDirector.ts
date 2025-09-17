@@ -209,18 +209,68 @@ ${malformedResponse}`;
       // Check if it's a JSON array string
       if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
         try {
+          // Try to parse as JSON
           const parsed = JSON.parse(trimmed);
           if (Array.isArray(parsed)) {
-            console.log('📝 Detected double-encoded narrativeParts, parsing JSON array');
+            console.log('📝 Successfully parsed double-encoded narrativeParts');
             narrativeArray = parsed;
           } else {
             // Parsed but not an array
             narrativeArray = [rawNarrativeParts];
           }
         } catch (e) {
-          // Not valid JSON, might be a narrative that just happens to start with [
-          console.log('📝 NarrativeParts looks like JSON but failed to parse, treating as narrative text');
-          narrativeArray = [rawNarrativeParts];
+          // JSON parse failed - try to extract array elements manually
+          // This handles cases where the string contains escaped quotes
+          try {
+            // Remove outer brackets and split by comma, handling quoted strings
+            const innerContent = trimmed.slice(1, -1);
+            const elements: string[] = [];
+            let current = '';
+            let inString = false;
+            let escapeNext = false;
+            
+            for (let i = 0; i < innerContent.length; i++) {
+              const char = innerContent[i];
+              
+              if (escapeNext) {
+                current += char;
+                escapeNext = false;
+              } else if (char === '\\') {
+                escapeNext = true;
+                // Don't add the escape character itself
+              } else if (char === '"') {
+                if (inString) {
+                  // End of string - check if we should add this element
+                  let j = i + 1;
+                  while (j < innerContent.length && innerContent[j] === ' ') j++;
+                  if (j >= innerContent.length || innerContent[j] === ',') {
+                    elements.push(current);
+                    current = '';
+                    i = j; // Skip to comma or end
+                  }
+                }
+                inString = !inString;
+              } else if (inString) {
+                current += char;
+              }
+            }
+            
+            // Add any remaining content
+            if (current.trim()) {
+              elements.push(current);
+            }
+            
+            if (elements.length > 0) {
+              console.log('📝 Successfully extracted array elements from malformed JSON string');
+              narrativeArray = elements;
+            } else {
+              console.log('📝 Failed to extract array elements, treating as single narrative');
+              narrativeArray = [rawNarrativeParts];
+            }
+          } catch (extractError) {
+            console.log('📝 Manual extraction failed, treating as single narrative');
+            narrativeArray = [rawNarrativeParts];
+          }
         }
       } else {
         // Regular string, wrap in array

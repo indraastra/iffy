@@ -29,11 +29,36 @@ export const STORY_METADATA: StoryMetadata[] = [
     "slug": "friday-night-rain"
   },
   {
-    "filename": "friday_night_rain_reflected.yaml",
-    "title": "Friday Night Rain (Reflected)",
+    "filename": "intermission.yaml",
+    "title": "Intermission",
     "author": "Iffy Collective",
-    "blurb": "Some words weigh too much to speak, even to those who wait patiently to hear them.",
-    "slug": "friday-night-rain-reflected"
+    "blurb": "Three months of silence, broken by a chance encounter.",
+    "slug": "intermission"
+  },
+  {
+    "filename": "intermission_test.yaml",
+    "title": "Intermission Test",
+    "author": "Iffy Collective",
+    "blurb": "The play you're watching shapes how your story unfolds.",
+    "slug": "intermission-test"
+  },
+  {
+    "filename": "transition_test.yaml",
+    "title": "Transition Test",
+    "author": "Test",
+    "blurb": "Testing flag-based story endings",
+    "slug": "transition-test"
+  }
+];
+
+// All stories including unlisted ones (for direct access by slug/filename)
+const ALL_STORY_METADATA: StoryMetadata[] = [
+  {
+    "filename": "friday_night_rain.yaml",
+    "title": "Friday Night Rain",
+    "author": "Iffy Collective",
+    "blurb": "The space between words grows heavier with each passing Friday.",
+    "slug": "friday-night-rain"
   },
   {
     "filename": "intermission.yaml",
@@ -71,10 +96,10 @@ export async function loadStoryContent(filename: string): Promise<string> {
 }
 
 /**
- * Load a complete story with content
+ * Load a complete story with content (including unlisted stories)
  */
 export async function loadStory(filename: string): Promise<BundledStory | undefined> {
-  const meta = STORY_METADATA.find(story => story.filename === filename);
+  const meta = ALL_STORY_METADATA.find(story => story.filename === filename);
   if (!meta) {
     return undefined;
   }
@@ -91,11 +116,13 @@ export function getStoryMetadata(): StoryMetadata[] {
 }
 
 export function getStoryMetadataByFilename(filename: string): StoryMetadata | undefined {
-  return STORY_METADATA.find(story => story.filename === filename);
+  // Check all stories including unlisted ones
+  return ALL_STORY_METADATA.find(story => story.filename === filename);
 }
 
 export function getStoryMetadataBySlug(slug: string): StoryMetadata | undefined {
-  return STORY_METADATA.find(story => story.slug === slug);
+  // Check all stories including unlisted ones
+  return ALL_STORY_METADATA.find(story => story.slug === slug);
 }
 
 export async function loadStoryBySlug(slug: string): Promise<BundledStory | undefined> {

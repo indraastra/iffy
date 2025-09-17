@@ -12,6 +12,7 @@ export interface ImpressionistStory {
   author: string
   blurb: string  // 1-2 sentence hook for the story
   version: string  // e.g., "1.0", "2.3"
+  unlisted?: boolean  // If true, story won't appear in public listings
   
   // Story essence (required)
   context: string  // 1-3 sentences capturing story essence

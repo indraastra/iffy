@@ -123,6 +123,7 @@ export class ImpressionistParser {
       author: data.author ? String(data.author).trim() : '',
       blurb: data.blurb ? String(data.blurb).trim() : '',
       version: data.version ? String(data.version).trim() : '1.0',
+      unlisted: data.unlisted === true,  // Parse the unlisted flag
       
       // Story essence
       context: data.context ? String(data.context).trim() : '',
