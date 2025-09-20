@@ -220,6 +220,7 @@ export interface DirectorSignals {
   error?: string        // Error message for debugging
   endStory?: boolean    // Mark story as ended
   endingId?: string     // ID of the ending that was triggered
+  game_over?: boolean   // Natural story conclusion detected
 }
 
 // Metrics tracking for optimization

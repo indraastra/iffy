@@ -15,16 +15,8 @@ const mockMultiModelService = {
 describe('Unplanned Ending Integration', () => {
   let engine: ImpressionistEngine;
   let story: ImpressionistStory;
-  let uiCallbacks: any;
-
   beforeEach(() => {
     vi.clearAllMocks();
-    
-    // Track UI callbacks
-    uiCallbacks = {
-      messages: [],
-      typingShown: false
-    };
 
     story = {
       title: "Test Story",
@@ -96,7 +88,6 @@ describe('Unplanned Ending Integration', () => {
       .mockResolvedValueOnce(endingResponse); // Second call for ending
 
     const result = await engine.processAction({ 
-      type: 'user', 
       input: 'walk away forever' 
     });
 
@@ -129,7 +120,6 @@ describe('Unplanned Ending Integration', () => {
     mockMultiModelService.makeStructuredRequest.mockResolvedValue(response);
 
     const result = await engine.processAction({ 
-      type: 'user', 
       input: 'step outside' 
     });
 
@@ -164,7 +154,7 @@ describe('Unplanned Ending Integration', () => {
       .mockResolvedValueOnce(endingAction)
       .mockResolvedValueOnce(endingNarrative);
 
-    await engine.processAction({ type: 'user', input: 'leave forever' });
+    await engine.processAction({ input: 'leave forever' });
     
     expect(engine.getGameState().isEnded).toBe(true);
 
@@ -182,7 +172,6 @@ describe('Unplanned Ending Integration', () => {
     mockMultiModelService.makeStructuredRequest.mockResolvedValue(postEndingResponse);
 
     const postResult = await engine.processAction({ 
-      type: 'user', 
       input: 'imagine returning' 
     });
 
@@ -221,7 +210,7 @@ describe('Unplanned Ending Integration', () => {
       .mockResolvedValueOnce(actionWithFlag)
       .mockResolvedValueOnce(plannedEndingResponse);
 
-    await engine.processAction({ type: 'user', input: 'make the choice' });
+    await engine.processAction({ input: 'make the choice' });
 
     // Should use the planned ending, not unplanned
     expect(engine.getGameState().isEnded).toBe(true);
