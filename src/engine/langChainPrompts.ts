@@ -535,6 +535,7 @@ ${this.getRichTextFormattingInstructions()}
 * memories: Array of strings with important details to remember: discoveries, changes, or new knowledge gained
 * importance: Rate the significance of this interaction (1-10, default 5)
 * flagChanges: Object with 'set' and 'unset' arrays listing flag IDs to change based on this interaction
+* signals: Optional object with special signals (discover, game_over)
 
 **CRITICAL FORMAT REQUIREMENTS:**
 * narrativeParts MUST be an array of strings (e.g., ["First paragraph.", "Second paragraph."]), NOT a JSON-encoded string
@@ -543,6 +544,11 @@ ${this.getRichTextFormattingInstructions()}
 * Set flags conservatively - only when the action clearly warrants the change
 
 **FLAG MANAGEMENT:**
-Use the flag system to track story state changes and character developments. Set flags when significant events occur that affect the story world or character relationships.`;
+Use the flag system to track story state changes and character developments. Set flags when significant events occur that affect the story world or character relationships.
+
+**DETECTING NATURAL CONCLUSIONS:**
+If the player's action creates a natural story ending (permanent departure, final decision, clear closure), set signals.game_over: true
+Examples that warrant game_over: "walk away forever", "close the door behind you one last time", "make your final choice", "say goodbye and leave"
+Do NOT use game_over for: temporary departures, ongoing actions, or moments that might continue`;
   }
 }

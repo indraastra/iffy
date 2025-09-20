@@ -376,26 +376,52 @@ export class ImpressionistEngine {
         this.uiAddMessageCallback(finalNarrative, 'story');
       }
       
-      // Check for automatic endings after applying flag changes
+      // Check for automatic endings after applying flag changes OR game_over signal
       const endingTriggered = this.checkAutomaticEndings();
-      if (endingTriggered) {
-        // Generate ending narrative through director
-        const endingInfo = this.story?.endings?.variations.find(e => e.id === endingTriggered);
+      const gameOverSignal = finalResponse.signals?.game_over;
+      
+      if (endingTriggered || gameOverSignal) {
+        let endingInfo: { id: string; content: string } | undefined;
+        
+        if (endingTriggered) {
+          // Normal ending with author-provided content
+          const ending = this.story?.endings?.variations.find(e => e.id === endingTriggered);
+          if (ending) {
+            endingInfo = { id: endingTriggered, content: ending.sketch };
+          }
+        } else if (gameOverSignal) {
+          // Unplanned ending - use generic guidance
+          endingInfo = {
+            id: 'unplanned',
+            content: `The story reaches its natural conclusion through this decisive action. 
+            Honor the established narrative voice, maintain the story's themes, and provide 
+            emotional closure that feels earned and appropriate to the journey so far.`
+          };
+        }
+        
         if (endingInfo) {
           const endingResponse = await this.director.processEndingAction(
             context, 
             action.input, 
-            { id: endingTriggered, content: endingInfo.sketch }
+            endingInfo
           );
           
           // Update the display response with ending narrative
           displayResponse.narrative = endingResponse.narrative;
           displayResponse.memories = [...(displayResponse.memories || []), ...(endingResponse.memories || [])];
           displayResponse.signals = { ...displayResponse.signals, ...endingResponse.signals };
+          
+          // Update finalNarrative to use the ending response
+          finalNarrative = normalizeNarrative(endingResponse.narrative);
+          
+          // Display the ending narrative via UI callback if available
+          if (this.uiAddMessageCallback) {
+            this.uiAddMessageCallback(finalNarrative, 'story');
+          }
         }
         
         this.gameState.isEnded = true;
-        this.gameState.endingId = endingTriggered;
+        this.gameState.endingId = endingInfo?.id || 'unplanned';
       }
       
       // Check if an ending was actually triggered after applying signals (not just if signal existed)
@@ -586,6 +612,12 @@ export class ImpressionistEngine {
       if (response.signals.endingId) {
         this.gameState.endingId = response.signals.endingId;
       }
+    }
+
+    // Unplanned story ending via game_over signal
+    if (response.signals.game_over) {
+      this.gameState.isEnded = true;
+      this.gameState.endingId = 'unplanned';
     }
   }
 

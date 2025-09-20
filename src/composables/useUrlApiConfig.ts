@@ -17,7 +17,7 @@ import { useApiConfig } from '@/composables/useApiConfig'
  * - ?apiKey=AIza...  (auto-detects Google, uses default models)
  */
 export function useUrlApiConfig() {
-  const { updateConfig, isConfigured, getDefaultModel, getCheapestModelForProvider } = useApiConfig()
+  const { updateConfig, getDefaultModel, getCheapestModelForProvider } = useApiConfig()
   
   /**
    * Auto-detect provider from API key format

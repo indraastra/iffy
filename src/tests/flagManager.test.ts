@@ -154,11 +154,9 @@ describe('FlagManager', () => {
 
     it('should apply flag changes from LLM', () => {
       flagManager.applyChanges({
-        values: { 
-          flag1: true, 
-          flag2: false,
-          flag3: "string_value"
-        }
+        flag1: true, 
+        flag2: false,
+        flag3: "string_value"
       });
 
       expect(flagManager.getFlag('flag1')).toBe(true);

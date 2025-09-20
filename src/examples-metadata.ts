@@ -80,6 +80,13 @@ const ALL_STORY_METADATA: StoryMetadata[] = [
     "author": "Test",
     "blurb": "Testing flag-based story endings",
     "slug": "transition-test"
+  },
+  {
+    "filename": "before_the_journey_a.yaml",
+    "title": "Before the Journey - Side A: The Departure",
+    "author": "Iffy Collective",
+    "blurb": "Two hours until the overnight express departs. Your friend drove you to the station, and now you're both sitting in Track Nine Café, watching your train wait on Platform 3. Everything you've been through led to this moment - but is leaving still the right choice?",
+    "slug": "before-the-journey-a"
   }
 ];
 

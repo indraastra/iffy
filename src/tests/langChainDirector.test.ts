@@ -98,9 +98,7 @@ describe('LangChainDirector', () => {
           narrativeParts: ["You examine the room carefully."],
           memories: ["Player looked around"],
           importance: 5,
-          flagChanges: {
-            values: {}
-          }
+          flagChanges: {}
         },
         usage: { input_tokens: 100, output_tokens: 50, total_tokens: 150 }
       };
@@ -140,7 +138,7 @@ describe('LangChainDirector', () => {
           memories: ["Player opened door"],
           importance: 6,
           flagChanges: {
-            values: { door_opened: true }
+            door_opened: true
           }
         }
       };
@@ -156,7 +154,7 @@ describe('LangChainDirector', () => {
 
       // Verify flag changes were applied
       expect(mockFlagManager.applyChanges).toHaveBeenCalledWith({
-        values: { door_opened: true }
+        door_opened: true
       });
     });
 
@@ -169,7 +167,7 @@ describe('LangChainDirector', () => {
           memories: [],
           importance: 5,
           flagChanges: {
-            values: { unknown_flag: true }
+            unknown_flag: true
           }
         }
       };
@@ -188,9 +186,7 @@ describe('LangChainDirector', () => {
           narrativeParts: ["You trigger something."],
           memories: [],
           importance: 5,
-          flagChanges: {
-            values: {}
-          }
+          flagChanges: {}
         }
       };
 
@@ -208,9 +204,7 @@ describe('LangChainDirector', () => {
           narrativeParts: ["You do something else."],
           memories: [],
           importance: 5,
-          flagChanges: {
-            values: {}
-          }
+          flagChanges: {}
         }
       };
 
@@ -249,7 +243,7 @@ describe('LangChainDirector', () => {
           memories: [],
           importance: 5,
           flagChanges: {
-            values: { some_flag: true }
+            some_flag: true
           }
         }
       };
@@ -262,7 +256,7 @@ describe('LangChainDirector', () => {
       // Should complete successfully with just the action response
       expect(result.narrative).toEqual(["You act."]);
       expect(mockFlagManager.applyChanges).toHaveBeenCalledWith({
-        values: { some_flag: true }
+        some_flag: true
       });
     });
   });

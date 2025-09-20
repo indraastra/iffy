@@ -1,0 +1,239 @@
+title: "Before the Journey - Side A: The Departure"
+author: "Iffy Collective"
+blurb: "Two hours until the overnight express departs. Your friend drove you to the station, and now
+  you're both sitting in Track Nine Café, watching your train wait on Platform 3. Everything you've
+  been through led to this moment - but is leaving still the right choice?"
+version: "2.0"
+unlisted: true
+context: "You're about to embark on a month-long solo journey to heal from a difficult period in
+  your life. Your closest friend Mia is here for the goodbye, but the conversation is stirring
+  feelings you weren't prepared for."
+
+ui:
+  loadingMessage: "Settling into the café..."
+
+narrative:
+  voice: "Direct second-person present, conversational and immediate"
+  setting: "Track Nine Café at Millbrook Junction train station, overlooking the platforms"
+  tone: "Energetic but anxious, decisions in motion, time as catalyst not weight"
+  themes:
+    [
+      "healing through connection",
+      "love interrupting plans",
+      "courage in the face of departure",
+      "choosing adventure vs. choosing each other"
+    ]
+
+# Simplified flags - let the LLM handle most state tracking
+flags:
+  mia_confessed:
+    default: false
+    description: "When Mia admits her romantic feelings"
+  player_reciprocated:
+    default: false
+    description: "When player admits mutual feelings"
+  journey_decided:
+    default: false
+    description: "When final decision about the journey is made"
+  jukebox_approached:
+    default: false
+    description: "When player approaches or shows interest in the jukebox"
+  music_selected:
+    default: false
+    description: "When player selects a song from the jukebox"
+
+world:
+  characters:
+    mia:
+      name: "Mia"
+      sketch: "Your closest friend who drove you here tonight. Something in her eyes suggests this goodbye
+        means more than either of you has said."
+      voice: "Energetic, warm, trying to keep things light but emotions bleeding through"
+      behaviors:
+        base: "Sitting across from you at your usual table by the window, coffee getting cold, stealing
+          glances at the departure board."
+        states:
+        - when:
+            all_of: [ "mia_confessed" ]
+            none_of: [ "player_reciprocated" ]
+          description: "Vulnerable but trying to be brave, watching your face for any sign of how you're
+            taking this."
+        - when:
+            all_of: [ "mia_confessed", "player_reciprocated" ]
+          description: "Relief and joy barely contained, leaning forward, the careful distance dissolved."
+
+    sam:
+      name: "Sam"
+      sketch: "The café server - middle-aged, knowing eyes, has seen every kind of goodbye this station
+        offers."
+      voice: "Wry, observant, drops wisdom at unexpected moments"
+
+  locations:
+    track_nine:
+      name: "Track Nine Café"
+      sketch: "Second-floor café with floor-to-ceiling windows overlooking Platform 3. Corner jukebox that
+        only plays track 9 from any album - Sam's quirky rule."
+      atmosphere: [ "warm lights against evening windows", "coffee and train diesel", "departure board clicking" ]
+      details:
+      - "Your usual table facing the platforms"
+      - "The vintage Wurlitzer with its handwritten sign"
+      - "Other travelers having their own goodbyes"
+      - "The 8:47 overnight express waiting below"
+
+scenes:
+  opening:
+    process_sketch: false
+    sketch: |
+      Track Nine Café, 6:30 PM. Through the windows, your train waits on Platform 3.
+      The departure board clicks: **8:47 - OVERNIGHT EXPRESS - ON TIME**
+
+      [Mia](character:mia) drops into the seat across from you. "Two hours to talk you 
+      out of this crazy plan." She's grinning, but there's something else in her eyes.
+
+      Your packed backpack leans against the table. In the corner, a vintage jukebox 
+      cycles through warm lights.
+
+      [Sam](character:sam) approaches with the coffee pot. "Refills? Or maybe some music 
+      to set the mood?" They nod toward the Wurlitzer. "Track 9s have a way of revealing 
+      what needs revealing."
+
+    guidance: |
+      SCENE ENTRY: Reset music_selected=false when entering this scene (allows jukebox re-use).
+
+      INTERACTIONS: This is the main conversation space. Player can talk to Mia about 
+      the journey, engage with Sam about coffee/life wisdom, or show interest in the jukebox.
+
+      JUKEBOX TRIGGER: Set jukebox_approached=true when player shows interest in music/jukebox 
+      (approaching it, asking about it, mentioning music, etc.)
+
+    transitions:
+      jukebox:
+        requires:
+          all_of: [ "jukebox_approached" ]
+
+  jukebox:
+    sketch: |
+      You approach the vintage Wurlitzer, quarters in hand. The handwritten sign reads: 
+      "Only plays track 9 from any album - Sam's Rules."
+
+      The selection wheel shows various albums from different eras:
+
+      **Available selections:**
+      - Yeah Yeah Yeahs - *Maps*
+      - The Cure - *Just Like Heaven*
+      - Bob Marley - *Three Little Birds*
+      - Radiohead - *Jigsaw Falling into Place*
+      - Tool - *Lateralus*
+
+      Mia watches from the table. "Good choice on the track 9 rule. Sometimes 
+      you need the universe to narrow down your options."
+
+    guidance: |
+      SCENE ENTRY: Reset jukebox_approached=false when entering this scene (clean interaction).
+
+      MUSIC SELECTION: When player selects a song, set music_selected=true and describe 
+      the music starting to play. Each song should create a different mood for the 
+      conversation when they return to the opening scene.
+
+      SCENE PURPOSE: This is a focused interaction - player chooses music and returns 
+      to the main conversation with the selected mood enhancement.
+
+    transitions:
+      opening:
+        requires:
+          all_of: [ "music_selected" ]
+
+endings:
+  requires:
+    any_of:
+    - "journey_decided"
+
+  variations:
+  - id: "stay_for_love"
+    when: "choosing love over the journey"
+    requires:
+      all_of:
+      - "mia_confessed"
+      - "player_reciprocated"
+      - "journey_decided"
+    sketch: |
+      "I'm not getting on that train," you say, surprised by your own certainty.
+
+      Mia's face transforms with hope. Through the window, the overnight express 
+      pulls away from Platform 3, carrying other people's journeys into the night.
+
+      "Are you sure?" she asks. "I don't want to be the reason you don't heal."
+
+      You reach across and take her hand. "Maybe healing doesn't always mean 
+      going away. Maybe sometimes it means staying and building something new."
+
+      Sam appears with fresh coffee. "Next train's not for another week. Gives 
+      you time to figure things out."
+
+  - id: "journey_together"
+    when: "inviting Mia along"
+    requires:
+      all_of:
+      - "mia_confessed"
+      - "player_reciprocated"
+    sketch: |
+      "Come with me," you say suddenly. "This doesn't have to be a solo journey."
+
+      Mia's eyes widen. "I can't just... I have work, responsibilities..."
+
+      "So did I. The ticket office is still open. What if healing doesn't mean 
+      doing it alone? What if it means doing it with someone who loves you?"
+
+      Sam, eavesdropping shamelessly, pipes up: "Forty-five minutes till they 
+      close. Just saying."
+
+  - id: "journey_alone"
+    when: "leaving despite everything"
+    requires:
+      all_of:
+      - "journey_decided"
+    sketch: |
+      The final boarding call echoes through the station. You stand, backpack 
+      in hand, everything you wanted to say stuck in your throat.
+
+      Mia manages a brave smile. "Send me postcards?"
+
+      "Every town," you promise.
+
+      As you head for the stairs, Sam calls out: "Sometimes the journey teaches 
+      us what home really means."
+
+      Through the café window, you see Mia watching as your train pulls away 
+      into the night.
+
+guidance: |
+  CRITICAL - CHARACTER CONSISTENCY:
+  - Mia is female (she/her pronouns)
+  - The player/main character is male
+  - Sam is the server (they/them or context-appropriate pronouns)
+
+  TONE AND PACING:
+  - More energetic and conversational than contemplative stories
+  - Real-time conversation, not literary introspection
+  - The two-hour countdown creates urgency
+  - Allow natural interruptions and momentum shifts
+
+  EMERGENT STORYTELLING:
+  - Don't force specific paths - let player actions guide the narrative
+  - Sam can appear whenever it feels natural
+  - The jukebox music should color the mood but not dictate it
+  - Mia's confession can happen early, late, or be prompted by player
+  - Other café patrons and station activity provide texture
+
+  CONVERSATION STYLE:
+  - Quick exchanges, incomplete sentences, talking over each other
+  - Nervous energy, deflection, sudden vulnerable moments
+  - Less "weight of silence" and more "filling silence with chatter"
+  - Friends who know each other's rhythms
+
+  TIME PROGRESSION:
+  - Story starts at 6:30 PM
+  - Train departs at 8:47 PM
+  - Let time advance naturally through scenes
+  - Boarding announcements at 7:00, 7:30, 8:00, 8:30
+  - Each announcement should increase urgency

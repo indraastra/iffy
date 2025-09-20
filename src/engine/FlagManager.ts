@@ -11,9 +11,7 @@ import { ImpressionistStory, StructuredFlag } from '@/types/impressionistStory';
 export type StoryData = ImpressionistStory;
 
 // Simple flag change interface for LLM responses  
-export interface FlagChange {
-  values: Record<string, any>;
-}
+export interface FlagChange extends Record<string, any> {}
 
 export interface FlagTrigger {
   pattern: string;
@@ -111,11 +109,9 @@ export class FlagManager {
 
   // Apply flag changes from LLM
   applyChanges(changes: FlagChange): void {
-    // Set flags to their specific values
-    if (changes.values) {
-      for (const [flag, value] of Object.entries(changes.values)) {
-        this.setFlag(flag, value);
-      }
+    // Set flags to their specific values - now expects direct flag->value mapping
+    for (const [flag, value] of Object.entries(changes)) {
+      this.setFlag(flag, value);
     }
     
     // Invalidate cache after batch changes

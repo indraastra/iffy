@@ -32,7 +32,7 @@ export const POPULAR_MODELS: ModelOption[] = [
   // Google (now default provider)
   {
     provider: 'google',
-    model: 'gemini-2.5-flash-preview-05-20',
+    model: 'gemini-2.5-flash',
     displayName: 'Gemini 2.5 Flash',
     description: 'Fast and capable with thinking (recommended)',
     costTier: 'premium'
@@ -108,7 +108,7 @@ export const POPULAR_MODELS: ModelOption[] = [
 export const DEFAULT_MODELS: Record<LLMProvider, string> = {
   anthropic: 'claude-3-5-sonnet-latest',
   openai: 'gpt-4o',
-  google: 'gemini-2.5-flash-preview-05-20'
+  google: 'gemini-2.5-flash'
 };
 
 // Default cost models per provider (efficient options for cost-optimized operations)
@@ -140,7 +140,7 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
   
   // Google
   'gemini-2.5-pro-preview-06-05': { input: 1.25, output: 10.00 }, // ≤200K context, includes thinking tokens
-  'gemini-2.5-flash-preview-05-20': { input: 0.15, output: 0.60 }, // Non-thinking output, thinking tokens cost $3.50/M
+  'gemini-2.5-flash': { input: 0.15, output: 0.60 }, // Non-thinking output, thinking tokens cost $3.50/M
   'gemini-2.0-flash': { input: 0.10, output: 0.40 },
   'gemini-2.5-flash-lite-preview-06-17': { input: 0.075, output: 0.30 },
   'gemini-1.5-pro': { input: 1.25, output: 5.00 }, // ≤128K context

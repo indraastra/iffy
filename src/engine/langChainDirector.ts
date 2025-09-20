@@ -125,7 +125,7 @@ export class LangChainDirector {
 }
 
 CRITICAL: 
-- flagChanges MUST be an object with "values" object
+- flagChanges MUST be an object mapping flag names directly to values
 - narrativeParts MUST be an array of strings
 - Do NOT include any explanation, just return the corrected JSON
 
@@ -149,7 +149,7 @@ ${malformedResponse}`;
           narrativeParts: ["I need a moment to process what you said."],
           memories: [],
           importance: 5,
-          flagChanges: { values: {} }
+          flagChanges: undefined
         }
       };
     }
@@ -291,9 +291,7 @@ ${malformedResponse}`;
       memories: result.data.memories || [],
       importance: result.data.importance || defaultImportance,
       signals: result.data.signals || {},
-      actualFlags: {
-        values: result.data.flagChanges?.values || {}
-      }
+      actualFlags: result.data.flagChanges || {}
     };
 
     // Extract usage information for logging and metadata
@@ -405,7 +403,7 @@ ${malformedResponse}`;
     const response = await this.processAction(context, playerInput);
 
     // Apply flag changes from the narrative response
-    if (response.actualFlags && Object.keys(response.actualFlags.values).length > 0) {
+    if (response.actualFlags && Object.keys(response.actualFlags).length > 0) {
       this.flagManager?.applyChanges(response.actualFlags);
       
       // Update debug pane with current flag states

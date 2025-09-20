@@ -515,7 +515,7 @@ multiple lines for readability.`,
                 narrativeParts: ['Action response: You are now ready'],
                 memories: ['Player is ready'],
                 importance: 5,
-                flagChanges: { values: { door_opened: true, ready_to_leave: true } }
+                flagChanges: { door_opened: true, ready_to_leave: true }
               }
             });
           } else {
@@ -525,7 +525,7 @@ multiple lines for readability.`,
                 narrativeParts: ['Transition: You move to the hallway'],
                 memories: ['Player moved to hallway'],
                 importance: 7,
-                flagChanges: { values: {} }
+                flagChanges: {}
               }
             });
           }
@@ -599,7 +599,7 @@ multiple lines for readability.`,
                 narrativeParts: ['Action sets flag'],
                 memories: [],
                 importance: 5,
-                flagChanges: { values: { trigger_flag: true } }
+                flagChanges: { trigger_flag: true }
               }
             });
           } else {
@@ -609,7 +609,7 @@ multiple lines for readability.`,
                 narrativeParts: [],
                 memories: [],
                 importance: 5,
-                flagChanges: { values: {} }
+                flagChanges: {}
               }
             });
           }
