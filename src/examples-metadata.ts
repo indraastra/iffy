@@ -36,6 +36,20 @@ export const STORY_METADATA: StoryMetadata[] = [
     "slug": "intermission"
   },
   {
+    "filename": "intermission_side_a.yaml",
+    "title": "Intermission: Side A",
+    "author": "Iffy Collective",
+    "blurb": "Three months of silence, broken by a chance encounter.",
+    "slug": "intermission-side-a"
+  },
+  {
+    "filename": "intermission_side_b.yaml",
+    "title": "Intermission: Side B",
+    "author": "Iffy Collective",
+    "blurb": "Three months of silence, broken by a chance encounter.",
+    "slug": "intermission-side-b"
+  },
+  {
     "filename": "transition_test.yaml",
     "title": "Transition Test",
     "author": "Test",
@@ -59,6 +73,20 @@ const ALL_STORY_METADATA: StoryMetadata[] = [
     "author": "Iffy Collective",
     "blurb": "Three months of silence, broken by a chance encounter.",
     "slug": "intermission"
+  },
+  {
+    "filename": "intermission_side_a.yaml",
+    "title": "Intermission: Side A",
+    "author": "Iffy Collective",
+    "blurb": "Three months of silence, broken by a chance encounter.",
+    "slug": "intermission-side-a"
+  },
+  {
+    "filename": "intermission_side_b.yaml",
+    "title": "Intermission: Side B",
+    "author": "Iffy Collective",
+    "blurb": "Three months of silence, broken by a chance encounter.",
+    "slug": "intermission-side-b"
   },
   {
     "filename": "transition_test.yaml",

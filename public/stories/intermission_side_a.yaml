@@ -1,0 +1,407 @@
+title: "Intermission: Side A"
+author: "Iffy Collective"
+blurb: "Three months of silence, broken by a chance encounter."
+version: "1.0"
+context: "An unexpected encounter at a theater brings the past into the present. You are V, someone whose first instinct is to believe, to hope, to imagine what could be—but who can be reached by gentle rationality."
+
+ui:
+  loadingMessage: "The lights dim..."
+
+narrative:
+  voice: "Present tense, intimate observation"
+  setting: "Independent theater where shared history lives in every corner"
+  tone: "Careful reconnection, each word testing the distance between past and present"
+  themes:
+    [
+      "memory as physical presence",
+      "unfinished conversations",
+      "the weight of shared history",
+      "finding words for what remained unspoken"
+    ]
+
+# Concrete event flags for story progression
+flags:
+  # Theater events
+  seats_taken:
+    default: false
+    description: "when V and C have taken their seats in the theater"
+
+  lights_dimmed:
+    default: false
+    description: "when the house lights dim and the first act begins"
+
+  first_act_ended:
+    default: false
+    description: "when the first act concludes and intermission is announced"
+
+  intermission_bell:
+    default: false
+    description: "when the bell rings signaling intermission is ending"
+
+  second_act_ended:
+    default: false
+    description: "when the second act ends and final curtain falls"
+
+  # Relationship milestones
+  contact_made:
+    default: false
+    description: "when V and C have made initial contact (approached or been approached)"
+
+  sitting_together:
+    default: false
+    description: "when V and C decide to sit together (vs separately)"
+
+  vulnerability_shared:
+    default: false
+    description: "when genuine vulnerability is exchanged during conversation"
+
+  decision_moment:
+    default: false
+    description: "when the final choice about continuing or parting is presented"
+    requires:
+      all_of: [ "second_act_ended" ]
+
+world:
+  characters:
+    v:
+      name: "V"
+      sketch: "You—someone whose first instinct is to believe, to hope, to imagine what could be. You lead with your heart, but you can be reached by gentle rationality."
+      voice: "Internal monologue that's warm, earnest, sometimes wistful. You feel things deeply."
+
+    c:
+      name: "C"
+      sketch: "The woman you didn't expect to see again. Clear-eyed and unflinching in her honesty, yet every difficult truth is softened by genuine care for those who must hear it. She carries three months of unspoken history in her posture."
+      voice: "Clear, thoughtful, gentle but firm. She speaks with conviction tempered by compassion."
+      behaviors:
+        base: "Maintains polite distance, but shared history weighs heavy in the space between."
+        states:
+        - when:
+            none_of: [ "contact_made" ]
+          description: "Pretending this is just coincidence, while unspoken memories fill the space between you."
+        - when:
+            all_of: [ "contact_made" ]
+            none_of: [ "vulnerability_shared" ]
+          description: "More present but cautious, testing each word before speaking. The conversation moves carefully around what matters."
+        - when:
+            all_of: [ "vulnerability_shared" ]
+          description: "Fully present, no longer hidden behind careful civility. Raw and real, nothing left unsaid."
+
+  locations:
+    theater_lobby:
+      name: "Riverside Theater Lobby"
+      sketch: "Exposed brick and vintage posters create intimate warmth. The buzz of pre-show anticipation
+        fills the air."
+      atmosphere: [ "anticipatory energy", "warm lighting", "conversations about art and life" ]
+
+    theater_bar:
+      name: "Lobby Bar"
+      sketch: "Small alcove bar serving wine and beer. Perfect for nervous conversations and liquid
+        courage."
+      atmosphere: [ "intimate lighting", "nervous energy", "possibility" ]
+
+    theater_seats:
+      name: "Theater Seats"
+      sketch: "Burgundy velvet seats in an intimate theater. Close enough to touch the stage, close enough
+        to feel each other's presence."
+      atmosphere: [ "hushed expectancy", "proximity", "shared experience" ]
+
+scenes:
+  theater_lobby:
+    location: "theater_lobby"
+    process_sketch: false
+    sketch: |
+      You're studying the cast list when that familiar sensation crawls up your spine—
+      the specific gravity of being seen by someone who knows your history. You turn.
+
+      **[C](character:c).**
+
+      Three months of carefully arranged distance collapses instantly. The program
+      trembles slightly in your hands, the same tremor you notice in hers. Between
+      you: twenty feet of lobby carpet that feels impossibly vast, weighted with
+      everything left unfinished.
+
+      Around you, strangers flow toward the theater doors, but you're both caught—
+      suspended in this unexpected moment of recognition.
+
+      The house manager's voice: "Five minutes to curtain."
+
+    guidance: |
+      V (the player) sees C and must decide how to handle this unexpected encounter.
+
+      V'S PERSPECTIVE: As a dreamer and idealist, V's internal voice should reflect:
+      - Hope flickering despite the three months of silence
+      - Seeing possibility in this chance meeting
+      - Leading with emotion while being aware of practical concerns
+      - Internal conflict between wanting to believe and knowing better
+
+      C'S DEMEANOR: She's composed but not cold. Her rationality is kind. She won't
+      make the first move but won't reject V's approach either.
+
+      SCENE PROGRESSION: Guide through these natural beats:
+      1. Initial recognition - V's hopeful heart vs cautious mind
+      2. Careful conversation, V testing the waters
+      3. Time pressure builds (2-3 minutes to curtain)
+      4. C asks "Where are you sitting?" - practical question carrying emotional weight
+      5. When V responds, C reveals proximity (2 seats away in same row)
+      6. The question of sitting together becomes about more than just seats
+      7. They enter theater, beginning their excavation or preservation
+
+    transitions:
+      first_act:
+        requires:
+          all_of: [ "seats_taken", "lights_dimmed" ]
+
+  first_act:
+    location: "theater_seats"
+    sketch: |
+      The house lights fade, and darkness becomes a kind of permission—you and
+      [C](character:c) sitting close enough to feel each other's presence, aware
+      of each breath in the carefully maintained distance.
+
+      On stage, lights reveal a family confronting their own unspoken truths—
+      inheritances both material and emotional, old wounds still tender to touch.
+      You're conscious of how your own unresolved history sits between you,
+      waiting to be acknowledged or ignored.
+
+    guidance: |
+      This scene should be highly interactive, not passive watching. Create active
+      moments that demand player response, not just observation.
+
+      V'S INTERNAL EXPERIENCE: V notices everything about C—small gestures, shifts
+      in posture, her breathing. The idealist in V wants to read meaning into every
+      moment. Show this internal narration while the play unfolds.
+
+      PLAY PROGRESSION: With each player action, advance the stage play toward
+      intermission. Keep the play about relationships and second chances.
+      Use the play's progression as backdrop and trigger for interactions with C.
+
+      INTERACTIVE MOMENTS (create these actively, don't just describe):
+      - C drops her program, or shifts uncomfortably - does V react?
+      - Your hands both reach for the shared armrest - what happens?
+      - C whispers a question/observation that requires response
+      - She tenses during an argument scene - acknowledge it or ignore?
+      - An actor's line makes you both look at each other - then what?
+      - C's phone buzzes/she checks the time - V notices or doesn't?
+
+      MEMORY PROMPTS: Use stage action to trigger reminiscence that lets V
+      define backstory:
+      - "You think back to the first time you met C..."
+      - "This reminds you of that night when you and C..."
+      - "Watching this argument, you remember when you both..."
+      - "The way the character says goodbye makes you think of..."
+
+      CRITICAL: End each beat with either C doing something that REQUIRES response
+      OR a memory prompt that invites V to complete the thought.
+
+      SCENE ENDING: When intermission is announced and house lights come up,
+      set first_act_ended flag.
+
+    transitions:
+      intermission:
+        requires:
+          all_of: [ "first_act_ended" ]
+
+  intermission:
+    location: "theater_bar"
+    sketch: |
+      Intermission finds you at the lobby bar with [C](character:c), wine glasses
+      between you like a fragile truce. Each sip seems considered, measured—as if
+      you're both testing how much honesty this moment can hold.
+
+      Around you, strangers discuss the play's first act, but their conversations
+      feel distant, muffled. This is your first real chance to address what's
+      been unspoken for three months.
+
+      The question hangs between you: will you finally have the conversation
+      that's been waiting, or let the past remain in the past?
+
+    guidance: |
+      This is the emotional crux. The intermission becomes a space for authentic
+      conversation.
+
+      V'S EMOTIONAL STATE: The dreamer in V wants to believe this meeting means
+      something. There's hope here, possibility. But V is also learning to listen
+      to reason.
+
+      C'S APPROACH: She's kind but clear. If difficult truths need saying, she'll
+      say them gently but directly. Her rationality is an act of care, not coldness.
+
+      The surrounding conversations about the play's themes mirror their situation.
+      This is where the real choices happen.
+
+      SCENE PROGRESSION: This scene happens during the play's intermission. Guide
+      toward meaningful conversation, then signal when intermission ends and the
+      second act is about to begin.
+
+    transitions:
+      second_act:
+        requires:
+          all_of: [ "intermission_bell" ]
+
+  second_act:
+    location: "theater_seats"
+    sketch: |
+      Back in your seats for the second act. Whatever was said during intermission
+      hangs in the air between you and [C](character:c), shifting the dynamic in ways
+      both subtle and profound.
+
+      The house lights dim again, but this time the darkness feels different—charged
+      with whatever understanding you've reached or avoided. The stage lights rise
+      on the second act, and you're both more aware of each other's presence than
+      you were before.
+
+      As the play continues to unfold, its themes and conflicts seem to resonate
+      with your own situation in new ways. Every moment becomes a choice about
+      how close or distant to remain.
+
+    guidance: |
+      The second act is where internal changes become external choices. The play's
+      resolution should mirror the choice facing V and C.
+
+      V'S GROWTH: If C has shared difficult truths, V is processing them. The idealist
+      doesn't disappear, but V is learning that dreams and reality can coexist. This
+      is where V might begin to accept what C has been trying to say.
+
+      INTERACTION OPPORTUNITIES: The changed dynamic from intermission creates new possibilities:
+      - Physical closeness choices (her hand near yours, do you take it? avoid it? acknowledge it?)
+      - Processing revelations from intermission conversation through action or silence
+      - Parallel moments where stage dialogue directly mirrors your situation
+      - Final decision points as the play reaches its climax
+      - Shared reactions to the play's resolution that reflect your own choices
+
+      SCENE ENDING: Build toward the stage play's final curtain and applause. When
+      the final bow is taken and applause begins to die down, set the second_act_ended
+      flag. This creates urgency as the evening draws to a close.
+
+    transitions:
+      after_the_show:
+        requires:
+          all_of: [ "second_act_ended" ]
+
+  after_the_show:
+    location: "theater_seats"
+    sketch: |
+      The final curtain falls, and the audience erupts in applause. You and [C](character:c)
+      clap together, but the real performance—the one happening between you throughout
+      the evening—remains unresolved.
+
+      As people begin to file out around you, the weight of decision settles in.
+      The evening has brought you both to this moment: the theater emptying, the
+      outside world waiting, and the question of what happens next hanging in the air.
+
+      This is where the evening's choices culminate. Will you extend the night?
+      Part ways with new understanding? Or find some other resolution to the story
+      that began three months ago and resumed tonight?
+
+    guidance: |
+      The resolution. All the choices made in the previous scenes culminate here.
+
+      V'S FINAL DECISION: V decides whether this is a beginning, an ending, or
+      something in between. The dreamer in V hasn't disappeared, but rationality
+      can guide the decision. V can accept difficult realities while still honoring
+      the emotions that brought them here.
+
+      C'S FINAL PRESENCE: She's steady, clear, kind to the end. She won't push V
+      toward any particular choice, but her own position will be honest.
+
+      SCENE PROGRESSION: This scene takes place after the play has fully ended.
+      The curtain has fallen, applause has died down, and now comes the real decision.
+
+      DECISION TRIGGER: When the moment comes for C and V to decide what
+      happens next (coffee, parting ways, etc.), set the decision_moment flag to
+      trigger the appropriate ending.
+
+endings:
+  requires:
+    all_of: [ "second_act_ended", "decision_moment" ]
+
+  variations:
+  - id: "new_beginning"
+    requires:
+      all_of: [ "vulnerability_shared", "decision_moment" ]
+    sketch: |
+      Walking to the coffee shop, you both carry yourselves differently—lighter,
+      like people who've finally said what needed saying. The past three months
+      weren't wasted time but necessary distance, giving you both space to
+      understand what really mattered.
+
+      The dreamer in you is still there, but now it's tempered by the wisdom C
+      helped you find. You're learning that the most romantic thing can be choosing
+      the path that makes sense.
+
+  - id: "gentle_closure"
+    requires:
+      all_of: [ "contact_made", "second_act_ended" ]
+      none_of: [ "vulnerability_shared" ]
+    sketch: |
+      Outside the theater, you part with the particular weight of acknowledged history.
+      Some relationships are meant to be remembered fondly but left in the past—
+      precious but belonging to another time. You both understand this now, and
+      there's peace in that understanding.
+
+      It hurts, but you recognize the kindness in C's clarity. Your heart wanted
+      more, but your head knows she's right.
+
+  - id: "brief_connection"
+    requires:
+      all_of: [ "vulnerability_shared" ]
+      none_of: [ "decision_moment" ]
+    sketch: |
+      The conversation at the bar was enough—fifteen minutes of honest words
+      that explained three months of silence. Sometimes understanding comes
+      quickly, completely, leaving nothing more that needs to be said.
+
+      You wanted to believe in more, but C's gentle rationality showed you what
+      you already knew. The connection was real, and so is the closure.
+
+  - id: "artifacts_remain_buried"
+    requires:
+      all_of: [ "second_act_ended" ]
+      none_of: [ "contact_made", "vulnerability_shared" ]
+    sketch: |
+      You leave without addressing anything, both of you maintaining the careful
+      distance of three months ago. Some conversations aren't ready to happen. Some
+      truths are too fragile for this moment. The silence continues,
+      and perhaps that's its own kind of answer.
+
+      The idealist in you wanted to reach out, but sometimes waiting is wiser than hoping.
+
+guidance: |
+  PLAYER CHARACTER: V is male (he/him). Someone whose first instinct is to believe,
+  to hope, to imagine what could be—but who can be reached by gentle rationality.
+
+  NPC CHARACTER: C is female (she/her). Clear-eyed and unflinching in her honesty,
+  yet every difficult truth is softened by genuine care for those who must hear it.
+
+  V'S VOICE AND PERSPECTIVE:
+  - Internal narration should reflect hope and possibility
+  - V notices details, reads into moments, feels deeply
+  - The dreamer in V wants to believe this meeting means something
+  - But V can hear reason when it's spoken with kindness
+  - V's growth arc is learning to dance between heart and head
+
+  C'S CHARACTER FROM V'S POV:
+  - V sees her clarity and strength
+  - Her kindness is evident even when she's being direct
+  - She doesn't waver, but she's never cruel
+  - V recognizes that her rationality comes from caring
+  - She tells V what they need to hear, not what they want to hear
+
+  EMOTIONAL TONE:
+  - This isn't about C crushing V's dreams
+  - It's about V learning that rationality and emotion can coexist
+  - C's kindness is as important as her correctness
+  - V's idealism is valued even as certain hopes are set aside
+  - The ending should feel bittersweet but growth-oriented
+
+  MEMORY AS PRESENCE: Focus on physical and sensory details that bring the past forward.
+  Each gesture, object, or scent carries emotional weight. Let memories surface
+  naturally through the present moment.
+
+  UNFINISHED BUSINESS: This relationship ended ambiguously, leaving things
+  unresolved. Each interaction reveals what went unsaid—sometimes healing,
+  sometimes painful, always meaningful.
+
+  THE PLAY AS MIRROR: The play they watch reflects their situation through
+  emotional resonance, not theatrical metaphor. They're observers finding their
+  own story reflected back.

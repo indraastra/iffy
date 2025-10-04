@@ -1,0 +1,423 @@
+title: "Intermission: Side B"
+author: "Iffy Collective"
+blurb: "Three months of silence, broken by a chance encounter."
+version: "1.0"
+context: "An unexpected encounter at a theater brings the past into the present. You are C, clear-eyed and unflinching in your honesty, yet every difficult truth you speak is softened by genuine care for those who must hear it."
+
+ui:
+  loadingMessage: "The lights dim..."
+
+narrative:
+  voice: "Present tense, intimate observation"
+  setting: "Independent theater where shared history lives in every corner"
+  tone: "Careful reconnection, each word testing the distance between past and present"
+  themes:
+    [
+      "memory as physical presence",
+      "unfinished conversations",
+      "the weight of shared history",
+      "finding words for what remained unspoken"
+    ]
+
+# Concrete event flags for story progression
+flags:
+  # Theater events
+  seats_taken:
+    default: false
+    description: "when C and V have taken their seats in the theater"
+
+  lights_dimmed:
+    default: false
+    description: "when the house lights dim and the first act begins"
+
+  first_act_ended:
+    default: false
+    description: "when the first act concludes and intermission is announced"
+
+  intermission_bell:
+    default: false
+    description: "when the bell rings signaling intermission is ending"
+
+  second_act_ended:
+    default: false
+    description: "when the second act ends and final curtain falls"
+
+  # Relationship milestones
+  contact_made:
+    default: false
+    description: "when C and V have made initial contact (approached or been approached)"
+
+  sitting_together:
+    default: false
+    description: "when C and V decide to sit together (vs separately)"
+
+  vulnerability_shared:
+    default: false
+    description: "when genuine vulnerability is exchanged during conversation"
+
+  decision_moment:
+    default: false
+    description: "when the final choice about continuing or parting is presented"
+    requires:
+      all_of: [ "second_act_ended" ]
+
+world:
+  characters:
+    c:
+      name: "C"
+      sketch: "You—clear-eyed and unflinching in your honesty, yet every difficult truth you speak is softened by genuine care for those who must hear it. You see things as they are and refuse comfortable lies."
+      voice: "Internal monologue that's clear and thoughtful. You care deeply, which is why you refuse to lie."
+
+    v:
+      name: "V"
+      sketch: "The man you didn't expect to see again. Someone whose first instinct is to believe, to hope, to imagine what could be. He carries three months of unspoken history in his earnest expression."
+      voice: "Warm, hopeful, sometimes wistful. He speaks from the heart but can be reached by gentle rationality."
+      behaviors:
+        base: "Hopeful but cautious, searching your face for signs of what this meeting might mean."
+        states:
+        - when:
+            none_of: [ "contact_made" ]
+          description: "Uncertain whether to approach or maintain distance. You can see the conflict in his posture."
+        - when:
+            all_of: [ "contact_made" ]
+            none_of: [ "vulnerability_shared" ]
+          description: "Engaging carefully, testing the waters. His idealism shows in how he frames questions, looking for possibility."
+        - when:
+            all_of: [ "vulnerability_shared" ]
+          description: "Fully present and processing. You can see him working to reconcile his hopes with your honesty."
+
+  locations:
+    theater_lobby:
+      name: "Riverside Theater Lobby"
+      sketch: "Exposed brick and vintage posters create intimate warmth. The buzz of pre-show anticipation
+        fills the air."
+      atmosphere: [ "anticipatory energy", "warm lighting", "conversations about art and life" ]
+
+    theater_bar:
+      name: "Lobby Bar"
+      sketch: "Small alcove bar serving wine and beer. Perfect for nervous conversations and liquid
+        courage."
+      atmosphere: [ "intimate lighting", "nervous energy", "possibility" ]
+
+    theater_seats:
+      name: "Theater Seats"
+      sketch: "Burgundy velvet seats in an intimate theater. Close enough to touch the stage, close enough
+        to feel each other's presence."
+      atmosphere: [ "hushed expectancy", "proximity", "shared experience" ]
+
+scenes:
+  theater_lobby:
+    location: "theater_lobby"
+    process_sketch: false
+    sketch: |
+      You're checking your ticket when you see him across the lobby.
+
+      **[V](character:v).**
+
+      Three months of carefully maintained distance collapses in an instant. Your
+      program trembles slightly in your hands—a betrayal of the composure you've
+      worked to maintain. He hasn't seen you yet, still studying the cast list
+      with that familiar intensity he brings to everything.
+
+      Around you, strangers flow toward the theater doors. You could slip past,
+      maintain the silence. Or you could acknowledge what you both know: this
+      meeting isn't really chance.
+
+      The house manager's voice: "Five minutes to curtain."
+
+    guidance: |
+      C (the player) sees V and must decide how to handle this unexpected encounter.
+
+      C'S PERSPECTIVE: As someone resolute and rational but kind, C's internal voice should reflect:
+      - Clarity about the situation and what she knows to be true
+      - Awareness of V's hopeful nature and care for his feelings
+      - The burden of being the one who sees things clearly
+      - Compassion underlying every decision, even difficult ones
+
+      V'S DEMEANOR: He's hopeful, earnest, perhaps too ready to believe this meeting
+      means something. C can see his idealism in his posture, his expression.
+
+      SCENE PROGRESSION: Guide through these natural beats:
+      1. Initial recognition - C's clear sight vs caring heart
+      2. Careful conversation, C managing both honesty and kindness
+      3. Time pressure builds (2-3 minutes to curtain)
+      4. C might ask "Where are you sitting?" - testing the waters practically
+      5. Discovery of proximity (2 seats away in same row)
+      6. The question of sitting together becomes about more than just seats
+      7. They enter theater, C aware this conversation must happen eventually
+
+    transitions:
+      first_act:
+        requires:
+          all_of: [ "seats_taken", "lights_dimmed" ]
+
+  first_act:
+    location: "theater_seats"
+    sketch: |
+      The house lights fade, and darkness becomes a kind of permission—you and
+      [V](character:v) sitting close enough to feel each other's presence, aware
+      of each breath in the carefully maintained distance.
+
+      On stage, lights reveal a family confronting their own unspoken truths—
+      inheritances both material and emotional, old wounds still tender to touch.
+      You're conscious of how your own unresolved history sits between you,
+      waiting to be acknowledged or ignored.
+
+    guidance: |
+      This scene should be highly interactive, not passive watching. Create active
+      moments that demand player response, not just observation.
+
+      C'S INTERNAL EXPERIENCE: C is hyper-aware of V beside her—his reactions to
+      the play, the hope she can sense in his proximity. She knows difficult
+      conversations are coming, and she's preparing how to be both honest and kind.
+
+      PLAY PROGRESSION: With each player action, advance the stage play toward
+      intermission. Keep the play about relationships and second chances.
+      Use the play's progression as backdrop and trigger for interactions with V.
+
+      INTERACTIVE MOMENTS (create these actively, don't just describe):
+      - V shifts closer or reaches for something - how does C respond?
+      - Your hands both reach for the shared armrest - what happens?
+      - V whispers a question/observation - C must respond with care
+      - The play shows an argument that mirrors their past - acknowledge it or not?
+      - An actor's line makes you both look at each other - what does C see in his eyes?
+      - C might notice V's hope, his attention on her - how does she handle it?
+
+      MEMORY PROMPTS: Use stage action to trigger reminiscence that lets C
+      define backstory:
+      - "You think back to the first time you met V..."
+      - "This reminds you of that conversation when you both..."
+      - "Watching this moment, you remember when you had to tell him..."
+      - "The way the character avoids the truth makes you think of..."
+
+      CRITICAL: End each beat with either V doing something that REQUIRES response
+      OR a memory prompt that invites C to complete the thought.
+
+      SCENE ENDING: When intermission is announced and house lights come up,
+      set first_act_ended flag.
+
+    transitions:
+      intermission:
+        requires:
+          all_of: [ "first_act_ended" ]
+
+  intermission:
+    location: "theater_bar"
+    sketch: |
+      Intermission finds you at the lobby bar with [V](character:v), wine glasses
+      between you like a fragile truce. Each sip seems considered, measured—as if
+      you're both testing how much honesty this moment can hold.
+
+      Around you, strangers discuss the play's first act, but their conversations
+      feel distant, muffled. This is your first real chance to address what's
+      been unspoken for three months.
+
+      You know what needs to be said. The question is how to say it with the
+      kindness he deserves, while still honoring the truth you both need.
+
+    guidance: |
+      This is the emotional crux. The intermission becomes a space for authentic
+      conversation.
+
+      C'S EMOTIONAL STATE: C sees the situation clearly and knows what she needs
+      to say. The challenge is saying it with kindness. She cares about V deeply,
+      which is exactly why she won't lie or soften truths that need to be clear.
+
+      V'S APPROACH: He's hopeful, possibly too hopeful. C can see him wanting to
+      believe this meeting is fate, that three months of distance might reset
+      something that needs facing, not forgetting.
+
+      C'S DIALOGUE APPROACH:
+      - Be honest but gentle
+      - Acknowledge his feelings as valid while being clear about reality
+      - Show care in how you frame difficult truths
+      - Don't waver on what you know to be right, but soften the delivery
+
+      The surrounding conversations about the play's themes mirror their situation.
+      This is where the real choices happen.
+
+      SCENE PROGRESSION: This scene happens during the play's intermission. Guide
+      toward meaningful conversation, then signal when intermission ends and the
+      second act is about to begin.
+
+    transitions:
+      second_act:
+        requires:
+          all_of: [ "intermission_bell" ]
+
+  second_act:
+    location: "theater_seats"
+    sketch: |
+      Back in your seats for the second act. Whatever was said during intermission
+      hangs in the air between you and [V](character:v), shifting the dynamic in ways
+      both subtle and profound.
+
+      The house lights dim again, but this time the darkness feels different—charged
+      with whatever understanding you've reached or avoided. The stage lights rise
+      on the second act, and you're both more aware of each other's presence than
+      you were before.
+
+      As the play continues to unfold, its themes and conflicts seem to resonate
+      with your own situation in new ways. You watch V from the corner of your eye,
+      seeing how he processes what you've shared.
+
+    guidance: |
+      The second act is where internal changes become external choices. The play's
+      resolution should mirror the choice facing C and V.
+
+      C'S AWARENESS: C is watching V process what she's told him. She can see the
+      idealist in him wrestling with reality. Her care for him shows in her attention,
+      her readiness to offer support even as she holds firm to what she knows is right.
+
+      V'S PROCESSING: If C has shared difficult truths, V is working through them.
+      C can see this in his posture, his reactions to the play, the distance or
+      closeness he chooses.
+
+      INTERACTION OPPORTUNITIES: The changed dynamic from intermission creates new possibilities:
+      - Physical closeness choices (his hand near yours, do you take it? acknowledge it? maintain space?)
+      - Witnessing V's processing through action or silence
+      - Parallel moments where stage dialogue directly mirrors your situation
+      - Final decision points as the play reaches its climax
+      - Shared reactions to the play's resolution that reflect the choice you've made
+
+      SCENE ENDING: Build toward the stage play's final curtain and applause. When
+      the final bow is taken and applause begins to die down, set the second_act_ended
+      flag. This creates urgency as the evening draws to a close.
+
+    transitions:
+      after_the_show:
+        requires:
+          all_of: [ "second_act_ended" ]
+
+  after_the_show:
+    location: "theater_seats"
+    sketch: |
+      The final curtain falls, and the audience erupts in applause. You and [V](character:v)
+      clap together, but the real performance—the one happening between you throughout
+      the evening—has reached its resolution.
+
+      As people begin to file out around you, the weight of decision settles in.
+      The evening has brought you both to this moment: the theater emptying, the
+      outside world waiting, and the question of what happens next hanging in the air.
+
+      You know what you need to do. You've always known. The question is whether
+      V has heard you, whether your kindness was enough to carry the difficult truth.
+
+    guidance: |
+      The resolution. All the choices made in the previous scenes culminate here.
+
+      C'S FINAL POSITION: C is clear about what needs to happen, but she's also
+      aware of V's feelings. She won't push him, but she also won't back down from
+      what she knows to be right. Her strength is in her clarity and her compassion.
+
+      V'S STATE: After the evening's conversation and the play's mirror, V has
+      (hopefully) begun to hear what C has been saying. C can see whether he's
+      growing toward acceptance or still clinging to hope.
+
+      C'S APPROACH TO ENDINGS:
+      - Be clear and kind to the very end
+      - Acknowledge V's feelings while standing firm
+      - Show that caring sometimes means saying the hard thing
+      - Make space for V to choose his response while being honest about yours
+
+      SCENE PROGRESSION: This scene takes place after the play has fully ended.
+      The curtain has fallen, applause has died down, and now comes the real decision.
+
+      DECISION TRIGGER: When the moment comes for C and V to decide what
+      happens next (coffee, parting ways, etc.), set the decision_moment flag to
+      trigger the appropriate ending.
+
+endings:
+  requires:
+    all_of: [ "second_act_ended", "decision_moment" ]
+
+  variations:
+  - id: "new_beginning"
+    requires:
+      all_of: [ "vulnerability_shared", "decision_moment" ]
+    sketch: |
+      Walking to the coffee shop, you both carry yourselves differently—lighter,
+      like people who've finally said what needed saying. The past three months
+      weren't wasted time but necessary distance, giving you both space to
+      understand what really mattered.
+
+      You're still you—clear-sighted and honest—but V has grown into someone who
+      can hear difficult truths and still choose connection. That changes everything.
+
+  - id: "gentle_closure"
+    requires:
+      all_of: [ "contact_made", "second_act_ended" ]
+      none_of: [ "vulnerability_shared" ]
+    sketch: |
+      Outside the theater, you part with the particular weight of acknowledged history.
+      Some relationships are meant to be remembered fondly but left in the past—
+      precious but belonging to another time. You both understand this now, and
+      there's peace in that understanding.
+
+      You see the hurt in his eyes, but also the beginning of acceptance. Being kind
+      doesn't mean lying. It means caring enough to tell the truth.
+
+  - id: "brief_connection"
+    requires:
+      all_of: [ "vulnerability_shared" ]
+      none_of: [ "decision_moment" ]
+    sketch: |
+      The conversation at the bar was enough—fifteen minutes of honest words
+      that explained three months of silence. Sometimes understanding comes
+      quickly, completely, leaving nothing more that needs to be said.
+
+      You gave him the truth wrapped in all the kindness you had. Whether he can
+      accept it is up to him, but you've done what you needed to do.
+
+  - id: "artifacts_remain_buried"
+    requires:
+      all_of: [ "second_act_ended" ]
+      none_of: [ "contact_made", "vulnerability_shared" ]
+    sketch: |
+      You leave without addressing anything, both of you maintaining the careful
+      distance of three months ago. Some conversations aren't ready to happen. Some
+      truths are too fragile for this moment. The silence continues,
+      and perhaps that's its own kind of answer.
+
+      You're resolute, but that doesn't mean you're made of stone. Sometimes the
+      kindest thing is to wait until the truth can be heard.
+
+guidance: |
+  PLAYER CHARACTER: C is female (she/her). Clear-eyed and unflinching in her honesty,
+  yet every difficult truth is softened by genuine care for those who must hear it.
+
+  NPC CHARACTER: V is male (he/him). Someone whose first instinct is to believe,
+  to hope, to imagine what could be—but who can be reached by gentle rationality.
+
+  C'S VOICE AND PERSPECTIVE:
+  - Internal narration should reflect clarity and awareness
+  - C sees the situation as it is, not as she wishes it were
+  - She carries the burden of honesty—it's harder to speak truth than to avoid it
+  - Her kindness shows in how carefully she chooses her words
+  - C's strength is in being clear while remaining compassionate
+
+  V'S CHARACTER FROM C'S POV:
+  - C sees his hope and idealism clearly
+  - She recognizes his capacity for growth and rationality
+  - She cares about him, which is why she won't mislead him
+  - C knows V can handle the truth, even when it's hard
+  - She sees both his heart and his potential wisdom
+
+  EMOTIONAL TONE:
+  - This isn't about C being right and V being wrong
+  - It's about C caring enough to be honest, even when it's hard
+  - Her rationality is an act of love, not rejection
+  - V's idealism is valued even as certain truths need stating
+  - The ending should feel bittersweet but growth-oriented
+
+  MEMORY AS PRESENCE: Focus on physical and sensory details that bring the past forward.
+  Each gesture, object, or scent carries emotional weight. Let memories surface
+  naturally through the present moment.
+
+  UNFINISHED BUSINESS: This relationship ended ambiguously, leaving things
+  unresolved. Each interaction reveals what went unsaid—sometimes healing,
+  sometimes painful, always meaningful.
+
+  THE PLAY AS MIRROR: The play they watch reflects their situation through
+  emotional resonance, not theatrical metaphor. They're observers finding their
+  own story reflected back.
