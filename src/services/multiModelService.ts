@@ -240,6 +240,9 @@ export class MultiModelService {
           model: model,
           temperature: temperature,
           maxTokens: 4000,
+          // Explicitly set valid parameter values to prevent LangChain from setting invalid defaults
+          topP: undefined, // Don't set top_p at all, let Anthropic use their defaults
+          topK: undefined, // Don't set top_k at all, let Anthropic use their defaults
         });
         
       case 'openai':
@@ -390,6 +393,18 @@ export class MultiModelService {
         signal: abortController.signal,
         callbacks
       };
+
+      // Fix invalid parameter values for Anthropic models
+      if (this.currentConfig?.provider === 'anthropic') {
+        // Ensure top_p is in valid range (0-1) or remove it
+        if ('top_p' in invokeOptions && (invokeOptions.top_p < 0 || invokeOptions.top_p > 1)) {
+          delete invokeOptions.top_p;
+        }
+        // Ensure top_k is non-negative or remove it
+        if ('top_k' in invokeOptions && invokeOptions.top_k < 0) {
+          delete invokeOptions.top_k;
+        }
+      }
       
       const response = await structuredModel.invoke(
         [new HumanMessage(prompt)],
@@ -450,6 +465,18 @@ export class MultiModelService {
       // Add temperature override if specified
       if (options.temperature !== undefined) {
         invokeOptions.temperature = options.temperature;
+      }
+
+      // Fix invalid parameter values for Anthropic models
+      if (this.currentConfig?.provider === 'anthropic') {
+        // Ensure top_p is in valid range (0-1) or remove it
+        if ('top_p' in invokeOptions && (invokeOptions.top_p < 0 || invokeOptions.top_p > 1)) {
+          delete invokeOptions.top_p;
+        }
+        // Ensure top_k is non-negative or remove it
+        if ('top_k' in invokeOptions && invokeOptions.top_k < 0) {
+          delete invokeOptions.top_k;
+        }
       }
       
       const response = await model.invoke(
