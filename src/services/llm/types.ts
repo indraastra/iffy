@@ -39,7 +39,7 @@ export const POPULAR_MODELS: ModelOption[] = [
   },
   {
     provider: 'google',
-    model: 'gemini-2.5-pro-preview-06-05',
+    model: 'gemini-2.5-pro',
     displayName: 'Gemini 2.5 Pro',
     description: 'State-of-the-art reasoning',
     costTier: 'enterprise'
@@ -53,7 +53,7 @@ export const POPULAR_MODELS: ModelOption[] = [
   },
   {
     provider: 'google',
-    model: 'gemini-2.5-flash-lite-preview-06-17',
+    model: 'gemini-2.5-flash-lite',
     displayName: 'Gemini 2.5 Flash Lite',
     description: 'Most cost-effective option',
     costTier: 'free'
@@ -68,8 +68,8 @@ export const POPULAR_MODELS: ModelOption[] = [
   },
   {
     provider: 'anthropic',
-    model: 'claude-sonnet-4-20250514',
-    displayName: 'Claude Sonnet 4',
+    model: 'claude-opus-4-1-20250805',
+    displayName: 'Claude Opus 4.1',
     description: 'Most intelligent, highest quality',
     costTier: 'enterprise'
   },
@@ -115,7 +115,7 @@ export const DEFAULT_MODELS: Record<LLMProvider, string> = {
 export const DEFAULT_COST_MODELS: Record<LLMProvider, string> = {
   anthropic: 'claude-3-5-haiku-latest',
   openai: 'gpt-4o-mini',
-  google: 'gemini-2.5-flash-lite-preview-06-17'
+  google: 'gemini-2.5-flash-lite'
 };
 
 // Pricing per 1M tokens (as of June 2025)
@@ -127,7 +127,7 @@ export interface ModelPricing {
 export const MODEL_PRICING: Record<string, ModelPricing> = {
   // Anthropic
   'claude-3-5-sonnet-latest': { input: 3.00, output: 15.00 },
-  'claude-sonnet-4-20250514': { input: 3.00, output: 15.00 },
+  'claude-opus-4-1-20250805': { input: 15.00, output: 75.00 }, // Claude Opus pricing
   'claude-3-5-haiku-latest': { input: 0.80, output: 4.00 },
   
   // OpenAI
@@ -138,20 +138,22 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
   'gpt-4o-mini': { input: 0.15, output: 0.60 },
   'o3-mini': { input: 1.10, output: 4.40 },
   
-  // Google
-  'gemini-2.5-pro-preview-06-05': { input: 1.25, output: 10.00 }, // ≤200K context, includes thinking tokens
-  'gemini-2.5-flash': { input: 0.15, output: 0.60 }, // Non-thinking output, thinking tokens cost $3.50/M
-  'gemini-2.0-flash': { input: 0.10, output: 0.40 },
-  'gemini-2.5-flash-lite-preview-06-17': { input: 0.075, output: 0.30 },
-  'gemini-1.5-pro': { input: 1.25, output: 5.00 }, // ≤128K context
-  'gemini-1.5-flash': { input: 0.075, output: 0.30 }, // ≤128K context
+  // Google (updated December 2024 pricing)
+  'gemini-2.5-pro': { input: 1.25, output: 10.00 }, // ≤200K context
+  'gemini-2.5-pro-preview-06-05': { input: 1.25, output: 10.00 }, // ≤200K context
+  'gemini-2.5-flash': { input: 0.30, output: 2.50 }, // Standard pricing (text/image/video)
+  'gemini-2.5-flash-lite': { input: 0.10, output: 0.40 }, // Most cost-effective
+  'gemini-2.0-flash': { input: 0.10, output: 0.40 }, // Standard pricing
+  'gemini-2.0-flash-lite': { input: 0.075, output: 0.30 },
+  'gemini-1.5-pro': { input: 1.25, output: 5.00 }, // Legacy model
+  'gemini-1.5-flash': { input: 0.075, output: 0.30 }, // Legacy model
 };
 
 // Default pricing per provider (using cheapest model rates)
 export const DEFAULT_PROVIDER_PRICING: Record<LLMProvider, ModelPricing> = {
   anthropic: MODEL_PRICING['claude-3-5-haiku-latest'],
   openai: MODEL_PRICING['gpt-4o-mini'],
-  google: MODEL_PRICING['gemini-2.5-flash-lite-preview-06-17']
+  google: MODEL_PRICING['gemini-2.5-flash-lite']
 };
 
 // Helper function to get the cheapest model for a provider
