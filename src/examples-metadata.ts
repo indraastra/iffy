@@ -36,13 +36,6 @@ export const STORY_METADATA: StoryMetadata[] = [
     "slug": "intermission"
   },
   {
-    "filename": "intermission_test.yaml",
-    "title": "Intermission Test",
-    "author": "Iffy Collective",
-    "blurb": "The play you're watching shapes how your story unfolds.",
-    "slug": "intermission-test"
-  },
-  {
     "filename": "transition_test.yaml",
     "title": "Transition Test",
     "author": "Test",
@@ -66,13 +59,6 @@ const ALL_STORY_METADATA: StoryMetadata[] = [
     "author": "Iffy Collective",
     "blurb": "Three months of silence, broken by a chance encounter.",
     "slug": "intermission"
-  },
-  {
-    "filename": "intermission_test.yaml",
-    "title": "Intermission Test",
-    "author": "Iffy Collective",
-    "blurb": "The play you're watching shapes how your story unfolds.",
-    "slug": "intermission-test"
   },
   {
     "filename": "transition_test.yaml",
