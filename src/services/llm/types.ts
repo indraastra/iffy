@@ -61,31 +61,38 @@ export const POPULAR_MODELS: ModelOption[] = [
   // Anthropic
   {
     provider: 'anthropic',
-    model: 'claude-sonnet-4-5',
+    model: 'claude-sonnet-4-5-20250929',
     displayName: 'Claude Sonnet 4.5',
-    description: 'Latest and most capable (recommended)',
-    costTier: 'premium'
-  },
-  {
-    provider: 'anthropic',
-    model: 'claude-3-5-sonnet-latest',
-    displayName: 'Claude Sonnet 3.5',
-    description: 'Previous generation, still capable',
+    description: 'Latest model, best for complex agents and coding',
     costTier: 'premium'
   },
   {
     provider: 'anthropic',
     model: 'claude-opus-4-1-20250805',
     displayName: 'Claude Opus 4.1',
-    description: 'Most intelligent for complex tasks',
+    description: 'Exceptional model for specialized complex tasks',
     costTier: 'enterprise'
   },
   {
     provider: 'anthropic',
-    model: 'claude-3-5-haiku-latest',
+    model: 'claude-sonnet-4-20250514',
+    displayName: 'Claude Sonnet 4',
+    description: 'Previous Sonnet generation',
+    costTier: 'premium'
+  },
+  {
+    provider: 'anthropic',
+    model: 'claude-3-5-haiku-20241022',
     displayName: 'Claude Haiku 3.5',
-    description: 'Fast and cost-effective',
+    description: 'Fastest model',
     costTier: 'budget'
+  },
+  {
+    provider: 'anthropic',
+    model: 'claude-3-haiku-20240307',
+    displayName: 'Claude Haiku 3',
+    description: 'Most cost-effective option',
+    costTier: 'free'
   },
   // OpenAI
   {
@@ -113,14 +120,14 @@ export const POPULAR_MODELS: ModelOption[] = [
 
 // Default models per provider
 export const DEFAULT_MODELS: Record<LLMProvider, string> = {
-  anthropic: 'claude-sonnet-4-5',
+  anthropic: 'claude-sonnet-4-5-20250929',
   openai: 'gpt-4o',
   google: 'gemini-2.5-flash'
 };
 
 // Default cost models per provider (efficient options for cost-optimized operations)
 export const DEFAULT_COST_MODELS: Record<LLMProvider, string> = {
-  anthropic: 'claude-3-5-haiku-latest',
+  anthropic: 'claude-3-haiku-20240307',
   openai: 'gpt-4o-mini',
   google: 'gemini-2.5-flash-lite'
 };
@@ -132,11 +139,12 @@ export interface ModelPricing {
 }
 
 export const MODEL_PRICING: Record<string, ModelPricing> = {
-  // Anthropic
-  'claude-sonnet-4-5': { input: 3.00, output: 15.00 }, // Same pricing as Sonnet 4
-  'claude-3-5-sonnet-latest': { input: 3.00, output: 15.00 },
-  'claude-opus-4-1-20250805': { input: 15.00, output: 75.00 }, // Claude Opus pricing
-  'claude-3-5-haiku-latest': { input: 0.80, output: 4.00 },
+  // Anthropic (official API names and pricing)
+  'claude-sonnet-4-5-20250929': { input: 3.00, output: 15.00 },
+  'claude-opus-4-1-20250805': { input: 15.00, output: 75.00 },
+  'claude-sonnet-4-20250514': { input: 3.00, output: 15.00 },
+  'claude-3-5-haiku-20241022': { input: 0.80, output: 4.00 },
+  'claude-3-haiku-20240307': { input: 0.25, output: 1.25 },
   
   // OpenAI
   'gpt-4.1': { input: 3.70, output: 11.10 },
@@ -159,7 +167,7 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
 
 // Default pricing per provider (using cheapest model rates)
 export const DEFAULT_PROVIDER_PRICING: Record<LLMProvider, ModelPricing> = {
-  anthropic: MODEL_PRICING['claude-3-5-haiku-latest'],
+  anthropic: MODEL_PRICING['claude-3-haiku-20240307'],
   openai: MODEL_PRICING['gpt-4o-mini'],
   google: MODEL_PRICING['gemini-2.5-flash-lite']
 };
