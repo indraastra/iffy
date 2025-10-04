@@ -1,0 +1,300 @@
+title: "Before the Journey - Side B: The Friend"
+author: "Iffy Collective"
+blurb: "Two hours until their overnight express departs. You drove them to the station, and now
+  you're both sitting in Track Nine Café, watching their train wait on Platform 3. You know
+  this might be your last chance to say what you've been holding back - but is now the right time?"
+version: "2.0"
+unlisted: true
+context: "You're Mia, watching your closest friend prepare to leave on a month-long solo journey.
+  You've been hiding romantic feelings, and with time running out, you're wrestling with whether
+  to speak up or let them go."
+
+ui:
+  loadingMessage: "Sitting across from them..."
+
+narrative:
+  voice: "Direct second-person present, emotionally charged but trying to stay composed"
+  setting: "Track Nine Café at Millbrook Junction train station, overlooking the platforms"
+  tone: "Loving but anxious, time slipping away, courage warring with fear"
+  themes:
+    [
+      "love as courage and risk",
+      "timing and missed chances",
+      "friendship on the edge of change",
+      "speaking truth before goodbye"
+    ]
+
+# Simplified flags - let the LLM handle most state tracking
+flags:
+  feelings_revealed:
+    default: false
+    description: "When Mia (player) admits romantic feelings"
+  friend_reciprocated:
+    default: false
+    description: "When the friend admits mutual feelings"
+  final_decision:
+    default: false
+    description: "When the final choice about their departure is resolved"
+  jukebox_suggested:
+    default: false
+    description: "When Mia suggests or encourages music from the jukebox"
+  music_playing:
+    default: false
+    description: "When music is actively playing in the background"
+
+world:
+  characters:
+    friend:
+      name: "Alex"
+      sketch: "Your closest friend, the one about to leave. They've been through something difficult
+        and think they need to heal alone - but you wonder if that's really true."
+      voice: "Thoughtful, sometimes distant, carrying emotional weight"
+      behaviors:
+        base: "Sitting across from you, occasionally glancing at the departure board, backpack
+          at their feet like an anchor."
+        states:
+        - when:
+            all_of: [ "feelings_revealed" ]
+            none_of: [ "friend_reciprocated" ]
+          description: "Processing what you've told them, careful with their words, aware of
+            the weight of this moment."
+        - when:
+            all_of: [ "feelings_revealed", "friend_reciprocated" ]
+          description: "Relief and possibility mixing with confusion about the timing, leaning
+            closer, the careful distance dissolved."
+
+    sam:
+      name: "Sam"
+      sketch: "The café server - middle-aged, knowing eyes, has seen every kind of goodbye this station
+        offers."
+      voice: "Wry, observant, drops wisdom at unexpected moments"
+
+  locations:
+    track_nine:
+      name: "Track Nine Café"
+      sketch: "Second-floor café with floor-to-ceiling windows overlooking Platform 3. Corner jukebox that
+        only plays track 9 from any album - Sam's quirky rule."
+      atmosphere: [ "warm lights against evening windows", "coffee and train diesel", "departure board clicking" ]
+      details:
+      - "Your usual table facing the platforms"
+      - "The vintage Wurlitzer with its handwritten sign"
+      - "Other travelers having their own goodbyes"
+      - "The 8:47 overnight express waiting below"
+
+scenes:
+  opening:
+    process_sketch: false
+    sketch: |
+      Track Nine Café, 6:30 PM. You drove them here, and now you're sitting across from [Alex](character:friend)
+      at your usual table. Through the windows, their train waits on Platform 3.
+      The departure board clicks: **8:47 - OVERNIGHT EXPRESS - ON TIME**
+
+      Two hours. That's all the time left to say everything you've been holding back.
+
+      Alex's backpack leans against the table like a wall between you. You've been friends for 
+      years, but tonight feels different. Final.
+
+      "Two hours to talk you out of this crazy plan," you say, forcing a grin. The joke feels 
+      hollow when your heart is racing.
+
+      [Sam](character:sam) approaches with the coffee pot. "Refills? Or maybe some music 
+      to set the mood?" They nod toward the vintage jukebox in the corner. "Track 9s have 
+      a way of revealing what needs revealing."
+
+    guidance: |
+      SCENE ENTRY: Reset music_playing=false when entering this scene (allows fresh jukebox interactions).
+
+      MIA'S INTERNAL CONFLICT: Mia (the player) is battling between protecting their friendship 
+      and risking everything to speak the truth. Show this internal tension through action choices.
+
+      CONVERSATION DYNAMICS: Alex is processing their own journey. Mia knows them well enough 
+      to see when they're deflecting or when they're genuinely considering staying. Let their 
+      body language and responses guide Mia's choices.
+
+      JUKEBOX OPPORTUNITY: Set jukebox_suggested=true when Mia encourages or suggests music 
+      (following Sam's hint, wanting to create mood, needing distraction, etc.)
+
+      TIME PRESSURE: The 2-hour countdown adds urgency to every choice. Show this through 
+      departure announcements, other passengers, Alex checking their phone/watch.
+
+    transitions:
+      jukebox_scene:
+        requires:
+          all_of: [ "jukebox_suggested" ]
+
+  jukebox_scene:
+    sketch: |
+      You both approach the vintage Wurlitzer. The handwritten sign reads: 
+      "Only plays track 9 from any album - Sam's Rules."
+
+      Alex reads over your shoulder. "Track 9s only? That's oddly specific."
+
+      "Maybe Sam knows something about ninth chances," you say, then immediately 
+      regret how vulnerable that sounded.
+
+      The selection wheel shows various albums from different eras:
+
+      **Available selections:**
+      - Yeah Yeah Yeahs - *Maps*
+      - The Cure - *Just Like Heaven*
+      - Bob Marley - *Three Little Birds*
+      - Radiohead - *Jigsaw Falling into Place*
+      - Tool - *Lateralus*
+
+      Alex feeds quarters into the machine. "Your pick. You drove me here, after all."
+
+    guidance: |
+      SCENE ENTRY: Reset jukebox_suggested=false when entering this scene (clean interaction).
+
+      MIA'S CHOICE: This is Mia's chance to set the emotional tone. Each song choice should 
+      reflect different aspects of her feelings or different approaches to the conversation.
+
+      MUSIC SELECTION: When a song is chosen, set music_playing=true and describe how 
+      the music begins to fill the space. The song should influence the mood when they 
+      return to the main conversation.
+
+      SHARED MOMENT: Standing close to the jukebox, sharing the music selection, creates 
+      intimacy that can carry into their conversation.
+
+    transitions:
+      opening:
+        requires:
+          all_of: [ "music_playing" ]
+
+endings:
+  requires:
+    any_of:
+    - "final_decision"
+
+  variations:
+  - id: "love_confessed_staying"
+    when: "Alex chooses to stay for love"
+    requires:
+      all_of:
+      - "feelings_revealed"
+      - "friend_reciprocated"
+      - "final_decision"
+    sketch: |
+      "I'm not getting on that train," Alex says, and your heart stops.
+
+      Through the window, the overnight express pulls away from Platform 3, 
+      carrying someone else's journey into the night.
+
+      "Are you sure?" you ask, afraid to hope. "I don't want to be the reason 
+      you don't heal."
+
+      Alex reaches across and takes your hand. "Maybe healing doesn't always mean 
+      going away. Maybe sometimes it means staying and building something new."
+
+      [Sam](character:sam) appears with fresh coffee and a knowing smile. "Next train's 
+      not for another week. Gives you time to figure things out."
+
+      You squeeze Alex's hand, feeling like you can finally breathe.
+
+  - id: "journey_together"
+    when: "invited along on the journey"
+    requires:
+      all_of:
+      - "feelings_revealed"
+      - "friend_reciprocated"
+    sketch: |
+      "Come with me," Alex says suddenly. "This doesn't have to be a solo journey."
+
+      Your eyes widen. You think of work, responsibilities, the life you'd be 
+      leaving behind. "I can't just... I have work, responsibilities..."
+
+      "So did I," Alex says. "The ticket office is still open. What if healing 
+      doesn't mean doing it alone? What if it means doing it with someone who loves you?"
+
+      [Sam](character:sam), eavesdropping shamelessly, pipes up: "Forty-five minutes 
+      till they close. Just saying."
+
+      You look at Alex's hopeful face, then at the departure board. Sometimes 
+      the biggest healing happens when you're brave enough to say yes.
+
+  - id: "courage_with_goodbye"
+    when: "feelings revealed but Alex still leaves"
+    requires:
+      all_of:
+      - "feelings_revealed"
+      - "final_decision"
+    sketch: |
+      The final boarding call echoes through the station. Alex stands, backpack 
+      in hand, but now they're looking at you differently.
+
+      "I'm glad you told me," they say softly. "I needed to know."
+
+      You manage what you hope is a brave smile. "Send me postcards?"
+
+      "Every town," they promise. Then, surprising you: "And when I get back..."
+
+      They don't finish the sentence, but you hear the possibility in it.
+
+      As Alex heads for the stairs, [Sam](character:sam) calls out: "Sometimes 
+      the journey teaches us what home really means."
+
+      Through the café window, you watch the train pull away, but this time 
+      the goodbye doesn't feel like an ending.
+
+  - id: "silent_goodbye"
+    when: "keeping feelings secret"
+    requires:
+      all_of:
+      - "final_decision"
+      none_of:
+      - "feelings_revealed"
+    sketch: |
+      The final boarding call echoes through the station. Alex stands, and 
+      you realize your last chance is slipping away.
+
+      But looking at their face - determined, nervous, hopeful about their 
+      journey - you make a different choice. Some loves are about letting go.
+
+      "Send me postcards?" you say instead of everything else.
+
+      "Every town," Alex promises.
+
+      As they head for the stairs, you sit back down at the table. [Sam](character:sam) 
+      refills your coffee without being asked.
+
+      "Some goodbyes are about love, too," Sam says quietly.
+
+      Through the café window, you watch the train pull away, carrying your 
+      secret with it.
+
+guidance: |
+  CRITICAL - CHARACTER CONSISTENCY:
+  - Mia (the player) is female (she/her pronouns)
+  - Alex (the friend leaving) should be kept gender-neutral (they/them)
+  - Sam is the server (they/them or context-appropriate pronouns)
+
+  TONE AND EMOTIONAL CORE:
+  - Mia is fighting between courage and fear, love and friendship
+  - More internally focused than Side A - Mia processes emotions deeply
+  - The two-hour countdown creates urgency for emotional honesty
+  - Show Mia's internal conflict through external actions and dialogue choices
+
+  MIA'S PERSPECTIVE:
+  - She's been hiding feelings, so emotional reactions may be intense
+  - She knows Alex very well - can read their moods and needs
+  - She's torn between supporting their healing and wanting them to stay
+  - Her actions should reflect both selfless love and personal desire
+
+  CONVERSATION STYLE:
+  - Mia might be more careful with words, afraid of saying too much
+  - Moments of nervous chatter followed by meaningful silences
+  - Quick deflections when emotions get too intense
+  - Alex responds to Mia's emotional state and energy
+
+  TIME PROGRESSION:
+  - Story starts at 6:30 PM
+  - Train departs at 8:47 PM
+  - Let time advance naturally through scenes
+  - Boarding announcements at 7:00, 7:30, 8:00, 8:30
+  - Each announcement should increase Mia's internal urgency
+
+  RELATIONSHIP DYNAMICS:
+  - Mia has been supporting Alex through their difficult time
+  - Their friendship is deep and comfortable, but the hidden feelings create tension
+  - Alex may not realize the depth of Mia's feelings initially
+  - The departure threat makes everything more intense

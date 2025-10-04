@@ -101,6 +101,13 @@ const ALL_STORY_METADATA: StoryMetadata[] = [
     "author": "Iffy Collective",
     "blurb": "Two hours until the overnight express departs. Your friend drove you to the station, and now you're both sitting in Track Nine Café, watching your train wait on Platform 3. Everything you've been through led to this moment - but is leaving still the right choice?",
     "slug": "before-the-journey-a"
+  },
+  {
+    "filename": "before_the_journey_b.yaml",
+    "title": "Before the Journey - Side B: The Friend",
+    "author": "Iffy Collective",
+    "blurb": "Two hours until their overnight express departs. You drove them to the station, and now you're both sitting in Track Nine Café, watching their train wait on Platform 3. You know this might be your last chance to say what you've been holding back - but is now the right time?",
+    "slug": "before-the-journey-b"
   }
 ];
 

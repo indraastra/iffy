@@ -235,15 +235,37 @@ export class MultiModelService {
   private createModelWithSettings(provider: LLMProvider, model: string, apiKey: string, temperature: number = 0.7): BaseChatModel {
     switch (provider) {
       case 'anthropic':
-        return new ChatAnthropic({
+        const anthropicModel = new ChatAnthropic({
           anthropicApiKey: apiKey,
           model: model,
           temperature: temperature,
           maxTokens: 4000,
-          // Explicitly set valid parameter values to prevent LangChain from setting invalid defaults
-          topP: undefined, // Don't set top_p at all, let Anthropic use their defaults
-          topK: undefined, // Don't set top_k at all, let Anthropic use their defaults
         });
+        
+        // Override the _generate method to filter out invalid parameters
+        const originalGenerate = anthropicModel._generate.bind(anthropicModel);
+        anthropicModel._generate = async function(messages: any, options: any, runManager?: any) {
+          // Clean options before passing to Anthropic API
+          if (options) {
+            delete options.top_p;
+            delete options.topP;
+            delete options.top_k;
+            delete options.topK;
+            
+            // Only keep valid parameters
+            const cleanOptions = {
+              signal: options.signal,
+              callbacks: options.callbacks,
+              temperature: options.temperature,
+            };
+            
+            console.log('🔍 Anthropic generate options cleaned:', JSON.stringify(cleanOptions, null, 2));
+            return originalGenerate(messages, cleanOptions, runManager);
+          }
+          return originalGenerate(messages, options, runManager);
+        };
+        
+        return anthropicModel;
         
       case 'openai':
         return new ChatOpenAI({
@@ -396,14 +418,16 @@ export class MultiModelService {
 
       // Fix invalid parameter values for Anthropic models
       if (this.currentConfig?.provider === 'anthropic') {
-        // Ensure top_p is in valid range (0-1) or remove it
-        if ('top_p' in invokeOptions && (invokeOptions.top_p < 0 || invokeOptions.top_p > 1)) {
-          delete invokeOptions.top_p;
-        }
-        // Ensure top_k is non-negative or remove it
-        if ('top_k' in invokeOptions && invokeOptions.top_k < 0) {
-          delete invokeOptions.top_k;
-        }
+        // Remove any parameters that might be invalid for Anthropic
+        delete invokeOptions.top_p;
+        delete invokeOptions.topP;
+        delete invokeOptions.top_k;
+        delete invokeOptions.topK;
+        delete invokeOptions.stop;
+        delete invokeOptions.maxTokens;
+        delete invokeOptions.max_tokens;
+        
+        console.log('🔍 Cleaned invoke options for Anthropic:', JSON.stringify(invokeOptions, null, 2));
       }
       
       const response = await structuredModel.invoke(
@@ -469,14 +493,16 @@ export class MultiModelService {
 
       // Fix invalid parameter values for Anthropic models
       if (this.currentConfig?.provider === 'anthropic') {
-        // Ensure top_p is in valid range (0-1) or remove it
-        if ('top_p' in invokeOptions && (invokeOptions.top_p < 0 || invokeOptions.top_p > 1)) {
-          delete invokeOptions.top_p;
-        }
-        // Ensure top_k is non-negative or remove it
-        if ('top_k' in invokeOptions && invokeOptions.top_k < 0) {
-          delete invokeOptions.top_k;
-        }
+        // Remove any parameters that might be invalid for Anthropic
+        delete invokeOptions.top_p;
+        delete invokeOptions.topP;
+        delete invokeOptions.top_k;
+        delete invokeOptions.topK;
+        delete invokeOptions.stop;
+        delete invokeOptions.maxTokens;
+        delete invokeOptions.max_tokens;
+        
+        console.log('🔍 Cleaned invoke options for Anthropic:', JSON.stringify(invokeOptions, null, 2));
       }
       
       const response = await model.invoke(
