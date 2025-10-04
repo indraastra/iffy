@@ -501,10 +501,12 @@ ${this.getStructuredResponseInstructions()}`;
    */
   static getRichTextFormattingInstructions(): string {
     return `
-**FORMATTING & MARKUP:**
+**FORMATTING & OUTPUT LENGTH:**
 * **Bold** for emphasis, *italics* for thoughts/whispers
 * "Double quotes" for all dialogue (never single quotes)
 * 1-2 sentences per paragraph for pacing
+* **Target 2-4 paragraphs total** for most responses (maintain consistency across models)
+* **Each paragraph: 20-40 words** for optimal pacing and readability
 * Atmospheric details and sensory descriptions
 
 **INTERACTIVE MARKUP (use sparingly):**
@@ -564,7 +566,7 @@ ${this.getRichTextFormattingInstructions()}
   - How does this fit the story context and character relationships?
   - What flags (if any) should be set and why?
   - What narrative approach best serves this moment?
-* narrativeParts: Array of paragraph strings, each containing 1-2 sentences with rich formatting
+* narrativeParts: Array of paragraph strings, each containing 1-2 sentences with rich formatting (aim for 2-4 paragraphs total, 20-40 words each)
 * memories: Array of strings with important details to remember: discoveries, changes, or new knowledge gained
 * importance: Rate the significance of this interaction (1-10, default 5)
 * flagChanges: Object mapping flag names to values: {"flag_name": true, "other_flag": false}

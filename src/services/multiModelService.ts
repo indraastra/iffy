@@ -233,13 +233,42 @@ export class MultiModelService {
 
 
   private createModelWithSettings(provider: LLMProvider, model: string, apiKey: string, temperature: number = 0.7): BaseChatModel {
+    // Adjust max tokens based on model tendencies for output length consistency
+    const getOptimalMaxTokens = (provider: LLMProvider, model: string): number => {
+      // Base target: ~150-300 tokens for typical narrative responses (2-4 paragraphs)
+      switch (provider) {
+        case 'anthropic':
+          // Claude models tend to be verbose, use lower limits to encourage conciseness
+          if (model.includes('opus')) return 250;
+          if (model.includes('sonnet')) return 300;
+          if (model.includes('haiku')) return 350; // Haiku is naturally more concise
+          return 300;
+          
+        case 'openai':
+          // GPT models vary, generally good at following length guidelines
+          if (model.includes('gpt-4o')) return 350;
+          if (model.includes('gpt-4')) return 300;
+          return 350;
+          
+        case 'google':
+          // Gemini models can be inconsistent, use tighter limits
+          if (model.includes('pro')) return 275;
+          if (model.includes('flash')) return 325;
+          return 300;
+          
+        default:
+          return 300;
+      }
+    };
+    
+    const maxTokens = getOptimalMaxTokens(provider, model);
     switch (provider) {
       case 'anthropic':
         const anthropicModel = new ChatAnthropic({
           anthropicApiKey: apiKey,
           model: model,
           temperature: temperature,
-          maxTokens: 4000,
+          maxTokens: maxTokens,
         });
         
         // Override the completionWithRetry method to filter request body parameters
@@ -270,7 +299,7 @@ export class MultiModelService {
           openAIApiKey: apiKey,
           model: model,
           temperature: temperature,
-          maxTokens: 4000,
+          maxTokens: maxTokens,
         });
         
       case 'google':
@@ -278,7 +307,7 @@ export class MultiModelService {
           apiKey: apiKey,
           model: model,
           temperature: temperature,
-          maxOutputTokens: 4000,
+          maxOutputTokens: maxTokens,
         });
         
       default:
