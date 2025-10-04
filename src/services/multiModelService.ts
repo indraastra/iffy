@@ -242,27 +242,25 @@ export class MultiModelService {
           maxTokens: 4000,
         });
         
-        // Override the _generate method to filter out invalid parameters
-        const originalGenerate = anthropicModel._generate.bind(anthropicModel);
-        anthropicModel._generate = async function(messages: any, options: any, runManager?: any) {
-          // Clean options before passing to Anthropic API
-          if (options) {
-            delete options.top_p;
-            delete options.topP;
-            delete options.top_k;
-            delete options.topK;
+        // Override the completionWithRetry method to filter request body parameters
+        const originalCompletionWithRetry = (anthropicModel as any).completionWithRetry.bind(anthropicModel);
+        (anthropicModel as any).completionWithRetry = async function(request: any, options?: any) {
+          // Filter the request body to remove invalid parameters
+          if (request && typeof request === 'object') {
+            // Remove invalid parameters from the request
+            delete request.top_p;
+            delete request.topP;
+            delete request.top_k;
+            delete request.topK;
             
-            // Only keep valid parameters
-            const cleanOptions = {
-              signal: options.signal,
-              callbacks: options.callbacks,
-              temperature: options.temperature,
-            };
+            // Ensure top_p and top_k are not set to -1
+            if (request.top_p === -1) delete request.top_p;
+            if (request.top_k === -1) delete request.top_k;
             
-            console.log('🔍 Anthropic generate options cleaned:', JSON.stringify(cleanOptions, null, 2));
-            return originalGenerate(messages, cleanOptions, runManager);
+            console.log('🔍 Anthropic request body cleaned:', JSON.stringify(request, null, 2));
           }
-          return originalGenerate(messages, options, runManager);
+          
+          return originalCompletionWithRetry(request, options);
         };
         
         return anthropicModel;
