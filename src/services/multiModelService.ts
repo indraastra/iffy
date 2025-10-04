@@ -233,31 +233,28 @@ export class MultiModelService {
 
 
   private createModelWithSettings(provider: LLMProvider, model: string, apiKey: string, temperature: number = 0.7): BaseChatModel {
-    // Adjust max tokens based on model tendencies for output length consistency
+    // Set reasonable max tokens with safety buffer - focus on prompt guidance instead of hard limits
     const getOptimalMaxTokens = (provider: LLMProvider, model: string): number => {
-      // Base target: ~150-300 tokens for typical narrative responses (2-4 paragraphs)
+      // Conservative limits with safety buffer to prevent truncation errors
+      // Target: ~200-400 tokens for responses, but allow 2x buffer for safety
       switch (provider) {
         case 'anthropic':
-          // Claude models tend to be verbose, use lower limits to encourage conciseness
-          if (model.includes('opus')) return 250;
-          if (model.includes('sonnet')) return 300;
-          if (model.includes('haiku')) return 350; // Haiku is naturally more concise
-          return 300;
+          // Use reasonable limits with safety buffer
+          if (model.includes('opus')) return 800;   // 2x buffer for verbose model
+          if (model.includes('sonnet')) return 700; // Balanced
+          if (model.includes('haiku')) return 600;  // More concise naturally
+          return 700;
           
         case 'openai':
-          // GPT models vary, generally good at following length guidelines
-          if (model.includes('gpt-4o')) return 350;
-          if (model.includes('gpt-4')) return 300;
-          return 350;
+          // OpenAI models generally follow guidelines well
+          return 700;
           
         case 'google':
-          // Gemini models can be inconsistent, use tighter limits
-          if (model.includes('pro')) return 275;
-          if (model.includes('flash')) return 325;
-          return 300;
+          // Gemini can be inconsistent, use generous buffer
+          return 800;
           
         default:
-          return 300;
+          return 700;
       }
     };
     
