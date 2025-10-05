@@ -282,8 +282,6 @@ export class MultiModelService {
             // Ensure top_p and top_k are not set to -1
             if (request.top_p === -1) delete request.top_p;
             if (request.top_k === -1) delete request.top_k;
-            
-            console.log('🔍 Anthropic request body cleaned:', JSON.stringify(request, null, 2));
           }
           
           return originalCompletionWithRetry(request, options);
@@ -450,8 +448,6 @@ export class MultiModelService {
         delete invokeOptions.stop;
         delete invokeOptions.maxTokens;
         delete invokeOptions.max_tokens;
-        
-        console.log('🔍 Cleaned invoke options for Anthropic:', JSON.stringify(invokeOptions, null, 2));
       }
       
       const response = await structuredModel.invoke(
@@ -525,8 +521,6 @@ export class MultiModelService {
         delete invokeOptions.stop;
         delete invokeOptions.maxTokens;
         delete invokeOptions.max_tokens;
-        
-        console.log('🔍 Cleaned invoke options for Anthropic:', JSON.stringify(invokeOptions, null, 2));
       }
       
       const response = await model.invoke(
