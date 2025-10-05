@@ -20,6 +20,7 @@
     "test:llm-player:auto": "tsx tests/integration/llm-player/run-test.ts --auto",
     "debug:assessor": "tsx tests/integration/llm-player/debug-assessor.ts",
     "test:matrix": "tsx tests/integration/llm-player/run-matrix.ts",
+    "test:latency": "tsx scripts/latency-test.ts",
     "docs:serve": "npx http-server docs -p 8080 -o",
     "docs:dev": "echo 'Documentation available at: http://localhost:8080' && npm run docs:serve"
   },
