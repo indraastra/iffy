@@ -8,10 +8,11 @@
  */
 
 import * as dotenv from 'dotenv';
+import * as fs from 'fs';
+import * as path from 'path';
 import { MultiModelService } from '../src/services/multiModelService';
 import type { LLMConfig } from '../src/services/llm/types';
 import { ImpressionistEngine } from '../src/engine/impressionistEngine';
-import { loadStoryContent } from '../src/examples-metadata';
 import type { PlayerAction, GameResponse } from '../src/types/impressionistStory';
 
 // Load environment variables
@@ -81,16 +82,41 @@ class LatencyTester {
   async runLatencyTest(numActions: number = 5): Promise<LatencyResult[]> {
     console.log(`🏃 Starting latency test with ${numActions} actions per model...`);
     console.log(`📖 Using test story: ${this.testStory}`);
-    console.log(`🤖 Testing ${TEST_MODELS.length} models:`);
+    
+    console.log(`🤖 Checking ${TEST_MODELS.length} configured models:`);
     
     TEST_MODELS.forEach(model => {
-      console.log(`   • ${model.displayName} (${model.tier})`);
+      const hasKey = !!this.getApiKey(model.provider);
+      const status = hasKey ? '✅' : '⚠️ ';
+      console.log(`   ${status} ${model.displayName} (${model.tier})`);
     });
     console.log();
 
+    // Filter to only test models with available API keys
+    const availableModels = TEST_MODELS.filter(model => !!this.getApiKey(model.provider));
+    const missingModels = TEST_MODELS.filter(model => !this.getApiKey(model.provider));
+    
+    if (missingModels.length > 0) {
+      console.log(`⚠️  Skipping ${missingModels.length} models due to missing API keys:`);
+      missingModels.forEach(model => {
+        console.log(`   • ${model.displayName} - Set ${this.getEnvVarName(model.provider)} to test`);
+      });
+      console.log();
+    }
+    
+    if (availableModels.length === 0) {
+      console.log('❌ No API keys found! Please set at least one of:');
+      console.log('   • ANTHROPIC_API_KEY for Claude models');
+      console.log('   • OPENAI_API_KEY for GPT models');
+      console.log('   • GOOGLE_API_KEY for Gemini models');
+      return [];
+    }
+    
+    console.log(`🚀 Running tests for ${availableModels.length} available models...\n`);
+
     const results: LatencyResult[] = [];
 
-    for (const modelConfig of TEST_MODELS) {
+    for (const modelConfig of availableModels) {
       console.log(`🔄 Testing ${modelConfig.displayName}...`);
       
       const result = await this.testModel(modelConfig, numActions);
@@ -106,7 +132,8 @@ class LatencyTester {
   private async testModel(modelConfig: ModelConfig, numActions: number): Promise<LatencyResult> {
     const apiKey = this.getApiKey(modelConfig.provider);
     if (!apiKey) {
-      return this.createFailedResult(modelConfig, `No API key found for ${modelConfig.provider}`);
+      // This should not happen since we filter before calling this method
+      throw new Error(`No API key found for ${modelConfig.provider} - this should have been filtered earlier`);
     }
 
     // Configure the model
@@ -119,6 +146,7 @@ class LatencyTester {
     try {
       this.multiModelService.setConfig(config);
     } catch (error) {
+      console.log(`   ❌ Failed to configure model: ${error}`);
       return this.createFailedResult(modelConfig, `Failed to configure model: ${error}`);
     }
 
@@ -176,8 +204,10 @@ class LatencyTester {
   }
 
   private async createFreshEngine(): Promise<ImpressionistEngine> {
-    // Load the test story
-    const storyContent = await loadStoryContent(this.testStory);
+    // Load the test story directly from filesystem
+    const storyPath = path.join(__dirname, '..', 'public', 'stories', this.testStory);
+    const storyContent = fs.readFileSync(storyPath, 'utf-8');
+    
     const engine = new ImpressionistEngine();
     
     // Parse the YAML story and load it
@@ -266,6 +296,19 @@ class LatencyTester {
         return process.env.GOOGLE_API_KEY;
       default:
         return undefined;
+    }
+  }
+
+  private getEnvVarName(provider: string): string {
+    switch (provider) {
+      case 'anthropic':
+        return 'ANTHROPIC_API_KEY';
+      case 'openai':
+        return 'OPENAI_API_KEY';
+      case 'google':
+        return 'GOOGLE_API_KEY';
+      default:
+        return `${provider.toUpperCase()}_API_KEY`;
     }
   }
 
