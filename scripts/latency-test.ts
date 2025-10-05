@@ -208,7 +208,8 @@ class LatencyTester {
     const storyPath = path.join(__dirname, '..', 'public', 'stories', this.testStory);
     const storyContent = fs.readFileSync(storyPath, 'utf-8');
     
-    const engine = new ImpressionistEngine();
+    // Create engine with the configured model service
+    const engine = new ImpressionistEngine(this.multiModelService);
     
     // Parse the YAML story and load it
     const yamlParser = await import('js-yaml');
